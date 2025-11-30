@@ -651,52 +651,51 @@
             } else { alert('بيانات خاطئة'); }
         });
 
-        // --- SHIFT CHECK LOGIC (FIXED) ---
+        // --- SHIFT CHECK LOGIC (STRICT FIX FOR OLD DATES) ---
         function checkShiftAdherence(lastUpdateStr) {
-            if (!lastUpdateStr) return true; // No update ever -> warn
+            // 1. Missing Data Check
+            if (!lastUpdateStr) return true; 
 
+            // 2. Parse Check
             const lastUpdate = parseCustomDate(lastUpdateStr);
-            if (!lastUpdate) return true; // Error parsing -> warn
+            
+            // 3. VALIDITY CHECK (CRITICAL FIX)
+            // If the date is invalid (NaN) or old format, treat it as missed update immediately
+            if (!lastUpdate || isNaN(lastUpdate.getTime())) return true; 
 
             const now = new Date();
 
-            // Shift Milestones Today
+            // Shift Milestones
             const morningShiftDeadline = new Date(now);
-            morningShiftDeadline.setHours(7, 30, 0, 0); // 7:30 AM
+            morningShiftDeadline.setHours(7, 30, 0, 0); 
             
-            const morningShiftStart = new Date(now);
-            morningShiftStart.setHours(5, 0, 0, 0); // 5:00 AM
-
             const eveningShiftDeadline = new Date(now);
-            eveningShiftDeadline.setHours(19, 30, 0, 0); // 7:30 PM
+            eveningShiftDeadline.setHours(19, 30, 0, 0); 
 
-            const eveningShiftStart = new Date(now);
-            eveningShiftStart.setHours(17, 0, 0, 0); // 5:00 PM
+            // Required Start Times
+            const todayMorningStart = new Date(now);
+            todayMorningStart.setHours(5, 0, 0, 0); 
 
-            // Logic: Compare lastUpdate with the start of the REQUIRED shift
-            // If lastUpdate is OLDER than the required shift start, it means missed update.
+            const todayEveningStart = new Date(now);
+            todayEveningStart.setHours(17, 0, 0, 0);
 
-            // 1. Early Morning (Dead Zone: 12:00 AM - 7:30 AM)
+            const yesterdayEveningStart = new Date(now);
+            yesterdayEveningStart.setDate(now.getDate() - 1); // Go back 1 day
+            yesterdayEveningStart.setHours(17, 0, 0, 0);
+
+            // Logic:
+            // 1. Early Morning (Before 7:30 AM): Expect update from Yesterday 5 PM
             if (now < morningShiftDeadline) {
-                // Must have updated in Yesterday's Evening Shift
-                const yesterdayEveningStart = new Date(now);
-                yesterdayEveningStart.setDate(yesterdayEveningStart.getDate() - 1);
-                yesterdayEveningStart.setHours(17, 0, 0, 0);
-
-                if (lastUpdate < yesterdayEveningStart) return true; // Missed
+                return lastUpdate < yesterdayEveningStart;
             }
-            // 2. Day Time (7:30 AM - 7:30 PM)
+            // 2. Day Time (Between 7:30 AM and 7:30 PM): Expect update from Today 5 AM
             else if (now < eveningShiftDeadline) {
-                // Must have updated in Today's Morning Shift
-                if (lastUpdate < morningShiftStart) return true; // Missed
+                return lastUpdate < todayMorningStart;
             }
-            // 3. Evening/Night (After 7:30 PM)
+            // 3. Evening/Night (After 7:30 PM): Expect update from Today 5 PM
             else {
-                // Must have updated in Today's Evening Shift
-                if (lastUpdate < eveningShiftStart) return true; // Missed
+                return lastUpdate < todayEveningStart;
             }
-
-            return false; // No missed update
         }
 
         // --- DASHBOARD RENDERER ---
@@ -1463,4 +1462,4 @@
         loadSystemData();
     </script>
 </body>
-            </html>
+    </html>
