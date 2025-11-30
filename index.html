@@ -193,7 +193,7 @@
                 </div>
                 <button id="login-btn" class="btn" style="width: 100%; background-color: #bdc3c7; color: #fff; cursor: not-allowed;" disabled>جاري الاتصال بالنظام...</button>
             </div>
-            <div class="signature">Implemented by Ahmed Salah Ibrahim 2025 V1.5.8</div>
+            <div class="signature">Implemented by Ahmed Salah Ibrahim 2025 V1.5.8 (Auto-Repair)</div>
         </div>
 
         <div id="stations-screen" class="screen">
@@ -474,28 +474,36 @@
             return str.replace(/[٠-٩]/g, d => '٠١٢٣٤٥٦٧٨٩'.indexOf(d));
         }
 
-        // --- UTILITY: PARSE ANY DATE FORMAT (ROBUST) ---
+        // --- UTILITY: PARSE ANY DATE FORMAT (ROBUST V2.1) ---
         function parseRobustDate(str) {
             if(!str || typeof str !== 'string') return null;
             
             // 1. Normalize Arabic digits to English
-            str = normalizeDigits(str);
+            let normalized = normalizeDigits(str);
             
-            // 2. Try ISO format (YYYY-MM-DD)
-            let date = new Date(str);
+            // 2. Handle Arabic AM/PM (ص/م)
+            let isPM = normalized.includes('م') || normalized.toLowerCase().includes('pm');
+            let isAM = normalized.includes('ص') || normalized.toLowerCase().includes('am');
+            
+            // 3. Try standard ISO first
+            let date = new Date(normalized);
             if (date && !isNaN(date.getTime())) return date;
             
-            // 3. Try custom parser for DD/MM/YYYY or D/M/YYYY (with mixed time)
-            const parts = str.match(/(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{4})(?:\s+(\d{1,2}):(\d{1,2})(?::(\d{1,2}))?)?/);
+            // 4. Try regex for DD/MM/YYYY
+            const parts = normalized.match(/(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{4})(?:\s+(\d{1,2}):(\d{1,2})(?::(\d{1,2}))?)?/);
             
             if (parts) {
                 const day = parseInt(parts[1], 10);
                 const month = parseInt(parts[2], 10) - 1;
                 const year = parseInt(parts[3], 10);
-                const hour = parts[4] ? parseInt(parts[4], 10) : 0;
+                let hour = parts[4] ? parseInt(parts[4], 10) : 0;
                 const min = parts[5] ? parseInt(parts[5], 10) : 0;
                 const sec = parts[6] ? parseInt(parts[6], 10) : 0;
                 
+                // Adjust for AM/PM
+                if (isPM && hour < 12) hour += 12;
+                if (isAM && hour === 12) hour = 0;
+
                 date = new Date(year, month, day, hour, min, sec);
                 if (date && !isNaN(date.getTime())) return date;
             }
@@ -554,7 +562,7 @@
             db.ref('stations').on('value', (snapshot) => {
                 let data = snapshot.val();
                 if (!data) { forceRepairStations(); } 
-                else { appData.stations = data; forceRepairStations(); }
+                else { appData.stations = data; forceRepairStations(); repairLegacyData(); }
                 
                 if (document.getElementById('stations-screen').classList.contains('active')) {
                     const activeTab = document.querySelector('.nav-tab.active');
@@ -590,6 +598,39 @@
                 else appData.faultsLog = [];
                 if (document.getElementById('faults-log-screen').classList.contains('active')) renderFaultsLog();
             });
+        }
+
+        // --- RETROACTIVE FIX: REPAIR LEGACY DATES ---
+        function repairLegacyData() {
+            if (!appData.stations) return;
+            let updates = {};
+            let needsUpdate = false;
+
+            Object.keys(appData.stations).forEach(key => {
+                const s = appData.stations[key];
+                const lastUpdate = s.lastUpdate;
+                
+                // Check if date is "dirty" (Arabic or old format)
+                if (lastUpdate && (/[٠-٩]/.test(lastUpdate) || lastUpdate.includes('/') || lastUpdate.includes('م') || lastUpdate.includes('ص'))) {
+                    const cleanDate = parseRobustDate(lastUpdate);
+                    if (cleanDate) {
+                        const y = cleanDate.getFullYear();
+                        const m = String(cleanDate.getMonth() + 1).padStart(2, '0');
+                        const d = String(cleanDate.getDate()).padStart(2, '0');
+                        const h = String(cleanDate.getHours()).padStart(2, '0');
+                        const min = String(cleanDate.getMinutes()).padStart(2, '0');
+                        const sec = String(cleanDate.getSeconds()).padStart(2, '0');
+                        const formatted = `${y}-${m}-${d} ${h}:${min}:${sec}`;
+                        
+                        updates[`${key}/lastUpdate`] = formatted;
+                        needsUpdate = true;
+                    }
+                }
+            });
+
+            if (needsUpdate) {
+                db.ref('stations').update(updates).then(() => console.log("Legacy dates repaired."));
+            }
         }
 
         function forceRepairStations() {
@@ -671,9 +712,9 @@
             } else { alert('بيانات خاطئة'); }
         });
 
-        // --- SHIFT CHECK LOGIC (V2.0 - GRACE PERIODS & ROBUST PARSING) ---
+        // --- SHIFT CHECK LOGIC (V2.1 - GRACE PERIODS) ---
         function checkShiftAdherence(lastUpdateStr) {
-            // 1. Robust Parsing (Handles Arabic Numerals & Bad Formats)
+            // 1. Robust Parsing
             const lastUpdate = parseRobustDate(lastUpdateStr);
             if (!lastUpdate) return true; // Invalid date = Alert
 
@@ -681,10 +722,10 @@
             const h = now.getHours();
 
             // 2. CHECK GRACE PERIODS (NO ALERT)
-            // Morning Update Window: 05:00 AM - 07:00 AM (Hour 5, 6)
+            // Morning Update Window: 05:00 AM - 07:00 AM
             if (h >= 5 && h < 7) return false; 
             
-            // Evening Update Window: 05:00 PM - 07:00 PM (Hour 17, 18)
+            // Evening Update Window: 05:00 PM - 07:00 PM
             if (h >= 17 && h < 19) return false;
 
             // 3. MORNING SHIFT ACTIVE (07:00 AM - 05:00 PM)
@@ -701,7 +742,6 @@
             if (h >= 19) {
                 eveningCutoff.setHours(17, 0, 0, 0); // Today 5 PM
             } else {
-                // Early morning hours (00:00 - 04:59) belong to previous night shift
                 eveningCutoff.setDate(now.getDate() - 1);
                 eveningCutoff.setHours(17, 0, 0, 0); // Yesterday 5 PM
             }
@@ -1470,4 +1510,4 @@
         loadSystemData();
     </script>
 </body>
-                </html>
+    </html>
