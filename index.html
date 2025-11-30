@@ -515,22 +515,30 @@
             };
         }
 
-        // --- UTILITY: PARSE CUSTOM DATE STRING ---
+        // --- UTILITY: PARSE CUSTOM DATE STRING (ROBUST FIX) ---
         function parseCustomDate(str) {
-            if(!str) return null;
+            if(!str || typeof str !== 'string') return null;
             // Expected format: "DD/MM/YYYY HH:MM:SS"
-            const parts = str.split(' ');
-            if(parts.length < 2) return null;
-            const dateParts = parts[0].split('/');
-            const timeParts = parts[1].split(':');
-            return new Date(
-                parseInt(dateParts[2]), // Year
-                parseInt(dateParts[1]) - 1, // Month (0-based)
-                parseInt(dateParts[0]), // Day
-                parseInt(timeParts[0]), // Hours
-                parseInt(timeParts[1]), // Minutes
-                parseInt(timeParts[2] || 0) // Seconds
-            );
+            const parts = str.trim().split(' ');
+            if(parts.length < 2) return null; // Must have Date and Time parts
+
+            const dateParts = parts[0].split('/'); // [DD, MM, YYYY]
+            const timeParts = parts[1].split(':'); // [HH, MM, SS]
+
+            if (dateParts.length !== 3 || timeParts.length < 2) return null;
+            
+            const day = parseInt(dateParts[0], 10);
+            const month = parseInt(dateParts[1], 10) - 1; // Month is 0-indexed in JS
+            const year = parseInt(dateParts[2], 10);
+            
+            const hours = parseInt(timeParts[0], 10);
+            const minutes = parseInt(timeParts[1], 10);
+            const seconds = timeParts[2] ? parseInt(timeParts[2], 10) : 0;
+
+            const date = new Date(year, month, day, hours, minutes, seconds);
+            
+            // Validate if the Date object is valid
+            return (date && !isNaN(date.getTime())) ? date : null;
         }
 
         // --- CORE FUNCTIONS ---
@@ -655,35 +663,43 @@
             } else { alert('بيانات خاطئة'); }
         });
 
-        // --- SHIFT CHECK LOGIC (UPDATED FOR 5 AM / 5 PM) ---
+        // --- SHIFT CHECK LOGIC (STRICT 5 AM / 5 PM RULES) ---
         function checkShiftAdherence(lastUpdateStr) {
-            if (!lastUpdateStr) return true;
+            // 1. Initial Validation
+            if (!lastUpdateStr) return true; // Show Warning
+            
             const lastUpdate = parseCustomDate(lastUpdateStr);
-            if (!lastUpdate || isNaN(lastUpdate.getTime())) return true;
+            if (!lastUpdate) return true; // Show Warning if Date is invalid
 
             const now = new Date();
             const currentHour = now.getHours();
             
-            // Determine the required start time for the current shift
-            let requiredStartTime = new Date(now);
+            // 2. Define Shift Boundaries
+            // Start of current shift based on time of day
+            let shiftStartTime = new Date(now);
+            shiftStartTime.setMinutes(0);
+            shiftStartTime.setSeconds(0);
+            shiftStartTime.setMilliseconds(0);
 
             if (currentHour >= 5 && currentHour < 17) {
-                // Morning Shift (05:00 AM - 05:00 PM) -> Must update after today 05:00 AM
-                requiredStartTime.setHours(5, 0, 0, 0);
+                // Morning Shift: Begins Today at 05:00 AM
+                shiftStartTime.setHours(5);
             } else {
-                // Evening Shift (05:00 PM - 05:00 AM)
+                // Evening Shift Logic
                 if (currentHour >= 17) {
-                    // Evening of same day -> Must update after today 05:00 PM
-                    requiredStartTime.setHours(17, 0, 0, 0);
+                    // Evening (5 PM - Midnight): Begins Today at 17:00 (5 PM)
+                    shiftStartTime.setHours(17);
                 } else {
-                    // Early morning next day (before 5 AM) -> Must update after yesterday 05:00 PM
-                    requiredStartTime.setDate(now.getDate() - 1);
-                    requiredStartTime.setHours(17, 0, 0, 0);
+                    // Early Morning (Midnight - 5 AM): Begins Yesterday at 17:00 (5 PM)
+                    shiftStartTime.setDate(now.getDate() - 1);
+                    shiftStartTime.setHours(17);
                 }
             }
 
-            // If last update is older than the required start time, return true (show warning)
-            return lastUpdate < requiredStartTime;
+            // 3. Comparison
+            // If Last Update is older than Shift Start Time -> Show Warning (True)
+            // If Last Update is equal or newer -> Hide Warning (False)
+            return lastUpdate < shiftStartTime;
         }
 
         // --- DASHBOARD RENDERER ---
@@ -792,7 +808,7 @@
                         // Check Shift Update Status
                         let missedUpdateHtml = '';
                         if (checkShiftAdherence(s.lastUpdate)) {
-                            missedUpdateHtml = `<span class="missed-update-icon" title="لم يتم التحديث في الموعد">!</span>`;
+                            missedUpdateHtml = `<span class="missed-update-icon">!</span>`;
                         }
 
                         card.innerHTML = `
