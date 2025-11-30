@@ -49,9 +49,10 @@
         /* Shift Warning Icon (Red Bubble) */
         .missed-update-icon {
             display: inline-flex; align-items: center; justify-content: center;
-            width: 24px; height: 24px; background-color: #e74c3c; color: white;
-            border-radius: 50%; font-size: 16px; font-weight: bold; margin-right: 5px;
+            width: 30px; height: 30px; background-color: #e74c3c; color: white;
+            border-radius: 50%; font-size: 18px; font-weight: bold; margin-left: 10px;
             box-shadow: 0 2px 4px rgba(0,0,0,0.2); animation: pulse-red 2s infinite; vertical-align: middle; cursor: help;
+            float: left; 
         }
         @keyframes pulse-red {
             0% { transform: scale(1); box-shadow: 0 0 0 0 rgba(231, 76, 60, 0.7); }
@@ -193,7 +194,7 @@
                 </div>
                 <button id="login-btn" class="btn" style="width: 100%; background-color: #bdc3c7; color: #fff; cursor: not-allowed;" disabled>جاري الاتصال بالنظام...</button>
             </div>
-            <div class="signature">Implemented by Ahmed Salah Ibrahim 2025 V1.5.8 (Auto-Repair)</div>
+            <div class="signature">Implemented by Ahmed Salah Ibrahim 2025 V1.5.8</div>
         </div>
 
         <div id="stations-screen" class="screen">
@@ -239,8 +240,6 @@
                     <div class="detail-card" style="flex: 1;"><div class="detail-title">وقت الإيقاف</div><div class="detail-value" id="stop-time-value" style="color:var(--danger-color); font-weight:bold;">-</div></div>
                 </div>
 
-                <div class="detail-card"><div class="detail-title">آخر تحديث (System)</div><div class="detail-value" id="last-update-value" style="font-size:0.8rem; color:#666;">-</div></div>
-                
                 <div class="detail-card" style="grid-column: 1 / -1; background-color: #fffde7;">
                     <div class="detail-title">ملاحظات التشغيل</div>
                     <div class="detail-value" id="station-comments-value" style="font-weight: normal; font-size: 1rem;">-</div>
@@ -474,7 +473,7 @@
             return str.replace(/[٠-٩]/g, d => '٠١٢٣٤٥٦٧٨٩'.indexOf(d));
         }
 
-        // --- UTILITY: PARSE ANY DATE FORMAT (ROBUST V2.1) ---
+        // --- UTILITY: PARSE ANY DATE FORMAT (ROBUST V2.6) ---
         function parseRobustDate(str) {
             if(!str || typeof str !== 'string') return null;
             
@@ -485,11 +484,11 @@
             let isPM = normalized.includes('م') || normalized.toLowerCase().includes('pm');
             let isAM = normalized.includes('ص') || normalized.toLowerCase().includes('am');
             
-            // 3. Try standard ISO first
+            // 3. Try standard ISO first (YYYY-MM-DD HH:mm:ss)
             let date = new Date(normalized);
             if (date && !isNaN(date.getTime())) return date;
             
-            // 4. Try regex for DD/MM/YYYY
+            // 4. Try custom parser for DD/MM/YYYY or D/M/YYYY
             const parts = normalized.match(/(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{4})(?:\s+(\d{1,2}):(\d{1,2})(?::(\d{1,2}))?)?/);
             
             if (parts) {
@@ -500,7 +499,7 @@
                 const min = parts[5] ? parseInt(parts[5], 10) : 0;
                 const sec = parts[6] ? parseInt(parts[6], 10) : 0;
                 
-                // Adjust for AM/PM
+                // Adjust for AM/PM logic if detected in string
                 if (isPM && hour < 12) hour += 12;
                 if (isAM && hour === 12) hour = 0;
 
@@ -508,6 +507,45 @@
                 if (date && !isNaN(date.getTime())) return date;
             }
             return null;
+        }
+
+        // --- CORE: DATA SANITIZER (SILENT AUTO-REPAIR) ---
+        function sanitizeStationData(stations) {
+            if (!stations) return;
+            let updates = {};
+            let hasUpdates = false;
+
+            Object.keys(stations).forEach(key => {
+                const s = stations[key];
+                const rawDate = s.lastUpdate;
+                
+                // If we can parse it, check if we need to standardize it
+                const parsedDate = parseRobustDate(rawDate);
+                
+                if (parsedDate) {
+                    const y = parsedDate.getFullYear();
+                    const m = String(parsedDate.getMonth() + 1).padStart(2, '0');
+                    const d = String(parsedDate.getDate()).padStart(2, '0');
+                    const h = String(parsedDate.getHours()).padStart(2, '0');
+                    const min = String(parsedDate.getMinutes()).padStart(2, '0');
+                    const sec = String(parsedDate.getSeconds()).padStart(2, '0');
+                    
+                    const cleanISO = `${y}-${m}-${d} ${h}:${min}:${sec}`;
+                    
+                    // If the stored string is DIFFERENT from the clean ISO, update it!
+                    if (rawDate !== cleanISO) {
+                        updates[`${key}/lastUpdate`] = cleanISO;
+                        hasUpdates = true;
+                        // Also update local copy immediately for rendering this frame
+                        appData.stations[key].lastUpdate = cleanISO;
+                    }
+                }
+            });
+
+            if (hasUpdates) {
+                // Perform the silent update to DB
+                db.ref('stations').update(updates);
+            }
         }
 
         let appData = {
@@ -562,7 +600,12 @@
             db.ref('stations').on('value', (snapshot) => {
                 let data = snapshot.val();
                 if (!data) { forceRepairStations(); } 
-                else { appData.stations = data; forceRepairStations(); repairLegacyData(); }
+                else { 
+                    appData.stations = data; 
+                    forceRepairStations(); 
+                    // TRIGGER SILENT AUTO-REPAIR FOR LEGACY DATA
+                    sanitizeStationData(appData.stations);
+                }
                 
                 if (document.getElementById('stations-screen').classList.contains('active')) {
                     const activeTab = document.querySelector('.nav-tab.active');
@@ -598,39 +641,6 @@
                 else appData.faultsLog = [];
                 if (document.getElementById('faults-log-screen').classList.contains('active')) renderFaultsLog();
             });
-        }
-
-        // --- RETROACTIVE FIX: REPAIR LEGACY DATES ---
-        function repairLegacyData() {
-            if (!appData.stations) return;
-            let updates = {};
-            let needsUpdate = false;
-
-            Object.keys(appData.stations).forEach(key => {
-                const s = appData.stations[key];
-                const lastUpdate = s.lastUpdate;
-                
-                // Check if date is "dirty" (Arabic or old format)
-                if (lastUpdate && (/[٠-٩]/.test(lastUpdate) || lastUpdate.includes('/') || lastUpdate.includes('م') || lastUpdate.includes('ص'))) {
-                    const cleanDate = parseRobustDate(lastUpdate);
-                    if (cleanDate) {
-                        const y = cleanDate.getFullYear();
-                        const m = String(cleanDate.getMonth() + 1).padStart(2, '0');
-                        const d = String(cleanDate.getDate()).padStart(2, '0');
-                        const h = String(cleanDate.getHours()).padStart(2, '0');
-                        const min = String(cleanDate.getMinutes()).padStart(2, '0');
-                        const sec = String(cleanDate.getSeconds()).padStart(2, '0');
-                        const formatted = `${y}-${m}-${d} ${h}:${min}:${sec}`;
-                        
-                        updates[`${key}/lastUpdate`] = formatted;
-                        needsUpdate = true;
-                    }
-                }
-            });
-
-            if (needsUpdate) {
-                db.ref('stations').update(updates).then(() => console.log("Legacy dates repaired."));
-            }
         }
 
         function forceRepairStations() {
@@ -712,7 +722,7 @@
             } else { alert('بيانات خاطئة'); }
         });
 
-        // --- SHIFT CHECK LOGIC (V2.1 - GRACE PERIODS) ---
+        // --- SHIFT CHECK LOGIC (V2.6 - STRICT 6 AM/PM) ---
         function checkShiftAdherence(lastUpdateStr) {
             // 1. Robust Parsing
             const lastUpdate = parseRobustDate(lastUpdateStr);
@@ -721,31 +731,24 @@
             const now = new Date();
             const h = now.getHours();
 
-            // 2. CHECK GRACE PERIODS (NO ALERT)
-            // Morning Update Window: 05:00 AM - 07:00 AM
-            if (h >= 5 && h < 7) return false; 
-            
-            // Evening Update Window: 05:00 PM - 07:00 PM
-            if (h >= 17 && h < 19) return false;
+            // Shift Logic: 06:00 AM / 06:00 PM (18:00)
+            let cutoffTime = new Date(now);
+            cutoffTime.setMinutes(0); cutoffTime.setSeconds(0); cutoffTime.setMilliseconds(0);
 
-            // 3. MORNING SHIFT ACTIVE (07:00 AM - 05:00 PM)
-            // Constraint: Last update must be >= Today 05:00 AM
-            if (h >= 7 && h < 17) {
-                let morningCutoff = new Date(now);
-                morningCutoff.setHours(5, 0, 0, 0); // Today 5 AM
-                return lastUpdate < morningCutoff;
-            }
-
-            // 4. EVENING SHIFT ACTIVE (07:00 PM - 05:00 AM next day)
-            // Constraint: Last update must be >= Today 05:00 PM (if h>=19) OR Yesterday 05:00 PM (if h<5)
-            let eveningCutoff = new Date(now);
-            if (h >= 19) {
-                eveningCutoff.setHours(17, 0, 0, 0); // Today 5 PM
+            if (h >= 6 && h < 18) {
+                // Morning Shift (06:00 to 17:59) -> Must be updated after Today 06:00 AM
+                cutoffTime.setHours(6, 0, 0, 0);
             } else {
-                eveningCutoff.setDate(now.getDate() - 1);
-                eveningCutoff.setHours(17, 0, 0, 0); // Yesterday 5 PM
+                // Evening Shift (18:00 to 05:59) -> Must be updated after 06:00 PM
+                if (h >= 18) {
+                    cutoffTime.setHours(18, 0, 0, 0); // Today 6 PM
+                } else {
+                    cutoffTime.setDate(now.getDate() - 1); // Yesterday
+                    cutoffTime.setHours(18, 0, 0, 0); // Yesterday 6 PM
+                }
             }
-            return lastUpdate < eveningCutoff;
+
+            return lastUpdate < cutoffTime;
         }
 
         // --- DASHBOARD RENDERER ---
@@ -892,7 +895,8 @@
             document.getElementById('start-time-value').textContent = s.startTime || '-';
             document.getElementById('stop-time-value').textContent = s.stopTime || '-';
             
-            document.getElementById('last-update-value').textContent = s.lastUpdate;
+            // Last update removed from display as requested
+            document.getElementById('last-update-value').textContent = "";
             document.getElementById('station-comments-value').textContent = s.comments || 'لا يوجد ملاحظات';
 
             const banner = document.getElementById('station-fault-banner');
@@ -1135,7 +1139,7 @@
                         } else {
                              if (safeOldFault2) {
                                  changesDetails.push(`✅ إصلاح: ${safeOldFault2}`);
-                                 resolvedFaultEntries.push({ station: sName, type: safeOldFault2, startTime: stationFullDateTime, active: false });
+                                 resolvedFaultEntries.push({ station: sName, type: safeOldFault2, startTime: faultStartTime, endTime: stationFullDateTime, active: false });
                              }
                         }
                     }
