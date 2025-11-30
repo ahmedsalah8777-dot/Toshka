@@ -483,9 +483,11 @@
             'S01-A': 7, 'S01-B': 7, 'S02-A': 6, 'S02-B': 7, 'S03': 6, 'S04': 6, 'S05-A': 6, 'S05-B': 6, 'S06': 6, 'S07-A': 7, 'S07-B': 7, 'S08': 6, 'S09-A': 7, 'S09-B': 7, 'S09-C': 8, 'S09-D': 8, 'S09-E': 6, 'S09-F': 6
         };
 
-        // --- UTILITY: English Digits Conversion ---
+        // --- UTILITY: English Digits Conversion (Strong) ---
         function toEnglishDigits(str) {
             if (!str) return str;
+            // Trim spaces
+            str = str.trim();
             const arabicNumbers = ["٠", "١", "٢", "٣", "٤", "٥", "٦", "٧", "٨", "٩"];
             return str.replace(/[٠-٩]/g, function(w) { return arabicNumbers.indexOf(w); });
         }
@@ -493,7 +495,6 @@
         // --- UTILITY: STANDARD DATE TIME ---
         function getStandardDateTime() {
             const now = new Date();
-            // Force English numbers
             const d = String(now.getDate()).padStart(2, '0');
             const m = String(now.getMonth() + 1).padStart(2, '0');
             const y = now.getFullYear();
@@ -510,25 +511,29 @@
         // --- UTILITY: PARSE CUSTOM DATE STRING (ROBUST) ---
         function parseCustomDate(str) {
             if(!str) return null;
-            // Retroactive fix: Convert Arabic digits to English
+            // 1. Clean and convert to English digits
             str = toEnglishDigits(str);
             
-            // Expected format: "DD/MM/YYYY HH:MM:SS"
-            const parts = str.split(' ');
+            // Expected format: "DD/MM/YYYY HH:MM:SS" or "DD/MM/YYYY HH:MM"
+            // Handle variations (extra spaces, etc.)
+            const parts = str.split(/\s+/); // Split by any whitespace
             if(parts.length < 2) return null;
+            
             const dateParts = parts[0].split('/');
             const timeParts = parts[1].split(':');
             
-            if(dateParts.length < 3) return null;
+            if(dateParts.length < 3 || timeParts.length < 2) return null;
 
-            return new Date(
-                parseInt(dateParts[2]), // Year
-                parseInt(dateParts[1]) - 1, // Month (0-based)
-                parseInt(dateParts[0]), // Day
-                parseInt(timeParts[0]), // Hours
-                parseInt(timeParts[1]), // Minutes
-                parseInt(timeParts[2] || 0) // Seconds
-            );
+            const year = parseInt(dateParts[2]);
+            const month = parseInt(dateParts[1]) - 1; // 0-based
+            const day = parseInt(dateParts[0]);
+            const hour = parseInt(timeParts[0]);
+            const min = parseInt(timeParts[1]);
+            const sec = timeParts[2] ? parseInt(timeParts[2]) : 0;
+
+            if (isNaN(year) || isNaN(month) || isNaN(day)) return null;
+
+            return new Date(year, month, day, hour, min, sec);
         }
 
         // --- CORE FUNCTIONS ---
@@ -653,11 +658,12 @@
             } else { alert('بيانات خاطئة'); }
         });
 
-        // --- SHIFT CHECK LOGIC (UPDATED FOR 6 AM - 6 PM) ---
+        // --- SHIFT CHECK LOGIC (6 AM - 6 PM) ---
         function checkShiftAdherence(lastUpdateStr) {
-            // 1. Missing Data Check
+            // 1. Check if string exists
             if (!lastUpdateStr) return true;
-            // 2. Parse Check (With Arabic Digits Fix)
+
+            // 2. Parse Check (With Arabic Digits Fix & Robust Splitting)
             const lastUpdate = parseCustomDate(lastUpdateStr);
             if (!lastUpdate || isNaN(lastUpdate.getTime())) return true;
 
@@ -671,12 +677,15 @@
             shiftStart.setMilliseconds(0);
 
             // LOGIC:
-            // Morning Shift (06:00 to 18:00): Must update after 06:00 Today
-            // Evening Shift (18:00 to 06:00): Must update after 18:00 (Today or Yesterday)
+            // Morning Shift (06:00 to 17:59): Updates valid if >= Today 06:00
+            // Evening Shift (18:00 to 05:59):
+            //    If Now is 18:00-23:59 -> Shift started Today 18:00
+            //    If Now is 00:00-05:59 -> Shift started Yesterday 18:00
             
             if (currentHour >= 6 && currentHour < 18) {
                 // Morning Shift
                 shiftStart.setHours(6);
+                // If lastUpdate is older than shiftStart, return true (Warning)
                 return lastUpdate < shiftStart;
             } else {
                 // Evening Shift
@@ -1454,4 +1463,4 @@
         loadSystemData();
     </script>
 </body>
-                                                                                </html>
+    </html>
