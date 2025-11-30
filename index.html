@@ -157,6 +157,7 @@
                 <div class="logo">
                     <i>💧</i> <span>نظام المياه الذكي (Toshka)</span>
                 </div>
+     
                 <div class="user-info" id="header-user-info">
                     <button id="alarm-btn" class="alarm-btn" title="سجل الأعطال">
                         🔔
@@ -165,7 +166,7 @@
                     <div class="user-badge" id="current-user">مرحباً</div>
                     <button id="users-management-btn" class="btn btn-warning" style="display: none;">المستخدمين</button>
                     <button id="history-management-btn" class="btn btn-info" style="display: none;">السجل العام</button>
-                    <button id="logout-btn" class="btn btn-danger">خروج</button>
+                   <button id="logout-btn" class="btn btn-danger">خروج</button>
                 </div>
             </div>
         </div>
@@ -300,6 +301,7 @@
                         </select>
                     </div>
                 </div>
+               
                 <div class="form-section">
                     <h3>حالة المضخات</h3>
                     <div id="pumps-form-container" class="pump-controls"></div>
@@ -377,6 +379,7 @@
                         <tbody id="history-faults-body"></tbody>
                     </table>
                 </div>
+        
                 <div class="pagination-controls">
                     <p id="faults-status-text" class="status-text"></p>
                     <button id="load-more-faults-btn" class="btn btn-warning" style="display: none; width: 200px; margin: 0 auto;">⚠️ عرض 100 عطل إضافي</button>
@@ -398,6 +401,7 @@
                 <div class="form-group">
                     <select id="new-user-type"></select>
                 </div>
+  
                 <div style="display:flex; gap:10px;">
                     <button id="save-user-btn" class="btn btn-success" style="flex:1">حفظ</button>
                     <button id="cancel-user-btn" class="btn btn-danger" style="flex:1">إلغاء</button>
@@ -651,51 +655,35 @@
             } else { alert('بيانات خاطئة'); }
         });
 
-        // --- SHIFT CHECK LOGIC (STRICT FIX FOR OLD DATES) ---
+        // --- SHIFT CHECK LOGIC (UPDATED FOR 5 AM / 5 PM) ---
         function checkShiftAdherence(lastUpdateStr) {
-            // 1. Missing Data Check
-            if (!lastUpdateStr) return true; 
-
-            // 2. Parse Check
+            if (!lastUpdateStr) return true;
             const lastUpdate = parseCustomDate(lastUpdateStr);
-            
-            // 3. VALIDITY CHECK (CRITICAL FIX)
-            // If the date is invalid (NaN) or old format, treat it as missed update immediately
-            if (!lastUpdate || isNaN(lastUpdate.getTime())) return true; 
+            if (!lastUpdate || isNaN(lastUpdate.getTime())) return true;
 
             const now = new Date();
-
-            // Shift Milestones
-            const morningShiftDeadline = new Date(now);
-            morningShiftDeadline.setHours(7, 30, 0, 0); 
+            const currentHour = now.getHours();
             
-            const eveningShiftDeadline = new Date(now);
-            eveningShiftDeadline.setHours(19, 30, 0, 0); 
+            // Determine the required start time for the current shift
+            let requiredStartTime = new Date(now);
 
-            // Required Start Times
-            const todayMorningStart = new Date(now);
-            todayMorningStart.setHours(5, 0, 0, 0); 
-
-            const todayEveningStart = new Date(now);
-            todayEveningStart.setHours(17, 0, 0, 0);
-
-            const yesterdayEveningStart = new Date(now);
-            yesterdayEveningStart.setDate(now.getDate() - 1); // Go back 1 day
-            yesterdayEveningStart.setHours(17, 0, 0, 0);
-
-            // Logic:
-            // 1. Early Morning (Before 7:30 AM): Expect update from Yesterday 5 PM
-            if (now < morningShiftDeadline) {
-                return lastUpdate < yesterdayEveningStart;
+            if (currentHour >= 5 && currentHour < 17) {
+                // Morning Shift (05:00 AM - 05:00 PM) -> Must update after today 05:00 AM
+                requiredStartTime.setHours(5, 0, 0, 0);
+            } else {
+                // Evening Shift (05:00 PM - 05:00 AM)
+                if (currentHour >= 17) {
+                    // Evening of same day -> Must update after today 05:00 PM
+                    requiredStartTime.setHours(17, 0, 0, 0);
+                } else {
+                    // Early morning next day (before 5 AM) -> Must update after yesterday 05:00 PM
+                    requiredStartTime.setDate(now.getDate() - 1);
+                    requiredStartTime.setHours(17, 0, 0, 0);
+                }
             }
-            // 2. Day Time (Between 7:30 AM and 7:30 PM): Expect update from Today 5 AM
-            else if (now < eveningShiftDeadline) {
-                return lastUpdate < todayMorningStart;
-            }
-            // 3. Evening/Night (After 7:30 PM): Expect update from Today 5 PM
-            else {
-                return lastUpdate < todayEveningStart;
-            }
+
+            // If last update is older than the required start time, return true (show warning)
+            return lastUpdate < requiredStartTime;
         }
 
         // --- DASHBOARD RENDERER ---
@@ -714,7 +702,8 @@
             container.innerHTML = '';
             let allStations = Object.values(appData.stations || {});
             
-            if(allStations.length === 0) { container.innerHTML = '<div style="text-align:center; padding:20px;">جاري تحميل البيانات...</div>'; return; }
+            if(allStations.length === 0) { container.innerHTML = '<div style="text-align:center; padding:20px;">جاري تحميل البيانات...</div>';
+            return; }
 
             const activeCount = allStations.filter(s => s.status === 'نشطة').length;
             const inactiveCount = allStations.filter(s => s.status === 'متوقفة' && !s.currentFault).length;
@@ -1107,7 +1096,7 @@
                     let newStatus = statElem ? statElem.value : p.status;
                     
                     if (isCriticalFault) {
-                         if (newStatus === 'نشطة') { newStatus = 'متوقفة'; }
+                        if (newStatus === 'نشطة') { newStatus = 'متوقفة'; }
                     }
                     
                     if(p.status != newStatus) changesDetails.push(`مضخة ${p.id}: ${p.status} -> ${newStatus}`);
@@ -1115,7 +1104,7 @@
                     let pumpData = { id: p.id, status: newStatus, suctionPressure: null, dischargePressure: null, frequency: null };
                     
                     if(newStatus === 'نشطة') {
-                         activeCount++;
+                        activeCount++;
                         pumpData.suctionPressure = getVal(`p_suc_${p.id}`);
                         pumpData.dischargePressure = getVal(`p_dis_${p.id}`);
                         pumpData.frequency = getVal(`p_freq_${p.id}`);
@@ -1406,8 +1395,7 @@
             const fZone = document.getElementById('filter-zone').value;
             const fStation = document.getElementById('filter-station').value;
             const fDateFromInput = document.getElementById('filter-date-from').value; // YYYY-MM-DD
-            const fDateToInput = document.getElementById('filter-date-to').value;
-            // YYYY-MM-DD
+            const fDateToInput = document.getElementById('filter-date-to').value; // YYYY-MM-DD
             
             // Convert inputs to Date objects at Midnight
             const fDateFrom = fDateFromInput ? new Date(fDateFromInput) : null;
@@ -1415,6 +1403,7 @@
             
             const fDateTo = fDateToInput ? new Date(fDateToInput) : null;
             if(fDateTo) fDateTo.setHours(0,0,0,0);
+
             const filtered = appData.operationHistory.filter(h => {
                 let valid = true;
                 if(fStation !== 'all' && h.station !== fStation) valid = false;
@@ -1462,4 +1451,4 @@
         loadSystemData();
     </script>
 </body>
-    </html>
+                    </html>
