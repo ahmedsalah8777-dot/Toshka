@@ -49,8 +49,8 @@
         /* Shift Warning Icon (Red Bubble) */
         .missed-update-icon {
             display: inline-flex; align-items: center; justify-content: center;
-            width: 22px; height: 22px; background-color: #e74c3c; color: white;
-            border-radius: 50%; font-size: 14px; font-weight: bold; margin-right: 5px;
+            width: 24px; height: 24px; background-color: #e74c3c; color: white;
+            border-radius: 50%; font-size: 16px; font-weight: bold; margin-right: 5px;
             box-shadow: 0 2px 4px rgba(0,0,0,0.2); animation: pulse-red 2s infinite; vertical-align: middle; cursor: help;
         }
         @keyframes pulse-red {
@@ -193,7 +193,7 @@
                 </div>
                 <button id="login-btn" class="btn" style="width: 100%; background-color: #bdc3c7; color: #fff; cursor: not-allowed;" disabled>جاري الاتصال بالنظام...</button>
             </div>
-            <div class="signature">Implemented by Ahmed Salah Ibrahim 2025 V1.5.8 (Robust Date Fix)</div>
+            <div class="signature">Implemented by Ahmed Salah Ibrahim 2025 V1.5.8</div>
         </div>
 
         <div id="stations-screen" class="screen">
@@ -468,6 +468,40 @@
             "تسريب مياه": "💧", "كسر في الشبكة": "🛠️", "عجز تحقيق الضغط": "🔻",
             "انقطاع الاتصال SCADA": `<svg viewBox="0 0 24 24" width="20" height="20" class="scada-icon-svg" style="color:#d32f2f;" fill="currentColor"><path d="M12 3C7.79 3 3.7 4.41 0.38 7L2.6 9.22C5.35 7.15 8.55 6 12 6C15.45 6 18.65 7.15 21.4 9.22L23.62 7C20.3 4.41 16.21 3 12 3Z" /><path d="M12 8C9.48 8 7.15 8.76 5.18 10.05L7.4 12.27C8.71 11.47 10.28 11 12 11C13.72 11 15.29 11.47 16.6 12.27L18.82 10.05C16.85 8.76 14.52 8 12 8Z" /><path d="M12 13L6 21H18L12 13ZM11 18H13V19.5H11V18ZM11 15.5H13V17.5H11V15.5Z" /></svg>`
         };
+
+        // --- UTILITY: NORMALIZE DIGITS (ARABIC to ENGLISH) ---
+        function normalizeDigits(str) {
+            return str.replace(/[٠-٩]/g, d => '٠١٢٣٤٥٦٧٨٩'.indexOf(d));
+        }
+
+        // --- UTILITY: PARSE ANY DATE FORMAT (ROBUST) ---
+        function parseRobustDate(str) {
+            if(!str || typeof str !== 'string') return null;
+            
+            // 1. Normalize Arabic digits to English
+            str = normalizeDigits(str);
+            
+            // 2. Try ISO format (YYYY-MM-DD)
+            let date = new Date(str);
+            if (date && !isNaN(date.getTime())) return date;
+            
+            // 3. Try custom parser for DD/MM/YYYY or D/M/YYYY (with mixed time)
+            const parts = str.match(/(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{4})(?:\s+(\d{1,2}):(\d{1,2})(?::(\d{1,2}))?)?/);
+            
+            if (parts) {
+                const day = parseInt(parts[1], 10);
+                const month = parseInt(parts[2], 10) - 1;
+                const year = parseInt(parts[3], 10);
+                const hour = parts[4] ? parseInt(parts[4], 10) : 0;
+                const min = parts[5] ? parseInt(parts[5], 10) : 0;
+                const sec = parts[6] ? parseInt(parts[6], 10) : 0;
+                
+                date = new Date(year, month, day, hour, min, sec);
+                if (date && !isNaN(date.getTime())) return date;
+            }
+            return null;
+        }
+
         let appData = {
             currentUser: null, currentStation: null, stations: {}, users: {},
             userTypes: {
@@ -499,60 +533,20 @@
             'Lifting-57S': 6, 'Lifting-8S': 12, 'Lifting-17S': 12,
             'S01-A': 7, 'S01-B': 7, 'S02-A': 6, 'S02-B': 7, 'S03': 6, 'S04': 6, 'S05-A': 6, 'S05-B': 6, 'S06': 6, 'S07-A': 7, 'S07-B': 7, 'S08': 6, 'S09-A': 7, 'S09-B': 7, 'S09-C': 8, 'S09-D': 8, 'S09-E': 6, 'S09-F': 6
         };
-
-        // --- UTILITY: NORMALIZE DIGITS (ARABIC to ENGLISH) ---
-        function normalizeDigits(str) {
-            return str.replace(/[٠-٩]/g, d => '٠١٢٣٤٥٦٧٨٩'.indexOf(d));
-        }
-
-        // --- UTILITY: STANDARD DATE TIME (FOR SAVING ISO 8601) ---
+        // --- UTILITY: STANDARD DATE TIME ---
         function getStandardDateTime() {
             const now = new Date();
-            // Use local date values but format as ISO-like for consistent parsing
-            const y = now.getFullYear();
-            const m = String(now.getMonth() + 1).padStart(2, '0');
             const d = String(now.getDate()).padStart(2, '0');
+            const m = String(now.getMonth() + 1).padStart(2, '0');
+            const y = now.getFullYear();
             const h = String(now.getHours()).padStart(2, '0');
             const min = String(now.getMinutes()).padStart(2, '0');
             const s = String(now.getSeconds()).padStart(2, '0');
-            
             return {
                 date: `${d}/${m}/${y}`, 
-                time: `${h}:${min}:${s}`,
-                // Save full as strict format: YYYY-MM-DD HH:MM:SS
-                full: `${y}-${m}-${d} ${h}:${min}:${s}`,
-                display: `${d}/${m}/${y} ${h}:${min}` // Friendly display
+                time: `${h}:${min}:${s}`, 
+                full: `${y}-${m}-${d} ${h}:${min}:${s}` // Saved as strict ISO format
             };
-        }
-
-        // --- UTILITY: PARSE ANY DATE FORMAT (ROBUST) ---
-        function parseRobustDate(str) {
-            if(!str || typeof str !== 'string') return null;
-            
-            // 1. Normalize Arabic digits to English
-            str = normalizeDigits(str);
-            
-            // 2. Try ISO format (YYYY-MM-DD)
-            let date = new Date(str);
-            if (date && !isNaN(date.getTime())) return date;
-            
-            // 3. Try custom parser for DD/MM/YYYY or D/M/YYYY
-            // Matches: Day / Month / Year  Time
-            const parts = str.match(/(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{4})(?:\s+(\d{1,2}):(\d{1,2})(?::(\d{1,2}))?)?/);
-            
-            if (parts) {
-                const day = parseInt(parts[1], 10);
-                const month = parseInt(parts[2], 10) - 1;
-                const year = parseInt(parts[3], 10);
-                const hour = parts[4] ? parseInt(parts[4], 10) : 0;
-                const min = parts[5] ? parseInt(parts[5], 10) : 0;
-                const sec = parts[6] ? parseInt(parts[6], 10) : 0;
-                
-                date = new Date(year, month, day, hour, min, sec);
-                if (date && !isNaN(date.getTime())) return date;
-            }
-            
-            return null;
         }
 
         // --- CORE FUNCTIONS ---
@@ -677,38 +671,41 @@
             } else { alert('بيانات خاطئة'); }
         });
 
-        // --- SHIFT CHECK LOGIC (V1.9 - ROBUST PARSING) ---
+        // --- SHIFT CHECK LOGIC (V2.0 - GRACE PERIODS & ROBUST PARSING) ---
         function checkShiftAdherence(lastUpdateStr) {
             // 1. Robust Parsing (Handles Arabic Numerals & Bad Formats)
             const lastUpdate = parseRobustDate(lastUpdateStr);
-            if (!lastUpdate) return true; // Invalid date = Show Warning
+            if (!lastUpdate) return true; // Invalid date = Alert
 
             const now = new Date();
-            const currentHour = now.getHours();
-            
-            // Define Cutoff Time (Must update AFTER this time)
-            let cutoffTime = new Date(now);
-            cutoffTime.setMinutes(0); cutoffTime.setSeconds(0); cutoffTime.setMilliseconds(0);
+            const h = now.getHours();
 
-            // Shift Logic:
-            // 05:00 AM - 05:00 PM (Day Shift) -> Cutoff Today 05:00 AM
-            // 05:00 PM - 05:00 AM (Night Shift) -> Cutoff Today 05:00 PM (or Yesterday 5PM if early morning)
+            // 2. CHECK GRACE PERIODS (NO ALERT)
+            // Morning Update Window: 05:00 AM - 07:00 AM (Hour 5, 6)
+            if (h >= 5 && h < 7) return false; 
             
-            if (currentHour >= 5 && currentHour < 17) {
-                // Day Slot
-                cutoffTime.setHours(5, 0, 0, 0); // Today 5 AM
-            } else {
-                // Night Slot
-                if (currentHour >= 17) {
-                    cutoffTime.setHours(17, 0, 0, 0); // Today 5 PM
-                } else {
-                    cutoffTime.setDate(now.getDate() - 1); // Yesterday
-                    cutoffTime.setHours(17, 0, 0, 0); // Yesterday 5 PM
-                }
+            // Evening Update Window: 05:00 PM - 07:00 PM (Hour 17, 18)
+            if (h >= 17 && h < 19) return false;
+
+            // 3. MORNING SHIFT ACTIVE (07:00 AM - 05:00 PM)
+            // Constraint: Last update must be >= Today 05:00 AM
+            if (h >= 7 && h < 17) {
+                let morningCutoff = new Date(now);
+                morningCutoff.setHours(5, 0, 0, 0); // Today 5 AM
+                return lastUpdate < morningCutoff;
             }
 
-            // Check
-            return lastUpdate < cutoffTime;
+            // 4. EVENING SHIFT ACTIVE (07:00 PM - 05:00 AM next day)
+            // Constraint: Last update must be >= Today 05:00 PM (if h>=19) OR Yesterday 05:00 PM (if h<5)
+            let eveningCutoff = new Date(now);
+            if (h >= 19) {
+                eveningCutoff.setHours(17, 0, 0, 0); // Today 5 PM
+            } else {
+                // Early morning hours (00:00 - 04:59) belong to previous night shift
+                eveningCutoff.setDate(now.getDate() - 1);
+                eveningCutoff.setHours(17, 0, 0, 0); // Yesterday 5 PM
+            }
+            return lastUpdate < eveningCutoff;
         }
 
         // --- DASHBOARD RENDERER ---
@@ -820,18 +817,6 @@
                             missedUpdateHtml = `<span class="missed-update-icon">!</span>`;
                         }
 
-                        // Display formatted date/time for readability
-                        let displayTime = s.lastUpdate;
-                        // Try to parse to clean format if it's ISO
-                        const dObj = parseRobustDate(s.lastUpdate);
-                        if(dObj) {
-                             const h = String(dObj.getHours()).padStart(2,'0');
-                             const m = String(dObj.getMinutes()).padStart(2,'0');
-                             const d = String(dObj.getDate()).padStart(2,'0');
-                             const mo = String(dObj.getMonth()+1).padStart(2,'0');
-                             displayTime = `${d}/${mo} ${h}:${m}`;
-                        }
-
                         card.innerHTML = `
                             <div style="font-weight:bold; color:var(--primary-color)">${missedUpdateHtml}${s.name}</div>
                             <span class="station-status ${s.status === 'نشطة' ? 'status-active' : 'status-inactive'}">${s.status}</span>
@@ -840,7 +825,7 @@
                                 <div>الضغط: ${s.pressure} Bar</div>
                                 <div>الجهد: ${s.voltage} V</div>
                                 <div style="color:var(--secondary-color);">التدفق: ${s.waterFlow} L/Sec</div>
-                                <div style="font-size:0.75rem; color:#888; margin-top:2px;">${displayTime}</div>
+                                <div>المضخات: ${s.activePumps}</div>
                             </div>`;
                         card.onclick = () => showStationDetails(s.name);
                         grid.appendChild(card);
@@ -1039,8 +1024,6 @@
                 
                 // Standard System Time
                 const nowStd = getStandardDateTime();
-                
-                // Use the STRICT format for saving to DB to avoid future parsing errors
                 const stationFullDateTime = nowStd.full; // YYYY-MM-DD HH:MM:SS
                 
                 let changesDetails = [];
@@ -1112,7 +1095,7 @@
                         } else {
                              if (safeOldFault2) {
                                  changesDetails.push(`✅ إصلاح: ${safeOldFault2}`);
-                                 resolvedFaultEntries.push({ station: sName, type: safeOldFault2, startTime: faultStartTime, endTime: stationFullDateTime, active: false });
+                                 resolvedFaultEntries.push({ station: sName, type: safeOldFault2, startTime: stationFullDateTime, active: false });
                              }
                         }
                     }
@@ -1487,4 +1470,4 @@
         loadSystemData();
     </script>
 </body>
-    </html>
+                </html>
