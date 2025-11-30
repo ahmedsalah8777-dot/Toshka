@@ -48,20 +48,10 @@
 
         /* Shift Warning Icon (Red Bubble) */
         .missed-update-icon {
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            width: 20px;
-            height: 20px;
-            background-color: #e74c3c;
-            color: white;
-            border-radius: 50%;
-            font-size: 14px;
-            font-weight: bold;
-            margin-right: 5px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
-            animation: pulse-red 2s infinite;
-            vertical-align: middle;
+            display: inline-flex; align-items: center; justify-content: center;
+            width: 20px; height: 20px; background-color: #e74c3c; color: white;
+            border-radius: 50%; font-size: 14px; font-weight: bold; margin-right: 5px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2); animation: pulse-red 2s infinite; vertical-align: middle;
         }
         @keyframes pulse-red {
             0% { transform: scale(1); box-shadow: 0 0 0 0 rgba(231, 76, 60, 0.7); }
@@ -93,40 +83,13 @@
 
         /* Mobile Responsive Modifications */
         @media (max-width: 768px) {
-            /* تعديل: كارتين بجانب بعض في الموبايل */
-            .stations-grid { 
-                grid-template-columns: 1fr 1fr !important; /* Force 2 columns */
-                gap: 8px; 
-            }
-            .station-card { 
-                padding: 8px; 
-                font-size: 0.85rem; 
-            }
-            .station-card div { 
-                white-space: nowrap; 
-                overflow: hidden; 
-                text-overflow: ellipsis; 
-            }
-            
-            /* تعديل: الإحصائيات في صف واحد */
-            .dashboard-stats {
-                display: flex !important; /* Flex row for side-by-side */
-                flex-direction: row;
-                gap: 5px;
-            }
-            .dashboard-stats .stat-card {
-                flex: 1;
-                padding: 8px;
-                text-align: center;
-                min-width: 0;
-            }
-            .dashboard-stats .stat-label {
-                font-size: 0.75rem;
-                white-space: nowrap;
-            }
-            .dashboard-stats .stat-value {
-                font-size: 1.1rem;
-            }
+            .stations-grid { grid-template-columns: 1fr 1fr !important; gap: 8px; }
+            .station-card { padding: 8px; font-size: 0.85rem; }
+            .station-card div { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+            .dashboard-stats { display: flex !important; flex-direction: row; gap: 5px; }
+            .dashboard-stats .stat-card { flex: 1; padding: 8px; text-align: center; min-width: 0; }
+            .dashboard-stats .stat-label { font-size: 0.75rem; white-space: nowrap; }
+            .dashboard-stats .stat-value { font-size: 1.1rem; }
         }
         
         .stat-card, .station-card, .detail-card { background: var(--card-bg); border-radius: 8px; padding: 15px; box-shadow: 0 3px 6px rgba(0,0,0,0.05); border: 1px solid #eee; }
@@ -532,7 +495,6 @@
             'Lifting-57S': 6, 'Lifting-8S': 12, 'Lifting-17S': 12,
             'S01-A': 7, 'S01-B': 7, 'S02-A': 6, 'S02-B': 7, 'S03': 6, 'S04': 6, 'S05-A': 6, 'S05-B': 6, 'S06': 6, 'S07-A': 7, 'S07-B': 7, 'S08': 6, 'S09-A': 7, 'S09-B': 7, 'S09-C': 8, 'S09-D': 8, 'S09-E': 6, 'S09-F': 6
         };
-
         // --- UTILITY: STANDARD DATE TIME ---
         function getStandardDateTime() {
             const now = new Date();
@@ -582,7 +544,6 @@
                     showStationDetails(appData.currentStation);
                 }
             });
-
             db.ref('users').on('value', (snapshot) => {
                 if (snapshot.val()) appData.users = snapshot.val();
                 else db.ref('users').set(appData.users);
@@ -597,14 +558,12 @@
                     loginBtn.classList.add('btn-primary');
                 }
             });
-
             db.ref('history').limitToLast(20000).on('value', (snapshot) => {
                 const val = snapshot.val();
                 if(val) appData.operationHistory = Object.values(val).reverse();
                 else appData.operationHistory = [];
                 if (document.getElementById('history-screen').classList.contains('active')) renderHistoryTable(true);
             });
-
             db.ref('faults_log').on('value', (snapshot) => {
                 const val = snapshot.val();
                 if (val) appData.faultsLog = Array.isArray(val) ? val : Object.values(val);
@@ -692,33 +651,49 @@
             } else { alert('بيانات خاطئة'); }
         });
 
-        // --- SHIFT CHECK LOGIC ---
+        // --- SHIFT CHECK LOGIC (FIXED) ---
         function checkShiftAdherence(lastUpdateStr) {
             if (!lastUpdateStr) return true; // No update ever -> warn
 
-            const now = new Date();
-            // Create Date objects for shift boundaries TODAY
-            const morningShiftEnd = new Date(now); morningShiftEnd.setHours(7, 30, 0, 0);
-            const morningShiftStart = new Date(now); morningShiftStart.setHours(5, 0, 0, 0);
-
-            const eveningShiftEnd = new Date(now); eveningShiftEnd.setHours(19, 30, 0, 0);
-            const eveningShiftStart = new Date(now); eveningShiftStart.setHours(17, 0, 0, 0);
-            
             const lastUpdate = parseCustomDate(lastUpdateStr);
             if (!lastUpdate) return true; // Error parsing -> warn
 
-            // Warning Logic:
-            // If Time > 7:30 AM (passed morning shift) -> Check if update happened AFTER 5:00 AM today
-            // If Time > 7:30 PM (passed evening shift) -> Check if update happened AFTER 5:00 PM today
+            const now = new Date();
+
+            // Shift Milestones Today
+            const morningShiftDeadline = new Date(now);
+            morningShiftDeadline.setHours(7, 30, 0, 0); // 7:30 AM
             
-            // Prioritize Evening Check first (later in day)
-            if (now > eveningShiftEnd) {
-                // Should have updated in Evening Shift (after 5 PM today)
-                if (lastUpdate < eveningShiftStart) return true; // Missed
-            } 
-            else if (now > morningShiftEnd) {
-                // Should have updated in Morning Shift (after 5 AM today)
+            const morningShiftStart = new Date(now);
+            morningShiftStart.setHours(5, 0, 0, 0); // 5:00 AM
+
+            const eveningShiftDeadline = new Date(now);
+            eveningShiftDeadline.setHours(19, 30, 0, 0); // 7:30 PM
+
+            const eveningShiftStart = new Date(now);
+            eveningShiftStart.setHours(17, 0, 0, 0); // 5:00 PM
+
+            // Logic: Compare lastUpdate with the start of the REQUIRED shift
+            // If lastUpdate is OLDER than the required shift start, it means missed update.
+
+            // 1. Early Morning (Dead Zone: 12:00 AM - 7:30 AM)
+            if (now < morningShiftDeadline) {
+                // Must have updated in Yesterday's Evening Shift
+                const yesterdayEveningStart = new Date(now);
+                yesterdayEveningStart.setDate(yesterdayEveningStart.getDate() - 1);
+                yesterdayEveningStart.setHours(17, 0, 0, 0);
+
+                if (lastUpdate < yesterdayEveningStart) return true; // Missed
+            }
+            // 2. Day Time (7:30 AM - 7:30 PM)
+            else if (now < eveningShiftDeadline) {
+                // Must have updated in Today's Morning Shift
                 if (lastUpdate < morningShiftStart) return true; // Missed
+            }
+            // 3. Evening/Night (After 7:30 PM)
+            else {
+                // Must have updated in Today's Evening Shift
+                if (lastUpdate < eveningShiftStart) return true; // Missed
             }
 
             return false; // No missed update
@@ -810,7 +785,6 @@
                             if (s.currentFault === 'انقطاع الاتصال SCADA' || s.secondaryFault === 'انقطاع الاتصال SCADA') cardClass += ' scada-fault';
                         }
                         card.className = cardClass;
-                        
                         let faultHtml = '';
                         if(isFault) {
                             if(s.currentFault) {
@@ -850,7 +824,6 @@
                 }
             });
         };
-
         // --- STATION DETAILS ---
         function showStationDetails(stationId) {
             const s = appData.stations[stationId];
@@ -895,7 +868,8 @@
                     banner.style.background = '#ffecec';
                     banner.style.color = '#b71c1c'; banner.style.borderColor = '#ffcdd2';
                 }
-            } else { banner.style.display = 'none'; }
+            } else { banner.style.display = 'none';
+            }
 
             const tbody = document.getElementById('pumps-table-body');
             tbody.innerHTML = '';
@@ -983,7 +957,6 @@
             s.pumps.forEach(p => { togglePumpInputs(p.id); });
             showScreen('operator');
         });
-
         window.togglePumpInputs = (id) => {
             const active = document.getElementById(`p_stat_${id}`).value === 'نشطة';
             document.querySelectorAll(`.p_inp_${id}`).forEach(i => {
@@ -1017,11 +990,11 @@
         document.getElementById('btn-resolve-f2').addEventListener('click', () => {
              if(confirm("هل تم إصلاح العطل الثاني؟")) saveDataInternal({ resolveTarget: 'secondaryFault' });
         });
-
         function saveDataInternal(options = {}) {
             try {
                 const sName = appData.currentStation;
-                if (!sName || !appData.stations[sName]) { alert("خطأ: لا توجد محطة محددة!"); return; }
+                if (!sName || !appData.stations[sName]) { alert("خطأ: لا توجد محطة محددة!"); return;
+                }
                 
                 const oldData = appData.stations[sName];
                 const getVal = (id) => { const el = document.getElementById(id); return el ? el.value : ''; };
@@ -1043,9 +1016,9 @@
                 const nowStd = getStandardDateTime();
                 const updateDate = nowStd.date;
                 const updateTime = nowStd.time;
-                const sysTimeShort = updateTime.substring(0, 5); // HH:MM
+                const sysTimeShort = updateTime.substring(0, 5);
+                // HH:MM
                 const stationFullDateTime = nowStd.full;
-
                 let changesDetails = [];
                 let activeCount = 0;
                 let currentStatus = 'متوقفة';
@@ -1135,7 +1108,7 @@
                     let newStatus = statElem ? statElem.value : p.status;
                     
                     if (isCriticalFault) {
-                        if (newStatus === 'نشطة') { newStatus = 'متوقفة'; }
+                         if (newStatus === 'نشطة') { newStatus = 'متوقفة'; }
                     }
                     
                     if(p.status != newStatus) changesDetails.push(`مضخة ${p.id}: ${p.status} -> ${newStatus}`);
@@ -1143,7 +1116,7 @@
                     let pumpData = { id: p.id, status: newStatus, suctionPressure: null, dischargePressure: null, frequency: null };
                     
                     if(newStatus === 'نشطة') {
-                        activeCount++;
+                         activeCount++;
                         pumpData.suctionPressure = getVal(`p_suc_${p.id}`);
                         pumpData.dischargePressure = getVal(`p_dis_${p.id}`);
                         pumpData.frequency = getVal(`p_freq_${p.id}`);
@@ -1181,7 +1154,6 @@
                 if(oldData.status != currentStatus) changesDetails.push(`الحالة: ${oldData.status} -> ${currentStatus}`);
                 if(oldData.startTime != newStartTime) changesDetails.push(`تشغيل: ${oldData.startTime||'-'} -> ${newStartTime}`);
                 if(oldData.stopTime != newStopTime) changesDetails.push(`إيقاف: ${oldData.stopTime||'-'} -> ${newStopTime}`);
-
                 const changesString = changesDetails.length > 0 ? changesDetails.join(', ') : "تحديث دوري";
                 const updates = {
                     pressure: newPressure, waterFlow: newFlow, voltage: newVoltage,
@@ -1251,11 +1223,11 @@
             appData.faultsLimit += 100;
             renderFaultsLog();
         });
-
         window.autoDeepCleanFaults = () => {
             if (!appData.stations || Object.keys(appData.stations).length === 0) return;
             let logs = [];
-            if (appData.faultsLog) { logs = Array.isArray(appData.faultsLog) ? appData.faultsLog : Object.values(appData.faultsLog); }
+            if (appData.faultsLog) { logs = Array.isArray(appData.faultsLog) ? appData.faultsLog : Object.values(appData.faultsLog);
+            }
             let changesMade = false;
             const nowStd = getStandardDateTime();
             let activeGroups = {};
@@ -1290,7 +1262,8 @@
                 }
             });
             if (changesMade) { db.ref('faults_log').set(finalLogs).then(() => { renderFaultsLog(); }); } 
-            else { renderFaultsLog(); }
+            else { renderFaultsLog();
+            }
         };
 
         window.renderFaultsLog = () => {
@@ -1307,7 +1280,8 @@
             activeBody.innerHTML = '';
             historyBody.innerHTML = '';
             let logs = [];
-            if (appData.faultsLog) { logs = Array.isArray(appData.faultsLog) ? appData.faultsLog : Object.values(appData.faultsLog); }
+            if (appData.faultsLog) { logs = Array.isArray(appData.faultsLog) ? appData.faultsLog : Object.values(appData.faultsLog);
+            }
             
             const activeFaults = logs.filter(f => f.active);
             const pastFaults = logs.filter(f => !f.active);
@@ -1322,7 +1296,8 @@
             });
             const filterVal = filterSelect.value;
             let filteredPast = pastFaults;
-            if (filterVal !== 'all') { filteredPast = pastFaults.filter(f => f.station === filterVal); }
+            if (filterVal !== 'all') { filteredPast = pastFaults.filter(f => f.station === filterVal);
+            }
 
             const faultsToShow = filteredPast.slice(0, appData.faultsLimit);
             if (faultsToShow.length === 0) {
@@ -1344,7 +1319,6 @@
                 }
             }
         };
-
         // --- USERS MANAGEMENT ---
         document.getElementById('users-management-btn').addEventListener('click', () => { renderUsersManagement(); showScreen('users'); });
         function renderUsersManagement() {
@@ -1363,7 +1337,8 @@
                 tbody.innerHTML += `<tr><td>${u.username}</td><td>${appData.userTypes[u.type].name}</td><td style="font-family: monospace;">${showPassword ? u.password : '******'}</td><td>${u.active ? 'نشط' : 'x'}</td><td>${showDeleteBtn ? `<button class="btn btn-danger" style="padding:2px 5px;" onclick="deleteUser('${u.username}')">حذف</button>` : ''}</td></tr>`;
             });
         }
-        window.deleteUser = (u) => { if(confirm('هل أنت متأكد من حذف المستخدم؟')) db.ref('users/' + u).remove(); };
+        window.deleteUser = (u) => { if(confirm('هل أنت متأكد من حذف المستخدم؟')) db.ref('users/' + u).remove();
+        };
         document.getElementById('add-user-btn').addEventListener('click', () => {
             document.getElementById('user-form-container').style.display = 'block';
             const typeSelect = document.getElementById('new-user-type');
@@ -1424,13 +1399,16 @@
             const loadMoreBtn = document.getElementById('load-more-history-btn');
             const statusText = document.getElementById('history-status-text');
 
-            if (reset) { appData.historyLimit = 100; tbody.innerHTML = ''; } 
-            else { tbody.innerHTML = ''; }
+            if (reset) { appData.historyLimit = 100; tbody.innerHTML = '';
+            } 
+            else { tbody.innerHTML = '';
+            }
 
             const fZone = document.getElementById('filter-zone').value;
             const fStation = document.getElementById('filter-station').value;
             const fDateFromInput = document.getElementById('filter-date-from').value; // YYYY-MM-DD
-            const fDateToInput = document.getElementById('filter-date-to').value; // YYYY-MM-DD
+            const fDateToInput = document.getElementById('filter-date-to').value;
+            // YYYY-MM-DD
             
             // Convert inputs to Date objects at Midnight
             const fDateFrom = fDateFromInput ? new Date(fDateFromInput) : null;
@@ -1438,7 +1416,6 @@
             
             const fDateTo = fDateToInput ? new Date(fDateToInput) : null;
             if(fDateTo) fDateTo.setHours(0,0,0,0);
-
             const filtered = appData.operationHistory.filter(h => {
                 let valid = true;
                 if(fStation !== 'all' && h.station !== fStation) valid = false;
@@ -1456,7 +1433,6 @@
                 }
                 return valid;
             });
-
             const dataToShow = filtered.slice(0, appData.historyLimit);
             if(dataToShow.length === 0) {
                 tbody.innerHTML = '<tr><td colspan="4" style="text-align:center; padding:20px;">لا توجد سجلات مطابقة</td></tr>';
@@ -1476,18 +1452,15 @@
                 }
             }
         };
-
         // Navigation Back Buttons
         document.getElementById('back-to-stations').addEventListener('click', () => { showScreen('stations'); });
         document.getElementById('back-to-station').addEventListener('click', () => showStationDetails(appData.currentStation));
         document.getElementById('back-to-stations-from-users').addEventListener('click', () => showScreen('stations'));
         document.getElementById('back-to-stations-from-history').addEventListener('click', () => showScreen('stations'));
         document.getElementById('back-to-stations-from-faults').addEventListener('click', () => showScreen('stations'));
-
         // Initial Load
         checkRememberedUser();
         loadSystemData();
     </script>
 </body>
 </html>
-
