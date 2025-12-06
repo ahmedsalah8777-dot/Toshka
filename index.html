@@ -16,6 +16,7 @@
             --header-bg: #eaf2f8;
             --scada-fault-color: #e67e22;
             --blue-fault: #87CEFA;
+            --grey-color: #95a5a6;
         }
         * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
         body { background-color: var(--light-bg); color: #333; line-height: 1.6; min-height: 100vh; display: flex; flex-direction: column; }
@@ -46,7 +47,7 @@
         @keyframes bell-shake { 10%, 90% { transform: translate3d(-1px, 0, 0); } 20%, 80% { transform: translate3d(2px, 0, 0); } 30%, 50%, 70% { transform: translate3d(-4px, 0, 0); } 40%, 60% { transform: translate3d(4px, 0, 0); } }
         @keyframes red-glow { 0% { text-shadow: 0 0 5px red; } 50% { text-shadow: 0 0 20px red; } 100% { text-shadow: 0 0 5px red; } }
 
-        /* Shift Warning Icon (Red Bubble) */
+        /* Shift Warning Icon */
         .missed-update-icon { display: inline-flex; align-items: center; justify-content: center; width: 20px; height: 20px; background-color: #e74c3c; color: white; border-radius: 50%; font-size: 14px; font-weight: bold; margin-right: 5px; box-shadow: 0 2px 4px rgba(0,0,0,0.2); animation: pulse-red 2s infinite; vertical-align: middle; }
         @keyframes pulse-red { 0% { transform: scale(1); box-shadow: 0 0 0 0 rgba(231, 76, 60, 0.7); } 70% { transform: scale(1.05); box-shadow: 0 0 0 6px rgba(231, 76, 60, 0); } 100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(231, 76, 60, 0); } }
 
@@ -72,7 +73,6 @@
         .station-details { display: grid; gap: 10px; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); margin-top: 20px; }
         .dashboard-stats { display: grid; gap: 15px; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); }
 
-        /* Mobile Responsive Modifications */
         @media (max-width: 768px) {
             .stations-grid { grid-template-columns: 1fr 1fr !important; gap: 8px; }
             .station-card { padding: 8px; font-size: 0.85rem; }
@@ -135,6 +135,77 @@
         .scada-icon-svg { vertical-align: text-bottom; }
         .fault-row-action { display: flex; justify-content: space-between; align-items: center; background: white; padding: 8px; border-radius: 4px; margin-bottom: 8px; border-right: 3px solid var(--danger-color); }
         .desc-input { margin-top: 5px; font-size: 0.9rem; background: #fff; border: 1px solid #ccc; }
+
+        /* --- INSPECTION SCREEN STYLES (MOBILE OPTIMIZED V1.9) --- */
+        
+        /* Main Section Accordion */
+        .section-accordion { margin-bottom: 10px; border-radius: 8px; overflow: hidden; border: 1px solid #ddd; background: #fff; }
+        
+        /* Edit Mode: Headers are just standard blocks, no accordion behavior */
+        .section-header-static {
+            background: #eaf2f8; color: var(--primary-color);
+            padding: 12px 15px; font-weight: bold; font-size: 1.1rem;
+            border-bottom: 1px solid #ddd;
+        }
+
+        /* View Mode: Accordion Headers */
+        .section-accordion-header {
+            background: linear-gradient(to right, #2c3e50, #34495e); color: white;
+            padding: 15px; cursor: pointer; display: flex; justify-content: space-between; align-items: center;
+            font-weight: bold; font-size: 1.1rem; border-radius: 8px;
+            transition: all 0.2s;
+        }
+        .section-accordion-header:active { transform: scale(0.99); }
+        .section-accordion-header .arrow { transition: transform 0.3s; }
+        .section-accordion-header.active .arrow { transform: rotate(180deg); }
+        
+        .section-accordion-body { display: none; padding: 10px; background: #fff; }
+        .section-accordion-body.open { display: block; animation: fadeIn 0.3s; }
+        
+        /* In Edit mode, body is always visible if we use a specific class */
+        .section-body-static { display: block; padding: 10px; background: #fff; }
+
+        /* Row Styles */
+        .inspection-row { display: grid; grid-template-columns: 1fr; gap: 8px; padding: 12px; border-bottom: 1px solid #f0f0f0; background: #fff; margin-bottom: 5px; border-radius: 8px; border: 1px solid #eee; }
+        .inspection-row:last-child { margin-bottom: 0; }
+        
+        @media (min-width: 768px) {
+            .inspection-row { grid-template-columns: 1fr 180px 1.5fr; align-items: center; gap: 15px; }
+        }
+
+        .inspection-label { font-size: 1rem; font-weight: 600; color: var(--secondary-color); margin-bottom: 2px; }
+        
+        .inspection-status-select { 
+            padding: 10px; border-radius: 8px; font-size: 1rem; font-weight: 500; width: 100%; border: 1px solid #ccc; appearance: none; -webkit-appearance: none;
+            background-image: url("data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22292.4%22%20height%3D%22292.4%22%3E%3Cpath%20fill%3D%22%23007CB2%22%20d%3D%22M287%2069.4a17.6%2017.6%200%200%200-13-5.4H18.4c-5%200-9.3%201.8-12.9%205.4A17.6%2017.6%200%200%200%200%2082.2c0%205%201.8%209.3%205.4%2012.9l128%20127.9c3.6%203.6%207.8%205.4%2012.8%205.4s9.2-1.8%2012.8-5.4L287%2095c3.5-3.5%205.4-7.8%205.4-12.8%200-5-1.9-9.2-5.5-12.8z%22%2F%3E%3C%2Fsvg%3E");
+            background-repeat: no-repeat; background-position: left 10px top 50%; background-size: 12px; padding-left: 30px;
+        }
+        
+        /* Status Colors */
+        .inspection-status-select.efficient { color: #155724; border-color: #28a745; background-color: #d4edda; }
+        .inspection-status-select.fault { color: #856404; border-color: #ffeeba; background-color: #fff3cd; }
+        .inspection-status-select.broken { color: #721c24; border-color: #f5c6cb; background-color: #f8d7da; }
+        .inspection-status-select.none { color: #333; border-color: #ccc; background-color: #e2e3e5; }
+        
+        .inspection-desc-input { padding: 10px; border-radius: 8px; border: 1px solid #ddd; width: 100%; font-size: 0.9rem; }
+
+        /* PUMP INNER ACCORDION STYLES */
+        .pump-accordion-item { margin-bottom: 10px; border-radius: 8px; overflow: hidden; border: 1px solid transparent; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
+        .pump-accordion-header {
+            padding: 12px; cursor: pointer; display: flex; justify-content: space-between; align-items: center;
+            font-weight: bold; font-size: 1rem; color: white; transition: background 0.3s;
+        }
+        .pump-accordion-header .icon-state { font-size: 1.1rem; background: rgba(0,0,0,0.2); width: 25px; height: 25px; border-radius: 50%; display: flex; align-items: center; justify-content: center; }
+        
+        .pump-header-green { background: linear-gradient(45deg, #27ae60, #2ecc71); }
+        .pump-header-yellow { background: linear-gradient(45deg, #f39c12, #f1c40f); color: #fff; text-shadow: 0 1px 2px rgba(0,0,0,0.1); }
+        .pump-header-red { background: linear-gradient(45deg, #c0392b, #e74c3c); }
+        
+        .pump-accordion-body { display: none; padding: 10px; background: #fff; border: 1px solid #eee; border-top: none; }
+        .pump-accordion-body.open { display: block; animation: slideDown 0.3s ease-out; }
+        
+        @keyframes slideDown { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
+
     </style>
 </head>
 <body>
@@ -179,7 +250,7 @@
                 </div>
                 <button id="login-btn" class="btn" style="width: 100%; background-color: #bdc3c7; color: #fff; cursor: not-allowed;" disabled>جاري الاتصال بالنظام...</button>
             </div>
-            <div class="signature">Implemented by Ahmed Salah Ibrahim 2025 V1.5.8</div>
+            <div class="signature">Implemented by Ahmed Salah Ibrahim 2025 V1.5.9</div>
         </div>
 
         <div id="stations-screen" class="screen">
@@ -204,7 +275,10 @@
 
         <div id="station-screen" class="screen">
             <h2 id="station-title">التفاصيل</h2>
-            <button id="back-to-stations" class="btn btn-outline">عودة للقائمة</button>
+            <div style="display:flex; gap:10px; flex-wrap:wrap;">
+                <button id="back-to-stations" class="btn btn-outline">عودة للقائمة</button>
+                <button id="view-inspection-btn" class="btn btn-info">📋 عرض الفحص</button>
+            </div>
             
             <div id="station-fault-banner" class="alert" style="background: #ffecec; color: #b71c1c; border: 1px solid #ffcdd2; margin-top: 15px; display: none;">
                 <div style="margin-bottom: 5px;">⚠️ <b>الأعطال المسجلة حالياً:</b></div>
@@ -247,7 +321,10 @@
         <div id="operator-screen" class="screen">
             <h2>تحديث بيانات / إدارة الأعطال</h2>
             <h3 id="editing-station-name" style="text-align: center; color: var(--secondary-color); margin-bottom: 20px; border-bottom: none;"></h3>
-            <button id="back-to-station" class="btn btn-outline">إلغاء</button>
+            <div style="display:flex; justify-content:space-between; margin-bottom: 15px;">
+                <button id="back-to-station" class="btn btn-outline">إلغاء</button>
+                <button id="edit-inspection-btn" class="btn btn-info">📋 شاشة الفحص</button>
+            </div>
             <div id="operator-alert" class="alert"></div>
 
             <div id="active-fault-control" style="background: #fff3cd; border: 1px solid #ffeeba; padding: 15px; border-radius: 6px; margin-bottom: 20px; display: none;">
@@ -287,6 +364,7 @@
                         </select>
                     </div>
                 </div>
+               
                 <div class="form-section">
                     <h3>حالة المضخات</h3>
                     <div id="pumps-form-container" class="pump-controls"></div>
@@ -332,6 +410,20 @@
                     <div class="form-group"><label>ملاحظات عامة</label><textarea id="operator-comments" rows="3"></textarea></div>
                     <div class="form-actions"><button id="save-operator-data" class="btn btn-success" style="width: 100%;">حفظ البيانات</button></div>
                 </div>
+            </div>
+        </div>
+
+        <div id="inspection-screen" class="screen">
+            <h2 id="inspection-title">شاشة الفحص الشامل</h2>
+            <div style="display:flex; justify-content:space-between; margin-bottom: 20px;">
+                <button id="back-from-inspection" class="btn btn-outline">عودة</button>
+            </div>
+            
+            <div id="inspection-container">
+                </div>
+            
+            <div id="inspection-actions" style="margin-top:20px; display:none; position:sticky; bottom:10px; z-index:999;">
+                <button id="save-inspection-btn" class="btn btn-success" style="width:100%; box-shadow: 0 4px 10px rgba(0,0,0,0.2); padding:15px; font-size:1.1rem;">💾 حفظ الفحص بالكامل</button>
             </div>
         </div>
 
@@ -451,6 +543,51 @@
             "تسريب مياه": "💧", "كسر في الشبكة": "🛠️", "عجز تحقيق الضغط": "🔻",
             "انقطاع الاتصال SCADA": `<svg viewBox="0 0 24 24" width="20" height="20" class="scada-icon-svg" style="color:#d32f2f;" fill="currentColor"><path d="M12 3C7.79 3 3.7 4.41 0.38 7L2.6 9.22C5.35 7.15 8.55 6 12 6C15.45 6 18.65 7.15 21.4 9.22L23.62 7C20.3 4.41 16.21 3 12 3Z" /><path d="M12 8C9.48 8 7.15 8.76 5.18 10.05L7.4 12.27C8.71 11.47 10.28 11 12 11C13.72 11 15.29 11.47 16.6 12.27L18.82 10.05C16.85 8.76 14.52 8 12 8Z" /><path d="M12 13L6 21H18L12 13ZM11 18H13V19.5H11V18ZM11 15.5H13V17.5H11V15.5Z" /></svg>`
         };
+        
+        // INSPECTION SCHEMA FROM CSV
+        const inspectionSchema = {
+            prepSystem: {
+                title: "منظومة التحضير",
+                items: ["الكومبريوسر", "طلمبة تحضير 1", "طلمبة تحضير 2", "تانك التعويض", "تانك التحضير", "لوحه التحضير"]
+            },
+            pumps: {
+                title: "المضخات",
+                isDynamic: true, // Repeated per pump
+                items: ["محبس فراشه", "وصله فك و تركيب", "وصله مرنه", "عداد السحب", "حساس السحب", "المضخه", "عداد الطرد", "حساس الطرد", "وصله مرنه طرد", "اير فينت", "محبس عدم رجوع", "وصله فك و تركيب طرد", "محبس فراشه طرد"]
+            },
+            waterHammer: {
+                title: "منظومة الطرق المائي",
+                items: ["كومبريسور1", "كومبريسور2", "كومبريسور3", "تانك 1", "تانك 2", "تانك 3", "لوحه كونترول"]
+            },
+            mainLine: {
+                title: "خط الطرد الرئيسي",
+                items: ["ارفينت", "محبس عدم رجوع", "وصله فك و تركيب 1", "الفلوميتر", "حساس ضغط", "عداد ضغط", "وصله فك و تركيب 2", "محبس فراشه", "محبس درين"]
+            },
+            submersibles: {
+                title: "الغواطس",
+                items: ["طلمبة غاطس 1", "طلمبة غاطس 2"]
+            },
+            ac: {
+                title: "تكييفات المحطه",
+                items: ["تكييف 1", "تكييف 2", "تكييف 3", "تكييف 4", "تكييف 5", "تكييف 6", "تكييف 7", "تكييف 8", "9-PLC", "10-PLC"]
+            },
+            ventilation: {
+                title: "التهوية",
+                items: ["غرفه المضخات", "غرفه محول 1", "غرفه محول 2", "غرفه رينج"]
+            },
+            crane: {
+                title: "الونش",
+                items: ["الونش"]
+            }
+        };
+
+        const statusOptions = [
+            { val: "efficient", text: "✅ يعمل بكفاءة", class: "efficient" },
+            { val: "fault", text: "⚠️ عطل / ملاحظة", class: "fault" },
+            { val: "broken", text: "🛑 لا يعمل", class: "broken" },
+            { val: "none", text: "⚪ لا يوجد", class: "none" }
+        ];
+
         let appData = {
             currentUser: null, currentStation: null, stations: {}, users: {},
             userTypes: {
@@ -463,6 +600,7 @@
             operationHistory: [], faultsLog: [],
             historyLimit: 100, faultsLimit: 100
         };
+
         const pumpsData = {
             'A01': 4, 'A02': 4, 'A04': 2, 'A06': 5, 'A07': 5, 'A08': 4, 'A09': 5, 'A10': 5, 'A11': 5, 'A12': 5, 'A13': 5, 'A14': 4, 'A15': 4,
             'B01': 5, 'B02': 5, 'B03': 5, 'B04': 5, 'B05': 4, 'B06': 2, 'B07': 4, 'B08': 5, 'B09': 3, 'B10': 5, 'B11': 5, 'B12': 2, 'B13': 5, 'C01': 5, 'C02': 5, 'C03': 5,
@@ -483,16 +621,13 @@
             'S01-A': 7, 'S01-B': 7, 'S02-A': 6, 'S02-B': 7, 'S03': 6, 'S04': 6, 'S05-A': 6, 'S05-B': 6, 'S06': 6, 'S07-A': 7, 'S07-B': 7, 'S08': 6, 'S09-A': 7, 'S09-B': 7, 'S09-C': 8, 'S09-D': 8, 'S09-E': 6, 'S09-F': 6
         };
 
-        // --- UTILITY: English Digits Conversion (Strong) ---
         function toEnglishDigits(str) {
             if (!str) return str;
-            // Trim spaces
             str = str.trim();
             const arabicNumbers = ["٠", "١", "٢", "٣", "٤", "٥", "٦", "٧", "٨", "٩"];
             return str.replace(/[٠-٩]/g, function(w) { return arabicNumbers.indexOf(w); });
         }
 
-        // --- UTILITY: STANDARD DATE TIME ---
         function getStandardDateTime() {
             const now = new Date();
             const d = String(now.getDate()).padStart(2, '0');
@@ -508,31 +643,21 @@
             };
         }
 
-        // --- UTILITY: PARSE CUSTOM DATE STRING (ROBUST) ---
         function parseCustomDate(str) {
             if(!str) return null;
-            // 1. Clean and convert to English digits
             str = toEnglishDigits(str);
-            
-            // Expected format: "DD/MM/YYYY HH:MM:SS" or "DD/MM/YYYY HH:MM"
-            // Handle variations (extra spaces, etc.)
-            const parts = str.split(/\s+/); // Split by any whitespace
+            const parts = str.split(/\s+/);
             if(parts.length < 2) return null;
-            
             const dateParts = parts[0].split('/');
             const timeParts = parts[1].split(':');
-            
             if(dateParts.length < 3 || timeParts.length < 2) return null;
-
             const year = parseInt(dateParts[2]);
-            const month = parseInt(dateParts[1]) - 1; // 0-based
+            const month = parseInt(dateParts[1]) - 1;
             const day = parseInt(dateParts[0]);
             const hour = parseInt(timeParts[0]);
             const min = parseInt(timeParts[1]);
             const sec = timeParts[2] ? parseInt(timeParts[2]) : 0;
-
             if (isNaN(year) || isNaN(month) || isNaN(day)) return null;
-
             return new Date(year, month, day, hour, min, sec);
         }
 
@@ -658,43 +783,23 @@
             } else { alert('بيانات خاطئة'); }
         });
 
-        // --- SHIFT CHECK LOGIC (6 AM - 6 PM) ---
+        // --- SHIFT CHECK LOGIC ---
         function checkShiftAdherence(lastUpdateStr) {
-            // 1. Check if string exists
             if (!lastUpdateStr) return true;
-
-            // 2. Parse Check (With Arabic Digits Fix & Robust Splitting)
             const lastUpdate = parseCustomDate(lastUpdateStr);
             if (!lastUpdate || isNaN(lastUpdate.getTime())) return true;
 
             const now = new Date();
-            const currentHour = now.getHours(); // 0 - 23
-
-            // Define Shift Start
+            const currentHour = now.getHours();
             let shiftStart = new Date(now);
-            shiftStart.setMinutes(0);
-            shiftStart.setSeconds(0);
-            shiftStart.setMilliseconds(0);
+            shiftStart.setMinutes(0); shiftStart.setSeconds(0); shiftStart.setMilliseconds(0);
 
-            // LOGIC:
-            // Morning Shift (06:00 to 17:59): Updates valid if >= Today 06:00
-            // Evening Shift (18:00 to 05:59):
-            //    If Now is 18:00-23:59 -> Shift started Today 18:00
-            //    If Now is 00:00-05:59 -> Shift started Yesterday 18:00
-            
             if (currentHour >= 6 && currentHour < 18) {
-                // Morning Shift
                 shiftStart.setHours(6);
-                // If lastUpdate is older than shiftStart, return true (Warning)
                 return lastUpdate < shiftStart;
             } else {
-                // Evening Shift
-                if (currentHour >= 18) {
-                    shiftStart.setHours(18); // Today 6 PM
-                } else {
-                    shiftStart.setDate(shiftStart.getDate() - 1); // Yesterday
-                    shiftStart.setHours(18); // Yesterday 6 PM
-                }
+                if (currentHour >= 18) { shiftStart.setHours(18); } 
+                else { shiftStart.setDate(shiftStart.getDate() - 1); shiftStart.setHours(18); }
                 return lastUpdate < shiftStart;
             }
         }
@@ -741,9 +846,7 @@
                         const icon = faultIcons[s.secondaryFault] || '⚠️';
                         tickerHtml += `<span class="ticker-item">${icon} ${s.name}: ${s.secondaryFault}</span>`;
                     }
-                    if (index < faultedStations.length - 1) {
-                        tickerHtml += `<span class="ticker-separator">•</span>`;
-                    }
+                    if (index < faultedStations.length - 1) { tickerHtml += `<span class="ticker-separator">•</span>`; }
                 });
                 tickerContent.innerHTML = tickerHtml;
                 
@@ -801,11 +904,8 @@
                             }
                         }
 
-                        // Check Shift Update Status
                         let missedUpdateHtml = '';
-                        if (checkShiftAdherence(s.lastUpdate)) {
-                            missedUpdateHtml = `<span class="missed-update-icon" title="لم يتم التحديث في الموعد">!</span>`;
-                        }
+                        if (checkShiftAdherence(s.lastUpdate)) { missedUpdateHtml = `<span class="missed-update-icon" title="لم يتم التحديث في الموعد">!</span>`; }
 
                         card.innerHTML = `
                             <div style="font-weight:bold; color:var(--primary-color)">${missedUpdateHtml}${s.name}</div>
@@ -839,7 +939,6 @@
             document.getElementById('active-pumps-value').textContent = s.activePumps;
             document.getElementById('water-flow-value').textContent = s.waterFlow;
             document.getElementById('system-mode-value').textContent = s.systemMode;
-            // Split Time Display
             document.getElementById('start-time-value').textContent = s.startTime || '-';
             document.getElementById('stop-time-value').textContent = s.stopTime || '-';
             
@@ -862,13 +961,8 @@
                     const descText = s.fault2Desc ? ` <span style="font-weight:normal; color:#d32f2f">(${s.fault2Desc})</span>` : '';
                     faultList.innerHTML += `<li>${s.secondaryFault}${descText}</li>`;
                 }
-                if (hasScadaFault) {
-                    banner.style.background = '#fff3cd';
-                    banner.style.color = '#856404'; banner.style.borderColor = '#ffeeba';
-                } else {
-                    banner.style.background = '#ffecec';
-                    banner.style.color = '#b71c1c'; banner.style.borderColor = '#ffcdd2';
-                }
+                if (hasScadaFault) { banner.style.background = '#fff3cd'; banner.style.color = '#856404'; banner.style.borderColor = '#ffeeba'; } 
+                else { banner.style.background = '#ffecec'; banner.style.color = '#b71c1c'; banner.style.borderColor = '#ffcdd2'; }
             } else { banner.style.display = 'none'; }
 
             const tbody = document.getElementById('pumps-table-body');
@@ -883,58 +977,42 @@
             showScreen('station');
         }
 
-        // --- EDIT MODE & SEPARATE FAULT RESOLUTION ---
+        // --- EDIT MODE & FAULT RESOLUTION ---
         document.getElementById('edit-station-btn').addEventListener('click', () => {
             const s = appData.stations[appData.currentStation];
             document.getElementById('editing-station-name').textContent = `محطة: ${s.name}`;
             document.getElementById('operator-name').value = appData.currentUser.username;
             
-            // Auto-fill Current Time for Manual Input or Use Saved
             const now = new Date();
             const timeString = now.getHours().toString().padStart(2, '0') + ':' + now.getMinutes().toString().padStart(2, '0');
             
-            // Pre-fill fields
             document.getElementById('operator-start-time').value = s.startTime || timeString;
             document.getElementById('operator-stop-time').value = s.stopTime || '';
-
             document.getElementById('operator-pressure').value = s.pressure;
             document.getElementById('operator-water-flow').value = s.waterFlow;
             document.getElementById('operator-voltage').value = s.voltage;
             document.getElementById('operator-system-mode').value = s.systemMode;
             document.getElementById('operator-comments').value = s.comments;
-            // Setup Individual Fault Resolution UI
+
             const faultControl = document.getElementById('active-fault-control');
             const row1 = document.getElementById('fault-row-1');
             const row2 = document.getElementById('fault-row-2');
             
-            // Reset Displays
-            row1.style.display = 'none';
-            row2.style.display = 'none';
-            faultControl.style.display = 'none';
+            row1.style.display = 'none'; row2.style.display = 'none'; faultControl.style.display = 'none';
 
             if (s.currentFault || s.secondaryFault) {
                 faultControl.style.display = 'block';
-                if(s.currentFault) {
-                    row1.style.display = 'flex';
-                    document.getElementById('txt-fault-1').textContent = s.currentFault;
-                }
-                if(s.secondaryFault) {
-                    row2.style.display = 'flex';
-                    document.getElementById('txt-fault-2').textContent = s.secondaryFault;
-                }
+                if(s.currentFault) { row1.style.display = 'flex'; document.getElementById('txt-fault-1').textContent = s.currentFault; }
+                if(s.secondaryFault) { row2.style.display = 'flex'; document.getElementById('txt-fault-2').textContent = s.secondaryFault; }
             }
 
-            // Setup Selectors (New Faults)
             document.getElementById('fault-selector').value = s.currentFault || "";
             document.getElementById('fault-selector-secondary').value = s.secondaryFault || "";
-            
-            // Setup Description Inputs
             document.getElementById('fault-1-desc').value = s.fault1Desc || "";
             document.getElementById('fault-2-desc').value = s.fault2Desc || "";
 
             updateFaultExclusions();
 
-            // Pumps
             const c = document.getElementById('pumps-form-container');
             let pumpsHtml = '';
             s.pumps.forEach(p => {
@@ -970,26 +1048,16 @@
             const f2 = document.getElementById('fault-selector-secondary');
             Array.from(f2.options).forEach(opt => opt.disabled = false);
             Array.from(f1.options).forEach(opt => opt.disabled = false);
-            if(f1.value) {
-                const optIn2 = f2.querySelector(`option[value="${f1.value}"]`);
-                if(optIn2) optIn2.disabled = true;
-            }
-            if(f2.value) {
-                const optIn1 = f1.querySelector(`option[value="${f2.value}"]`);
-                if(optIn1) optIn1.disabled = true;
-            }
+            if(f1.value) { const optIn2 = f2.querySelector(`option[value="${f1.value}"]`); if(optIn2) optIn2.disabled = true; }
+            if(f2.value) { const optIn1 = f1.querySelector(`option[value="${f2.value}"]`); if(optIn1) optIn1.disabled = true; }
         }
         document.getElementById('fault-selector').addEventListener('change', updateFaultExclusions);
         document.getElementById('fault-selector-secondary').addEventListener('change', updateFaultExclusions);
 
-        // --- CORE SAVING LOGIC ---
         document.getElementById('save-operator-data').addEventListener('click', () => saveDataInternal({}));
-        document.getElementById('btn-resolve-f1').addEventListener('click', () => {
-             if(confirm("هل تم إصلاح العطل الأول؟")) saveDataInternal({ resolveTarget: 'currentFault' });
-        });
-        document.getElementById('btn-resolve-f2').addEventListener('click', () => {
-             if(confirm("هل تم إصلاح العطل الثاني؟")) saveDataInternal({ resolveTarget: 'secondaryFault' });
-        });
+        document.getElementById('btn-resolve-f1').addEventListener('click', () => { if(confirm("هل تم إصلاح العطل الأول؟")) saveDataInternal({ resolveTarget: 'currentFault' }); });
+        document.getElementById('btn-resolve-f2').addEventListener('click', () => { if(confirm("هل تم إصلاح العطل الثاني؟")) saveDataInternal({ resolveTarget: 'secondaryFault' }); });
+
         function saveDataInternal(options = {}) {
             try {
                 const sName = appData.currentStation;
@@ -1007,24 +1075,20 @@
                 const newOperator = getVal('operator-name');
                 const newComments = getVal('operator-comments');
                 
-                // --- Time Logic ---
                 let newStartTime = getVal('operator-start-time');
                 let newStopTime = getVal('operator-stop-time');
                 
-                // Standard System Time (English Digits)
                 const nowStd = getStandardDateTime();
                 const updateDate = nowStd.date;
                 const updateTime = nowStd.time;
-                const sysTimeShort = updateTime.substring(0, 5); // HH:MM
+                const sysTimeShort = updateTime.substring(0, 5);
                 const stationFullDateTime = nowStd.full;
-
                 let changesDetails = [];
                 let activeCount = 0;
                 let currentStatus = 'متوقفة';
-                // Fault Handling Logic
+                
                 let finalFault = safeOldFault1;
                 let finalFaultDesc = oldData.fault1Desc || null;
-
                 let finalFaultSec = safeOldFault2;
                 let finalFaultSecDesc = oldData.fault2Desc || null;
                 let faultStartTime = oldData.faultStartTime || null;
@@ -1033,38 +1097,31 @@
                 let resolvedFaultEntries = [];
 
                 if (options.resolveTarget === 'currentFault') {
-                    // Resolving Fault 1
                     if (safeOldFault1) {
                         changesDetails.push(`✅ إصلاح: ${safeOldFault1}`);
                         resolvedFaultEntries.push({ station: sName, type: safeOldFault1, startTime: faultStartTime, endTime: stationFullDateTime, active: false });
                     }
-                    finalFault = null;
-                    finalFaultDesc = null; 
+                    finalFault = null; finalFaultDesc = null; 
                     if (!finalFaultSec) faultStartTime = null;
                 } else if (options.resolveTarget === 'secondaryFault') {
-                    // Resolving Fault 2
                     if (safeOldFault2) {
                         changesDetails.push(`✅ إصلاح: ${safeOldFault2}`);
                         resolvedFaultEntries.push({ station: sName, type: safeOldFault2, startTime: faultStartTime, endTime: stationFullDateTime, active: false });
                     }
-                    finalFaultSec = null;
-                    finalFaultSecDesc = null; 
+                    finalFaultSec = null; finalFaultSecDesc = null; 
                     if (!finalFault) faultStartTime = null;
                 } else {
-                    // Normal Save
                     const sel1 = getVal('fault-selector');
                     const selDesc1 = getVal('fault-1-desc');
-
                     let sel2 = getVal('fault-selector-secondary');
                     let selDesc2 = getVal('fault-2-desc');
                     if (sel1 && sel1 === sel2) sel2 = "";
                     
                     finalFault = sel1 || null;
                     finalFaultDesc = finalFault ? selDesc1 : null; 
-
                     finalFaultSec = sel2 || null;
                     finalFaultSecDesc = finalFaultSec ? selDesc2 : null;
-                    // 1. Primary Fault Changes
+
                     if (finalFault !== safeOldFault1) {
                         if (finalFault) {
                              changesDetails.push(`⚠️ تسجيل عطل 1: ${finalFault}`);
@@ -1078,7 +1135,6 @@
                              if (!finalFaultSec) faultStartTime = null;
                         }
                     }
-                    // 2. Secondary Fault Changes
                     if (finalFaultSec !== safeOldFault2) {
                         if (finalFaultSec) {
                              changesDetails.push(`⚠️ تسجيل عطل 2: ${finalFaultSec}`);
@@ -1087,7 +1143,7 @@
                         } else {
                              if (safeOldFault2) {
                                  changesDetails.push(`✅ إصلاح: ${safeOldFault2}`);
-                                 resolvedFaultEntries.push({ station: sName, type: safeOldFault2, startTime: faultStartTime, endTime: stationFullDateTime, active: false });
+                                 resolvedFaultEntries.push({ station: sName, type: safeOldFault2, startTime: stationFullDateTime, endTime: stationFullDateTime, active: false });
                              }
                         }
                     }
@@ -1106,9 +1162,7 @@
                     const statElem = document.getElementById(`p_stat_${p.id}`);
                     let newStatus = statElem ? statElem.value : p.status;
                     
-                    if (isCriticalFault) {
-                        if (newStatus === 'نشطة') { newStatus = 'متوقفة'; }
-                    }
+                    if (isCriticalFault) { if (newStatus === 'نشطة') { newStatus = 'متوقفة'; } }
                     
                     if(p.status != newStatus) changesDetails.push(`مضخة ${p.id}: ${p.status} -> ${newStatus}`);
                     
@@ -1124,28 +1178,16 @@
                 });
                 
                 if (!isCriticalFault) {
-                     if (activeCount > 0) {
-                         currentStatus = 'نشطة';
-                     } else {
-                         currentStatus = 'متوقفة';
-                         newPressure = 0; newFlow = 0;
-                     }
+                     if (activeCount > 0) { currentStatus = 'نشطة'; } 
+                     else { currentStatus = 'متوقفة'; newPressure = 0; newFlow = 0; }
                 }
 
-                // --- APPLY TIME RULES ---
                 if (currentStatus === 'نشطة') {
-                    // Rule 1: Active Station has NO stop time
                     newStopTime = '';
                     if (!newStartTime) newStartTime = sysTimeShort;
                 } else {
-                    // Stopped Station
-                    if (isCriticalFault) {
-                        // Rule 2b: Fault Stop -> Use System Time as Stop Time
-                        newStopTime = sysTimeShort;
-                    } else {
-                        // Rule 2a: Manual Stop -> Use Input Time (or System if empty)
-                        if (!newStopTime) newStopTime = sysTimeShort;
-                    }
+                    if (isCriticalFault) { newStopTime = sysTimeShort; } 
+                    else { if (!newStopTime) newStopTime = sysTimeShort; }
                 }
 
                 if(oldData.pressure != newPressure) changesDetails.push(`الضغط: ${oldData.pressure} -> ${newPressure}`);
@@ -1154,25 +1196,19 @@
                 if(oldData.startTime != newStartTime) changesDetails.push(`تشغيل: ${oldData.startTime||'-'} -> ${newStartTime}`);
                 if(oldData.stopTime != newStopTime) changesDetails.push(`إيقاف: ${oldData.stopTime||'-'} -> ${newStopTime}`);
                 const changesString = changesDetails.length > 0 ? changesDetails.join(', ') : "تحديث دوري";
-
                 const updates = {
                     pressure: newPressure, waterFlow: newFlow, voltage: newVoltage,
                     systemMode: newMode, operatorName: newOperator, comments: newComments,
                     lastUpdate: stationFullDateTime, 
-                    startTime: newStartTime, 
-                    stopTime: newStopTime,
-                    activePumps: activeCount,
+                    startTime: newStartTime, stopTime: newStopTime, activePumps: activeCount,
                     status: currentStatus, 
-                    currentFault: finalFault,
-                    fault1Desc: finalFaultDesc,
-                    secondaryFault: finalFaultSec,
-                    fault2Desc: finalFaultSecDesc,
+                    currentFault: finalFault, fault1Desc: finalFaultDesc,
+                    secondaryFault: finalFaultSec, fault2Desc: finalFaultSecDesc,
                     faultStartTime: faultStartTime,
                     pumps: updatedPumps
                 };
 
                 db.ref('stations/' + sName).update(updates).then(() => {
-                    // History Record
                     const log = { date: updateDate, time: updateTime, station: sName, operator: newOperator, details: changesString };
                     if (appData.operationHistory.length >= 20000) {
                         db.ref('history').orderByKey().limitToFirst(1).once('child_added', (snapshot) => { snapshot.ref.remove(); });
@@ -1183,8 +1219,7 @@
                         db.ref('faults_log').once('value').then(snap => {
                             let rawVal = snap.val();
                             let logs = [];
-                            if (rawVal) { 
-                                if (Array.isArray(rawVal)) logs = rawVal; else logs = Object.values(rawVal); }
+                            if (rawVal) { if (Array.isArray(rawVal)) logs = rawVal; else logs = Object.values(rawVal); }
                             newFaultEntries.forEach(newF => {
                                 const exists = logs.some(existingF => existingF.active === true && existingF.station === newF.station && existingF.type === newF.type);
                                 if (!exists) logs.unshift(newF);
@@ -1194,9 +1229,7 @@
                                 if (index !== -1) { 
                                     logs[index].active = false;
                                     logs[index].endTime = stationFullDateTime;
-                                } else { 
-                                    logs.unshift(rf);
-                                }
+                                } else { logs.unshift(rf); }
                             });
                             if (logs.length > 20000) logs = logs.slice(0, 20000);
                             db.ref('faults_log').set(logs);
@@ -1216,6 +1249,224 @@
                 alert("حدث خطأ برمجي: " + e.message);
             }
         }
+
+        // --- MOBILE OPTIMIZED INSPECTION LOGIC (V1.9) ---
+        function renderInspection(mode = 'view') {
+            const container = document.getElementById('inspection-container');
+            container.innerHTML = '';
+            
+            const sName = appData.currentStation;
+            const sData = appData.stations[sName];
+            if(!sData) return;
+            
+            const insData = sData.inspectionData || {};
+            const isEdit = (mode === 'edit');
+            const saveBtn = document.getElementById('inspection-actions');
+            saveBtn.style.display = isEdit ? 'block' : 'none';
+
+            Object.keys(inspectionSchema).forEach((key, sectionIndex) => {
+                const schema = inspectionSchema[key];
+                
+                // --- 1. Main Section Container ---
+                const sectionDiv = document.createElement('div');
+                sectionDiv.className = 'section-accordion';
+                
+                let title = schema.title;
+                if (key === 'pumps') {
+                    const totalPumps = sData.pumps ? sData.pumps.length : 4;
+                    title += ` (${totalPumps})`;
+                }
+                
+                // --- Header Logic (V1.9) ---
+                const headerDiv = document.createElement('div');
+                
+                if (isEdit) {
+                    // Static Header (No Arrow, Not Clickable)
+                    headerDiv.className = 'section-header-static';
+                    headerDiv.innerHTML = `<span>${title}</span>`;
+                } else {
+                    // Accordion Header (Arrow, Clickable)
+                    headerDiv.className = 'section-accordion-header';
+                    headerDiv.innerHTML = `<span>${title}</span> <span class="arrow">▼</span>`;
+                    headerDiv.onclick = function() {
+                        const body = this.nextElementSibling;
+                        body.classList.toggle('open');
+                        this.classList.toggle('active');
+                    };
+                }
+
+                // --- Body Logic (V1.9) ---
+                const bodyDiv = document.createElement('div');
+                // Use a static class for Edit so it's always open via CSS, else use accordion class
+                if (isEdit) {
+                    bodyDiv.className = 'section-body-static'; 
+                } else {
+                    bodyDiv.className = 'section-accordion-body';
+                    bodyDiv.id = `section-body-${key}`;
+                }
+                
+                // --- 2. Content Generation ---
+                if (key === 'pumps') {
+                    const totalPumps = sData.pumps ? sData.pumps.length : 4;
+                    const pumpsInsData = insData.pumps || {};
+                    
+                    for (let i = 1; i <= totalPumps; i++) {
+                        const pData = pumpsInsData[i] || {};
+                        
+                        let headerClass = 'pump-header-green';
+                        let icon = '✅';
+                        
+                        // New Color Logic (V1.9)
+                        // Critical Indices in Schema: 0,1,2,5,8,10,11,12
+                        const criticalIndices = [0, 1, 2, 5, 8, 10, 11, 12];
+                        let isRed = false;
+                        let isYellow = false;
+                        
+                        schema.items.forEach((item, idx) => {
+                            const status = pData[idx] ? pData[idx].status : 'efficient';
+                            // Logic:
+                            // RED: if Critical is Broken OR None
+                            if (criticalIndices.includes(idx)) {
+                                if (status === 'broken' || status === 'none') {
+                                    isRed = true;
+                                }
+                            }
+                            
+                            // YELLOW: if any part is Fault, OR non-critical is Broken/None
+                            if (status === 'fault') isYellow = true;
+                            if (!criticalIndices.includes(idx)) {
+                                if (status === 'broken' || status === 'none') isYellow = true;
+                            }
+                        });
+
+                        if (isRed) { headerClass = 'pump-header-red'; icon = '🛑'; }
+                        else if (isYellow) { headerClass = 'pump-header-yellow'; icon = '⚠️'; }
+
+                        const pumpItemDiv = document.createElement('div');
+                        pumpItemDiv.className = 'pump-accordion-item';
+
+                        const pumpHeaderDiv = document.createElement('div');
+                        pumpHeaderDiv.className = `pump-accordion-header ${headerClass}`;
+                        pumpHeaderDiv.innerHTML = `<span>مضخة رقم ${i}</span> <span class="icon-state">${icon}</span>`;
+                        pumpHeaderDiv.onclick = (e) => {
+                            e.stopPropagation(); 
+                            togglePumpAccordion(i);
+                        };
+
+                        const pumpBodyDiv = document.createElement('div');
+                        pumpBodyDiv.className = 'pump-accordion-body';
+                        pumpBodyDiv.id = `pump-body-${i}`;
+
+                        schema.items.forEach((item, idx) => {
+                             pumpBodyDiv.appendChild(createInspectionRow(idx, item, pData[idx] || {}, `pumps_${i}`, isEdit));
+                        });
+
+                        pumpItemDiv.appendChild(pumpHeaderDiv);
+                        pumpItemDiv.appendChild(pumpBodyDiv);
+                        bodyDiv.appendChild(pumpItemDiv);
+                    }
+
+                } else {
+                    const sectionData = insData[key] || {};
+                    schema.items.forEach((item, idx) => {
+                        bodyDiv.appendChild(createInspectionRow(idx, item, sectionData[idx] || {}, key, isEdit));
+                    });
+                }
+
+                sectionDiv.appendChild(headerDiv);
+                sectionDiv.appendChild(bodyDiv);
+                container.appendChild(sectionDiv);
+            });
+        }
+
+        function createInspectionRow(itemKey, label, dataObj, prefix, isEdit) {
+            const row = document.createElement('div');
+            row.className = 'inspection-row';
+            
+            const savedStatus = dataObj && dataObj.status ? dataObj.status : 'efficient';
+            const savedDesc = dataObj && dataObj.desc ? dataObj.desc : '';
+            const inputId = `${prefix}_${itemKey}`;
+            
+            let optionsHtml = '';
+            statusOptions.forEach(opt => {
+                const isSel = savedStatus === opt.val ? 'selected' : '';
+                optionsHtml += `<option value="${opt.val}" ${isSel}>${opt.text}</option>`;
+            });
+
+            let selectHtml = `
+                <select class="inspection-status-select ${savedStatus}" id="stat_${inputId}" ${isEdit ? '' : 'disabled'} onchange="updateInspectionColor(this)">
+                    ${optionsHtml}
+                </select>
+            `;
+            let descHtml = `<input type="text" class="inspection-desc-input" id="desc_${inputId}" value="${savedDesc}" placeholder="ملاحظات..." ${isEdit ? '' : 'readonly'}>`;
+            
+            row.innerHTML = `<div class="inspection-label">${label}</div><div>${selectHtml}</div><div>${descHtml}</div>`;
+            return row;
+        }
+
+        window.togglePumpAccordion = (id) => {
+            const target = document.getElementById(`pump-body-${id}`);
+            const allPumpBodies = document.querySelectorAll('.pump-accordion-body');
+            allPumpBodies.forEach(b => { if(b !== target) b.classList.remove('open'); });
+            target.classList.toggle('open');
+        };
+
+        window.updateInspectionColor = (selectElem) => {
+            selectElem.classList.remove('efficient', 'fault', 'broken', 'none');
+            selectElem.classList.add(selectElem.value);
+        };
+
+        // SAVE INSPECTION
+        document.getElementById('save-inspection-btn').addEventListener('click', () => {
+            const sName = appData.currentStation;
+            if(!sName) return;
+
+            const oldInsData = (appData.stations[sName].inspectionData) || {};
+            let newInsData = JSON.parse(JSON.stringify(oldInsData));
+
+            Object.keys(inspectionSchema).forEach(key => {
+                if (key === 'pumps') return; 
+                if (!newInsData[key]) newInsData[key] = {};
+                inspectionSchema[key].items.forEach((item, idx) => {
+                    const statEl = document.getElementById(`stat_${key}_${idx}`);
+                    const descEl = document.getElementById(`desc_${key}_${idx}`);
+                    if (statEl) { newInsData[key][idx] = { status: statEl.value, desc: descEl.value }; }
+                });
+            });
+
+            if (!newInsData.pumps) newInsData.pumps = {};
+            const totalPumps = appData.stations[sName].pumps ? appData.stations[sName].pumps.length : 4;
+            for(let i=1; i<=totalPumps; i++) {
+                if (!newInsData.pumps[i]) newInsData.pumps[i] = {};
+                inspectionSchema.pumps.items.forEach((item, idx) => {
+                    const prefix = `pumps_${i}`;
+                    const statEl = document.getElementById(`stat_${prefix}_${idx}`);
+                    const descEl = document.getElementById(`desc_${prefix}_${idx}`);
+                    if (statEl) { newInsData.pumps[i][idx] = { status: statEl.value, desc: descEl.value }; }
+                });
+            }
+
+            db.ref(`stations/${sName}/inspectionData`).update(newInsData).then(() => {
+                alert("تم حفظ بيانات الفحص بنجاح ✅");
+                renderInspection('edit'); 
+                const nowStd = getStandardDateTime();
+                const log = { date: nowStd.date, time: nowStd.time, station: sName, operator: appData.currentUser.username, details: `تحديث سجل الفحص الشامل` };
+                db.ref('history').push(log);
+            });
+        });
+
+        // Navigation for Inspection
+        document.getElementById('view-inspection-btn').addEventListener('click', () => {
+            renderInspection('view');
+            document.getElementById('inspection-title').textContent = `نتائج الفحص: ${appData.stations[appData.currentStation].name}`;
+            showScreen('inspection');
+        });
+        document.getElementById('edit-inspection-btn').addEventListener('click', () => {
+             renderInspection('edit');
+             document.getElementById('inspection-title').textContent = `تعديل الفحص: ${appData.stations[appData.currentStation].name}`;
+             showScreen('inspection');
+        });
+        document.getElementById('back-from-inspection').addEventListener('click', () => { showStationDetails(appData.currentStation); });
 
         // --- FAULT LOG SCREEN & FILTERING ---
         document.getElementById('alarm-btn').addEventListener('click', () => { showScreen('faults-log'); });
@@ -1291,7 +1542,6 @@
                 if (f.type === 'انقطاع الاتصال SCADA') style = 'color: #f39c12;';
                 activeBody.innerHTML += `<tr><td><b>${f.station}</b></td><td style="${style} font-weight:bold;">${icon} ${f.type}</td><td>${f.startTime}</td><td>مستمر...</td></tr>`;
             });
-
             const filterVal = filterSelect.value;
             let filteredPast = pastFaults;
             if (filterVal !== 'all') { filteredPast = pastFaults.filter(f => f.station === filterVal); }
@@ -1309,158 +1559,23 @@
                 if (filteredPast.length > appData.faultsLimit) {
                     loadMoreBtn.style.display = 'inline-block';
                     const remaining = filteredPast.length - appData.faultsLimit;
-                    statusText.textContent = `يتم عرض ${faultsToShow.length} من أصل ${filteredPast.length} عطل مؤرشف (متبقي ${remaining})`;
+                    statusText.textContent = `يتم عرض ${dataToShow.length} من أصل ${filteredPast.length} عطل مؤرشف (متبقي ${remaining})`;
                 } else {
                     loadMoreBtn.style.display = 'none';
                     statusText.textContent = `تم عرض كافة الأرشيف المحدد (${filteredPast.length})`;
                 }
             }
         };
-
-        // --- USERS MANAGEMENT ---
-        document.getElementById('users-management-btn').addEventListener('click', () => { renderUsersManagement(); showScreen('users'); });
-        function renderUsersManagement() {
-            const tbody = document.getElementById('users-table-body');
-            const searchValue = document.getElementById('search-user-input') ? document.getElementById('search-user-input').value.toLowerCase() : '';
-            tbody.innerHTML = '';
-            Object.values(appData.users).forEach(u => {
-                if (!u.username.toLowerCase().includes(searchValue)) return;
-                let showDeleteBtn = false;
-                const currentUserType = appData.currentUser.type;
-                const showPassword = currentUserType === 'admin';
-                if (u.username === appData.currentUser.username) showDeleteBtn = false; 
-                else if (currentUserType === 'admin') showDeleteBtn = true; 
-                else if (currentUserType === 'supervisor' && u.type === 'operator') showDeleteBtn = true; 
-                else if (currentUserType === 'engineer' && (u.type === 'operator' || u.type === 'supervisor')) showDeleteBtn = true; 
-                tbody.innerHTML += `<tr><td>${u.username}</td><td>${appData.userTypes[u.type].name}</td><td style="font-family: monospace;">${showPassword ? u.password : '******'}</td><td>${u.active ? 'نشط' : 'x'}</td><td>${showDeleteBtn ? `<button class="btn btn-danger" style="padding:2px 5px;" onclick="deleteUser('${u.username}')">حذف</button>` : ''}</td></tr>`;
-            });
-        }
-        window.deleteUser = (u) => { if(confirm('هل أنت متأكد من حذف المستخدم؟')) db.ref('users/' + u).remove(); };
-        document.getElementById('add-user-btn').addEventListener('click', () => {
-            document.getElementById('user-form-container').style.display = 'block';
-            const typeSelect = document.getElementById('new-user-type');
-            const currentUserType = appData.currentUser.type;
-            typeSelect.innerHTML = ''; 
-            const allOptions = [{ val: 'operator', text: 'مشغل' }, { val: 'supervisor', text: 'مشرف' }, { val: 'engineer', text: 'مهندس' }, { val: 'admin', text: 'مدير' }];
-            allOptions.forEach(opt => {
-                if (currentUserType === 'admin') typeSelect.innerHTML += `<option value="${opt.val}">${opt.text}</option>`;
-                else if (currentUserType === 'engineer') { if (opt.val === 'operator' || opt.val === 'supervisor') typeSelect.innerHTML += `<option value="${opt.val}">${opt.text}</option>`; }
-                else if (currentUserType === 'supervisor') { if (opt.val === 'operator') typeSelect.innerHTML += `<option value="${opt.val}">${opt.text}</option>`; }
-            });
-        });
-        document.getElementById('cancel-user-btn').addEventListener('click', () => document.getElementById('user-form-container').style.display = 'none');
-        document.getElementById('save-user-btn').addEventListener('click', () => {
-            const u = document.getElementById('new-username').value, p = document.getElementById('new-password').value, t = document.getElementById('new-user-type').value;
-            if(!u || !p) return alert('بيانات ناقصة');
-            if(appData.users[u]) return alert('موجود');
-            db.ref('users/' + u).set({ username: u, password: p, type: t, active: true });
-            document.getElementById('user-form-container').style.display = 'none';
-        });
-
-        // --- HISTORY SCREEN ---
-        document.getElementById('history-management-btn').addEventListener('click', () => { populateHistoryFilters(); renderHistoryTable(true); showScreen('history'); });
-        function populateHistoryFilters() {
-            const zoneSelect = document.getElementById('filter-zone');
-            zoneSelect.innerHTML = '<option value="all">كل المناطق</option>';
-            appData.zones.forEach(z => zoneSelect.innerHTML += `<option value="${z}">${z}</option>`);
-            updateStationFilter();
-        }
-        window.updateStationFilter = () => {
-            const zone = document.getElementById('filter-zone').value;
-            const stationSelect = document.getElementById('filter-station');
-            stationSelect.innerHTML = '<option value="all">كل المحطات</option>';
-            const allStations = Object.values(appData.stations);
-            const stationsToShow = zone === 'all' ? allStations : allStations.filter(s => s.zone === zone);
-            stationsToShow.sort((a,b) => a.name.localeCompare(b.name)).forEach(s => {
-                stationSelect.innerHTML += `<option value="${s.name}">${s.name}</option>`;
-            });
-        };
-
-        // --- FIXED DATE PARSER ---
-        function parseLogDate(dateStr) {
-            if (!dateStr) return null;
-            // Handle English digits conversion just in case
-            dateStr = toEnglishDigits(dateStr);
-            const parts = dateStr.split('/');
-            if (parts.length === 3) {
-                // new Date(Year, MonthIndex, Day)
-                return new Date(parts[2], parts[1] - 1, parts[0]);
-            }
-            return null;
-        }
-
-        document.getElementById('load-more-history-btn').addEventListener('click', () => {
-            appData.historyLimit += 100;
-            renderHistoryTable(false);
-        });
-        window.renderHistoryTable = (reset = false) => {
-            const tbody = document.getElementById('history-table-body');
-            const loadMoreBtn = document.getElementById('load-more-history-btn');
-            const statusText = document.getElementById('history-status-text');
-
-            if (reset) { appData.historyLimit = 100; tbody.innerHTML = ''; } 
-            else { tbody.innerHTML = ''; }
-
-            const fZone = document.getElementById('filter-zone').value;
-            const fStation = document.getElementById('filter-station').value;
-            const fDateFromInput = document.getElementById('filter-date-from').value; // YYYY-MM-DD
-            const fDateToInput = document.getElementById('filter-date-to').value; // YYYY-MM-DD
-            
-            // Convert inputs to Date objects at Midnight
-            const fDateFrom = fDateFromInput ? new Date(fDateFromInput) : null;
-            if(fDateFrom) fDateFrom.setHours(0,0,0,0);
-            
-            const fDateTo = fDateToInput ? new Date(fDateToInput) : null;
-            if(fDateTo) fDateTo.setHours(0,0,0,0);
-
-            const filtered = appData.operationHistory.filter(h => {
-                let valid = true;
-                if(fStation !== 'all' && h.station !== fStation) valid = false;
-                if(fZone !== 'all') { 
-                    const s = appData.stations[h.station]; 
-                    if(!s || s.zone !== fZone) valid = false; 
-                }
-                if(fDateFrom || fDateTo) {
-                    const rowDate = parseLogDate(h.date);
-                    if (rowDate) {
-                        rowDate.setHours(0,0,0,0);
-                        if(fDateFrom && rowDate < fDateFrom) valid = false;
-                        if(fDateTo && rowDate > fDateTo) valid = false;
-                    }
-                }
-                return valid;
-            });
-
-            const dataToShow = filtered.slice(0, appData.historyLimit);
-            if(dataToShow.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="4" style="text-align:center; padding:20px;">لا توجد سجلات مطابقة</td></tr>';
-                loadMoreBtn.style.display = 'none';
-                statusText.textContent = '';
-            } else {
-                dataToShow.forEach(h => { 
-                    tbody.innerHTML += `<tr><td>${h.date} <br> <small style='color:#666'>${h.time}</small></td><td>${h.station}</td><td>${h.operator}</td><td>${h.details}</td></tr>`; 
-                });
-                if (filtered.length > appData.historyLimit) {
-                    loadMoreBtn.style.display = 'inline-block';
-                    const remaining = filtered.length - appData.historyLimit;
-                    statusText.textContent = `يتم عرض ${dataToShow.length} من أصل ${filtered.length} سجل (متبقي ${remaining})`;
-                } else {
-                    loadMoreBtn.style.display = 'none';
-                    statusText.textContent = `تم عرض كافة السجلات (${filtered.length})`;
-                }
-            }
-        };
-
         // Navigation Back Buttons
         document.getElementById('back-to-stations').addEventListener('click', () => { showScreen('stations'); });
         document.getElementById('back-to-station').addEventListener('click', () => showStationDetails(appData.currentStation));
         document.getElementById('back-to-stations-from-users').addEventListener('click', () => showScreen('stations'));
         document.getElementById('back-to-stations-from-history').addEventListener('click', () => showScreen('stations'));
         document.getElementById('back-to-stations-from-faults').addEventListener('click', () => showScreen('stations'));
-
+        
         // Initial Load
         checkRememberedUser();
         loadSystemData();
     </script>
 </body>
-    </html>
+</html>
