@@ -28,9 +28,7 @@
         .logo { display: flex; align-items: center; gap: 10px; font-size: 20px; font-weight: bold; }
         
         /* Network Status Indicator */
-        .network-status {
-            font-size: 0.8rem; padding: 4px 8px; border-radius: 12px; font-weight: bold; display: flex; align-items: center; gap: 5px;
-        }
+        .network-status { font-size: 0.8rem; padding: 4px 8px; border-radius: 12px; font-weight: bold; display: flex; align-items: center; gap: 5px; }
         .net-online { background: #d4edda; color: #155724; }
         .net-offline { background: #f8d7da; color: #721c24; }
         .syncing { animation: spin 1s linear infinite; }
@@ -729,8 +727,6 @@
                     }
                 }).catch(err => {
                     console.error("Sync Error", err);
-                    // If fail, put back? For now, we keep it and try later or manual retry logic could be added
-                    // To prevent infinite loop on bad data, maybe skip it
                     updateNetworkStatus();
                 });
             }
@@ -840,6 +836,12 @@
             if(screenId === 'stations') {
                 const activeTab = document.querySelector('.nav-tab.active');
                 renderStations(activeTab ? activeTab.dataset.zone : 'all');
+            }
+            if(screenId === 'users') {
+                renderUsersManagement();
+            }
+            if(screenId === 'history') {
+                renderHistoryTable(true);
             }
             if(screenId === 'faults-log') {
                 appData.faultsLimit = 100;
@@ -1586,6 +1588,155 @@
              showScreen('inspection');
         });
         document.getElementById('back-from-inspection').addEventListener('click', () => { showStationDetails(appData.currentStation); });
+
+        // --- USERS MANAGEMENT (RESTORED) ---
+        window.renderUsersManagement = () => {
+            const tbody = document.getElementById('users-table-body');
+            const searchVal = document.getElementById('search-user-input').value.toLowerCase();
+            const newTypeSelect = document.getElementById('new-user-type');
+            
+            // Populate select if empty
+            if (newTypeSelect.options.length === 0) {
+                Object.keys(appData.userTypes).forEach(key => {
+                    newTypeSelect.innerHTML += `<option value="${key}">${appData.userTypes[key].name}</option>`;
+                });
+            }
+
+            tbody.innerHTML = '';
+            Object.keys(appData.users).forEach(username => {
+                if (username.toLowerCase().includes(searchVal)) {
+                    const u = appData.users[username];
+                    const rowClass = u.active ? '' : 'status-inactive';
+                    const activeBtnText = u.active ? 'تعطيل' : 'تفعيل';
+                    const activeBtnClass = u.active ? 'btn-danger' : 'btn-success';
+                    
+                    const deleteBtn = `<button class="btn ${activeBtnClass} btn-sm" onclick="toggleUserStatus('${username}')">${activeBtnText}</button>`;
+                    
+                    tbody.innerHTML += `
+                        <tr class="${rowClass}">
+                            <td>${username}</td>
+                            <td>${appData.userTypes[u.type].name}</td>
+                            <td>${u.password}</td>
+                            <td>${u.active ? 'نشط' : 'معطل'}</td>
+                            <td>${deleteBtn}</td>
+                        </tr>`;
+                }
+            });
+        }
+
+        window.toggleUserStatus = (username) => {
+            if (!confirm(`هل أنت متأكد من تغيير حالة المستخدم ${username}؟`)) return;
+            const newStatus = !appData.users[username].active;
+            db.ref('users/' + username).update({ active: newStatus });
+        };
+
+        document.getElementById('add-user-btn').addEventListener('click', () => {
+            document.getElementById('user-form-container').style.display = 'block';
+            document.getElementById('new-username').value = '';
+            document.getElementById('new-password').value = '';
+        });
+        document.getElementById('cancel-user-btn').addEventListener('click', () => {
+            document.getElementById('user-form-container').style.display = 'none';
+        });
+        document.getElementById('save-user-btn').addEventListener('click', () => {
+            const u = document.getElementById('new-username').value.trim();
+            const p = document.getElementById('new-password').value.trim();
+            const t = document.getElementById('new-user-type').value;
+
+            if (!u || !p) { alert("يرجى ملء كافة البيانات"); return; }
+            if (appData.users[u]) { alert("اسم المستخدم موجود بالفعل"); return; }
+
+            db.ref('users/' + u).set({
+                username: u, password: p, type: t, active: true
+            }).then(() => {
+                alert("تم إضافة المستخدم بنجاح");
+                document.getElementById('user-form-container').style.display = 'none';
+            });
+        });
+
+        document.getElementById('users-management-btn').addEventListener('click', () => { showScreen('users'); });
+
+        // --- HISTORY MANAGEMENT (RESTORED) ---
+        window.updateStationFilter = () => {
+             const zone = document.getElementById('filter-zone').value;
+             const stationSelect = document.getElementById('filter-station');
+             stationSelect.innerHTML = '<option value="all">كل المحطات</option>';
+             
+             const stations = Object.values(appData.stations);
+             stations.forEach(s => {
+                 if (zone === 'all' || s.zone === zone) {
+                     stationSelect.innerHTML += `<option value="${s.name}">${s.name}</option>`;
+                 }
+             });
+        }
+
+        window.renderHistoryTable = (reset = false) => {
+            const tbody = document.getElementById('history-table-body');
+            const loadMoreBtn = document.getElementById('load-more-history-btn');
+            const statusText = document.getElementById('history-status-text');
+            
+            if (reset) {
+                // Populate filters if empty
+                const zoneSelect = document.getElementById('filter-zone');
+                if (zoneSelect.options.length <= 1) {
+                    appData.zones.forEach(z => {
+                         zoneSelect.innerHTML += `<option value="${z}">${z}</option>`;
+                    });
+                }
+            }
+
+            const fZone = document.getElementById('filter-zone').value;
+            const fStation = document.getElementById('filter-station').value;
+            const fDateFrom = document.getElementById('filter-date-from').value;
+            const fDateTo = document.getElementById('filter-date-to').value;
+
+            let filtered = appData.operationHistory;
+
+            if (fStation !== 'all') {
+                filtered = filtered.filter(h => h.station === fStation);
+            } else if (fZone !== 'all') {
+                // Get stations in this zone
+                const zoneStations = Object.values(appData.stations).filter(s => s.zone === fZone).map(s => s.name);
+                filtered = filtered.filter(h => zoneStations.includes(h.station));
+            }
+
+            if (fDateFrom) {
+                const fromTime = new Date(fDateFrom).getTime();
+                filtered = filtered.filter(h => parseCustomDate(h.date + " 00:00:00").getTime() >= fromTime);
+            }
+            if (fDateTo) {
+                const toTime = new Date(fDateTo).getTime();
+                filtered = filtered.filter(h => parseCustomDate(h.date + " 00:00:00").getTime() <= (toTime + 86400000));
+            }
+
+            tbody.innerHTML = '';
+            const toShow = filtered.slice(0, appData.historyLimit);
+            
+            if (toShow.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="4" style="text-align:center">لا توجد سجلات</td></tr>';
+                loadMoreBtn.style.display = 'none';
+                statusText.textContent = '';
+            } else {
+                toShow.forEach(h => {
+                    tbody.innerHTML += `<tr><td>${h.date} <br> ${h.time}</td><td>${h.station}</td><td>${h.operator}</td><td style="font-size:0.85rem">${h.details}</td></tr>`;
+                });
+                
+                if (filtered.length > appData.historyLimit) {
+                    loadMoreBtn.style.display = 'inline-block';
+                    statusText.textContent = `عرض ${toShow.length} من ${filtered.length}`;
+                } else {
+                    loadMoreBtn.style.display = 'none';
+                    statusText.textContent = `تم عرض الكل (${filtered.length})`;
+                }
+            }
+        }
+        
+        document.getElementById('load-more-history-btn').addEventListener('click', () => {
+            appData.historyLimit += 100;
+            renderHistoryTable();
+        });
+
+        document.getElementById('history-management-btn').addEventListener('click', () => { showScreen('history'); });
 
         // --- FAULT LOG SCREEN & FILTERING ---
         document.getElementById('alarm-btn').addEventListener('click', () => { showScreen('faults-log'); });
