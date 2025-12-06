@@ -363,26 +363,22 @@ padding: 6px; margin-top: 5px; border-radius: 4px; text-align: center; }
                     <i>💧</i> <span>نظام المياه الذكي (Toshka)</span>
                 </div>
              
-
    <div id="network-status-indicator" class="network-status net-online">
                     <span id="net-icon">🟢</span> <span id="net-text">متصل</span>
                 </div>
                 <div class="user-info" id="header-user-info">
                     <button id="alarm-btn" class="alarm-btn" title="سجل الأعطال">
              
-
            🔔
                         <span id="alarm-count" class="alarm-count" style="display:none">0</span>
                     </button>
                     <div class="user-badge" id="current-user">مرحباً</div>
                     
 
-
                     <button id="users-management-btn" class="btn btn-warning" style="display: none;">المستخدمين</button>
                     <button id="consumptions-btn" class="btn btn-consumption" style="display: none;">⚡ الاستهلاكات</button>
                     <button id="history-management-btn" class="btn btn-info" style="display: none;">السجل العام</button>
                     <button id="logout-btn" class="btn 
-
 btn-danger">خروج</button>
                 </div>
             </div>
@@ -401,21 +397,18 @@ btn-danger">خروج</button>
                 <div class="form-group">
                     <label>اسم المستخدم</label>
        
-
              <input type="text" id="username" placeholder="admin">
                 </div>
                 <div class="form-group">
                     <label>كلمة المرور</label>
                     <div class="password-container">
          
-
                <input type="password" id="password" placeholder="admin123">
                         <span class="toggle-password" id="toggle-password-icon">👁️</span>
                     </div>
                 </div>
                 <div class="checkbox-group">
    
-
                  <input type="checkbox" id="remember-me">
                     <label for="remember-me">تذكرني</label>
                 </div>
@@ -429,7 +422,6 @@ color: #fff; cursor: not-allowed;" disabled>جاري الاتصال بالنظا
             <div id="ticker-container" class="ticker-container">
                 <div class="ticker-label">⚠️</div>
               
-
   <div class="ticker-text-wrap">
                     <div id="ticker-content" class="ticker"></div>
                 </div>
@@ -438,7 +430,6 @@ color: #fff; cursor: not-allowed;" disabled>جاري الاتصال بالنظا
             <div class="dashboard-stats">
                 <div class="stat-card"><div class="stat-label">الإجمالي</div><div class="stat-value" id="total-stations">0</div></div>
               
-
   <div class="stat-card"><div class="stat-label">النشطة</div><div class="stat-value" id="active-stations">0</div></div>
                 <div class="stat-card"><div class="stat-label">المتوقفة</div><div class="stat-value" id="inactive-stations">0</div></div>
             </div>
@@ -471,14 +462,12 @@ margin: 0;"></ul>
                 <div class="detail-card"><div class="detail-title">المشغل</div><div class="detail-value operator-highlight" id="operator-name-value">-</div></div>
                 <div class="detail-card"><div class="detail-title">الجهد الكهربي (V)</div><div class="detail-value" id="voltage-value">-</div></div>
          
-
        <div class="detail-card"><div class="detail-title">الضغط (Bar)</div><div class="detail-value" id="station-pressure-value">-</div></div>
                 <div class="detail-card"><div class="detail-title">المضخات العاملة</div><div class="detail-value" id="active-pumps-value">-</div></div>
                 <div class="detail-card"><div class="detail-title">التدفق (L/Sec)</div><div class="detail-value" id="water-flow-value">-</div></div>
                 <div class="detail-card"><div class="detail-title">النظام</div><div class="detail-value" id="system-mode-value">-</div></div>
                 
           
-
       <div style="grid-column: 1 / -1; display: flex;
 gap: 10px;">
                     <div class="detail-card" style="flex: 1;"><div class="detail-title">وقت بدء التشغيل</div><div class="detail-value" id="start-time-value" style="color:var(--success-color);
@@ -499,21 +488,18 @@ min-width:140px; border-left: 3px solid var(--consumption-color);">
                             <div class="detail-value" id="view-cons-t1">-</div>
                         </div>
            
-
              <div class="detail-card" style="flex:1; min-width:140px;
 border-left: 3px solid var(--consumption-color);">
                             <div class="detail-title">محول 2 (KW)</div>
                             <div class="detail-value" id="view-cons-t2">-</div>
                         </div>
             
-
             <div class="detail-card" style="flex:1; min-width:140px;
 border-left: 3px solid var(--consumption-color);">
                             <div class="detail-title">مياه (M3)</div>
                             <div class="detail-value" id="view-cons-m3">-</div>
                         </div>
              
-
        </div>
                     <div style="text-align:left;
 font-size:0.8rem; color:#888; margin-top:5px;">تاريخ آخر تحديث للاستهلاك: <span id="view-cons-date">-</span></div>
@@ -534,7 +520,6 @@ font-size: 1rem;">-</div>
                 <table class="pumps-table">
                     <thead><tr><th>رقم</th><th>الحالة</th><th>سحب</th><th>طرد</th><th>تردد</th></tr></thead>
          
-
            <tbody id="pumps-table-body"></tbody>
                 </table>
             </div>
@@ -544,7 +529,6 @@ font-size: 1rem;">-</div>
         </div>
 
   
-
       <div id="operator-screen" class="screen">
             <h2>تحديث بيانات / إدارة الأعطال</h2>
             <h3 id="editing-station-name" style="text-align: center;
@@ -566,7 +550,6 @@ margin-bottom: 10px;">🛑 تنبيه: أعطال نشطة</h4>
                     <button id="btn-resolve-f1" class="btn btn-success btn-sm">✅ إصلاح</button>
                 </div>
             
-
     <div id="fault-row-2" class="fault-row-action" style="display:none;">
                     <div><span style="font-weight:bold;">عطل 2:</span> <span id="txt-fault-2"></span></div>
                     <button id="btn-resolve-f2" class="btn btn-success btn-sm">✅ إصلاح</button>
@@ -575,7 +558,6 @@ margin-bottom: 10px;">🛑 تنبيه: أعطال نشطة</h4>
 
             <div class="operator-form">
    
-
              <div class="form-section">
                     <h3>بيانات عامة</h3>
                     <div class="form-group"><label>المشغل الحالي</label><input type="text" id="operator-name" readonly style="background: #eee;"></div>
@@ -585,12 +567,10 @@ gap: 10px;">
                             <label>وقت التشغيل 🟢</label>
                             <input type="time" id="operator-start-time" style="direction: ltr;">
           
-
               </div>
                         <div class="form-group" style="flex: 1;">
                             <label>وقت الإيقاف 🔴</label>
                             <input 
-
 type="time" id="operator-stop-time" style="direction: ltr;">
                         </div>
                     </div>
@@ -598,19 +578,16 @@ type="time" id="operator-stop-time" style="direction: ltr;">
                     <div class="form-group"><label>الجهد الكهربي (V)</label><input type="number" id="operator-voltage"></div>
                     <div class="form-group"><label>الضغط (Bar)</label><input type="number" id="operator-pressure" step="0.1"></div>
    
-
                  <div class="form-group"><label>التدفق (L/Sec)</label><input type="number" id="operator-water-flow"></div>
                     <div class="form-group">
                         <label>النظام</label>
                         <select id="operator-system-mode">
          
-
                    <option value="SCADA">SCADA</option><option value="PLC">PLC</option><option value="MIMIC">MIMIC</option><option value="LCP">LCP</option><option value="Marshlling">Marshlling</option><option value="HMI">HMI</option>
                         </select>
                     </div>
                 </div>
                
-
 
                 <div class="form-section">
                     <h3>حالة المضخات</h3>
@@ -618,7 +595,6 @@ type="time" id="operator-stop-time" style="direction: ltr;">
                 </div>
                 
         
-
         <div class="form-section">
                     <div class="form-group" style="border: 2px dashed var(--danger-color);
 padding: 10px; border-radius: 6px; background: #fff5f5;">
@@ -629,26 +605,21 @@ margin-top:5px;">عطل رقم (1):</label>
                             <select id="fault-selector" style="border-color: var(--danger-color);">
                                 <option value="">-- المحطة تعمل بشكل طبيعي --</option>
                              
-
    <option value="انقطاع التيار الكهربي">انقطاع التيار الكهربي ⚡</option>
                                 <option value="انخفاض جهد">انخفاض جهد ⚡📉</option>
                                 <option value="ارتفاع جهد">ارتفاع جهد ⚡📈</option>
                    
-
              <option value="انخفاض منسوب">انخفاض منسوب 📉</option>
                                 <option value="توقف منظومة التحضير">توقف منظومة التحضير عن العمل ⚙️</option>
                                 <option value="انسدادات">انسدادات ▦</option>
          
-
                        <option value="تسريب مياه">تسريب مياه بالمحطة 💧</option>
                                 <option value="كسر في الشبكة">كسر في شبكة المياه 🛠️</option>
                                 <option 
-
 value="عجز تحقيق الضغط">عجز تحقيق الضغط 🔻</option>
                                 <option value="انقطاع الاتصال SCADA">انقطاع الاتصال SCADA 📡</option>
                             </select>
                             <input 
-
 type="text" id="fault-1-desc" placeholder="وصف العطل / ملاحظات..." class="desc-input">
 
                             <label style="font-size:0.9rem;
@@ -656,26 +627,21 @@ margin-top:10px;">عطل رقم (2):</label>
                             <select id="fault-selector-secondary" style="border-color: #e67e22;">
                                 <option value="">-- لا يوجد عطل آخر --</option>
                              
-
    <option value="انقطاع التيار الكهربي">انقطاع التيار الكهربي ⚡</option>
                                 <option value="انخفاض جهد">انخفاض جهد ⚡📉</option>
                                 <option value="ارتفاع جهد">ارتفاع جهد ⚡📈</option>
                    
-
              <option value="انخفاض منسوب">انخفاض منسوب 📉</option>
                                 <option value="توقف منظومة التحضير">توقف منظومة التحضير عن العمل ⚙️</option>
                                 <option value="انسدادات">انسدادات ▦</option>
          
-
                        <option value="تسريب مياه">تسريب مياه بالمحطة 💧</option>
                                 <option value="كسر في الشبكة">كسر في شبكة المياه 🛠️</option>
                                 <option 
-
 value="عجز تحقيق الضغط">عجز تحقيق الضغط 🔻</option>
                                 <option value="انقطاع الاتصال SCADA">انقطاع الاتصال SCADA 📡</option>
                             </select>
                             <input 
-
 type="text" id="fault-2-desc" placeholder="وصف العطل / ملاحظات..." class="desc-input">
                         </div>
                     </div>
@@ -689,24 +655,20 @@ gap: 10px; margin-bottom: 10px;">
                             <div style="flex:1">
                                 <label style="font-size: 0.9rem;">محول (1) KW</label>
                                 
-
 <input type="number" id="cons-trans-1" placeholder="KW">
                             </div>
                             <div style="flex:1">
                                 <label style="font-size: 0.9rem;">محول (2) KW</label>
     
-
                             <input type="number" id="cons-trans-2" placeholder="KW">
                             </div>
                         </div>
                  
-
        <div style="margin-bottom: 10px;">
                             <label style="font-size: 0.9rem;">المنصرف من المياه (M3)</label>
                             <input type="number" id="cons-water-m3" placeholder="متر مكعب">
                         </div>
   
-
                   </div>
 
                     <div class="form-group"><label>ملاحظات عامة</label><textarea id="operator-comments" rows="3"></textarea></div>
@@ -714,7 +676,6 @@ gap: 10px; margin-bottom: 10px;">
                 </div>
             </div>
    
-
      </div>
 
         <div id="inspection-screen" class="screen">
@@ -752,19 +713,16 @@ align-items:flex-end; gap:5px;">
             </div>
             
         
-
     <div class="table-responsive">
                 <table class="history-table" id="consumptions-table-export">
                     <thead>
                         <tr>
                             <th>المحطة</th>
      
-
                        <th>استهلاك محول 1 (KW)</th>
                             <th>استهلاك محول 2 (KW)</th>
                             <th>استهلاك مياه (M3)</th>
              
-
            </tr>
                     </thead>
                     <tbody id="consumptions-table-body"></tbody>
@@ -774,7 +732,6 @@ align-items:flex-end; gap:5px;">
 
         <div id="faults-log-screen" class="screen">
   
-
           <h2 style="color: var(--danger-color);">سجل الأعطال</h2>
             <div style="display:flex;
 justify-content:space-between; align-items:center;">
@@ -785,13 +742,11 @@ justify-content:space-between; align-items:center;">
                 <h3 style="margin-bottom:10px;">الأعطال النشطة حالياً</h3>
                 <div class="table-responsive">
        
-
              <table class="faults-table">
                         <thead><tr><th>المحطة</th><th>العطل</th><th>وقت البدء</th><th>المدة</th></tr></thead>
                         <tbody id="active-faults-body"></tbody>
                     </table>
                 
-
 </div>
                 
                 <h3 style="margin-bottom:10px;
@@ -809,14 +764,12 @@ max-width:300px;" onchange="appData.faultsLimit=100; renderFaultsLog();">
 
                 <div class="table-responsive">
                 
-
     <table class="faults-table">
                         <thead><tr><th>المحطة</th><th>العطل</th><th>وقت البدء</th><th>وقت الإصلاح</th><th>الحالة</th></tr></thead>
                         <tbody id="history-faults-body"></tbody>
                     </table>
                 </div>
         
-
 
                 <div class="pagination-controls">
                     <p id="faults-status-text" class="status-text"></p>
@@ -844,7 +797,6 @@ color: var(--secondary-color);">مستخدم جديد</h4>
                     <select id="new-user-type"></select>
                 </div>
   
-
               <div style="display:flex;
 gap:10px;">
                     <button id="save-user-btn" class="btn btn-success" style="flex:1">حفظ</button>
@@ -861,7 +813,6 @@ padding: 10px; border: 1px solid #ddd; border-radius: 6px;">
                     <thead><tr><th>الاسم</th><th>النوع</th><th>كلمة المرور</th><th>الحالة</th><th>إجراء</th></tr></thead>
                     <tbody id="users-table-body"></tbody>
          
-
        </table>
             </div>
         </div>
@@ -878,7 +829,6 @@ grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));">
                 <div class="filter-item"><label>إلى تاريخ</label><input type="date" id="filter-date-to"></div>
                 
 
-
                 <div class="filter-item" style="display:flex;
 align-items:flex-end;">
                     <button class="btn btn-primary" onclick="renderHistoryTable(true)" style="width:100%">بحث وتصفية</button>
@@ -888,7 +838,6 @@ align-items:flex-end;">
             <div class="table-responsive">
                 <table class="history-table">
      
-
                <thead><tr><th style="width:15%">التاريخ والوقت</th><th style="width:15%">المحطة</th><th style="width:15%">المشغل</th><th>تفاصيل</th></tr></thead>
                     <tbody id="history-table-body"></tbody>
                 </table>
@@ -897,7 +846,6 @@ align-items:flex-end;">
             <div class="pagination-controls">
                 <p id="history-status-text" class="status-text"></p>
  
-
                <button id="load-more-history-btn" class="btn btn-primary" style="display: none;
 width: 200px; margin: 0 auto;">⬇️ عرض 100 سجل إضافي</button>
             </div>
@@ -913,7 +861,6 @@ width: 200px; margin: 0 auto;">⬇️ عرض 100 سجل إضافي</button>
             apiKey: "AIzaSyAJiiq8qdeRFZkaHnEew-6sisbCRaypJQ8",
             authDomain: "toshka-4db86.firebaseapp.com",
     
-
         databaseURL: "https://toshka-4db86-default-rtdb.firebaseio.com",
             projectId: "toshka-4db86",
             storageBucket: "toshka-4db86.firebasestorage.app",
@@ -924,13 +871,11 @@ width: 200px; margin: 0 auto;">⬇️ عرض 100 سجل إضافي</button>
         const db = firebase.database();
 
         
-
 const faultIcons = {
             "انقطاع التيار الكهربي": "⚡", "انخفاض جهد": "⚡📉", "ارتفاع جهد": "⚡📈",
             "انخفاض منسوب": "📉", "توقف منظومة التحضير": "⚙️", "انسدادات": "▦", 
             "تسريب مياه": "💧", "كسر في الشبكة": "🛠️", "عجز تحقيق الضغط": "🔻",
             "انقطاع الاتصال SCADA": `<svg viewBox="0 0 24 24" width="20" height="20" class="scada-icon-svg" style="color:#d32f2f;" fill="currentColor"><path d="M12 3C7.79 3 3.7 4.41 0.38 7L2.6 9.22C5.35 
-
 7.15 8.55 6 12 6C15.45 6 18.65 7.15 21.4 9.22L23.62 7C20.3 4.41 16.21 3 12 3Z" /><path d="M12 8C9.48 8 7.15 8.76 5.18 10.05L7.4 12.27C8.71 11.47 10.28 11 12 11C13.72 11 15.29 11.47 16.6 12.27L18.82 10.05C16.85 8.76 14.52 8 12 8Z" /><path d="M12 13L6 21H18L12 13ZM11 18H13V19.5H11V18ZM11 15.5H13V17.5H11V15.5Z" /></svg>`
         };
 const inspectionSchema = {
@@ -939,18 +884,15 @@ const inspectionSchema = {
                 title: "المضخات", isDynamic: true,
                 items: [
                  
-
    "محبس فراشه", "وصله فك و تركيب", "وصله مرنه", "عداد السحب", "حساس السحب", // Suction
                     "المضخه", // Pump
                     "عداد الطرد", "حساس الطرد", "وصله مرنه", "اير فينت", "محبس عدم رجوع", "وصله فك و تركيب", "محبس فراشه" // Discharge
                 ]
         
-
     },
             mainLine: { title: "خط الطرد الرئيسي", items: ["اير فينت", "محبس عدم رجوع", "وصله فك و تركيب 1", "الفلوميتر", "حساس ضغط", "عداد ضغط", "وصله فك و تركيب 2", "محبس فراشه", "محبس درين"] },
             waterHammer: { title: "منظومة الطرق المائي", items: ["كومبريسور1", "كومبريسور2", "كومبريسور3", "تانك 1", "تانك 2", "تانك 3", "لوحه كونترول"] },
             submersibles: { title: "الغواطس", items: ["طلمبة غاطس 1", "طلمبة غاطس 2"] 
-
 },
             ac: { title: "تكييفات المحطه", items: ["تكييف 1", "تكييف 2", "تكييف 3", "تكييف 4", "تكييف 5", "تكييف 6", "تكييف 7", "تكييف 8", "9-PLC", "10-PLC"] },
             ventilation: { title: "التهوية", items: ["غرفه المضخات", "غرفه محول 1", "غرفه محول 2", "غرفه رينج"] },
@@ -968,47 +910,38 @@ let appData = {
                 admin: { name: "مدير", permissions: ['view_all', 'edit_all', 'manage_users', 'add_users', 'view_history'] },
                 engineer: { name: "مهندس", permissions: ['view_all', 'edit_all', 'view_history', 'manage_users'] },
               
-
   supervisor: { name: "مشرف", permissions: ['view_all', 'edit_some', 'manage_users'] },
                 operator: { name: "مشغل", permissions: ['view_some', 'edit_own'] }
             },
             zones: ['Zone_A', 'Zone_B', 'Zone_C', 'Zone_D', 'Zone_E', 'Zone_F', 'Zone_G', 'Zone_H', 'Zone_I', 'Zone_J', 'Zone_K', 'Zone_L', 'Zone_O1', 'Zone_O2', 'Zone_O3', 'Zone_O4', 'Zone_O5', 'Zone_O2dashO6', 'Zone_O8', 'Zone_R', 'Zone_S'],
             operationHistory: [], faultsLog: [], consumptionLog: [],
      
-
        historyLimit: 100, faultsLimit: 100
         };
 const pumpsData = {
             'A01': 4, 'A02': 4, 'A04': 2, 'A06': 5, 'A07': 5, 'A08': 4, 'A09': 5, 'A10': 5, 'A11': 5, 'A12': 5, 'A13': 5, 'A14': 4, 'A15': 4,
             'B01': 5, 'B02': 5, 'B03': 5, 'B04': 5, 'B05': 4, 'B06': 2, 'B07': 4, 'B08': 5, 'B09': 3, 'B10': 5, 'B11': 5, 'B12': 2, 'B13': 5, 'C01': 5, 'C02': 5, 'C03': 5,
             'D01': 3, 'D02': 5, 'D03': 
-
 3, 'D04': 5, 'D05': 5, 'D06': 2, 'D07': 3, 'D08': 3, 'D09': 3, 'D10': 5, 'D11': 3, 'D12': 3, 'D13': 3, 'D14': 3, 'D15': 5, 'D16': 4, 'D17': 4, 'D18': 5, 'D19': 5, 'D20': 5,
             'E01': 5, 'E02': 5, 'E03': 5, 'E04': 5, 'E05': 5, 'E06': 5, 'E07': 5, 'E08': 5, 'E09': 5, 'E10': 4, 'E11': 5, 'F01': 5, 'F02': 5, 'G01': 5, 'G02': 5, 'G03': 4, 'H01': 5, 'H02': 5, 'I01': 5, 'J01': 5, 'J02': 5,
             'K01': 
-
 5, 'K02': 5, 'K03': 5, 'K04': 5, 'K05': 5, 'K06': 5, 'K07': 5, 'K08': 5, 'K09': 5, 'K10': 3,
             'L01_1': 5, 'L01_2': 5, 'L02': 7, 'L03': 5, 'L04': 6, 'L05': 5, 'L06': 5, 'L07_1': 5, 'L07_2': 4, 'L08': 4, 'L09': 5, 'L10': 7, 'L11': 5, 'L12': 5, 'L13': 5, 'L14_1': 6, 'L14_2': 6, 'L14_3': 6, 'L14_4': 7,
             'O1-1-P1': 4, 'O1-2-P2': 4, 'O1-2-P2-B1': 4, 'O1-3-P3': 4, 'O1-4-P4': 4, 'O1-4-P4-B2': 4, 'O1-5-P5': 4, 'O1-5-P5-B3': 4, 'O1-5-P6': 4, 'O1-5-P7': 4, 'O1-6-P8': 
-
 4, 'O1-6-P9': 4, 'O1-6-P9-B4': 4, 'O1-6-P10': 4, 'O1-6-P10-B5': 4, 'O1-7-P11': 4, 'O1-7-P11-B7': 4, 'O1-7-P12': 4, 'O1-7-P12-B6': 4, 'O1-7-P13': 4, 'O1-8-P14': 4, 'O1-8-P15': 4, 'O1-8-P16': 4, 'O1-8-P16-B8': 4,
             'O2-1-P1': 4, 'O2-2-P3': 5, 'O2-2-P3-B2': 5, 'O2-2-P4': 4, 'O2-3-P5': 5, 'O2-3-P6': 4, 'O2-3-P6-B3': 4, 'O2-4-P7': 4, 'O2-4-P8': 4, 'O2-4-P9': 4, 'O2-4-P9-B4': 4, 'O2-5-P10': 4, 'O2-5-P10-B5': 4, 'O2-5-P11': 4, 'O2-5-P12': 4, 'O2-6-P13': 4, 'O2-6-P13-B7': 4, 'O2-6-P14': 5, 'O2-6-P14-B6': 5, 'O2-6-P15': 5, 'O2-7-P17-B8': 4, 'O2-7-P17-B9': 4,
             'O3-1-P1': 5, 'O3-1-P2': 4, 'O3-1-P3': 6, 'O3-2-P4': 
-
 6, 'O3-3-P5': 4, 'O3-3-P6': 4, 'O3-4-P7': 4, 'O3-5-P8': 4, 'O3-6-P9': 5, 'O3-6-P10': 6, 'O3-7-P11': 3, 'O3-7-P12': 4, 'O3-7-P13': 4, 'O3-7-P14': 5, 'O3-7-P15': 5, 'O3-7-P16': 6,
             'O4-1-P1': 5, 'O4-1-P2': 5, 'O4-1-P3': 4, 'O4-1-P4': 5, 'O4-1-P5': 4, 'O4-2-P6': 4, 'O4-2-P7': 4, 'O4-2-P8': 5, 'O4-3-P9': 5, 'O4-4-P10': 4, 'O4-5-P11': 4, 'O4-6-P12': 4, 'O4-7-P13': 4, 'O4-8-P14': 4, 'O4-9-P15': 4, 'O4-9-P16': 4, 'O4-9-P17': 4, 'O4-9-P18': 4, 'O4-10-P19': 4, 'O4-10-P20': 5, 'O4-10-P21': 5, 'O4-10-P22': 5,
             'O5-1-P1': 4, 'O5-2-P2': 4, 'O5-3-P4': 5, 'O5-3-P5': 4, 'O5-3-P6': 
-
 3, 'O5-4-P7': 3, 'O5-4-P8': 5, 'O5-5-P10': 2, 'O5-5-P9': 5, 'O5-6-P11': 4, 'O5-6-P12': 3, 'O5-7-P13': 5, 'O5-8-P14': 5,
             'O6-1-P1': 4, 'O6-2-P2': 3, 'O6-3-P3': 4, 'O6-3-P4': 5, 'O6-3-P5': 5, 'O6-3-P6': 6, 'O6-3-P7': 6,
             'O8-1-P1': 4, 'O8-2-P2': 6, 'O8-3-P3': 4, 'O8-4-P4': 5, 'O8-5-P5': 5, 'O8-6-P6': 6, 'O8-7-P7': 5, 'O8-8-P8': 4, 'O8-8-P9': 5, 'O8-8-P10': 6, 'O8-8-P11': 5, 'O8-8-P12': 5, 'O8-9-P13': 5, 'O8-10-P14': 4,
             'Lifting-1A': 10, 'Lifting-1B': 10, 'Lifting-2A': 10, 'Lifting-2B': 10,
  
-
            'R01': 4, 'R02': 6, 'R03*': 6, 'R03-A': 7, 'R03-B': 5, 'R04': 7, 'R05-A': 7, 'R05-B': 8, 'R05-C': 8, 'R05-D': 6, 'R05-E': 7, 'R05-F': 6, 'R05-G': 7, 'R05-H': 7, 'R05-I': 7, 'R05-J1': 7, 'R05-J2': 7, 'R05-K': 7, 'R06': 7, 'R07': 8, 'R08-A': 7, 'R08-B': 7, 'R08-C': 5, 'R08-D': 6, 'R08-E': 7, 'R08-F1': 7, 'R08-F2': 7, 'R08-F3': 7, 'R09-A': 8, 'R09-B': 8, 'R09-C': 8, 'R10': 7, 'R11': 7, 'R12-A': 6, 'R12-B': 7,
             'Lifting-57S': 6, 'Lifting-8S': 12, 'Lifting-17S': 12,
    
-
          'S01-A': 7, 'S01-B': 7, 'S02-A': 6, 'S02-B': 7, 'S03': 6, 'S04': 6, 'S05-A': 6, 'S05-B': 6, 'S06': 6, 'S07-A': 7, 'S07-B': 7, 'S08': 6, 'S09-A': 7, 'S09-B': 7, 'S09-C': 8, 'S09-D': 8, 'S09-E': 6, 'S09-F': 6
         };
 function toEnglishDigits(str) {
@@ -1118,17 +1051,14 @@ if (item.type === 'update_station') {
                         if(item.data.log) db.ref('history').push(item.data.log);
                         if(item.data.consLog) db.ref('consumption_logs').push(item.data.consLog);
     
-
                     if(item.data.newFaults) {
                              db.ref('faults_log').once('value').then(snap => {
                                 let rawVal = snap.val();
              
-
                    let logs = Array.isArray(rawVal) ? rawVal : (rawVal ? Object.values(rawVal) : []);
                                 item.data.newFaults.forEach(f => logs.unshift(f));
                                 item.data.resolvedFaults.forEach(rf => {
   
-
                                    const idx = logs.findIndex(x => x.station === item.data.stationId && x.type === rf.type && x.active);
                                     if(idx !== -1) { logs[idx].active = false;
 logs[idx].endTime = rf.endTime; }
@@ -1150,19 +1080,16 @@ db.ref('faults_log').set(logs);
                     updateOfflineBanner();
                     if (queue.length > 0) {
    
-
                      setTimeout(processOfflineQueue, 500); 
                     } else {
                         icon.classList.remove('syncing');
                         updateNetworkStatus();
        
-
                  alert("تمت مزامنة البيانات المخزنة بنجاح! ✅");
                     }
                 }).catch(err => {
                     console.error("Sync Error", err);
                   
-
   updateNetworkStatus();
                 });
 }
@@ -1186,21 +1113,18 @@ if(cachedUsers) {
                 else { 
                     appData.stations = data; 
     
-
                 localStorage.setItem('toshka_stations_cache', JSON.stringify(data)); 
                     forceRepairStations(); 
                 }
                 
                 if (document.getElementById('stations-screen').classList.contains('active')) {
            
-
          const activeTab = document.querySelector('.nav-tab.active');
                     renderStations(activeTab ? activeTab.dataset.zone : 'all');
                 }
                 if (document.getElementById('station-screen').classList.contains('active') && appData.currentStation) {
                     showStationDetails(appData.currentStation);
         
-
         }
             });
 db.ref('users').on('value', (snapshot) => {
@@ -1211,13 +1135,11 @@ db.ref('users').on('value', (snapshot) => {
                 else db.ref('users').set(appData.users);
 
   
-
               const loginBtn = document.getElementById('login-btn');
                 if (loginBtn) {
                     loginBtn.disabled = false;
                     loginBtn.textContent = "دخول";
                     loginBtn.style.backgroundColor 
-
 = ''; 
                     loginBtn.style.color = '';
                     loginBtn.style.cursor = 'pointer';
@@ -1256,23 +1178,19 @@ let repairCount = 0;
                     let zone = 'Unknown';
                     appData.zones.forEach(z => { if(stationName.startsWith(z.split('_')[1])) zone = z; });
  
-
                    if(stationName.startsWith('A')) zone='Zone_A';
                     
                     const pumpCount = pumpsData[stationName] || 4;
                     updates[stationName] = {
              
-
            name: stationName, zone: zone, status: 'متوقفة', pressure: 0, activePumps: 0,
                         voltage: 380, waterFlow: 0, systemMode: 'SCADA', operatorName: 'النظام',
                         lastUpdate: nowStd.full, comments: '',
                       
-
   startTime: '', stopTime: '',
                         currentFault: null, secondaryFault: null,
                         pumps: Array(pumpCount).fill().map((_, index) => ({ id: index + 1, status: 'متوقفة', suctionPressure: null, dischargePressure: null, frequency: null })),
                         consumption: { t1: 
-
 '', t2: '', m3: '', lastUpdate: '' }
                     };
 repairCount++;
@@ -1328,7 +1246,6 @@ document.getElementById('password').value = savedPass;
             const p = document.getElementById('password').value.trim();
             const user = appData.users[u];
             
-
 const remember = document.getElementById('remember-me').checked;
             
             if (user && user.password === p && user.active) {
@@ -1336,7 +1253,6 @@ const remember = document.getElementById('remember-me').checked;
                 else { localStorage.removeItem('toshka_user'); localStorage.removeItem('toshka_pass'); }
                 
      
-
            appData.currentUser = user;
                 document.getElementById('current-user').textContent = `${appData.userTypes[user.type].name}: ${u}`;
                 
@@ -1429,13 +1345,11 @@ let tickerHtml = '';
                         const icon = faultIcons[s.currentFault] || '⚠️';
                         tickerHtml += `<span class="ticker-item">${icon} ${s.name}: ${s.currentFault}</span>`;
              
-
        }
                     if (s.secondaryFault) {
                         const icon = faultIcons[s.secondaryFault] || '⚠️';
                         tickerHtml += `<span class="ticker-item">${icon} ${s.name}: ${s.secondaryFault}</span>`;
              
-
        }
                     if (index < faultedStations.length - 1) { tickerHtml += `<span class="ticker-separator">•</span>`; }
                 });
@@ -1446,7 +1360,6 @@ tickerContent.innerHTML = tickerHtml;
                     const containerWidth = tickerContainer.offsetWidth;
                     const speed = 100;
                     const duration = (contentWidth + containerWidth) 
-
 / speed;
                     const finalDuration = Math.max(duration, 5); 
                     tickerContent.style.animationDuration = `${finalDuration}s`;
@@ -1468,19 +1381,16 @@ appData.zones : [zoneFilter];
                     const separator = document.createElement('div');
                     separator.className = 'zone-separator';
        
-
              separator.innerHTML = `<span>${zoneName}</span> <span style="font-size:0.9rem; opacity:0.8;">(${zoneStations.length})</span>`;
                     container.appendChild(separator);
                     
                     const grid = document.createElement('div');
                    
-
  grid.className = 'stations-grid';
                     
                     zoneStations.forEach(s => {
                         const isFault = (s.currentFault || s.secondaryFault) ? true : false;
                       
-
   let cardClass = 'station-card';
                         if (isFault) {
                             cardClass += ' fault-active';
@@ -1515,17 +1425,14 @@ if (checkShiftAdherence(s.lastUpdate)) { missedUpdateHtml = `<span class="missed
                             <div style="font-weight:bold; color:var(--primary-color)">${missedUpdateHtml}${s.name}</div>
                             <span class="station-status ${s.status === 'نشطة' ? 'status-active' : 'status-inactive'}">${s.status}</span>
         
-
                     ${faultHtml}
                             <div style="margin-top:10px; font-size:13px;">
                                 <div>الضغط: ${s.pressure} Bar</div>
                 
-
                 <div>الجهد: ${s.voltage} V</div>
                                 <div style="color:var(--secondary-color);">التدفق: ${s.waterFlow} L/Sec</div>
                                 <div>المضخات: ${s.activePumps}</div>
               
-
               </div>`;
                         card.onclick = () => showStationDetails(s.name);
 grid.appendChild(card);
@@ -1600,19 +1507,11 @@ const canEdit = appData.userTypes[appData.currentUser.type].permissions.some(p =
         // --- EDIT MODE & FAULT RESOLUTION ---
         document.getElementById('edit-station-btn').addEventListener('click', () => {
             const s = appData.stations[appData.currentStation];
-            
-            // ** التعديل 1: التحقق من وجود المشغل قبل الدخول لشاشة التعديل **
-            if (!appData.currentUser || !appData.currentUser.username) {
-                alert("يجب تسجيل الدخول أولاً للتمكن من تعديل البيانات.");
-                return;
-            }
-
             document.getElementById('editing-station-name').textContent = `محطة: ${s.name}`;
             document.getElementById('operator-name').value = appData.currentUser.username;
             
             const now = new Date();
   
-
           const timeString = now.getHours().toString().padStart(2, '0') + ':' + now.getMinutes().toString().padStart(2, '0');
             
             document.getElementById('operator-start-time').value = s.startTime || timeString;
@@ -1620,11 +1519,11 @@ const canEdit = appData.userTypes[appData.currentUser.type].permissions.some(p =
             document.getElementById('operator-pressure').value = s.pressure;
             document.getElementById('operator-water-flow').value = s.waterFlow;
          
-
    document.getElementById('operator-voltage').value = s.voltage;
             document.getElementById('operator-system-mode').value = s.systemMode;
 document.getElementById('operator-comments').value = s.comments;
-// Load Consumption Data
+
+            // Load Consumption Data
             const cons = s.consumption ||
 {};
             document.getElementById('cons-trans-1').value = cons.t1 || '';
@@ -1657,18 +1556,15 @@ const c = document.getElementById('pumps-form-container');
                     <div class="pump-control">
                         <div style="display:flex; justify-content:space-between; margin-bottom:10px;">
                         
-
     <b>مضخة ${p.id}</b>
                             <select id="p_stat_${p.id}" onchange="togglePumpInputs(${p.id})">
                                 <option value="نشطة" ${p.status==='نشطة'?'selected':''}>نشطة</option>
                                
-
  <option value="متوقفة" ${p.status==='متوقفة'?'selected':''}>متوقفة</option>
                                 <option value="معطلة" ${p.status==='معطلة'?'selected':''}>معطلة</option>
                             </select>
                         </div>
            
-
              <input type="number" placeholder="سحب" id="p_suc_${p.id}" value="${p.suctionPressure||''}" class="p_inp_${p.id}">
                         <input type="number" placeholder="طرد" id="p_dis_${p.id}" value="${p.dischargePressure||''}" class="p_inp_${p.id}" style="margin-top:5px">
                         <input type="number" placeholder="تردد" id="p_freq_${p.id}" value="${p.frequency||''}" class="p_inp_${p.id}" style="margin-top:5px">
@@ -1705,15 +1601,6 @@ document.getElementById('btn-resolve-f2').addEventListener('click', () => { if(c
 function saveDataInternal(options = {}) {
             try {
                 const sName = appData.currentStation;
-                
-                // ** التعديل 2: فحص صارم قبل بدء العملية لضمان وجود المشغل **
-                const determinedOperator = appData.currentUser ? appData.currentUser.username : 'خطأ_مشغل_غير_معرف';
-                if (determinedOperator === 'خطأ_مشغل_غير_معرف') {
-                    alert("خطأ: تعذر التعرف على المشغل. يرجى تسجيل الدخول وإعادة المحاولة.");
-                    return; // منع الحفظ
-                }
-
-
 if (!sName || !appData.stations[sName]) { alert("خطأ: لا توجد محطة محددة!"); return;
 }
                 
@@ -1726,10 +1613,7 @@ const safeOldFault2 = (oldData.secondaryFault && oldData.secondaryFault !== "und
 let newFlow = parseFloat(getVal('operator-water-flow')) || 0;
                 let newVoltage = getVal('operator-voltage');
                 const newMode = getVal('operator-system-mode');
-                
-                // ** التعديل 3: استخدام المشغل المؤكد
-                const newOperator = determinedOperator;
-                
+                const newOperator = getVal('operator-name');
 const newComments = getVal('operator-comments');
                 
                 // Consumption Data
@@ -1747,9 +1631,7 @@ const updateDate = nowStd.date;
                 const stationFullDateTime = nowStd.full;
 let changesDetails = [];
                 let activeCount = 0;
-                
-                // ** التعديل 4: تعيين حالة ابتدائية صريحة **
-                let currentStatus = oldData.status === 'نشطة' ? 'نشطة' : 'متوقفة';
+                let currentStatus = 'متوقفة';
                 
                 let finalFault = safeOldFault1;
 let finalFaultDesc = oldData.fault1Desc || null;
@@ -1811,13 +1693,11 @@ const updatedPumps = oldData.pumps.map(p => {
                     let newStatus = statElem ? statElem.value : p.status;
                     if (isCriticalFault && newStatus === 'نشطة') newStatus = 'متوقفة';
                  
-
    if(p.status != newStatus) changesDetails.push(`مضخة ${p.id}: ${p.status} -> ${newStatus}`);
                     let pumpData = { id: p.id, status: newStatus, suctionPressure: null, dischargePressure: null, frequency: null };
                     if(newStatus === 'نشطة') { activeCount++; pumpData.suctionPressure = getVal(`p_suc_${p.id}`); pumpData.dischargePressure = getVal(`p_dis_${p.id}`); pumpData.frequency = getVal(`p_freq_${p.id}`); }
                     return pumpData;
  
-
                });
 if (!isCriticalFault) { if (activeCount > 0) currentStatus = 'نشطة'; else { currentStatus = 'متوقفة'; newPressure = 0;
 newFlow = 0; } }
@@ -1839,7 +1719,6 @@ const oldCons = oldData.consumption || {};
                         date: updateDate, time: updateTime, station: sName,
                         t1: consTrans1, t2: consTrans2, m3: consWater,
                     
-
     operator: newOperator
                     };
 }
@@ -1851,14 +1730,12 @@ changesDetails.join(', ') : "تحديث دوري";
                     systemMode: newMode, operatorName: newOperator, comments: newComments,
                     lastUpdate: stationFullDateTime, 
                     
-
 startTime: newStartTime, stopTime: newStopTime, activePumps: activeCount,
                     status: currentStatus, 
                     currentFault: finalFault, fault1Desc: finalFaultDesc,
                     secondaryFault: finalFaultSec, fault2Desc: finalFaultSecDesc,
                     faultStartTime: faultStartTime,
       
-
               pumps: updatedPumps,
                     consumption: { t1: consTrans1, t2: consTrans2, m3: consWater, lastUpdate: stationFullDateTime }
                 };
@@ -1871,12 +1748,10 @@ if (navigator.onLine) {
                         if (appData.operationHistory.length >= 20000) db.ref('history').orderByKey().limitToFirst(1).once('child_added', (snapshot) => { snapshot.ref.remove(); });
                         db.ref('history').push(log);
                  
-
        if(consumptionLogData) db.ref('consumption_logs').push(consumptionLogData);
                         if (newFaultEntries.length > 0 || resolvedFaultEntries.length > 0) {
                             db.ref('faults_log').once('value').then(snap => {
                               
-
   let rawVal = snap.val(); let logs = []; if (rawVal) { if (Array.isArray(rawVal)) logs = rawVal; else logs = Object.values(rawVal); }
                                 newFaultEntries.forEach(newF => { const exists = logs.some(existingF => existingF.active === true && existingF.station === newF.station && existingF.type === newF.type); if (!exists) logs.unshift(newF);
 });
@@ -1909,7 +1784,6 @@ alert("حدث خطأ برمجي: " + e.message); }
              if (filterSelect.options.length <= 1) {
                  const sorted = Object.values(appData.stations).sort((a,b) => a.name.localeCompare(b.name));
                  sorted.forEach(s => filterSelect.innerHTML += 
-
 `<option value="${s.name}">${s.name}</option>`);
              }
              const today = new Date();
@@ -1917,7 +1791,6 @@ alert("حدث خطأ برمجي: " + e.message); }
              const firstDayLastMonth = new Date(today.getFullYear(), today.getMonth() - 1, 1);
              document.getElementById('cons-filter-date-to').valueAsDate = firstDayThisMonth;
              document.getElementById('cons-filter-date-from').valueAsDate 
-
 = firstDayLastMonth;
              renderConsumptionsTable();
              showScreen('consumptions-report');
@@ -1950,14 +1823,12 @@ targetStations.forEach(stName => {
                 logs.sort((a,b) => parseCustomDate(a.date+' '+a.time) - parseCustomDate(b.date+' '+b.time));
 
              
-
    // Find First Log in "From" period and "To" period
                 const startLog = logs.find(l => parseCustomDate(l.date + " 00:00:00").getTime() >= fromTime);
                 const endLog = logs.find(l => parseCustomDate(l.date + " 00:00:00").getTime() >= toTime);
 
                 if (startLog && endLog) {
                 
-
     const diffT1 = (endLog.t1 && startLog.t1) ? (parseFloat(endLog.t1) - parseFloat(startLog.t1)) : 0;
                     const diffT2 = (endLog.t2 && startLog.t2) ? (parseFloat(endLog.t2) - parseFloat(startLog.t2)) : 0;
                     const diffM3 = (endLog.m3 && startLog.m3) ? (parseFloat(endLog.m3) - parseFloat(startLog.m3)) : 0;
@@ -1968,22 +1839,18 @@ const dateStartStr = `${startLog.date}`;
                          return `
                             <div class="cons-val-wrapper">
                             
-
     <div class="cons-sub-item">
                                     <span class="cons-label">سابق: <b>${startVal}</b></span>
                                 </div>
                          
-
        <span class="cons-date-small">${startDate}</span>
                                 
                                 <div class="cons-sub-item" style="margin-top:4px;">
                           
-
           <span class="cons-label">حالي: <b>${endVal}</b></span>
                                 </div>
                                 <span class="cons-date-small">${endDate}</span>
                        
-
          
                                 <div class="cons-result">استهلاك: ${diffVal.toFixed(1)}</div>
                             </div>
@@ -1995,7 +1862,6 @@ const dateStartStr = `${startLog.date}`;
                         <td class="cons-cell">${createCellContent(startLog.t1 || 0, endLog.t1 || 0, diffT1, dateStartStr, dateEndStr)}</td>
                         <td class="cons-cell">${createCellContent(startLog.t2 || 0, endLog.t2 || 0, diffT2, dateStartStr, dateEndStr)}</td>
      
-
                    <td class="cons-cell">${createCellContent(startLog.m3 || 0, endLog.m3 || 0, diffM3, dateStartStr, dateEndStr)}</td>
                     </tr>`;
 }
@@ -2007,85 +1873,80 @@ if(tbody.innerHTML === '') { tbody.innerHTML = '<tr><td colspan="4" style="text-
         // --- UPDATED FUNCTION TO EXPORT CONSUMPTION TO CSV ---
         function exportConsumptionsToCSV() {
             const fStation = document.getElementById('cons-filter-station').value;
-const fDateFrom = document.getElementById('cons-filter-date-from').value;
+            const fDateFrom = document.getElementById('cons-filter-date-from').value;
             const fDateTo = document.getElementById('cons-filter-date-to').value;
-            if (!fDateFrom || !fDateTo) { alert('يرجى تحديد فترة المقارنة أولاً.'); return;
-}
+            if (!fDateFrom || !fDateTo) { alert('يرجى تحديد فترة المقارنة أولاً.'); return; }
 
             const fromTime = new Date(fDateFrom).getTime();
-const toTime = new Date(fDateTo).getTime();
+            const toTime = new Date(fDateTo).getTime();
 
             let allLogs = appData.consumptionLog || [];
-            let targetStations = fStation === 'all' ?
-Object.keys(appData.stations) : [fStation];
+            let targetStations = fStation === 'all' ? Object.keys(appData.stations) : [fStation];
             
             let csvContent = "data:text/csv;charset=utf-8,\uFEFF"; // \uFEFF for BOM (to support Arabic in Excel)
             csvContent += "المحطة,تاريخ القراءة السابقة,قراءة محول 1 السابقة (KW),تاريخ القراءة الحالية,قراءة محول 1 الحالية (KW),استهلاك محول 1 (KW),قراءة محول 2 السابقة (KW),قراءة محول 2 الحالية (KW),استهلاك محول 2 (KW),قراءة المياه السابقة (M3),قراءة المياه الحالية (M3),استهلاك المياه (M3)\n";
-targetStations.forEach(stName => {
+
+            targetStations.forEach(stName => {
                 const logs = allLogs.filter(l => l.station === stName);
                 if (logs.length === 0) return;
 
                 logs.sort((a, b) => parseCustomDate(a.date + ' ' + a.time) - parseCustomDate(b.date + ' ' + b.time));
 
-                // Find the first log on or after 
-the selected 'From' date
+                // Find the first log on or after the selected 'From' date
                 const startLog = logs.find(l => parseCustomDate(l.date + " 00:00:00").getTime() >= fromTime);
                 // Find the first log on or after the selected 'To' date
                 const endLog = logs.find(l => parseCustomDate(l.date + " 00:00:00").getTime() >= toTime);
 
-                if (startLog 
-&& endLog) {
+                if (startLog && endLog) {
                     const t1_start = parseFloat(startLog.t1 || 0);
                     const t1_end = parseFloat(endLog.t1 || 0);
                     const t2_start = parseFloat(startLog.t2 || 0);
-                    const t2_end = 
-parseFloat(endLog.t2 || 0);
-                    const m3_start = parseFloat(startLog.m3 ||
-0);
+                    const t2_end = parseFloat(endLog.t2 || 0);
+                    const m3_start = parseFloat(startLog.m3 || 0);
                     const m3_end = parseFloat(endLog.m3 || 0);
                     
                     const diffT1 = t1_end - t1_start;
                     const diffT2 = t2_end - t2_start;
-const diffM3 = m3_end - m3_start;
+                    const diffM3 = m3_end - m3_start;
 
                     const row = [
                         stName,
                         startLog.date, t1_start.toFixed(1),
                         endLog.date, t1_end.toFixed(1),
-                 
-       diffT1.toFixed(1),
+                        diffT1.toFixed(1),
                         t2_start.toFixed(1), t2_end.toFixed(1),
                         diffT2.toFixed(1),
                         m3_start.toFixed(1), m3_end.toFixed(1),
-                   
-     diffM3.toFixed(1)
+                        diffM3.toFixed(1)
                     ].join(',');
-csvContent += row + "\n";
+                    csvContent += row + "\n";
                 }
             });
-if (targetStations.length > 0 && csvContent.split('\n').length <= 1) { // Check for header only + data row
+
+            if (targetStations.length > 0 && csvContent.split('\n').length <= 1) { // Check for header only + data row
                 alert('لا توجد بيانات استهلاك مطابقة للفترة المحددة لإنشاء ملف CSV.');
-return;
+                return;
             }
 
             const encodedUri = encodeURI(csvContent);
-const link = document.createElement("a");
+            const link = document.createElement("a");
             link.setAttribute("href", encodedUri);
             link.setAttribute("download", "تقرير_استهلاكات_" + fDateFrom + "_الى_" + fDateTo + ".csv");
             document.body.appendChild(link);
             link.click();
             document.body.removeChild(link);
-}
-        window.exportConsumptionsToCSV = exportConsumptionsToCSV;
-// Retain original Excel function but not used by button
+        }
+        window.exportConsumptionsToCSV = exportConsumptionsToCSV; 
+
+        // Retain original Excel function but not used by button
         function exportConsumptionsToExcel() {
              const table = document.getElementById("consumptions-table-export");
-const html = table.outerHTML;
+            const html = table.outerHTML;
              const url = 'data:application/vnd.ms-excel,' + encodeURIComponent(html);
              const downloadLink = document.createElement("a");
              document.body.appendChild(downloadLink);
              downloadLink.href = url;
-downloadLink.download = 'تقرير_معدلات_الاستهلاك.xls';
+            downloadLink.download = 'تقرير_معدلات_الاستهلاك.xls';
              downloadLink.click();
              document.body.removeChild(downloadLink);
         }
@@ -2107,14 +1968,12 @@ Object.keys(inspectionSchema).forEach((key) => {
                 sectionDiv.className = 'section-accordion';
                 let title = schema.title;
                 if (key === 'pumps') { const totalPumps 
-
 = sData.pumps ? sData.pumps.length : 4; title += ` (${totalPumps})`; }
                 const headerDiv = document.createElement('div');
                 if (isEdit) { headerDiv.className = 'section-header-static'; headerDiv.innerHTML = `<span>${title}</span>`; } 
                 else {
                     headerDiv.className = 'section-accordion-header'; headerDiv.innerHTML = `<span>${title}</span> <span class="arrow">▼</span>`;
  
-
                    headerDiv.onclick = function() { const body = this.nextElementSibling; body.classList.toggle('open'); this.classList.toggle('active'); };
                 }
                 const bodyDiv = document.createElement('div');
@@ -2140,11 +1999,9 @@ schema.items.forEach((item, idx) => {
                              if (idx === 0) { const subHeader = document.createElement('div'); subHeader.className = 'pump-section-divider'; subHeader.textContent = '1- خط السحب'; pumpBodyDiv.appendChild(subHeader); } 
                              else if (idx === 5) { const subHeader = document.createElement('div'); subHeader.className = 'pump-section-divider'; subHeader.textContent = '2- المضخة'; pumpBodyDiv.appendChild(subHeader); } 
  
-
                             else if (idx === 6) { const subHeader = document.createElement('div'); subHeader.className = 'pump-section-divider'; subHeader.textContent = '3- خط الطرد'; pumpBodyDiv.appendChild(subHeader); }
                              pumpBodyDiv.appendChild(createInspectionRow(idx, item, pData[idx] || {}, `pumps_${i}`, isEdit));
                   
-
       });
                         pumpItemDiv.appendChild(pumpHeaderDiv); pumpItemDiv.appendChild(pumpBodyDiv); bodyDiv.appendChild(pumpItemDiv);
 }
@@ -2172,26 +2029,16 @@ const allPumpBodies = document.querySelectorAll('.pump-accordion-body'); allPump
 window.updateInspectionColor = (selectElem) => { selectElem.classList.remove('efficient', 'fault', 'broken', 'none'); selectElem.classList.add(selectElem.value); };
 // SAVE INSPECTION
         document.getElementById('save-inspection-btn').addEventListener('click', () => {
-            const sName = appData.currentStation; 
-            
-            // ** التعديل 5: فحص المشغل قبل حفظ الفحص **
-            if (!appData.currentUser || !appData.currentUser.username) {
-                alert("خطأ: تعذر التعرف على المشغل. يرجى تسجيل الدخول وإعادة المحاولة.");
-                return;
-            }
-
-            if(!sName) return;
+            const sName = appData.currentStation; if(!sName) return;
             const oldInsData = (appData.stations[sName].inspectionData) || {}; let newInsData = JSON.parse(JSON.stringify(oldInsData));
             Object.keys(inspectionSchema).forEach(key => {
                 if (key === 'pumps') return; if (!newInsData[key]) newInsData[key] = {};
           
-
       inspectionSchema[key].items.forEach((item, idx) => { const statEl = document.getElementById(`stat_${key}_${idx}`); const descEl = document.getElementById(`desc_${key}_${idx}`); if (statEl) { newInsData[key][idx] = { status: statEl.value, desc: descEl.value }; } });
             });
             if (!newInsData.pumps) newInsData.pumps = {}; const totalPumps = appData.stations[sName].pumps ? appData.stations[sName].pumps.length : 4;
             for(let i=1; i<=totalPumps; i++) {
                 if (!newInsData.pumps[i]) 
-
 newInsData.pumps[i] = {};
                 inspectionSchema.pumps.items.forEach((item, idx) => { const prefix = `pumps_${i}`; const statEl = document.getElementById(`stat_${prefix}_${idx}`); const descEl = document.getElementById(`desc_${prefix}_${idx}`); if (statEl) { newInsData.pumps[i][idx] = { status: statEl.value, desc: descEl.value }; } });
 }
@@ -2205,16 +2052,7 @@ alert("تم حفظ الفحص في الجهاز (Offline) وسيتم رفعه ع
 }
         });
         document.getElementById('view-inspection-btn').addEventListener('click', () => { renderInspection('view'); document.getElementById('inspection-title').textContent = `نتائج الفحص: ${appData.stations[appData.currentStation].name}`; showScreen('inspection'); });
-document.getElementById('edit-inspection-btn').addEventListener('click', () => { 
-            // ** التعديل 6: فحص المشغل قبل فتح شاشة الفحص **
-            if (!appData.currentUser || !appData.currentUser.username) {
-                alert("يجب تسجيل الدخول أولاً للتمكن من تعديل الفحص.");
-                return;
-            }
-            renderInspection('edit'); 
-            document.getElementById('inspection-title').textContent = `تعديل الفحص: ${appData.stations[appData.currentStation].name}`; 
-            showScreen('inspection'); 
-        });
+document.getElementById('edit-inspection-btn').addEventListener('click', () => { renderInspection('edit'); document.getElementById('inspection-title').textContent = `تعديل الفحص: ${appData.stations[appData.currentStation].name}`; showScreen('inspection'); });
         document.getElementById('back-from-inspection').addEventListener('click', () => { showStationDetails(appData.currentStation); });
 // --- USERS MANAGEMENT ---
         function renderUsersManagement() {
@@ -2227,14 +2065,12 @@ const search = document.getElementById('search-user-input').value.toLowerCase();
                 const typeName = appData.userTypes[user.type].name;
                 const activeText = user.active ? '<span style="color:green">نشط</span>' : '<span style="color:red">محظور</span>';
         
-
         const actionBtn = user.active ? 
                     `<button class="btn btn-danger btn-sm" onclick="toggleUserStatus('${uName}')">حظر</button>` :
                     `<button class="btn btn-success btn-sm" onclick="toggleUserStatus('${uName}')">تنشيط</button>`;
                 
                 tbody.innerHTML += `<tr><td>${uName}</td><td>${typeName}</td><td>${user.password}</td><td>${activeText}</td><td>${actionBtn}</td></tr>`;
     
-
         });
         }
         document.getElementById('add-user-btn').addEventListener('click', () => {
@@ -2251,7 +2087,6 @@ document.getElementById('cancel-user-btn').addEventListener('click', () => docum
             if(!name || !pass) { alert('البيانات ناقصة'); return; }
             if(appData.users[name]) { alert('المستخدم موجود بالفعل'); return; }
          
-
    
             db.ref('users/' + name).set({ type: type, password: pass, active: true }).then(() => {
                 alert('تمت الإضافة');
@@ -2301,14 +2136,14 @@ document.getElementById('history-status-text').textContent = `عرض ${viewData.
         
         function renderFaultsLog() {
             const activeBody = document.getElementById('active-faults-body');
-const historyBody = document.getElementById('history-faults-body');
+            const historyBody = document.getElementById('history-faults-body');
             const fStation = document.getElementById('fault-archive-station-filter').value;
             
             activeBody.innerHTML = '';
             historyBody.innerHTML = '';
 // Populate active faults
             const activeFaults = appData.faultsLog.filter(f => f.active);
-activeFaults.forEach(f => {
+            activeFaults.forEach(f => {
                 const icon = faultIcons[f.type] || '⚠️'; 
                 activeBody.innerHTML += `<tr><td>${f.station}</td><td style="color:var(--danger-color); font-weight:bold">${icon} ${f.type}</td><td>${f.startTime}</td><td>مستمر</td></tr>`;
             });
@@ -2316,7 +2151,7 @@ if(activeFaults.length === 0) activeBody.innerHTML = `<tr><td colspan="4" style=
 // Populate history faults
             let histFaults = appData.faultsLog.filter(f => !f.active);
 if (fStation !== 'all') histFaults = histFaults.filter(f => f.station === fStation);
-histFaults.slice(0, appData.faultsLimit).forEach(f => {
+            histFaults.slice(0, appData.faultsLimit).forEach(f => {
                 const icon = faultIcons[f.type] || '⚠️';
                 historyBody.innerHTML += `<tr><td>${f.station}</td><td>${icon} ${f.type}</td><td>${f.startTime || '-'}</td><td>${f.endTime || '-'}</td><td style="color:green">تم الإصلاح</td></tr>`;
             });
@@ -2341,4 +2176,4 @@ list.forEach(st => s.innerHTML += `<option value="${st.name}">${st.name}</option
 loadSystemData();
     </script>
 </body>
-                </html>
+</html>
