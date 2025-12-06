@@ -27,6 +27,15 @@
         .header-content { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; }
         .logo { display: flex; align-items: center; gap: 10px; font-size: 20px; font-weight: bold; }
         
+        /* Network Status Indicator */
+        .network-status {
+            font-size: 0.8rem; padding: 4px 8px; border-radius: 12px; font-weight: bold; display: flex; align-items: center; gap: 5px;
+        }
+        .net-online { background: #d4edda; color: #155724; }
+        .net-offline { background: #f8d7da; color: #721c24; }
+        .syncing { animation: spin 1s linear infinite; }
+        @keyframes spin { 100% { transform: rotate(360deg); } }
+
         /* Ticker Styles */
         .ticker-container { background-color: var(--danger-color); color: white; height: 40px; overflow: hidden; border-radius: 4px; margin-bottom: 15px; display: none; align-items: center; box-shadow: 0 3px 5px rgba(0,0,0,0.1); border: 2px solid #922b21; }
         .ticker-container.active { display: flex; }
@@ -136,76 +145,44 @@
         .fault-row-action { display: flex; justify-content: space-between; align-items: center; background: white; padding: 8px; border-radius: 4px; margin-bottom: 8px; border-right: 3px solid var(--danger-color); }
         .desc-input { margin-top: 5px; font-size: 0.9rem; background: #fff; border: 1px solid #ccc; }
 
-        /* --- INSPECTION SCREEN STYLES (MOBILE OPTIMIZED V1.9) --- */
-        
-        /* Main Section Accordion */
+        /* --- INSPECTION SCREEN STYLES (MOBILE OPTIMIZED) --- */
         .section-accordion { margin-bottom: 10px; border-radius: 8px; overflow: hidden; border: 1px solid #ddd; background: #fff; }
-        
-        /* Edit Mode: Headers are just standard blocks, no accordion behavior */
-        .section-header-static {
-            background: #eaf2f8; color: var(--primary-color);
-            padding: 12px 15px; font-weight: bold; font-size: 1.1rem;
-            border-bottom: 1px solid #ddd;
-        }
-
-        /* View Mode: Accordion Headers */
-        .section-accordion-header {
-            background: linear-gradient(to right, #2c3e50, #34495e); color: white;
-            padding: 15px; cursor: pointer; display: flex; justify-content: space-between; align-items: center;
-            font-weight: bold; font-size: 1.1rem; border-radius: 8px;
-            transition: all 0.2s;
-        }
+        .section-header-static { background: #eaf2f8; color: var(--primary-color); padding: 12px 15px; font-weight: bold; font-size: 1.1rem; border-bottom: 1px solid #ddd; }
+        .section-accordion-header { background: linear-gradient(to right, #2c3e50, #34495e); color: white; padding: 15px; cursor: pointer; display: flex; justify-content: space-between; align-items: center; font-weight: bold; font-size: 1.1rem; border-radius: 8px; transition: all 0.2s; }
         .section-accordion-header:active { transform: scale(0.99); }
         .section-accordion-header .arrow { transition: transform 0.3s; }
         .section-accordion-header.active .arrow { transform: rotate(180deg); }
-        
         .section-accordion-body { display: none; padding: 10px; background: #fff; }
         .section-accordion-body.open { display: block; animation: fadeIn 0.3s; }
-        
-        /* In Edit mode, body is always visible if we use a specific class */
         .section-body-static { display: block; padding: 10px; background: #fff; }
-
-        /* Row Styles */
         .inspection-row { display: grid; grid-template-columns: 1fr; gap: 8px; padding: 12px; border-bottom: 1px solid #f0f0f0; background: #fff; margin-bottom: 5px; border-radius: 8px; border: 1px solid #eee; }
         .inspection-row:last-child { margin-bottom: 0; }
-        
-        @media (min-width: 768px) {
-            .inspection-row { grid-template-columns: 1fr 180px 1.5fr; align-items: center; gap: 15px; }
-        }
-
+        @media (min-width: 768px) { .inspection-row { grid-template-columns: 1fr 180px 1.5fr; align-items: center; gap: 15px; } }
         .inspection-label { font-size: 1rem; font-weight: 600; color: var(--secondary-color); margin-bottom: 2px; }
-        
-        .inspection-status-select { 
-            padding: 10px; border-radius: 8px; font-size: 1rem; font-weight: 500; width: 100%; border: 1px solid #ccc; appearance: none; -webkit-appearance: none;
-            background-image: url("data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22292.4%22%20height%3D%22292.4%22%3E%3Cpath%20fill%3D%22%23007CB2%22%20d%3D%22M287%2069.4a17.6%2017.6%200%200%200-13-5.4H18.4c-5%200-9.3%201.8-12.9%205.4A17.6%2017.6%200%200%200%200%2082.2c0%205%201.8%209.3%205.4%2012.9l128%20127.9c3.6%203.6%207.8%205.4%2012.8%205.4s9.2-1.8%2012.8-5.4L287%2095c3.5-3.5%205.4-7.8%205.4-12.8%200-5-1.9-9.2-5.5-12.8z%22%2F%3E%3C%2Fsvg%3E");
-            background-repeat: no-repeat; background-position: left 10px top 50%; background-size: 12px; padding-left: 30px;
-        }
-        
-        /* Status Colors */
+        .inspection-status-select { padding: 10px; border-radius: 8px; font-size: 1rem; font-weight: 500; width: 100%; border: 1px solid #ccc; appearance: none; -webkit-appearance: none; background-image: url("data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22292.4%22%20height%3D%22292.4%22%3E%3Cpath%20fill%3D%22%23007CB2%22%20d%3D%22M287%2069.4a17.6%2017.6%200%200%200-13-5.4H18.4c-5%200-9.3%201.8-12.9%205.4A17.6%2017.6%200%200%200%200%2082.2c0%205%201.8%209.3%205.4%2012.9l128%20127.9c3.6%203.6%207.8%205.4%2012.8%205.4s9.2-1.8%2012.8-5.4L287%2095c3.5-3.5%205.4-7.8%205.4-12.8%200-5-1.9-9.2-5.5-12.8z%22%2F%3E%3C%2Fsvg%3E"); background-repeat: no-repeat; background-position: left 10px top 50%; background-size: 12px; padding-left: 30px; }
         .inspection-status-select.efficient { color: #155724; border-color: #28a745; background-color: #d4edda; }
         .inspection-status-select.fault { color: #856404; border-color: #ffeeba; background-color: #fff3cd; }
         .inspection-status-select.broken { color: #721c24; border-color: #f5c6cb; background-color: #f8d7da; }
         .inspection-status-select.none { color: #333; border-color: #ccc; background-color: #e2e3e5; }
-        
         .inspection-desc-input { padding: 10px; border-radius: 8px; border: 1px solid #ddd; width: 100%; font-size: 0.9rem; }
-
-        /* PUMP INNER ACCORDION STYLES */
-        .pump-accordion-item { margin-bottom: 10px; border-radius: 8px; overflow: hidden; border: 1px solid transparent; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
-        .pump-accordion-header {
-            padding: 12px; cursor: pointer; display: flex; justify-content: space-between; align-items: center;
-            font-weight: bold; font-size: 1rem; color: white; transition: background 0.3s;
-        }
-        .pump-accordion-header .icon-state { font-size: 1.1rem; background: rgba(0,0,0,0.2); width: 25px; height: 25px; border-radius: 50%; display: flex; align-items: center; justify-content: center; }
         
+        .pump-accordion-item { margin-bottom: 10px; border-radius: 8px; overflow: hidden; border: 1px solid transparent; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
+        .pump-accordion-header { padding: 12px; cursor: pointer; display: flex; justify-content: space-between; align-items: center; font-weight: bold; font-size: 1rem; color: white; transition: background 0.3s; }
+        .pump-accordion-header .icon-state { font-size: 1.1rem; background: rgba(0,0,0,0.2); width: 25px; height: 25px; border-radius: 50%; display: flex; align-items: center; justify-content: center; }
         .pump-header-green { background: linear-gradient(45deg, #27ae60, #2ecc71); }
         .pump-header-yellow { background: linear-gradient(45deg, #f39c12, #f1c40f); color: #fff; text-shadow: 0 1px 2px rgba(0,0,0,0.1); }
         .pump-header-red { background: linear-gradient(45deg, #c0392b, #e74c3c); }
-        
         .pump-accordion-body { display: none; padding: 10px; background: #fff; border: 1px solid #eee; border-top: none; }
         .pump-accordion-body.open { display: block; animation: slideDown 0.3s ease-out; }
-        
         @keyframes slideDown { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
+        
+        #save-inspection-btn { width: 100%; box-shadow: 0 -2px 10px rgba(0,0,0,0.1); padding: 8px; font-size: 0.95rem; border-radius: 20px; margin-bottom: 5px; }
 
+        /* Offline Banner */
+        #offline-sync-banner {
+            display: none; background: #fff3cd; border: 1px solid #ffeeba; color: #856404; padding: 10px;
+            text-align: center; margin-bottom: 10px; border-radius: 8px;
+        }
     </style>
 </head>
 <body>
@@ -214,6 +191,9 @@
             <div class="header-content">
                 <div class="logo">
                     <i>💧</i> <span>نظام المياه الذكي (Toshka)</span>
+                </div>
+                <div id="network-status-indicator" class="network-status net-online">
+                    <span id="net-icon">🟢</span> <span id="net-text">متصل</span>
                 </div>
                 <div class="user-info" id="header-user-info">
                     <button id="alarm-btn" class="alarm-btn" title="سجل الأعطال">
@@ -230,6 +210,10 @@
     </header>
 
     <div class="container">
+        <div id="offline-sync-banner">
+            يوجد <b><span id="offline-count">0</span></b> عمليات معلقة. سيتم رفعها تلقائياً عند عودة الإنترنت. ⏳
+        </div>
+
         <div id="login-screen" class="screen active">
             <div class="login-form">
                 <h2>تسجيل الدخول</h2>
@@ -364,7 +348,7 @@
                         </select>
                     </div>
                 </div>
-               
+                
                 <div class="form-section">
                     <h3>حالة المضخات</h3>
                     <div id="pumps-form-container" class="pump-controls"></div>
@@ -420,10 +404,10 @@
             </div>
             
             <div id="inspection-container">
-                </div>
+            </div>
             
-            <div id="inspection-actions" style="margin-top:20px; display:none; position:sticky; bottom:10px; z-index:999;">
-                <button id="save-inspection-btn" class="btn btn-success" style="width:100%; box-shadow: 0 4px 10px rgba(0,0,0,0.2); padding:15px; font-size:1.1rem;">💾 حفظ الفحص بالكامل</button>
+            <div id="inspection-actions" style="margin-top:10px; display:none; position:sticky; bottom:10px; z-index:999;">
+                <button id="save-inspection-btn" class="btn btn-success">💾 حفظ الفحص بالكامل</button>
             </div>
         </div>
 
@@ -543,42 +527,19 @@
             "تسريب مياه": "💧", "كسر في الشبكة": "🛠️", "عجز تحقيق الضغط": "🔻",
             "انقطاع الاتصال SCADA": `<svg viewBox="0 0 24 24" width="20" height="20" class="scada-icon-svg" style="color:#d32f2f;" fill="currentColor"><path d="M12 3C7.79 3 3.7 4.41 0.38 7L2.6 9.22C5.35 7.15 8.55 6 12 6C15.45 6 18.65 7.15 21.4 9.22L23.62 7C20.3 4.41 16.21 3 12 3Z" /><path d="M12 8C9.48 8 7.15 8.76 5.18 10.05L7.4 12.27C8.71 11.47 10.28 11 12 11C13.72 11 15.29 11.47 16.6 12.27L18.82 10.05C16.85 8.76 14.52 8 12 8Z" /><path d="M12 13L6 21H18L12 13ZM11 18H13V19.5H11V18ZM11 15.5H13V17.5H11V15.5Z" /></svg>`
         };
-        
-        // INSPECTION SCHEMA FROM CSV
+
         const inspectionSchema = {
-            prepSystem: {
-                title: "منظومة التحضير",
-                items: ["الكومبريوسر", "طلمبة تحضير 1", "طلمبة تحضير 2", "تانك التعويض", "تانك التحضير", "لوحه التحضير"]
-            },
+            prepSystem: { title: "منظومة التحضير", items: ["الكومبريوسر", "طلمبة تحضير 1", "طلمبة تحضير 2", "تانك التعويض", "تانك التحضير", "لوحه التحضير"] },
             pumps: {
-                title: "المضخات",
-                isDynamic: true, // Repeated per pump
+                title: "المضخات", isDynamic: true,
                 items: ["محبس فراشه", "وصله فك و تركيب", "وصله مرنه", "عداد السحب", "حساس السحب", "المضخه", "عداد الطرد", "حساس الطرد", "وصله مرنه طرد", "اير فينت", "محبس عدم رجوع", "وصله فك و تركيب طرد", "محبس فراشه طرد"]
             },
-            waterHammer: {
-                title: "منظومة الطرق المائي",
-                items: ["كومبريسور1", "كومبريسور2", "كومبريسور3", "تانك 1", "تانك 2", "تانك 3", "لوحه كونترول"]
-            },
-            mainLine: {
-                title: "خط الطرد الرئيسي",
-                items: ["ارفينت", "محبس عدم رجوع", "وصله فك و تركيب 1", "الفلوميتر", "حساس ضغط", "عداد ضغط", "وصله فك و تركيب 2", "محبس فراشه", "محبس درين"]
-            },
-            submersibles: {
-                title: "الغواطس",
-                items: ["طلمبة غاطس 1", "طلمبة غاطس 2"]
-            },
-            ac: {
-                title: "تكييفات المحطه",
-                items: ["تكييف 1", "تكييف 2", "تكييف 3", "تكييف 4", "تكييف 5", "تكييف 6", "تكييف 7", "تكييف 8", "9-PLC", "10-PLC"]
-            },
-            ventilation: {
-                title: "التهوية",
-                items: ["غرفه المضخات", "غرفه محول 1", "غرفه محول 2", "غرفه رينج"]
-            },
-            crane: {
-                title: "الونش",
-                items: ["الونش"]
-            }
+            waterHammer: { title: "منظومة الطرق المائي", items: ["كومبريسور1", "كومبريسور2", "كومبريسور3", "تانك 1", "تانك 2", "تانك 3", "لوحه كونترول"] },
+            mainLine: { title: "خط الطرد الرئيسي", items: ["ارفينت", "محبس عدم رجوع", "وصله فك و تركيب 1", "الفلوميتر", "حساس ضغط", "عداد ضغط", "وصله فك و تركيب 2", "محبس فراشه", "محبس درين"] },
+            submersibles: { title: "الغواطس", items: ["طلمبة غاطس 1", "طلمبة غاطس 2"] },
+            ac: { title: "تكييفات المحطه", items: ["تكييف 1", "تكييف 2", "تكييف 3", "تكييف 4", "تكييف 5", "تكييف 6", "تكييف 7", "تكييف 8", "9-PLC", "10-PLC"] },
+            ventilation: { title: "التهوية", items: ["غرفه المضخات", "غرفه محول 1", "غرفه محول 2", "غرفه رينج"] },
+            crane: { title: "الونش", items: ["الونش"] }
         };
 
         const statusOptions = [
@@ -661,12 +622,142 @@
             return new Date(year, month, day, hour, min, sec);
         }
 
+        // --- NETWORK & OFFLINE LOGIC ---
+        function updateNetworkStatus() {
+            const indicator = document.getElementById('network-status-indicator');
+            const icon = document.getElementById('net-icon');
+            const text = document.getElementById('net-text');
+            const loginBtn = document.getElementById('login-btn');
+
+            if (navigator.onLine) {
+                indicator.className = 'network-status net-online';
+                icon.textContent = '🟢';
+                text.textContent = 'متصل';
+                processOfflineQueue(); // Auto sync when back online
+                if(loginBtn) loginBtn.disabled = false;
+            } else {
+                indicator.className = 'network-status net-offline';
+                icon.textContent = '🔴';
+                text.textContent = 'غير متصل';
+                // Allow login if users cached
+                if(appData.users && Object.keys(appData.users).length > 0 && loginBtn) {
+                     loginBtn.disabled = false;
+                     loginBtn.textContent = 'دخول (Offline)';
+                     loginBtn.style.backgroundColor = ''; loginBtn.style.color = ''; loginBtn.style.cursor = 'pointer'; loginBtn.classList.add('btn-primary');
+                }
+            }
+        }
+        window.addEventListener('online', updateNetworkStatus);
+        window.addEventListener('offline', updateNetworkStatus);
+
+        function addToOfflineQueue(actionType, data) {
+            let queue = JSON.parse(localStorage.getItem('toshka_offline_queue') || '[]');
+            queue.push({ type: actionType, data: data, timestamp: Date.now() });
+            localStorage.setItem('toshka_offline_queue', JSON.stringify(queue));
+            updateOfflineBanner();
+        }
+
+        function updateOfflineBanner() {
+            const queue = JSON.parse(localStorage.getItem('toshka_offline_queue') || '[]');
+            const banner = document.getElementById('offline-sync-banner');
+            const countSpan = document.getElementById('offline-count');
+            
+            if (queue.length > 0) {
+                banner.style.display = 'block';
+                countSpan.textContent = queue.length;
+            } else {
+                banner.style.display = 'none';
+            }
+        }
+
+        function processOfflineQueue() {
+            if (!navigator.onLine) return;
+            
+            let queue = JSON.parse(localStorage.getItem('toshka_offline_queue') || '[]');
+            if (queue.length === 0) return;
+
+            const indicator = document.getElementById('network-status-indicator');
+            const icon = document.getElementById('net-icon');
+            const text = document.getElementById('net-text');
+            
+            icon.textContent = '🔄';
+            icon.classList.add('syncing');
+            text.textContent = 'جاري المزامنة...';
+
+            // Process one by one
+            const item = queue.shift(); // Get first item
+            
+            // Perform action based on type
+            let promise;
+            if (item.type === 'update_station') {
+                promise = db.ref('stations/' + item.data.stationId).update(item.data.updates)
+                    .then(() => {
+                        // Log history
+                        if(item.data.log) db.ref('history').push(item.data.log);
+                        // Log faults
+                        if(item.data.newFaults) {
+                             db.ref('faults_log').once('value').then(snap => {
+                                let rawVal = snap.val();
+                                let logs = Array.isArray(rawVal) ? rawVal : (rawVal ? Object.values(rawVal) : []);
+                                item.data.newFaults.forEach(f => logs.unshift(f));
+                                item.data.resolvedFaults.forEach(rf => {
+                                    const idx = logs.findIndex(x => x.station === item.data.stationId && x.type === rf.type && x.active);
+                                    if(idx !== -1) { logs[idx].active = false; logs[idx].endTime = rf.endTime; }
+                                });
+                                db.ref('faults_log').set(logs);
+                             });
+                        }
+                    });
+            } else if (item.type === 'update_inspection') {
+                promise = db.ref(`stations/${item.data.stationId}/inspectionData`).update(item.data.inspectionData)
+                    .then(() => {
+                        if(item.data.log) db.ref('history').push(item.data.log);
+                    });
+            }
+
+            if (promise) {
+                promise.then(() => {
+                    localStorage.setItem('toshka_offline_queue', JSON.stringify(queue)); // Save remaining
+                    updateOfflineBanner();
+                    if (queue.length > 0) {
+                        setTimeout(processOfflineQueue, 500); // Process next
+                    } else {
+                        // Done
+                        icon.classList.remove('syncing');
+                        updateNetworkStatus();
+                        alert("تمت مزامنة البيانات المخزنة بنجاح! ✅");
+                    }
+                }).catch(err => {
+                    console.error("Sync Error", err);
+                    // If fail, put back? For now, we keep it and try later or manual retry logic could be added
+                    // To prevent infinite loop on bad data, maybe skip it
+                    updateNetworkStatus();
+                });
+            }
+        }
+
         // --- CORE FUNCTIONS ---
         function loadSystemData() {
+            // Load from LocalStorage first (Cache Strategy)
+            const cachedStations = localStorage.getItem('toshka_stations_cache');
+            if (cachedStations) {
+                appData.stations = JSON.parse(cachedStations);
+                renderStations('all');
+            }
+            const cachedUsers = localStorage.getItem('toshka_users_cache');
+            if(cachedUsers) {
+                appData.users = JSON.parse(cachedUsers);
+            }
+
+            // If Online, listen to Firebase
             db.ref('stations').on('value', (snapshot) => {
                 let data = snapshot.val();
                 if (!data) { forceRepairStations(); } 
-                else { appData.stations = data; forceRepairStations(); }
+                else { 
+                    appData.stations = data; 
+                    localStorage.setItem('toshka_stations_cache', JSON.stringify(data)); // Update Cache
+                    forceRepairStations(); 
+                }
                 
                 if (document.getElementById('stations-screen').classList.contains('active')) {
                     const activeTab = document.querySelector('.nav-tab.active');
@@ -676,8 +767,12 @@
                     showStationDetails(appData.currentStation);
                 }
             });
+
             db.ref('users').on('value', (snapshot) => {
-                if (snapshot.val()) appData.users = snapshot.val();
+                if (snapshot.val()) {
+                    appData.users = snapshot.val();
+                    localStorage.setItem('toshka_users_cache', JSON.stringify(appData.users)); // Update Cache
+                }
                 else db.ref('users').set(appData.users);
 
                 const loginBtn = document.getElementById('login-btn');
@@ -690,6 +785,7 @@
                     loginBtn.classList.add('btn-primary');
                 }
             });
+
             db.ref('history').limitToLast(20000).on('value', (snapshot) => {
                 const val = snapshot.val();
                 if(val) appData.operationHistory = Object.values(val).reverse();
@@ -702,6 +798,9 @@
                 else appData.faultsLog = [];
                 if (document.getElementById('faults-log-screen').classList.contains('active')) renderFaultsLog();
             });
+
+            updateNetworkStatus();
+            updateOfflineBanner();
         }
 
         function forceRepairStations() {
@@ -728,7 +827,7 @@
                     repairCount++;
                 }
             });
-            if (repairCount > 0) db.ref('stations').update(updates);
+            if (repairCount > 0 && navigator.onLine) db.ref('stations').update(updates);
         }
 
         function showScreen(screenId) {
@@ -744,7 +843,7 @@
             }
             if(screenId === 'faults-log') {
                 appData.faultsLimit = 100;
-                autoDeepCleanFaults();
+                if(navigator.onLine) autoDeepCleanFaults();
             }
         }
 
@@ -1012,7 +1111,6 @@
             document.getElementById('fault-2-desc').value = s.fault2Desc || "";
 
             updateFaultExclusions();
-
             const c = document.getElementById('pumps-form-container');
             let pumpsHtml = '';
             s.pumps.forEach(p => {
@@ -1152,8 +1250,7 @@
                 const isCriticalFault = (finalFault && !nonStoppingFaults.includes(finalFault)) || (finalFaultSec && !nonStoppingFaults.includes(finalFaultSec));
 
                 if (isCriticalFault) {
-                    currentStatus = 'متوقفة';
-                    activeCount = 0; newPressure = 0; newFlow = 0;
+                    currentStatus = 'متوقفة'; activeCount = 0; newPressure = 0; newFlow = 0;
                     if (finalFault === 'انقطاع التيار الكهربي' || finalFaultSec === 'انقطاع التيار الكهربي') newVoltage = 0;
                 }
 
@@ -1195,6 +1292,7 @@
                 if(oldData.status != currentStatus) changesDetails.push(`الحالة: ${oldData.status} -> ${currentStatus}`);
                 if(oldData.startTime != newStartTime) changesDetails.push(`تشغيل: ${oldData.startTime||'-'} -> ${newStartTime}`);
                 if(oldData.stopTime != newStopTime) changesDetails.push(`إيقاف: ${oldData.stopTime||'-'} -> ${newStopTime}`);
+
                 const changesString = changesDetails.length > 0 ? changesDetails.join(', ') : "تحديث دوري";
                 const updates = {
                     pressure: newPressure, waterFlow: newFlow, voltage: newVoltage,
@@ -1208,46 +1306,69 @@
                     pumps: updatedPumps
                 };
 
-                db.ref('stations/' + sName).update(updates).then(() => {
-                    const log = { date: updateDate, time: updateTime, station: sName, operator: newOperator, details: changesString };
-                    if (appData.operationHistory.length >= 20000) {
-                        db.ref('history').orderByKey().limitToFirst(1).once('child_added', (snapshot) => { snapshot.ref.remove(); });
-                    }
-                    db.ref('history').push(log);
+                const log = { date: updateDate, time: updateTime, station: sName, operator: newOperator, details: changesString };
 
-                    if (newFaultEntries.length > 0 || resolvedFaultEntries.length > 0) {
-                        db.ref('faults_log').once('value').then(snap => {
-                            let rawVal = snap.val();
-                            let logs = [];
-                            if (rawVal) { if (Array.isArray(rawVal)) logs = rawVal; else logs = Object.values(rawVal); }
-                            newFaultEntries.forEach(newF => {
-                                const exists = logs.some(existingF => existingF.active === true && existingF.station === newF.station && existingF.type === newF.type);
-                                if (!exists) logs.unshift(newF);
+                // Apply update locally immediately for better UX
+                Object.assign(appData.stations[sName], updates);
+                localStorage.setItem('toshka_stations_cache', JSON.stringify(appData.stations)); // Cache immediately
+
+                if (navigator.onLine) {
+                    // ONLINE MODE
+                    db.ref('stations/' + sName).update(updates).then(() => {
+                        if (appData.operationHistory.length >= 20000) {
+                            db.ref('history').orderByKey().limitToFirst(1).once('child_added', (snapshot) => { snapshot.ref.remove(); });
+                        }
+                        db.ref('history').push(log);
+
+                        if (newFaultEntries.length > 0 || resolvedFaultEntries.length > 0) {
+                            db.ref('faults_log').once('value').then(snap => {
+                                let rawVal = snap.val();
+                                let logs = [];
+                                if (rawVal) { if (Array.isArray(rawVal)) logs = rawVal; else logs = Object.values(rawVal); }
+                                newFaultEntries.forEach(newF => {
+                                    const exists = logs.some(existingF => existingF.active === true && existingF.station === newF.station && existingF.type === newF.type);
+                                    if (!exists) logs.unshift(newF);
+                                });
+                                resolvedFaultEntries.forEach(rf => {
+                                    const index = logs.findIndex(f => f.station === sName && f.type === rf.type && f.active === true);
+                                    if (index !== -1) { 
+                                        logs[index].active = false;
+                                        logs[index].endTime = stationFullDateTime;
+                                    } else { logs.unshift(rf); }
+                                });
+                                if (logs.length > 20000) logs = logs.slice(0, 20000);
+                                db.ref('faults_log').set(logs);
                             });
-                            resolvedFaultEntries.forEach(rf => {
-                                const index = logs.findIndex(f => f.station === sName && f.type === rf.type && f.active === true);
-                                if (index !== -1) { 
-                                    logs[index].active = false;
-                                    logs[index].endTime = stationFullDateTime;
-                                } else { logs.unshift(rf); }
-                            });
-                            if (logs.length > 20000) logs = logs.slice(0, 20000);
-                            db.ref('faults_log').set(logs);
-                        });
-                    }
-                    
-                    document.getElementById('operator-alert').textContent = 'تم الحفظ والمزامنة!';
-                    document.getElementById('operator-alert').className = 'alert alert-success';
-                    document.getElementById('operator-alert').style.display = 'block';
-                    setTimeout(() => {
-                        document.getElementById('operator-alert').style.display = 'none';
-                        showStationDetails(sName);
-                    }, 1000);
-                }).catch(err => { alert("خطأ قاعدة البيانات: " + err.message); });
+                        }
+                        
+                        showSuccessFeedback(sName);
+                    }).catch(err => { alert("خطأ قاعدة البيانات: " + err.message); });
+                } else {
+                    // OFFLINE MODE
+                    addToOfflineQueue('update_station', {
+                        stationId: sName,
+                        updates: updates,
+                        log: log,
+                        newFaults: newFaultEntries,
+                        resolvedFaults: resolvedFaultEntries
+                    });
+                    showSuccessFeedback(sName, true);
+                }
+
             } catch (e) {
                 console.error(e);
                 alert("حدث خطأ برمجي: " + e.message);
             }
+        }
+
+        function showSuccessFeedback(sName, isOffline = false) {
+            document.getElementById('operator-alert').textContent = isOffline ? 'تم الحفظ في الجهاز (سيتم الرفع عند الاتصال) ⏳' : 'تم الحفظ والمزامنة! ✅';
+            document.getElementById('operator-alert').className = isOffline ? 'alert alert-warning' : 'alert alert-success';
+            document.getElementById('operator-alert').style.display = 'block';
+            setTimeout(() => {
+                document.getElementById('operator-alert').style.display = 'none';
+                showStationDetails(sName);
+            }, 1500);
         }
 
         // --- MOBILE OPTIMIZED INSPECTION LOGIC (V1.9) ---
@@ -1281,11 +1402,9 @@
                 const headerDiv = document.createElement('div');
                 
                 if (isEdit) {
-                    // Static Header (No Arrow, Not Clickable)
                     headerDiv.className = 'section-header-static';
                     headerDiv.innerHTML = `<span>${title}</span>`;
                 } else {
-                    // Accordion Header (Arrow, Clickable)
                     headerDiv.className = 'section-accordion-header';
                     headerDiv.innerHTML = `<span>${title}</span> <span class="arrow">▼</span>`;
                     headerDiv.onclick = function() {
@@ -1297,9 +1416,8 @@
 
                 // --- Body Logic (V1.9) ---
                 const bodyDiv = document.createElement('div');
-                // Use a static class for Edit so it's always open via CSS, else use accordion class
                 if (isEdit) {
-                    bodyDiv.className = 'section-body-static'; 
+                    bodyDiv.className = 'section-body-static';
                 } else {
                     bodyDiv.className = 'section-accordion-body';
                     bodyDiv.id = `section-body-${key}`;
@@ -1316,27 +1434,16 @@
                         let headerClass = 'pump-header-green';
                         let icon = '✅';
                         
-                        // New Color Logic (V1.9)
-                        // Critical Indices in Schema: 0,1,2,5,8,10,11,12
-                        const criticalIndices = [0, 1, 2, 5, 8, 10, 11, 12];
+                        const criticalIndices = [1, 5, 10, 11, 12];
                         let isRed = false;
                         let isYellow = false;
                         
                         schema.items.forEach((item, idx) => {
                             const status = pData[idx] ? pData[idx].status : 'efficient';
-                            // Logic:
-                            // RED: if Critical is Broken OR None
                             if (criticalIndices.includes(idx)) {
-                                if (status === 'broken' || status === 'none') {
-                                    isRed = true;
-                                }
+                                if (status === 'broken') isRed = true;
                             }
-                            
-                            // YELLOW: if any part is Fault, OR non-critical is Broken/None
                             if (status === 'fault') isYellow = true;
-                            if (!criticalIndices.includes(idx)) {
-                                if (status === 'broken' || status === 'none') isYellow = true;
-                            }
                         });
 
                         if (isRed) { headerClass = 'pump-header-red'; icon = '🛑'; }
@@ -1349,18 +1456,16 @@
                         pumpHeaderDiv.className = `pump-accordion-header ${headerClass}`;
                         pumpHeaderDiv.innerHTML = `<span>مضخة رقم ${i}</span> <span class="icon-state">${icon}</span>`;
                         pumpHeaderDiv.onclick = (e) => {
-                            e.stopPropagation(); 
+                            e.stopPropagation();
                             togglePumpAccordion(i);
                         };
 
                         const pumpBodyDiv = document.createElement('div');
                         pumpBodyDiv.className = 'pump-accordion-body';
                         pumpBodyDiv.id = `pump-body-${i}`;
-
                         schema.items.forEach((item, idx) => {
                              pumpBodyDiv.appendChild(createInspectionRow(idx, item, pData[idx] || {}, `pumps_${i}`, isEdit));
                         });
-
                         pumpItemDiv.appendChild(pumpHeaderDiv);
                         pumpItemDiv.appendChild(pumpBodyDiv);
                         bodyDiv.appendChild(pumpItemDiv);
@@ -1392,7 +1497,6 @@
                 const isSel = savedStatus === opt.val ? 'selected' : '';
                 optionsHtml += `<option value="${opt.val}" ${isSel}>${opt.text}</option>`;
             });
-
             let selectHtml = `
                 <select class="inspection-status-select ${savedStatus}" id="stat_${inputId}" ${isEdit ? '' : 'disabled'} onchange="updateInspectionColor(this)">
                     ${optionsHtml}
@@ -1410,7 +1514,6 @@
             allPumpBodies.forEach(b => { if(b !== target) b.classList.remove('open'); });
             target.classList.toggle('open');
         };
-
         window.updateInspectionColor = (selectElem) => {
             selectElem.classList.remove('efficient', 'fault', 'broken', 'none');
             selectElem.classList.add(selectElem.value);
@@ -1446,13 +1549,29 @@
                 });
             }
 
-            db.ref(`stations/${sName}/inspectionData`).update(newInsData).then(() => {
-                alert("تم حفظ بيانات الفحص بنجاح ✅");
-                renderInspection('edit'); 
-                const nowStd = getStandardDateTime();
-                const log = { date: nowStd.date, time: nowStd.time, station: sName, operator: appData.currentUser.username, details: `تحديث سجل الفحص الشامل` };
-                db.ref('history').push(log);
-            });
+            const nowStd = getStandardDateTime();
+            const log = { date: nowStd.date, time: nowStd.time, station: sName, operator: appData.currentUser.username, details: `تحديث سجل الفحص الشامل` };
+
+            // Update local first
+            if (!appData.stations[sName].inspectionData) appData.stations[sName].inspectionData = {};
+            appData.stations[sName].inspectionData = newInsData;
+            localStorage.setItem('toshka_stations_cache', JSON.stringify(appData.stations));
+
+            if (navigator.onLine) {
+                db.ref(`stations/${sName}/inspectionData`).update(newInsData).then(() => {
+                    db.ref('history').push(log);
+                    alert("تم حفظ بيانات الفحص بنجاح ✅");
+                    renderInspection('edit'); 
+                });
+            } else {
+                addToOfflineQueue('update_inspection', {
+                    stationId: sName,
+                    inspectionData: newInsData,
+                    log: log
+                });
+                alert("تم حفظ الفحص في الجهاز (Offline) وسيتم رفعه عند الاتصال ⏳");
+                renderInspection('edit');
+            }
         });
 
         // Navigation for Inspection
@@ -1511,7 +1630,7 @@
                     if (!uniqueArchiveMap.has(key)) { uniqueArchiveMap.add(key); finalLogs.push(log); } else { changesMade = true; }
                 }
             });
-            if (changesMade) { db.ref('faults_log').set(finalLogs).then(() => { renderFaultsLog(); }); } 
+            if (changesMade && navigator.onLine) { db.ref('faults_log').set(finalLogs).then(() => { renderFaultsLog(); }); } 
             else { renderFaultsLog(); }
         };
 
@@ -1542,6 +1661,7 @@
                 if (f.type === 'انقطاع الاتصال SCADA') style = 'color: #f39c12;';
                 activeBody.innerHTML += `<tr><td><b>${f.station}</b></td><td style="${style} font-weight:bold;">${icon} ${f.type}</td><td>${f.startTime}</td><td>مستمر...</td></tr>`;
             });
+
             const filterVal = filterSelect.value;
             let filteredPast = pastFaults;
             if (filterVal !== 'all') { filteredPast = pastFaults.filter(f => f.station === filterVal); }
@@ -1559,20 +1679,21 @@
                 if (filteredPast.length > appData.faultsLimit) {
                     loadMoreBtn.style.display = 'inline-block';
                     const remaining = filteredPast.length - appData.faultsLimit;
-                    statusText.textContent = `يتم عرض ${dataToShow.length} من أصل ${filteredPast.length} عطل مؤرشف (متبقي ${remaining})`;
+                    statusText.textContent = `يتم عرض ${faultsToShow.length} من أصل ${filteredPast.length} عطل مؤرشف (متبقي ${remaining})`;
                 } else {
                     loadMoreBtn.style.display = 'none';
                     statusText.textContent = `تم عرض كافة الأرشيف المحدد (${filteredPast.length})`;
                 }
             }
         };
+
         // Navigation Back Buttons
         document.getElementById('back-to-stations').addEventListener('click', () => { showScreen('stations'); });
         document.getElementById('back-to-station').addEventListener('click', () => showStationDetails(appData.currentStation));
         document.getElementById('back-to-stations-from-users').addEventListener('click', () => showScreen('stations'));
         document.getElementById('back-to-stations-from-history').addEventListener('click', () => showScreen('stations'));
         document.getElementById('back-to-stations-from-faults').addEventListener('click', () => showScreen('stations'));
-        
+
         // Initial Load
         checkRememberedUser();
         loadSystemData();
