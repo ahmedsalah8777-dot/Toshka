@@ -724,17 +724,24 @@
                 icon.textContent = '🟢';
                 text.textContent = 'متصل';
                 processOfflineQueue(); 
-                if(loginBtn) loginBtn.disabled = false;
+                if(loginBtn && appData.users && Object.keys(appData.users).length > 0) {
+                    loginBtn.disabled = false;
+                    loginBtn.textContent = "دخول";
+                    loginBtn.style.backgroundColor = '';
+                    loginBtn.style.color = '';
+                    loginBtn.style.cursor = 'pointer';
+                    loginBtn.classList.add('btn-primary');
+                }
             } else {
                 indicator.className = 'network-status net-offline';
                 icon.textContent = '🔴';
                 text.textContent = 'غير متصل';
-                if(appData.users && Object.keys(appData.users).length > 0 && loginBtn) {
+                if(loginBtn && appData.users && Object.keys(appData.users).length > 0) {
                     loginBtn.disabled = false;
                     loginBtn.textContent = 'دخول (Offline)';
-                    loginBtn.style.backgroundColor = ''; 
-                    loginBtn.style.color = ''; 
-                    loginBtn.style.cursor = 'pointer'; 
+                    loginBtn.style.backgroundColor = '';
+                    loginBtn.style.color = '';
+                    loginBtn.style.cursor = 'pointer';
                     loginBtn.classList.add('btn-primary');
                 }
             }
@@ -854,20 +861,30 @@
             });
             
             db.ref('users').on('value', (snapshot) => {
+                const loginBtn = document.getElementById('login-btn');
                 if (snapshot.val()) {
                     appData.users = snapshot.val();
                     localStorage.setItem('toshka_users_cache', JSON.stringify(appData.users)); 
+                    
+                    if (loginBtn) {
+                        loginBtn.disabled = false;
+                        loginBtn.textContent = "دخول";
+                        loginBtn.style.backgroundColor = '';
+                        loginBtn.style.color = '';
+                        loginBtn.style.cursor = 'pointer';
+                        loginBtn.classList.add('btn-primary');
+                    }
                 }
-                else db.ref('users').set(appData.users);
-
-                const loginBtn = document.getElementById('login-btn');
-                if (loginBtn) {
-                    loginBtn.disabled = false;
-                    loginBtn.textContent = "دخول";
-                    loginBtn.style.backgroundColor = ''; 
-                    loginBtn.style.color = '';
-                    loginBtn.style.cursor = 'pointer';
-                    loginBtn.classList.add('btn-primary');
+                else {
+                    db.ref('users').set(appData.users);
+                    if (loginBtn) {
+                        loginBtn.disabled = false;
+                        loginBtn.textContent = "دخول";
+                        loginBtn.style.backgroundColor = '';
+                        loginBtn.style.color = '';
+                        loginBtn.style.cursor = 'pointer';
+                        loginBtn.classList.add('btn-primary');
+                    }
                 }
             });
             
@@ -875,7 +892,6 @@
                 const val = snapshot.val();
                 if(val) {
                     appData.operationHistory = Object.values(val).reverse();
-                    // تنظيف البيانات التاريخية من undefined
                     cleanHistoricalData();
                 }
                 else appData.operationHistory = [];
@@ -989,7 +1005,6 @@
             }
         }
         
-        // LOGIN logic - تم التعديل هنا لمنع undefined
         document.getElementById('login-btn').addEventListener('click', () => {
             const u = document.getElementById('username').value.trim();
             const p = document.getElementById('password').value.trim();
@@ -1006,11 +1021,10 @@
                     localStorage.removeItem('toshka_pass'); 
                 }
                 
-                // إصلاح: حفظ بيانات المستخدم بشكل كامل
                 appData.currentUser = {
                     username: u,
                     id: u,
-                    name: u,  // إضافة خاصية name
+                    name: u,
                     type: user.type,
                     permissions: appData.userTypes[user.type].permissions
                 };
@@ -1036,12 +1050,10 @@
         });
 
         // --- NAVIGATION & BUTTONS FIXES ---
-        // Header Navigation
         document.getElementById('users-management-btn').addEventListener('click', () => showScreen('users'));
         document.getElementById('history-management-btn').addEventListener('click', () => showScreen('history'));
         document.getElementById('alarm-btn').addEventListener('click', () => showScreen('faults-log'));
 
-        // Back Buttons
         document.getElementById('back-to-stations').addEventListener('click', () => showScreen('stations'));
         document.getElementById('back-to-station').addEventListener('click', () => showStationDetails(appData.currentStation));
         document.getElementById('back-to-stations-from-users').addEventListener('click', () => showScreen('stations'));
@@ -1219,7 +1231,6 @@
             document.getElementById('last-update-value').textContent = s.lastUpdate;
             document.getElementById('station-comments-value').textContent = s.comments || 'لا يوجد ملاحظات';
             
-            // Consumption Details Update
             const cons = s.consumption || {};
             document.getElementById('view-cons-t1').textContent = cons.t1 || '-';
             document.getElementById('view-cons-t2').textContent = cons.t2 || '-';
@@ -1274,7 +1285,6 @@
             const s = appData.stations[appData.currentStation];
             document.getElementById('editing-station-name').textContent = `محطة: ${s.name}`;
             
-            // إصلاح: استخدام اسم المستخدم الحالي بشكل صحيح
             let currentOperatorName = 'غير معرّف';
             if (appData.currentUser) {
                 currentOperatorName = appData.currentUser.username || 
@@ -1295,7 +1305,6 @@
             document.getElementById('operator-system-mode').value = s.systemMode;
             document.getElementById('operator-comments').value = s.comments;
 
-            // Load Consumption Data
             const cons = s.consumption || {};
             document.getElementById('cons-trans-1').value = cons.t1 || '';
             document.getElementById('cons-trans-2').value = cons.t2 || '';
@@ -1371,7 +1380,6 @@
         document.getElementById('btn-resolve-f1').addEventListener('click', () => { if(confirm("هل تم إصلاح العطل الأول؟")) saveDataInternal({ resolveTarget: 'currentFault' }); });
         document.getElementById('btn-resolve-f2').addEventListener('click', () => { if(confirm("هل تم إصلاح العطل الثاني؟")) saveDataInternal({ resolveTarget: 'secondaryFault' }); });
         
-        // --- دالة saveDataInternal مع إصلاح مشكلة undefined ---
         function saveDataInternal(options = {}) {
             try {
                 const sName = appData.currentStation;
@@ -1389,10 +1397,8 @@
                 const safeOldFault1 = (oldData.currentFault && oldData.currentFault !== "undefined") ? oldData.currentFault : null;
                 const safeOldFault2 = (oldData.secondaryFault && oldData.secondaryFault !== "undefined") ? oldData.secondaryFault : null;
 
-                // إصلاح: الحصول على اسم المشغل بشكل آمن
                 let newOperator = '';
                 if (appData.currentUser) {
-                    // ترتيب الأولويات: username -> id -> name -> 'غير معرّف'
                     newOperator = appData.currentUser.username || 
                                  appData.currentUser.id || 
                                  appData.currentUser.name || 
@@ -1401,7 +1407,6 @@
                     newOperator = getVal('operator-name') || 'غير معرّف';
                 }
                 
-                // تأكيد أن newOperator ليست undefined أو فارغة
                 if (!newOperator || newOperator.trim() === '' || newOperator === 'undefined') {
                     newOperator = 'مستخدم النظام';
                 }
@@ -1412,7 +1417,6 @@
                 const newMode = getVal('operator-system-mode');
                 const newComments = getVal('operator-comments');
                 
-                // Consumption Data
                 let consTrans1 = getVal('cons-trans-1');
                 let consTrans2 = getVal('cons-trans-2');
                 let consWater = getVal('cons-water-m3');
@@ -1543,10 +1547,8 @@
 
                 if(oldData.pressure != newPressure) changesDetails.push(`الضغط: ${oldData.pressure} -> ${newPressure}`);
                 
-                // Consumption Data Logic
                 let consumptionLogData = null;
                 const oldCons = oldData.consumption || {};
-                // Only log if data is present and changed (or first time)
                 if (consTrans1 || consTrans2 || consWater) {
                     if (consTrans1 != oldCons.t1 || consTrans2 != oldCons.t2 || consWater != oldCons.m3) {
                         changesDetails.push('تم تحديث الاستهلاكات');
@@ -1558,23 +1560,21 @@
                         t1: consTrans1, 
                         t2: consTrans2, 
                         m3: consWater,
-                        operator: newOperator  // استخدام newOperator المؤمنة
+                        operator: newOperator
                     };
                 }
 
-                // إضافة تغيير المشغل إلى قائمة التغييرات إذا تغير
                 if (oldData.operatorName !== newOperator) {
                     changesDetails.push(`المشغل: ${oldData.operatorName || 'غير معرّف'} -> ${newOperator}`);
                 }
                 
                 const changesString = changesDetails.length > 0 ? changesDetails.join(', ') : "تحديث دوري";
                 
-                // إنشاء سجل العمليات - إصلاح هنا
                 const log = { 
                     date: updateDate, 
                     time: updateTime, 
                     station: sName, 
-                    operator: newOperator,  // استخدام newOperator المؤمنة
+                    operator: newOperator,
                     details: changesString 
                 };
                 
@@ -1583,7 +1583,7 @@
                     waterFlow: newFlow, 
                     voltage: newVoltage,
                     systemMode: newMode, 
-                    operatorName: newOperator,  // استخدام newOperator المؤمنة
+                    operatorName: newOperator,
                     comments: newComments,
                     lastUpdate: stationFullDateTime, 
                     startTime: newStartTime, 
@@ -1667,7 +1667,6 @@
             }, 1500);
         }
 
-        // --- دالة لتنظيف البيانات التاريخية ---
         function cleanHistoricalData() {
             if (appData.operationHistory && appData.operationHistory.length > 0) {
                 appData.operationHistory = appData.operationHistory.map(log => {
@@ -1722,10 +1721,8 @@
                 const logs = allLogs.filter(l => l.station === stName);
                 if(logs.length === 0) return;
 
-                // Sort logs by Date ASC
                 logs.sort((a,b) => parseCustomDate(a.date+' '+a.time) - parseCustomDate(b.date+' '+b.time));
 
-                // Find First Log in "From" period and "To" period
                 const startLog = logs.find(l => parseCustomDate(l.date + " 00:00:00").getTime() >= fromTime);
                 const endLog = logs.find(l => parseCustomDate(l.date + " 00:00:00").getTime() >= toTime);
 
@@ -1767,7 +1764,6 @@
             }
         }
 
-        // --- UPDATED FUNCTION TO EXPORT CONSUMPTION TO CSV ---
         function exportConsumptionsToCSV() {
             const fStation = document.getElementById('cons-filter-station').value;
             const fDateFrom = document.getElementById('cons-filter-date-from').value;
@@ -1780,7 +1776,7 @@
             let allLogs = appData.consumptionLog || [];
             let targetStations = fStation === 'all' ? Object.keys(appData.stations) : [fStation];
             
-            let csvContent = "data:text/csv;charset=utf-8,\uFEFF"; // \uFEFF for BOM (to support Arabic in Excel)
+            let csvContent = "data:text/csv;charset=utf-8,\uFEFF";
             csvContent += "المحطة,تاريخ القراءة السابقة,قراءة محول 1 السابقة (KW),تاريخ القراءة الحالية,قراءة محول 1 الحالية (KW),استهلاك محول 1 (KW),قراءة محول 2 السابقة (KW),قراءة محول 2 الحالية (KW),استهلاك محول 2 (KW),قراءة المياه السابقة (M3),قراءة المياه الحالية (M3),استهلاك المياه (M3)\n";
 
             targetStations.forEach(stName => {
@@ -1789,9 +1785,7 @@
 
                 logs.sort((a, b) => parseCustomDate(a.date + ' ' + a.time) - parseCustomDate(b.date + ' ' + b.time));
 
-                // Find the first log on or after the selected 'From' date
                 const startLog = logs.find(l => parseCustomDate(l.date + " 00:00:00").getTime() >= fromTime);
-                // Find the first log on or after the selected 'To' date
                 const endLog = logs.find(l => parseCustomDate(l.date + " 00:00:00").getTime() >= toTime);
 
                 if (startLog && endLog) {
@@ -1820,7 +1814,7 @@
                 }
             });
 
-            if (targetStations.length > 0 && csvContent.split('\n').length <= 1) { // Check for header only + data row
+            if (targetStations.length > 0 && csvContent.split('\n').length <= 1) {
                 alert('لا توجد بيانات استهلاك مطابقة للفترة المحددة لإنشاء ملف CSV.');
                 return;
             }
@@ -1835,7 +1829,6 @@
         }
         window.exportConsumptionsToCSV = exportConsumptionsToCSV; 
 
-        // Retain original Excel function but not used by button
         function exportConsumptionsToExcel() {
             const table = document.getElementById("consumptions-table-export");
             const html = table.outerHTML;
@@ -1994,7 +1987,6 @@
             selectElem.classList.add(selectElem.value); 
         };
         
-        // SAVE INSPECTION
         document.getElementById('save-inspection-btn').addEventListener('click', () => {
             const sName = appData.currentStation; 
             if(!sName) return;
@@ -2135,7 +2127,6 @@
                 const fDateTo = document.getElementById('filter-date-to').value;
                 
                 if (fZone !== 'all') {
-                    // Filter logic for zones would require station mapping, simplifying for now
                 }
                 if (fStation !== 'all') {
                     data = data.filter(d => d.station === fStation);
@@ -2150,14 +2141,12 @@
                 }
             }
             
-            // تنظيف البيانات من undefined قبل العرض
             data.forEach(log => {
                 if (!log.operator || log.operator === 'undefined') {
                     log.operator = 'مستخدم النظام';
                 }
             });
             
-            // Limit view
             const viewData = data.slice(0, 100);
             viewData.forEach(log => {
                 tbody.innerHTML += `<tr>
@@ -2182,7 +2171,6 @@
             activeBody.innerHTML = '';
             historyBody.innerHTML = '';
             
-            // Populate active faults
             const activeFaults = appData.faultsLog.filter(f => f.active);
             activeFaults.forEach(f => {
                 const icon = faultIcons[f.type] || '⚠️'; 
@@ -2196,7 +2184,6 @@
             
             if(activeFaults.length === 0) activeBody.innerHTML = `<tr><td colspan="4" style="text-align:center; color:green">لا توجد أعطال نشطة حالياً</td></tr>`;
             
-            // Populate history faults
             let histFaults = appData.faultsLog.filter(f => !f.active);
             if (fStation !== 'all') histFaults = histFaults.filter(f => f.station === fStation);
             histFaults.slice(0, appData.faultsLimit).forEach(f => {
@@ -2210,7 +2197,6 @@
                 </tr>`;
             });
             
-            // Populate filter if empty
             const filterSel = document.getElementById('fault-archive-station-filter');
             if (filterSel.options.length <= 1) {
                 const sorted = Object.values(appData.stations).sort((a,b) => a.name.localeCompare(b.name));
