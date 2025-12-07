@@ -190,6 +190,94 @@
         .cons-date-small { display: block; font-size: 0.7rem; color: #888; margin-top: 2px; line-height: 1.2; width: 100%; text-align: left; }
         .cons-result { background-color: #e8f6f3; color: var(--primary-color); font-weight: bold; padding: 6px; margin-top: 5px; border-radius: 4px; text-align: center; }
         .cons-val-wrapper { text-align: left; }
+        
+        /* --- USERS MANAGEMENT STYLES --- */
+        .users-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin: 20px 0;
+            padding-bottom: 15px;
+            border-bottom: 2px solid var(--header-bg);
+        }
+        
+        .user-form-card {
+            background: white;
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+            border: 2px solid var(--secondary-color);
+        }
+        
+        .user-form-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+        
+        .user-action-buttons {
+            display: flex;
+            gap: 10px;
+            margin-top: 15px;
+        }
+        
+        .users-table th {
+            position: sticky;
+            top: 0;
+            z-index: 10;
+        }
+        
+        .delete-user-btn {
+            background: linear-gradient(135deg, #c0392b, #e74c3c);
+            color: white;
+            border: none;
+            padding: 6px 12px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 12px;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            transition: all 0.3s ease;
+        }
+        
+        .delete-user-btn:hover {
+            background: linear-gradient(135deg, #a93226, #c0392b);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(192, 57, 43, 0.3);
+        }
+        
+        .no-users-message {
+            text-align: center;
+            padding: 40px;
+            color: #666;
+            font-size: 1.1rem;
+            background: #f9f9f9;
+            border-radius: 8px;
+            border: 2px dashed #ddd;
+            margin: 20px 0;
+        }
+        
+        .users-search-container {
+            position: relative;
+            margin: 15px 0;
+        }
+        
+        .users-search-icon {
+            position: absolute;
+            left: 15px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #666;
+        }
+        
+        #search-user-input {
+            padding-right: 15px;
+            padding-left: 45px;
+            font-size: 0.95rem;
+        }
     </style>
 </head>
 <body>
@@ -528,32 +616,61 @@
         </div>
 
         <div id="users-screen" class="screen">
-            <h2>المستخدمين</h2>
-            <button id="back-to-stations-from-users" class="btn btn-outline">عودة</button>
-            <div style="margin: 15px 0; display:flex; justify-content:space-between;">
-                <h3>القائمة</h3>
-                <button id="add-user-btn" class="btn btn-primary">إضافة</button>
+            <div class="users-header">
+                <h2>إدارة المستخدمين</h2>
+                <button id="back-to-stations-from-users" class="btn btn-outline">عودة للرئيسية</button>
             </div>
-            <div id="user-form-container" style="display: none; background: #f9f9f9; padding: 15px; margin-top: 15px; border-radius: 8px; border: 1px solid #ddd;">
+            
+            <div id="user-form-container" class="user-form-card" style="display: none;">
                 <h4 id="user-form-title" style="margin-bottom:15px; color: var(--secondary-color);">مستخدم جديد</h4>
-                <div class="form-group"><input type="text" id="new-username" placeholder="اسم المستخدم"></div>
-                <div class="form-group"><input type="text" id="new-password" placeholder="كلمة المرور"></div>
-                <div class="form-group">
-                    <select id="new-user-type"></select>
+                <div class="user-form-grid">
+                    <div class="form-group">
+                        <label>اسم المستخدم</label>
+                        <input type="text" id="new-username" placeholder="أدخل اسم المستخدم">
+                    </div>
+                    <div class="form-group">
+                        <label>كلمة المرور</label>
+                        <input type="text" id="new-password" placeholder="أدخل كلمة المرور">
+                    </div>
+                    <div class="form-group">
+                        <label>نوع المستخدم</label>
+                        <select id="new-user-type"></select>
+                    </div>
                 </div>
-                <div style="display:flex; gap:10px;">
-                    <button id="save-user-btn" class="btn btn-success" style="flex:1">حفظ</button>
-                    <button id="cancel-user-btn" class="btn btn-danger" style="flex:1">إلغاء</button>
+                <div class="user-action-buttons">
+                    <button id="save-user-btn" class="btn btn-success" style="flex:1">💾 حفظ المستخدم</button>
+                    <button id="cancel-user-btn" class="btn btn-danger" style="flex:1">❌ إلغاء</button>
                 </div>
             </div>
-            <div style="margin-bottom: 15px; margin-top: 15px;">
-                <input type="text" id="search-user-input" placeholder="بحث عن مستخدم (الاسم)..." onkeyup="renderUsersManagement()" style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 6px;">
+            
+            <div style="margin: 25px 0 15px; display:flex; justify-content:space-between; align-items:center;">
+                <h3>قائمة المستخدمين</h3>
+                <button id="add-user-btn" class="btn btn-primary">➕ إضافة مستخدم جديد</button>
             </div>
+            
+            <div class="users-search-container">
+                <span class="users-search-icon">🔍</span>
+                <input type="text" id="search-user-input" placeholder="البحث عن مستخدم (الاسم)..." onkeyup="renderUsersManagement()" style="width: 100%;">
+            </div>
+            
             <div class="table-responsive">
                 <table class="users-table">
-                    <thead><tr><th>الاسم</th><th>النوع</th><th>كلمة المرور</th><th>الحالة</th><th>إجراء</th></tr></thead>
+                    <thead>
+                        <tr>
+                            <th>اسم المستخدم</th>
+                            <th>نوع المستخدم</th>
+                            <th>كلمة المرور</th>
+                            <th>الإجراءات</th>
+                        </tr>
+                    </thead>
                     <tbody id="users-table-body"></tbody>
                 </table>
+            </div>
+            
+            <div id="no-users-message" class="no-users-message" style="display: none;">
+                <div style="font-size: 2rem; margin-bottom: 10px;">👥</div>
+                <div>لا توجد مستخدمين مسجلين في النظام</div>
+                <div style="font-size: 0.9rem; margin-top: 10px;">اضغط على زر "إضافة مستخدم جديد" لبدء إضافة المستخدمين</div>
             </div>
         </div>
 
@@ -2072,46 +2189,126 @@
         function renderUsersManagement() {
             const tbody = document.getElementById('users-table-body');
             const search = document.getElementById('search-user-input').value.toLowerCase();
+            const noUsersMessage = document.getElementById('no-users-message');
+            
             tbody.innerHTML = '';
-            Object.keys(appData.users).forEach(uName => {
-                if (search && !uName.toLowerCase().includes(search)) return;
+            
+            let filteredUsers = Object.keys(appData.users).filter(uName => {
+                if (search && !uName.toLowerCase().includes(search)) return false;
+                return true;
+            });
+            
+            if (filteredUsers.length === 0) {
+                tbody.style.display = 'none';
+                noUsersMessage.style.display = 'block';
+                if (search) {
+                    noUsersMessage.innerHTML = `
+                        <div style="font-size: 2rem; margin-bottom: 10px;">🔍</div>
+                        <div>لا توجد نتائج بحث مطابقة لـ "${search}"</div>
+                        <div style="font-size: 0.9rem; margin-top: 10px;">جرب استخدام مصطلحات بحث أخرى</div>
+                    `;
+                }
+                return;
+            }
+            
+            tbody.style.display = '';
+            noUsersMessage.style.display = 'none';
+            
+            filteredUsers.forEach(uName => {
                 const user = appData.users[uName];
                 const typeName = appData.userTypes[user.type].name;
-                const activeText = user.active ? '<span style="color:green">نشط</span>' : '<span style="color:red">محظور</span>';
-                const actionBtn = user.active ? 
-                    `<button class="btn btn-danger btn-sm" onclick="toggleUserStatus('${uName}')">حظر</button>` :
-                    `<button class="btn btn-success btn-sm" onclick="toggleUserStatus('${uName}')">تنشيط</button>`;
                 
-                tbody.innerHTML += `<tr><td>${uName}</td><td>${typeName}</td><td>${user.password}</td><td>${activeText}</td><td>${actionBtn}</td></tr>`;
+                tbody.innerHTML += `
+                    <tr>
+                        <td style="font-weight: bold;">${uName}</td>
+                        <td>${typeName}</td>
+                        <td style="font-family: monospace; letter-spacing: 1px;">${user.password}</td>
+                        <td>
+                            <button class="delete-user-btn" onclick="deleteUser('${uName}')" title="حذف المستخدم">
+                                🗑️ حذف
+                            </button>
+                        </td>
+                    </tr>`;
             });
         }
         
         document.getElementById('add-user-btn').addEventListener('click', () => {
             document.getElementById('user-form-container').style.display = 'block';
+            document.getElementById('new-username').value = '';
+            document.getElementById('new-password').value = '';
+            
             const sel = document.getElementById('new-user-type');
             sel.innerHTML = '';
             Object.keys(appData.userTypes).forEach(k => sel.innerHTML += `<option value="${k}">${appData.userTypes[k].name}</option>`);
         });
         
-        document.getElementById('cancel-user-btn').addEventListener('click', () => document.getElementById('user-form-container').style.display = 'none');
+        document.getElementById('cancel-user-btn').addEventListener('click', () => {
+            document.getElementById('user-form-container').style.display = 'none';
+            document.getElementById('new-username').value = '';
+            document.getElementById('new-password').value = '';
+        });
         
         document.getElementById('save-user-btn').addEventListener('click', () => {
             const name = document.getElementById('new-username').value.trim();
             const pass = document.getElementById('new-password').value.trim();
             const type = document.getElementById('new-user-type').value;
-            if(!name || !pass) { alert('البيانات ناقصة'); return; }
-            if(appData.users[name]) { alert('المستخدم موجود بالفعل'); return; }
             
-            db.ref('users/' + name).set({ type: type, password: pass, active: true }).then(() => {
-                alert('تمت الإضافة');
+            if(!name) { 
+                alert('يرجى إدخال اسم المستخدم'); 
+                document.getElementById('new-username').focus();
+                return; 
+            }
+            
+            if(!pass) { 
+                alert('يرجى إدخال كلمة المرور'); 
+                document.getElementById('new-password').focus();
+                return; 
+            }
+            
+            if(name.toLowerCase() === 'admin') {
+                alert('لا يمكن استخدام اسم "admin" لمستخدم جديد');
+                return;
+            }
+            
+            if(appData.users[name]) { 
+                alert('المستخدم موجود بالفعل في النظام'); 
+                return; 
+            }
+            
+            db.ref('users/' + name).set({ 
+                type: type, 
+                password: pass, 
+                active: true 
+            }).then(() => {
+                alert('✅ تمت إضافة المستخدم بنجاح');
                 document.getElementById('user-form-container').style.display = 'none';
+                document.getElementById('new-username').value = '';
+                document.getElementById('new-password').value = '';
                 renderUsersManagement();
+            }).catch(err => {
+                alert('خطأ في إضافة المستخدم: ' + err.message);
             });
         });
         
-        window.toggleUserStatus = (name) => {
-            const newVal = !appData.users[name].active;
-            db.ref(`users/${name}/active`).set(newVal);
+        window.deleteUser = (name) => {
+            if (name === 'admin') {
+                alert('لا يمكن حذف حساب المدير الرئيسي (admin)');
+                return;
+            }
+            
+            if (name === appData.currentUser.username) {
+                alert('لا يمكن حذف حسابك الخاص أثناء استخدام النظام');
+                return;
+            }
+            
+            if (confirm(`هل أنت متأكد من حذف المستخدم "${name}"؟\n\nهذا الإجراء لا يمكن التراجع عنه.`)) {
+                db.ref('users/' + name).remove().then(() => {
+                    alert('✅ تم حذف المستخدم بنجاح');
+                    renderUsersManagement();
+                }).catch(err => {
+                    alert('خطأ في حذف المستخدم: ' + err.message);
+                });
+            }
         };
 
         // --- FAULTS & HISTORY LOGIC ---
