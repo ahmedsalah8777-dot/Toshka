@@ -278,6 +278,76 @@
             padding-left: 45px;
             font-size: 0.95rem;
         }
+        
+        /* NEW STYLES FOR PASSWORD VISIBILITY */
+        .password-cell {
+            position: relative;
+            padding-right: 30px !important;
+        }
+        
+        .toggle-password-cell {
+            position: absolute;
+            left: 5px;
+            top: 50%;
+            transform: translateY(-50%);
+            cursor: pointer;
+            font-size: 14px;
+            background: none;
+            border: none;
+            color: #666;
+            display: none;
+        }
+        
+        .password-masked {
+            font-family: monospace;
+            letter-spacing: 2px;
+            color: #666;
+        }
+        
+        .password-visible {
+            font-family: monospace;
+            letter-spacing: 1px;
+            color: #333;
+        }
+        
+        .user-type-badge {
+            display: inline-block;
+            padding: 3px 8px;
+            border-radius: 12px;
+            font-size: 0.8rem;
+            font-weight: bold;
+        }
+        
+        .type-admin { background-color: #d32f2f; color: white; }
+        .type-engineer { background-color: #1976d2; color: white; }
+        .type-supervisor { background-color: #388e3c; color: white; }
+        .type-operator { background-color: #f57c00; color: white; }
+        
+        .disabled-user {
+            opacity: 0.6;
+            background-color: #f5f5f5;
+        }
+        
+        .disabled-user .user-type-badge {
+            background-color: #757575 !important;
+        }
+        
+        .user-status-toggle {
+            background: none;
+            border: none;
+            cursor: pointer;
+            font-size: 1.2rem;
+            padding: 5px;
+            border-radius: 4px;
+            transition: all 0.3s;
+        }
+        
+        .user-status-toggle:hover {
+            background-color: rgba(0,0,0,0.1);
+        }
+        
+        .user-status-active { color: #388e3c; }
+        .user-status-inactive { color: #d32f2f; }
     </style>
 </head>
 <body>
@@ -751,17 +821,76 @@
             { val: "none", text: "⚪ لا يوجد", class: "none" }
         ];
         
+        // --- USER TYPES & PERMISSIONS DEFINITION ---
+        const userTypes = {
+            admin: {
+                name: "مدير",
+                permissions: {
+                    view_all: true,
+                    edit_all: true,
+                    manage_users: true,
+                    add_users: true,
+                    delete_users: true,
+                    view_history: true,
+                    view_passwords: true,
+                    can_manage_types: ['admin', 'engineer', 'supervisor', 'operator'],
+                    can_add_types: ['admin', 'engineer', 'supervisor', 'operator'],
+                    can_delete_types: ['admin', 'engineer', 'supervisor', 'operator']
+                }
+            },
+            engineer: {
+                name: "مهندس",
+                permissions: {
+                    view_all: true,
+                    edit_all: true,
+                    manage_users: true,
+                    add_users: true,
+                    delete_users: true,
+                    view_history: true,
+                    view_passwords: false,
+                    can_manage_types: ['supervisor', 'operator'],
+                    can_add_types: ['supervisor', 'operator'],
+                    can_delete_types: ['supervisor', 'operator']
+                }
+            },
+            supervisor: {
+                name: "مشرف",
+                permissions: {
+                    view_all: true,
+                    edit_some: true,
+                    manage_users: true,
+                    add_users: true,
+                    delete_users: true,
+                    view_history: false,
+                    view_passwords: false,
+                    can_manage_types: ['operator'],
+                    can_add_types: ['operator'],
+                    can_delete_types: ['operator']
+                }
+            },
+            operator: {
+                name: "مشغل",
+                permissions: {
+                    view_some: true,
+                    edit_own: true,
+                    manage_users: false,
+                    add_users: false,
+                    delete_users: false,
+                    view_history: false,
+                    view_passwords: false,
+                    can_manage_types: [],
+                    can_add_types: [],
+                    can_delete_types: []
+                }
+            }
+        };
+        
         let appData = {
             currentUser: null, 
             currentStation: null, 
             stations: {}, 
             users: {},
-            userTypes: {
-                admin: { name: "مدير", permissions: ['view_all', 'edit_all', 'manage_users', 'add_users', 'view_history'] },
-                engineer: { name: "مهندس", permissions: ['view_all', 'edit_all', 'view_history', 'manage_users'] },
-                supervisor: { name: "مشرف", permissions: ['view_all', 'edit_some', 'manage_users'] },
-                operator: { name: "مشغل", permissions: ['view_some', 'edit_own'] }
-            },
+            userTypes: userTypes,
             zones: ['Zone_A', 'Zone_B', 'Zone_C', 'Zone_D', 'Zone_E', 'Zone_F', 'Zone_G', 'Zone_H', 'Zone_I', 'Zone_J', 'Zone_K', 'Zone_L', 'Zone_O1', 'Zone_O2', 'Zone_O3', 'Zone_O4', 'Zone_O5', 'Zone_O2dashO6', 'Zone_O8', 'Zone_R', 'Zone_S'],
             operationHistory: [], 
             faultsLog: [], 
@@ -993,7 +1122,18 @@
                     }
                 }
                 else {
-                    db.ref('users').set(appData.users);
+                    // إنشاء المستخدمين الافتراضيين
+                    const defaultUsers = {
+                        admin: { type: 'admin', password: 'admin123', active: true },
+                        engineer1: { type: 'engineer', password: 'eng123', active: true },
+                        supervisor1: { type: 'supervisor', password: 'sup123', active: true },
+                        operator1: { type: 'operator', password: 'op123', active: true }
+                    };
+                    
+                    db.ref('users').set(defaultUsers);
+                    appData.users = defaultUsers;
+                    localStorage.setItem('toshka_users_cache', JSON.stringify(defaultUsers));
+                    
                     if (loginBtn) {
                         loginBtn.disabled = false;
                         loginBtn.textContent = "دخول";
@@ -1128,7 +1268,7 @@
             const user = appData.users[u];
             const remember = document.getElementById('remember-me').checked;
             
-            if (user && user.password === p && user.active) {
+            if (user && user.password === p && user.active !== false) {
                 if (remember) { 
                     localStorage.setItem('toshka_user', u); 
                     localStorage.setItem('toshka_pass', p); 
@@ -1150,8 +1290,11 @@
                 
                 const userType = user.type;
                 const permissions = appData.userTypes[userType].permissions;
-                document.getElementById('users-management-btn').style.display = permissions.includes('manage_users') ? 'inline-block' : 'none';
-                document.getElementById('history-management-btn').style.display = permissions.includes('view_history') ? 'inline-block' : 'none';
+                
+                // إظهار/إخفاء أزرار الصلاحيات
+                document.getElementById('users-management-btn').style.display = permissions.manage_users ? 'inline-block' : 'none';
+                document.getElementById('history-management-btn').style.display = permissions.view_history ? 'inline-block' : 'none';
+                
                 if (userType === 'admin' || userType === 'engineer') {
                     document.getElementById('consumptions-btn').style.display = 'inline-block';
                 } else {
@@ -1162,12 +1305,19 @@
                 renderZonesTabs();
                 renderStations('all');
             } else { 
-                alert('بيانات خاطئة'); 
+                alert('بيانات خاطئة أو المستخدم غير مفعل'); 
             }
         });
 
         // --- NAVIGATION & BUTTONS FIXES ---
-        document.getElementById('users-management-btn').addEventListener('click', () => showScreen('users'));
+        document.getElementById('users-management-btn').addEventListener('click', () => {
+            if (appData.currentUser && appData.currentUser.permissions.manage_users) {
+                showScreen('users');
+            } else {
+                alert('ليس لديك صلاحية للوصول إلى إدارة المستخدمين');
+            }
+        });
+        
         document.getElementById('history-management-btn').addEventListener('click', () => showScreen('history'));
         document.getElementById('alarm-btn').addEventListener('click', () => showScreen('faults-log'));
 
@@ -1392,7 +1542,11 @@
                 tbody.innerHTML += `<tr><td>${p.id}</td><td style="color:${statusColor}">${p.status}</td><td>${p.suctionPressure||'-'}</td><td>${p.dischargePressure||'-'}</td><td>${p.frequency||'-'}</td></tr>`;
             });
             
-            const canEdit = appData.userTypes[appData.currentUser.type].permissions.some(p => p.startsWith('edit'));
+            const canEdit = appData.currentUser && (
+                appData.currentUser.permissions.edit_all || 
+                appData.currentUser.permissions.edit_some || 
+                appData.currentUser.permissions.edit_own
+            );
             document.getElementById('edit-station-btn').style.display = canEdit ? 'block' : 'none';
             showScreen('station');
         }
@@ -2190,6 +2344,7 @@
             const tbody = document.getElementById('users-table-body');
             const search = document.getElementById('search-user-input').value.toLowerCase();
             const noUsersMessage = document.getElementById('no-users-message');
+            const currentUser = appData.currentUser;
             
             tbody.innerHTML = '';
             
@@ -2217,52 +2372,214 @@
             filteredUsers.forEach(uName => {
                 const user = appData.users[uName];
                 const typeName = appData.userTypes[user.type].name;
+                const typeClass = `type-${user.type}`;
+                const isCurrentUser = (currentUser && currentUser.username === uName);
+                const isActive = user.active !== false;
+                const rowClass = !isActive ? 'disabled-user' : '';
                 
-                tbody.innerHTML += `
-                    <tr>
-                        <td style="font-weight: bold;">${uName}</td>
-                        <td>${typeName}</td>
-                        <td style="font-family: monospace; letter-spacing: 1px;">${user.password}</td>
+                // تحقق من الصلاحيات
+                const canDelete = currentUser && 
+                                 currentUser.permissions.delete_users && 
+                                 currentUser.permissions.can_delete_types.includes(user.type) &&
+                                 !isCurrentUser;
+                
+                const canToggleStatus = currentUser && 
+                                       currentUser.permissions.manage_users && 
+                                       currentUser.permissions.can_manage_types.includes(user.type) &&
+                                       !isCurrentUser;
+                
+                const canSeePassword = currentUser && 
+                                      currentUser.permissions.view_passwords;
+                
+                // إنشاء صف المستخدم
+                let rowHTML = `
+                    <tr class="${rowClass}">
+                        <td style="font-weight: bold;">
+                            ${uName}
+                            ${isCurrentUser ? ' <span style="color:#1976d2; font-size:0.8rem;">(أنت)</span>' : ''}
+                        </td>
+                        <td><span class="user-type-badge ${typeClass}">${typeName}</span></td>
+                        <td class="password-cell" id="password-cell-${uName}">
+                            ${canSeePassword ? 
+                                `<span class="password-visible">${user.password}</span>` : 
+                                `<span class="password-masked">••••••••</span>`
+                            }
+                            ${canSeePassword ? 
+                                `<button class="toggle-password-cell" onclick="togglePasswordVisibility('${uName}')" title="إخفاء">👁️</button>` : 
+                                ''
+                            }
+                        </td>
                         <td>
-                            <button class="delete-user-btn" onclick="deleteUser('${uName}')" title="حذف المستخدم">
-                                🗑️ حذف
-                            </button>
+                            ${canToggleStatus ? 
+                                `<button class="user-status-toggle ${isActive ? 'user-status-active' : 'user-status-inactive'}" 
+                                        onclick="toggleUserStatus('${uName}', ${isActive})" 
+                                        title="${isActive ? 'تعطيل' : 'تفعيل'}">
+                                    ${isActive ? '✅' : '⭕'}
+                                </button>` : 
+                                (isActive ? '✅' : '⭕')
+                            }
+                            ${canDelete ? 
+                                `<button class="delete-user-btn" onclick="deleteUser('${uName}')" title="حذف المستخدم">
+                                    🗑️ حذف
+                                </button>` : 
+                                ''
+                            }
                         </td>
                     </tr>`;
+                
+                tbody.innerHTML += rowHTML;
             });
         }
-        
+
+        // تبديل رؤية كلمة المرور (للمدير فقط)
+        window.togglePasswordVisibility = function(username) {
+            const cell = document.getElementById(`password-cell-${username}`);
+            const user = appData.users[username];
+            const span = cell.querySelector('span');
+            const button = cell.querySelector('button');
+            
+            if (span.classList.contains('password-masked')) {
+                span.classList.remove('password-masked');
+                span.classList.add('password-visible');
+                span.textContent = user.password;
+                button.title = "إخفاء";
+                button.textContent = "🔒";
+            } else {
+                span.classList.remove('password-visible');
+                span.classList.add('password-masked');
+                span.textContent = '••••••••';
+                button.title = "إظهار";
+                button.textContent = "👁️";
+            }
+        };
+
+        // تبديل حالة المستخدم (تفعيل/تعطيل)
+        window.toggleUserStatus = function(username, currentStatus) {
+            const currentUser = appData.currentUser;
+            const targetUser = appData.users[username];
+            
+            if (!currentUser || !currentUser.permissions.manage_users) {
+                alert('ليس لديك صلاحية لإدارة المستخدمين');
+                return;
+            }
+            
+            if (!currentUser.permissions.can_manage_types.includes(targetUser.type)) {
+                alert('ليس لديك صلاحية لإدارة هذا النوع من المستخدمين');
+                return;
+            }
+            
+            const newStatus = !currentStatus;
+            const action = newStatus ? 'تفعيل' : 'تعطيل';
+            
+            if (confirm(`هل أنت متأكد من ${action} المستخدم "${username}"؟`)) {
+                db.ref('users/' + username + '/active').set(newStatus)
+                    .then(() => {
+                        alert(`✅ تم ${action} المستخدم بنجاح`);
+                        renderUsersManagement();
+                    })
+                    .catch(err => {
+                        alert(`خطأ في ${action} المستخدم: ${err.message}`);
+                    });
+            }
+        };
+
+        // حذف المستخدم
+        window.deleteUser = function(username) {
+            const currentUser = appData.currentUser;
+            const targetUser = appData.users[username];
+            
+            if (!currentUser || !currentUser.permissions.delete_users) {
+                alert('ليس لديك صلاحية لحذف المستخدمين');
+                return;
+            }
+            
+            if (!currentUser.permissions.can_delete_types.includes(targetUser.type)) {
+                alert('ليس لديك صلاحية لحذف هذا النوع من المستخدمين');
+                return;
+            }
+            
+            if (username === 'admin') {
+                alert('لا يمكن حذف حساب المدير الرئيسي (admin)');
+                return;
+            }
+            
+            if (username === currentUser.username) {
+                alert('لا يمكن حذف حسابك الخاص أثناء استخدام النظام');
+                return;
+            }
+            
+            if (confirm(`هل أنت متأكد من حذف المستخدم "${username}"؟\n\nهذا الإجراء لا يمكن التراجع عنه.`)) {
+                db.ref('users/' + username).remove()
+                    .then(() => {
+                        alert('✅ تم حذف المستخدم بنجاح');
+                        renderUsersManagement();
+                    })
+                    .catch(err => {
+                        alert('خطأ في حذف المستخدم: ' + err.message);
+                    });
+            }
+        };
+
+        // إضافة مستخدم جديد
         document.getElementById('add-user-btn').addEventListener('click', () => {
+            const currentUser = appData.currentUser;
+            
+            if (!currentUser || !currentUser.permissions.add_users) {
+                alert('ليس لديك صلاحية لإضافة مستخدمين');
+                return;
+            }
+            
             document.getElementById('user-form-container').style.display = 'block';
             document.getElementById('new-username').value = '';
             document.getElementById('new-password').value = '';
             
             const sel = document.getElementById('new-user-type');
             sel.innerHTML = '';
-            Object.keys(appData.userTypes).forEach(k => sel.innerHTML += `<option value="${k}">${appData.userTypes[k].name}</option>`);
+            
+            // إظهار الأنواع المسموح بها فقط
+            currentUser.permissions.can_add_types.forEach(k => {
+                sel.innerHTML += `<option value="${k}">${appData.userTypes[k].name}</option>`;
+            });
+            
+            if (sel.options.length === 0) {
+                alert('ليس لديك صلاحية لإضافة أي نوع من المستخدمين');
+                document.getElementById('user-form-container').style.display = 'none';
+            }
         });
-        
+
         document.getElementById('cancel-user-btn').addEventListener('click', () => {
             document.getElementById('user-form-container').style.display = 'none';
             document.getElementById('new-username').value = '';
             document.getElementById('new-password').value = '';
         });
-        
+
         document.getElementById('save-user-btn').addEventListener('click', () => {
+            const currentUser = appData.currentUser;
+            
+            if (!currentUser || !currentUser.permissions.add_users) {
+                alert('ليس لديك صلاحية لإضافة مستخدمين');
+                return;
+            }
+            
             const name = document.getElementById('new-username').value.trim();
             const pass = document.getElementById('new-password').value.trim();
             const type = document.getElementById('new-user-type').value;
             
-            if(!name) { 
-                alert('يرجى إدخال اسم المستخدم'); 
-                document.getElementById('new-username').focus();
-                return; 
+            if (!currentUser.permissions.can_add_types.includes(type)) {
+                alert('ليس لديك صلاحية لإضافة هذا النوع من المستخدمين');
+                return;
             }
             
-            if(!pass) { 
-                alert('يرجى إدخال كلمة المرور'); 
+            if(!name) {
+                alert('يرجى إدخال اسم المستخدم');
+                document.getElementById('new-username').focus();
+                return;
+            }
+            
+            if(!pass) {
+                alert('يرجى إدخال كلمة المرور');
                 document.getElementById('new-password').focus();
-                return; 
+                return;
             }
             
             if(name.toLowerCase() === 'admin') {
@@ -2270,15 +2587,15 @@
                 return;
             }
             
-            if(appData.users[name]) { 
-                alert('المستخدم موجود بالفعل في النظام'); 
-                return; 
+            if(appData.users[name]) {
+                alert('المستخدم موجود بالفعل في النظام');
+                return;
             }
             
-            db.ref('users/' + name).set({ 
-                type: type, 
-                password: pass, 
-                active: true 
+            db.ref('users/' + name).set({
+                type: type,
+                password: pass,
+                active: true
             }).then(() => {
                 alert('✅ تمت إضافة المستخدم بنجاح');
                 document.getElementById('user-form-container').style.display = 'none';
@@ -2289,27 +2606,6 @@
                 alert('خطأ في إضافة المستخدم: ' + err.message);
             });
         });
-        
-        window.deleteUser = (name) => {
-            if (name === 'admin') {
-                alert('لا يمكن حذف حساب المدير الرئيسي (admin)');
-                return;
-            }
-            
-            if (name === appData.currentUser.username) {
-                alert('لا يمكن حذف حسابك الخاص أثناء استخدام النظام');
-                return;
-            }
-            
-            if (confirm(`هل أنت متأكد من حذف المستخدم "${name}"؟\n\nهذا الإجراء لا يمكن التراجع عنه.`)) {
-                db.ref('users/' + name).remove().then(() => {
-                    alert('✅ تم حذف المستخدم بنجاح');
-                    renderUsersManagement();
-                }).catch(err => {
-                    alert('خطأ في حذف المستخدم: ' + err.message);
-                });
-            }
-        };
 
         // --- FAULTS & HISTORY LOGIC ---
         function renderHistoryTable(applyFilters = false) {
