@@ -1184,6 +1184,52 @@
                 font-size: 0.8rem !important;
             }
         }
+        
+        /* إضافة أنماط التحميل التدريجي الجديدة */
+        .users-pagination-controls {
+            text-align: center;
+            margin-top: 20px;
+            padding: 15px;
+            border-top: 1px solid #eee;
+        }
+        
+        .users-status-text {
+            font-size: 0.85rem;
+            color: #666;
+            margin-bottom: 10px;
+        }
+        
+        .load-more-users-btn {
+            min-width: 150px;
+            padding: 10px 20px;
+            font-size: 0.9rem;
+        }
+        
+        .load-more-users-btn span {
+            background: rgba(255,255,255,0.2);
+            padding: 3px 8px;
+            border-radius: 10px;
+            margin-right: 5px;
+            font-size: 0.8rem;
+        }
+        
+        .loading-users {
+            text-align: center;
+            padding: 20px;
+            color: #666;
+        }
+        
+        .loading-users::after {
+            content: '';
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 2px solid #f3f3f3;
+            border-top: 2px solid var(--secondary-color);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-right: 10px;
+        }
     </style>
 </head>
 <body>
@@ -1613,6 +1659,7 @@
             </div>
         </div>
 
+        <!-- شاشة إدارة المستخدمين مع التحميل التدريجي -->
         <div id="users-screen" class="screen">
             <div class="users-header">
                 <h2>إدارة المستخدمين</h2>
@@ -1661,7 +1708,9 @@
                             <th>الإجراءات</th>
                         </tr>
                     </thead>
-                    <tbody id="users-table-body"></tbody>
+                    <tbody id="users-table-body">
+                        <!-- سيتم ملؤها بالبيانات من JavaScript -->
+                    </tbody>
                 </table>
             </div>
             
@@ -1669,6 +1718,14 @@
                 <div style="font-size: 2rem; margin-bottom: 10px;">👥</div>
                 <div>لا توجد مستخدمين مسجلين في النظام</div>
                 <div style="font-size: 0.9rem; margin-top: 10px;">اضغط على زر "إضافة مستخدم جديد" لبدء إضافة المستخدمين</div>
+            </div>
+            
+            <!-- عناصر التحميل التدريجي الجديدة -->
+            <div class="users-pagination-controls">
+                <p id="users-status-text" class="users-status-text">جاري تحميل المستخدمين...</p>
+                <button id="load-more-users-btn" class="btn btn-primary load-more-users-btn" style="display: none;">
+                    <span id="users-count">0</span> مزيد
+                </button>
             </div>
         </div>
 
@@ -1868,8 +1925,10 @@
             consumptionLog: [],
             historyLimit: 100, 
             faultsLimit: 100,
+            usersLimit: 100,          // إضافة: حد المستخدمين لكل صفحة
             historyDisplayed: 100,
-            faultsDisplayed: 100
+            faultsDisplayed: 100,
+            usersDisplayed: 100       // إضافة: عدد المستخدمين المعروضين
         };
         
         const pumpsData = {
@@ -3923,23 +3982,36 @@
             showScreen('inspection'); 
         });
 
-        // --- USERS MANAGEMENT (SIMPLIFIED - بدون عمود الحالة) ---
+        // --- USERS MANAGEMENT (SIMPLIFIED - بدون عمود الحالة) مع التحميل التدريجي ---
         function renderUsersManagement() {
             const tbody = document.getElementById('users-table-body');
             const search = document.getElementById('search-user-input').value.toLowerCase();
             const noUsersMessage = document.getElementById('no-users-message');
             const currentUser = appData.currentUser;
+            const statusText = document.getElementById('users-status-text');
+            const loadMoreBtn = document.getElementById('load-more-users-btn');
+            
+            // إعادة تعيين التحميل التدريجي عند البحث
+            if (search) {
+                appData.usersDisplayed = appData.usersLimit;
+            }
             
             tbody.innerHTML = '';
             
             let filteredUsers = Object.keys(appData.users).filter(uName => {
-                if (search && !uName.toLowerCase().includes(search)) return false;
+                if (search && !uName.toLowerCase().includes(search)) {
+                    return false;
+                }
                 return true;
             });
             
-            if (filteredUsers.length === 0) {
+            const totalUsers = filteredUsers.length;
+            const viewUsers = filteredUsers.slice(0, appData.usersDisplayed);
+            
+            if (viewUsers.length === 0) {
                 tbody.style.display = 'none';
                 noUsersMessage.style.display = 'block';
+                loadMoreBtn.style.display = 'none';
                 
                 if (search) {
                     noUsersMessage.innerHTML = `
@@ -3947,14 +4019,22 @@
                         <div>لا توجد نتائج بحث مطابقة لـ "${search}"</div>
                         <div style="font-size: 0.9rem; margin-top: 10px;">جرب استخدام مصطلحات بحث أخرى</div>
                     `;
+                } else {
+                    noUsersMessage.innerHTML = `
+                        <div style="font-size: 2rem; margin-bottom: 10px;">👥</div>
+                        <div>لا توجد مستخدمين مسجلين في النظام</div>
+                        <div style="font-size: 0.9rem; margin-top: 10px;">اضغط على زر "إضافة مستخدم جديد" لبدء إضافة المستخدمين</div>
+                    `;
                 }
+                
+                statusText.textContent = `لا توجد مستخدمين`;
                 return;
             }
             
             tbody.style.display = '';
             noUsersMessage.style.display = 'none';
             
-            filteredUsers.forEach(uName => {
+            viewUsers.forEach(uName => {
                 const user = appData.users[uName];
                 const typeName = appData.userTypes[user.type].name;
                 const typeClass = `type-${user.type}`;
@@ -3998,6 +4078,21 @@
                 
                 tbody.innerHTML += rowHTML;
             });
+            
+            // تحديث نص الحالة وزر التحميل
+            statusText.textContent = `عرض ${viewUsers.length} من أصل ${totalUsers} مستخدم`;
+            
+            if (viewUsers.length < totalUsers) {
+                loadMoreBtn.style.display = 'inline-block';
+                document.getElementById('users-count').textContent = totalUsers - viewUsers.length;
+                
+                loadMoreBtn.onclick = () => {
+                    appData.usersDisplayed += appData.usersLimit;
+                    renderUsersManagement();
+                };
+            } else {
+                loadMoreBtn.style.display = 'none';
+            }
         }
 
         window.togglePasswordVisibility = function(username) {
@@ -4297,6 +4392,7 @@
             btn.addEventListener('click', () => {
                 appData.historyDisplayed = 100;
                 appData.faultsDisplayed = 100;
+                appData.usersDisplayed = 100; // إعادة تعيين التحميل التدريجي للمستخدمين
             });
         });
 
