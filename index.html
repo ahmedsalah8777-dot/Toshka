@@ -383,18 +383,19 @@
             box-shadow: 0 4px 8px rgba(192, 57, 43, 0.3);
         }
         
+        /* Mobile action menu */
         .mobile-action-menu {
+            position: relative;
             display: none;
         }
         
         @media (max-width: 768px) {
             .desktop-actions {
-                display: none;
+                display: none !important;
             }
             
             .mobile-action-menu {
                 display: block;
-                position: relative;
             }
             
             .mobile-action-btn {
@@ -433,6 +434,7 @@
                 display: flex;
                 align-items: center;
                 gap: 8px;
+                white-space: nowrap;
             }
             
             .mobile-action-item:hover {
@@ -441,6 +443,10 @@
             
             .mobile-action-item:last-child {
                 border-bottom: none;
+            }
+            
+            .mobile-action-item.delete-action {
+                color: #c0392b;
             }
         }
 
@@ -1086,7 +1092,7 @@
                                     <th>رقم الهاتف</th>
                                     <th>رقم الواتساب</th>
                                     <th>البريد الإلكتروني</th>
-                                    <th>الإجراءات</th>
+                                    <th style="min-width: 120px;">الإجراءات</th>
                                 </tr>
                             </thead>
                             <tbody id="users-profiles-list">
@@ -2630,6 +2636,21 @@
                 const isCurrentUser = (username === currentUser.username);
                 const canDeleteThisProfile = canDeleteProfiles && !isCurrentUser && currentUser.type === 'admin';
                 
+                // Mobile action menu
+                let mobileActionMenu = '';
+                if (canDeleteThisProfile && window.innerWidth <= 768) {
+                    mobileActionMenu = `
+                        <div class="mobile-action-menu">
+                            <button class="mobile-action-btn" onclick="toggleMobileActions('${username}')">⋯</button>
+                            <div class="mobile-action-dropdown" id="mobile-actions-${username}">
+                                <div class="mobile-action-item delete-action" onclick="deleteUserProfile('${username}')">
+                                    🗑️ حذف بيانات المستخدم
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                }
+                
                 let rowHTML = `
                     <tr>
                         <td>
@@ -2642,13 +2663,16 @@
                         <td>${profile.phone || 'غير مسجل'}</td>
                         <td>${profile.whatsapp || 'غير مسجل'}</td>
                         <td>${profile.email || 'غير مسجل'}</td>
-                        <td class="desktop-actions">
-                            ${canDeleteThisProfile ? 
-                                `<button class="delete-profile-btn" onclick="deleteUserProfile('${username}')" title="حذف بيانات المستخدم">
-                                    🗑️ حذف
-                                </button>` : 
-                                '<span style="color:#888; font-size:0.8rem;">-</span>'
-                            }
+                        <td>
+                            <div class="desktop-actions" style="display: flex; justify-content: center;">
+                                ${canDeleteThisProfile ? 
+                                    `<button class="delete-profile-btn" onclick="deleteUserProfile('${username}')" title="حذف بيانات المستخدم">
+                                        🗑️ حذف
+                                    </button>` : 
+                                    '<span style="color:#888; font-size:0.8rem;">-</span>'
+                                }
+                            </div>
+                            ${mobileActionMenu}
                         </td>
                     </tr>`;
                 
@@ -2667,6 +2691,26 @@
                 loadMoreBtn.style.display = 'none';
             }
         }
+        
+        // Mobile actions toggle function
+        window.toggleMobileActions = function(username) {
+            const dropdown = document.getElementById(`mobile-actions-${username}`);
+            dropdown.classList.toggle('show');
+            
+            // Close other dropdowns
+            document.querySelectorAll('.mobile-action-dropdown').forEach(d => {
+                if (d !== dropdown) d.classList.remove('show');
+            });
+        };
+        
+        // Close mobile dropdowns when clicking outside
+        document.addEventListener('click', function(event) {
+            if (!event.target.closest('.mobile-action-menu')) {
+                document.querySelectorAll('.mobile-action-dropdown').forEach(d => {
+                    d.classList.remove('show');
+                });
+            }
+        });
         
         // Load more profiles button handler
         document.getElementById('load-more-profiles-btn').addEventListener('click', function() {
@@ -3693,18 +3737,49 @@
                 const fDateFrom = document.getElementById('filter-date-from').value;
                 const fDateTo = document.getElementById('filter-date-to').value;
                 
-                if (fZone !== 'all') {
+                // Filter by zone
+                const zoneSelect = document.getElementById('filter-zone');
+                if (zoneSelect.options.length <= 1) {
+                    zoneSelect.innerHTML = '<option value="all">كل المناطق</option>';
+                    appData.zones.forEach(z => zoneSelect.innerHTML += `<option value="${z}">${z}</option>`);
                 }
+                
+                if (fZone !== 'all') {
+                    const zoneStations = Object.values(appData.stations).filter(s => s.zone === fZone).map(s => s.name);
+                    data = data.filter(d => zoneStations.includes(d.station));
+                }
+                
+                // Update station filter based on selected zone
+                const stationSelect = document.getElementById('filter-station');
+                stationSelect.innerHTML = '<option value="all">كل المحطات</option>';
+                
+                let filteredStations = Object.values(appData.stations);
+                if (fZone !== 'all') {
+                    filteredStations = filteredStations.filter(s => s.zone === fZone);
+                }
+                
+                filteredStations.sort((a,b) => a.name.localeCompare(b.name)).forEach(s => {
+                    stationSelect.innerHTML += `<option value="${s.name}" ${fStation === s.name ? 'selected' : ''}>${s.name}</option>`;
+                });
+                
                 if (fStation !== 'all') {
                     data = data.filter(d => d.station === fStation);
                 }
+                
                 if (fDateFrom) {
-                    data = data.filter(d => parseCustomDate(d.date + ' ' + d.time) >= new Date(fDateFrom));
+                    data = data.filter(d => {
+                        const logDate = parseCustomDate(d.date + ' ' + d.time);
+                        return logDate && logDate >= new Date(fDateFrom);
+                    });
                 }
+                
                 if (fDateTo) {
                     const toDate = new Date(fDateTo);
                     toDate.setHours(23,59,59);
-                    data = data.filter(d => parseCustomDate(d.date + ' ' + d.time) <= toDate);
+                    data = data.filter(d => {
+                        const logDate = parseCustomDate(d.date + ' ' + d.time);
+                        return logDate && logDate <= toDate;
+                    });
                 }
             }
             
@@ -3809,7 +3884,7 @@
             const s = document.getElementById('filter-station');
             s.innerHTML = '<option value="all">كل المحطات</option>';
             const list = Object.values(appData.stations).filter(st => z === 'all' || st.zone === z);
-            list.forEach(st => s.innerHTML += `<option value="${st.name}">${st.name}</option>`);
+            list.sort((a,b) => a.name.localeCompare(b.name)).forEach(st => s.innerHTML += `<option value="${st.name}">${st.name}</option>`);
         }
 
         // Initial Load
