@@ -18,6 +18,7 @@
             --scada-fault-color: #e67e22;
             --blue-fault: #87CEFA;
             --grey-color: #95a5a6;
+            --profile-color: #9b59b6;
         }
         * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
         body { background-color: var(--light-bg); color: #333; line-height: 1.6; min-height: 100vh; display: flex; flex-direction: column; }
@@ -48,7 +49,7 @@
         /* User Info & Alarm */
         .user-info { display: none; align-items: center; gap: 8px; flex-wrap: wrap; justify-content: flex-end; }
         .user-badge { background: rgba(255,255,255,0.2); padding: 5px 10px; border-radius: 20px; font-size: 12px; white-space: nowrap; }
-        .alarm-btn { background: transparent; border: none; color: white; font-size: 1.4rem; cursor: pointer; position: relative; margin-left: 10px; }
+        .alarm-btn, .profile-btn { background: transparent; border: none; color: white; font-size: 1.4rem; cursor: pointer; position: relative; margin-left: 10px; }
         .alarm-btn.flashing { animation: bell-shake 1s infinite cubic-bezier(.36,.07,.19,.97) both, red-glow 1.5s infinite; color: #ffcccc; }
         .alarm-count { position: absolute; top: -5px; right: -5px; background: red; color: white; border-radius: 50%; width: 18px; height: 18px; font-size: 10px; display: flex; align-items: center; justify-content: center; border: 1px solid white; }
         @keyframes bell-shake { 10%, 90% { transform: translate3d(-1px, 0, 0); } 20%, 80% { transform: translate3d(2px, 0, 0); } 30%, 50%, 70% { transform: translate3d(-4px, 0, 0); } 40%, 60% { transform: translate3d(4px, 0, 0); } }
@@ -68,6 +69,7 @@
         .btn-warning { background-color: var(--warning-color); color: white; }
         .btn-info { background-color: #17a2b8; color: white; }
         .btn-consumption { background-color: var(--consumption-color); color: white; }
+        .btn-profile { background-color: var(--profile-color); color: white; }
         .btn:hover { opacity: 0.9; transform: translateY(-2px); }
 
         .screen { display: none; background: var(--card-bg); border-radius: 10px; box-shadow: 0 5px 15px rgba(0,0,0,0.05); padding: 15px; margin-top: 15px; min-height: 500px; }
@@ -322,6 +324,135 @@
         .type-engineer { background-color: #1976d2; color: white; }
         .type-supervisor { background-color: #388e3c; color: white; }
         .type-operator { background-color: #f57c00; color: white; }
+
+        /* --- USER PROFILE SCREEN STYLES --- */
+        .profile-container {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 20px;
+        }
+        
+        @media (min-width: 992px) {
+            .profile-container {
+                grid-template-columns: 1fr 1fr;
+            }
+        }
+        
+        .profile-card {
+            background: white;
+            border-radius: 10px;
+            padding: 20px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+            border: 1px solid #eee;
+        }
+        
+        .profile-form-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 15px;
+        }
+        
+        @media (min-width: 768px) {
+            .profile-form-grid {
+                grid-template-columns: 1fr 1fr;
+            }
+        }
+        
+        .full-width {
+            grid-column: 1 / -1;
+        }
+        
+        .users-list-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 15px;
+        }
+        
+        .users-list-table th {
+            background-color: var(--profile-color);
+            color: white;
+            padding: 12px;
+            text-align: right;
+            position: sticky;
+            top: 0;
+            z-index: 10;
+        }
+        
+        .users-list-table td {
+            padding: 10px 12px;
+            text-align: right;
+            border-bottom: 1px solid #eee;
+            vertical-align: top;
+        }
+        
+        .users-list-table tr:nth-child(even) {
+            background-color: #f9f9f9;
+        }
+        
+        .profile-search-container {
+            position: relative;
+            margin: 15px 0;
+        }
+        
+        .profile-search-icon {
+            position: absolute;
+            left: 15px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #666;
+        }
+        
+        #search-profile-input {
+            padding-right: 15px;
+            padding-left: 45px;
+            font-size: 0.95rem;
+        }
+        
+        .no-profiles-message {
+            text-align: center;
+            padding: 40px;
+            color: #666;
+            font-size: 1.1rem;
+            background: #f9f9f9;
+            border-radius: 8px;
+            border: 2px dashed #ddd;
+            margin: 20px 0;
+        }
+        
+        .user-profile-badge {
+            display: inline-block;
+            padding: 3px 8px;
+            border-radius: 12px;
+            font-size: 0.8rem;
+            font-weight: bold;
+            background-color: var(--secondary-color);
+            color: white;
+        }
+        
+        .profile-alert {
+            padding: 12px;
+            border-radius: 6px;
+            margin-bottom: 15px;
+            display: none;
+        }
+        
+        .profile-alert-success {
+            background-color: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        
+        .profile-alert-warning {
+            background-color: #fff3cd;
+            color: #856404;
+            border: 1px solid #ffeeba;
+        }
+        
+        .profile-alert-error {
+            background-color: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
     </style>
 </head>
 <body>
@@ -336,6 +467,9 @@
                     <span id="net-icon">🟢</span> <span id="net-text">متصل</span>
                 </div>
                 <div class="user-info" id="header-user-info">
+                    <button id="profile-btn" class="profile-btn" title="بيانات المستخدم">
+                        👤
+                    </button>
                     <button id="alarm-btn" class="alarm-btn" title="سجل الأعطال">
                         🔔
                         <span id="alarm-count" class="alarm-count" style="display:none">0</span>
@@ -659,6 +793,90 @@
             </div>
         </div>
 
+        <!-- شاشة بيانات المستخدم الجديدة -->
+        <div id="user-profile-screen" class="screen">
+            <h2 style="color: var(--profile-color);">إدارة بيانات المستخدمين</h2>
+            <button id="back-to-stations-from-profile" class="btn btn-outline">عودة للرئيسية</button>
+            
+            <div class="profile-alert" id="profile-alert"></div>
+            
+            <div class="profile-container">
+                <!-- القسم الأول: تسجيل البيانات الشخصية -->
+                <div class="profile-card">
+                    <h3 style="color: var(--profile-color); margin-bottom: 20px;">📝 تسجيل البيانات الشخصية</h3>
+                    <div class="profile-form-grid">
+                        <div class="form-group full-width">
+                            <label>اسم المستخدم الحالي</label>
+                            <input type="text" id="profile-username" readonly style="background: #f0f0f0; font-weight: bold;">
+                        </div>
+                        
+                        <div class="form-group">
+                            <label>الاسم الثلاثي <span style="color: red;">*</span></label>
+                            <input type="text" id="profile-fullname" placeholder="الاسم الكامل">
+                        </div>
+                        
+                        <div class="form-group">
+                            <label>رقم المحطة <span style="color: red;">*</span></label>
+                            <select id="profile-station">
+                                <option value="">-- اختر المحطة --</option>
+                            </select>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label>رقم الهاتف <span style="color: red;">*</span></label>
+                            <input type="tel" id="profile-phone" placeholder="مثال: 01012345678">
+                        </div>
+                        
+                        <div class="form-group">
+                            <label>رقم الواتساب</label>
+                            <input type="tel" id="profile-whatsapp" placeholder="مثال: 01012345678">
+                        </div>
+                        
+                        <div class="form-group full-width">
+                            <label>البريد الإلكتروني</label>
+                            <input type="email" id="profile-email" placeholder="مثال: user@example.com">
+                        </div>
+                        
+                        <div class="form-group full-width" style="margin-top: 20px;">
+                            <button id="save-profile-btn" class="btn btn-profile" style="width: 100%;">💾 حفظ البيانات الشخصية</button>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- القسم الثاني: قائمة بيانات المستخدمين المسجلين -->
+                <div class="profile-card">
+                    <h3 style="color: var(--profile-color); margin-bottom: 20px;">👥 بيانات المستخدمين المسجلين</h3>
+                    
+                    <div class="profile-search-container">
+                        <span class="profile-search-icon">🔍</span>
+                        <input type="text" id="search-profile-input" placeholder="البحث عن مستخدم (الاسم أو المحطة)..." style="width: 100%;">
+                    </div>
+                    
+                    <div class="table-responsive">
+                        <table class="users-list-table">
+                            <thead>
+                                <tr>
+                                    <th>اسم المستخدم</th>
+                                    <th>الاسم الثلاثي</th>
+                                    <th>المحطة</th>
+                                    <th>رقم الهاتف</th>
+                                </tr>
+                            </thead>
+                            <tbody id="users-profiles-list">
+                                <!-- سيتم ملؤها بالبيانات من JavaScript -->
+                            </tbody>
+                        </table>
+                    </div>
+                    
+                    <div id="no-profiles-message" class="no-profiles-message" style="display: none;">
+                        <div style="font-size: 2rem; margin-bottom: 10px;">📋</div>
+                        <div>لا توجد بيانات مستخدمين مسجلة في النظام</div>
+                        <div style="font-size: 0.9rem; margin-top: 10px;">يمكنك تسجيل بياناتك الشخصية في القسم الأيسر</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
         <div id="users-screen" class="screen">
             <div class="users-header">
                 <h2>إدارة المستخدمين</h2>
@@ -767,7 +985,7 @@
             "انقطاع التيار الكهربي": "⚡", "انخفاض جهد": "⚡📉", "ارتفاع جهد": "⚡📈",
             "انخفاض منسوب": "📉", "توقف منظومة التحضير": "⚙️", "انسدادات": "▦", 
             "تسريب مياه": "💧", "كسر في الشبكة": "🛠️", "عجز تحقيق الضغط": "🔻",
-            "انقطاع الاتصال SCADA": `<svg viewBox="0 0 24 24" width="20" height="20" class="scada-icon-svg" style="color:#d32f2f;" fill="currentColor"><path d="M12 3C7.79 3 3.7 4.41 0.38 7L2.6 9.22C5.35 7.15 8.55 6 12 6C15.45 6 18.65 7.15 21.4 9.22L23.62 7C20.3 4.41 16.21 3 12 3Z" /><path d="M12 8C9.48 8 7.15 8.76 5.18 10.05L7.4 12.27C8.71 11.47 10.28 11 12 11C13.72 11 15.29 11.47 16.6 12.27L18.82 10.05C16.85 8.76 14.52 8 12 8Z" /><path d="M12 13L6 21H18L12 13ZM11 18H13V19.5H11V18ZM11 15.5H13V17.5H11V15.5Z" /></svg>`
+            "انقطاع الاتصال SCADA": `<svg viewBox="0 0 24 24" width="20" height="20" class="scada-icon-svg" style="color:#d32f2f;" fill="currentColor"><path d="M12 3C7.79 3 3.7 4.41 0.38 7/L2.6 9.22C5.35 7.15 8.55 6 12 6C15.45 6 18.65 7.15 21.4 9.22L23.62 7C20.3 4.41 16.21 3 12 3Z" /><path d="M12 8C9.48 8 7.15 8.76 5.18 10.05L7.4 12.27C8.71 11.47 10.28 11 12 11C13.72 11 15.29 11.47 16.6 12.27L18.82 10.05C16.85 8.76 14.52 8 12 8Z" /><path d="M12 13L6 21H18L12 13ZM11 18H13V19.5H11V18ZM11 15.5H13V17.5H11V15.5Z" /></svg>`
         };
         
         const inspectionSchema = {
@@ -807,6 +1025,7 @@
                     delete_users: true,
                     view_history: true,
                     view_passwords: true,
+                    view_profiles: true,
                     can_manage_types: ['admin', 'engineer', 'supervisor', 'operator'],
                     can_add_types: ['admin', 'engineer', 'supervisor', 'operator'],
                     can_delete_types: ['admin', 'engineer', 'supervisor', 'operator']
@@ -822,6 +1041,7 @@
                     delete_users: true,
                     view_history: true,
                     view_passwords: false,
+                    view_profiles: true,
                     can_manage_types: ['supervisor', 'operator'],
                     can_add_types: ['supervisor', 'operator'],
                     can_delete_types: ['supervisor', 'operator']
@@ -837,6 +1057,7 @@
                     delete_users: true,
                     view_history: false,
                     view_passwords: false,
+                    view_profiles: true,
                     can_manage_types: ['operator'],
                     can_add_types: ['operator'],
                     can_delete_types: ['operator']
@@ -852,6 +1073,7 @@
                     delete_users: false,
                     view_history: false,
                     view_passwords: false,
+                    view_profiles: false,
                     can_manage_types: [],
                     can_add_types: [],
                     can_delete_types: []
@@ -864,6 +1086,7 @@
             currentStation: null, 
             stations: {}, 
             users: {},
+            userProfiles: {},
             userTypes: userTypes,
             zones: ['Zone_A', 'Zone_B', 'Zone_C', 'Zone_D', 'Zone_E', 'Zone_F', 'Zone_G', 'Zone_H', 'Zone_I', 'Zone_J', 'Zone_K', 'Zone_L', 'Zone_O1', 'Zone_O2', 'Zone_O3', 'Zone_O4', 'Zone_O5', 'Zone_O2dashO6', 'Zone_O8', 'Zone_R', 'Zone_S'],
             operationHistory: [], 
@@ -1030,6 +1253,19 @@
                     .then(() => {
                         if(item.data.log) db.ref('history').push(item.data.log);
                     });
+            } else if (item.type === 'update_profile') {
+                promise = db.ref('userProfiles/' + item.data.username).set(item.data.profileData)
+                    .then(() => {
+                        const nowStd = getStandardDateTime();
+                        const log = {
+                            date: nowStd.date,
+                            time: nowStd.time,
+                            station: item.data.profileData.station || 'غير محدد',
+                            operator: item.data.username,
+                            details: `تحديث البيانات الشخصية (مزامنة): ${item.data.profileData.fullname}`
+                        };
+                        db.ref('history').push(log);
+                    });
             }
 
             if (promise) {
@@ -1061,6 +1297,10 @@
             if(cachedUsers) {
                 appData.users = JSON.parse(cachedUsers);
             }
+            const cachedProfiles = localStorage.getItem('toshka_user_profiles_cache');
+            if(cachedProfiles) {
+                appData.userProfiles = JSON.parse(cachedProfiles);
+            }
 
             db.ref('stations').on('value', (snapshot) => {
                 let data = snapshot.val();
@@ -1077,6 +1317,9 @@
                 }
                 if (document.getElementById('station-screen').classList.contains('active') && appData.currentStation) {
                     showStationDetails(appData.currentStation);
+                }
+                if (document.getElementById('user-profile-screen').classList.contains('active')) {
+                    renderUserProfileForm();
                 }
             });
             
@@ -1096,7 +1339,6 @@
                     }
                 }
                 else {
-                    // إنشاء المستخدمين الافتراضيين
                     const defaultUsers = {
                         admin: { type: 'admin', password: 'admin123', active: true },
                         engineer1: { type: 'engineer', password: 'eng123', active: true },
@@ -1116,6 +1358,22 @@
                         loginBtn.style.cursor = 'pointer';
                         loginBtn.classList.add('btn-primary');
                     }
+                }
+            });
+            
+            db.ref('userProfiles').on('value', (snapshot) => {
+                const data = snapshot.val();
+                if (data) {
+                    appData.userProfiles = data;
+                    localStorage.setItem('toshka_user_profiles_cache', JSON.stringify(data));
+                } else {
+                    appData.userProfiles = {};
+                    localStorage.setItem('toshka_user_profiles_cache', JSON.stringify({}));
+                }
+                
+                if (document.getElementById('user-profile-screen').classList.contains('active')) {
+                    renderUserProfileForm();
+                    renderUsersProfilesList();
                 }
             });
             
@@ -1211,6 +1469,10 @@
                 appData.faultsLimit = 100;
                 renderFaultsLog();
             }
+            if(screenId === 'user-profile') {
+                renderUserProfileForm();
+                renderUsersProfilesList();
+            }
         }
 
         // --- AUTHENTICATION ---
@@ -1265,7 +1527,6 @@
                 const userType = user.type;
                 const permissions = appData.userTypes[userType].permissions;
                 
-                // إظهار/إخفاء أزرار الصلاحيات
                 document.getElementById('users-management-btn').style.display = permissions.manage_users ? 'inline-block' : 'none';
                 document.getElementById('history-management-btn').style.display = permissions.view_history ? 'inline-block' : 'none';
                 
@@ -1284,6 +1545,17 @@
         });
 
         // --- NAVIGATION & BUTTONS FIXES ---
+        document.getElementById('profile-btn').addEventListener('click', () => {
+            if (!appData.currentUser) {
+                alert('يجب تسجيل الدخول أولاً');
+                return;
+            }
+            
+            showScreen('user-profile');
+            renderUserProfileForm();
+            renderUsersProfilesList();
+        });
+        
         document.getElementById('users-management-btn').addEventListener('click', () => {
             if (appData.currentUser && appData.currentUser.permissions.manage_users) {
                 showScreen('users');
@@ -1302,6 +1574,7 @@
         document.getElementById('back-to-stations-from-faults').addEventListener('click', () => showScreen('stations'));
         document.getElementById('back-to-stations-from-cons').addEventListener('click', () => showScreen('stations'));
         document.getElementById('back-from-inspection').addEventListener('click', () => { showStationDetails(appData.currentStation); });
+        document.getElementById('back-to-stations-from-profile').addEventListener('click', () => showScreen('stations'));
 
         // --- SHIFT CHECK LOGIC ---
         function checkShiftAdherence(lastUpdateStr) {
@@ -1923,6 +2196,252 @@
             }
         }
 
+        // --- USER PROFILE FUNCTIONS ---
+        function renderUserProfileForm() {
+            const currentUser = appData.currentUser;
+            if (!currentUser) return;
+            
+            const username = currentUser.username;
+            document.getElementById('profile-username').value = username;
+            
+            const userProfile = appData.userProfiles[username] || {};
+            
+            document.getElementById('profile-fullname').value = userProfile.fullname || '';
+            document.getElementById('profile-phone').value = userProfile.phone || '';
+            document.getElementById('profile-whatsapp').value = userProfile.whatsapp || '';
+            document.getElementById('profile-email').value = userProfile.email || '';
+            
+            const stationSelect = document.getElementById('profile-station');
+            stationSelect.innerHTML = '<option value="">-- اختر المحطة --</option>';
+            
+            const sortedStations = Object.values(appData.stations).sort((a, b) => a.name.localeCompare(b.name));
+            sortedStations.forEach(station => {
+                const selected = (userProfile.station === station.name) ? 'selected' : '';
+                stationSelect.innerHTML += `<option value="${station.name}" ${selected}>${station.name}</option>`;
+            });
+            
+            if (!userProfile.station && appData.currentStation) {
+                stationSelect.value = appData.currentStation;
+            }
+        }
+        
+        function renderUsersProfilesList() {
+            const currentUser = appData.currentUser;
+            if (!currentUser) return;
+            
+            const tbody = document.getElementById('users-profiles-list');
+            const searchInput = document.getElementById('search-profile-input').value.toLowerCase();
+            const noProfilesMessage = document.getElementById('no-profiles-message');
+            
+            tbody.innerHTML = '';
+            
+            const canViewAllProfiles = currentUser.permissions.view_profiles;
+            
+            let filteredProfiles = Object.keys(appData.userProfiles).filter(username => {
+                const profile = appData.userProfiles[username];
+                
+                if (!canViewAllProfiles && username !== currentUser.username) {
+                    return false;
+                }
+                
+                if (searchInput) {
+                    const fullname = (profile.fullname || '').toLowerCase();
+                    const station = (profile.station || '').toLowerCase();
+                    const phone = (profile.phone || '').toLowerCase();
+                    
+                    if (!fullname.includes(searchInput) && 
+                        !station.includes(searchInput) && 
+                        !phone.includes(searchInput) &&
+                        !username.toLowerCase().includes(searchInput)) {
+                        return false;
+                    }
+                }
+                
+                return true;
+            });
+            
+            if (filteredProfiles.length === 0) {
+                tbody.style.display = 'none';
+                noProfilesMessage.style.display = 'block';
+                
+                if (searchInput) {
+                    noProfilesMessage.innerHTML = `
+                        <div style="font-size: 2rem; margin-bottom: 10px;">🔍</div>
+                        <div>لا توجد نتائج بحث مطابقة لـ "${searchInput}"</div>
+                        <div style="font-size: 0.9rem; margin-top: 10px;">جرب استخدام مصطلحات بحث أخرى</div>
+                    `;
+                } else if (!canViewAllProfiles) {
+                    noProfilesMessage.innerHTML = `
+                        <div style="font-size: 2rem; margin-bottom: 10px;">📋</div>
+                        <div>لا توجد بيانات شخصية مسجلة لك</div>
+                        <div style="font-size: 0.9rem; margin-top: 10px;">يمكنك تسجيل بياناتك الشخصية في القسم الأيسر</div>
+                    `;
+                } else {
+                    noProfilesMessage.innerHTML = `
+                        <div style="font-size: 2rem; margin-bottom: 10px;">📋</div>
+                        <div>لا توجد بيانات مستخدمين مسجلة في النظام</div>
+                        <div style="font-size: 0.9rem; margin-top: 10px;">يمكن للمستخدمين تسجيل بياناتهم الشخصية في القسم الأيسر</div>
+                    `;
+                }
+                return;
+            }
+            
+            tbody.style.display = '';
+            noProfilesMessage.style.display = 'none';
+            
+            filteredProfiles.forEach(username => {
+                const profile = appData.userProfiles[username];
+                const userType = appData.users[username] ? appData.users[username].type : 'غير معروف';
+                const userTypeName = appData.userTypes[userType] ? appData.userTypes[userType].name : 'غير معروف';
+                
+                const isCurrentUser = (username === currentUser.username);
+                
+                let rowHTML = `
+                    <tr>
+                        <td>
+                            ${username}
+                            ${isCurrentUser ? ' <span class="user-profile-badge">أنت</span>' : ''}
+                            <div style="font-size: 0.8rem; color: #666; margin-top: 3px;">${userTypeName}</div>
+                        </td>
+                        <td>${profile.fullname || 'غير مسجل'}</td>
+                        <td>${profile.station || 'غير محدد'}</td>
+                        <td>${profile.phone || 'غير مسجل'}</td>
+                    </tr>`;
+                
+                tbody.innerHTML += rowHTML;
+            });
+        }
+        
+        function saveUserProfile() {
+            const currentUser = appData.currentUser;
+            if (!currentUser) {
+                showProfileAlert('يجب تسجيل الدخول أولاً', 'error');
+                return;
+            }
+            
+            const username = currentUser.username;
+            const fullname = document.getElementById('profile-fullname').value.trim();
+            const station = document.getElementById('profile-station').value;
+            const phone = document.getElementById('profile-phone').value.trim();
+            const whatsapp = document.getElementById('profile-whatsapp').value.trim();
+            const email = document.getElementById('profile-email').value.trim();
+            
+            if (!fullname) {
+                showProfileAlert('الاسم الثلاثي مطلوب', 'error');
+                document.getElementById('profile-fullname').focus();
+                return;
+            }
+            
+            if (!station) {
+                showProfileAlert('يرجى اختيار المحطة', 'error');
+                document.getElementById('profile-station').focus();
+                return;
+            }
+            
+            if (!phone) {
+                showProfileAlert('رقم الهاتف مطلوب', 'error');
+                document.getElementById('profile-phone').focus();
+                return;
+            }
+            
+            const phoneRegex = /^01[0-9]{9}$/;
+            if (!phoneRegex.test(phone)) {
+                showProfileAlert('رقم الهاتف غير صحيح. يجب أن يكون 11 رقماً ويبدأ بـ 01', 'error');
+                document.getElementById('profile-phone').focus();
+                return;
+            }
+            
+            if (whatsapp && !phoneRegex.test(whatsapp)) {
+                showProfileAlert('رقم الواتساب غير صحيح. يجب أن يكون 11 رقماً ويبدأ بـ 01', 'error');
+                document.getElementById('profile-whatsapp').focus();
+                return;
+            }
+            
+            if (email) {
+                const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+                if (!emailRegex.test(email)) {
+                    showProfileAlert('البريد الإلكتروني غير صحيح', 'error');
+                    document.getElementById('profile-email').focus();
+                    return;
+                }
+            }
+            
+            const nowStd = getStandardDateTime();
+            const profileData = {
+                username: username,
+                fullname: fullname,
+                station: station,
+                phone: phone,
+                whatsapp: whatsapp || '',
+                email: email || '',
+                lastUpdate: nowStd.full,
+                userType: currentUser.type
+            };
+            
+            if (navigator.onLine) {
+                db.ref('userProfiles/' + username).set(profileData)
+                    .then(() => {
+                        showProfileAlert('تم حفظ البيانات الشخصية بنجاح ✅', 'success');
+                        
+                        appData.userProfiles[username] = profileData;
+                        localStorage.setItem('toshka_user_profiles_cache', JSON.stringify(appData.userProfiles));
+                        
+                        renderUsersProfilesList();
+                        
+                        const log = {
+                            date: nowStd.date,
+                            time: nowStd.time,
+                            station: station,
+                            operator: username,
+                            details: `تحديث البيانات الشخصية للمستخدم: ${fullname}`
+                        };
+                        db.ref('history').push(log);
+                    })
+                    .catch(err => {
+                        console.error('Error saving profile:', err);
+                        showProfileAlert('حدث خطأ في حفظ البيانات: ' + err.message, 'error');
+                    });
+            } else {
+                appData.userProfiles[username] = profileData;
+                localStorage.setItem('toshka_user_profiles_cache', JSON.stringify(appData.userProfiles));
+                
+                addToOfflineQueue('update_profile', {
+                    username: username,
+                    profileData: profileData
+                });
+                
+                showProfileAlert('تم حفظ البيانات في الجهاز (سيتم المزامنة عند الاتصال) ⏳', 'warning');
+                renderUsersProfilesList();
+            }
+        }
+        
+        function showProfileAlert(message, type = 'info') {
+            const alertDiv = document.getElementById('profile-alert');
+            alertDiv.textContent = message;
+            alertDiv.className = 'profile-alert';
+            
+            switch(type) {
+                case 'success':
+                    alertDiv.classList.add('profile-alert-success');
+                    break;
+                case 'warning':
+                    alertDiv.classList.add('profile-alert-warning');
+                    break;
+                case 'error':
+                    alertDiv.classList.add('profile-alert-error');
+                    break;
+            }
+            
+            alertDiv.style.display = 'block';
+            
+            setTimeout(() => {
+                alertDiv.style.display = 'none';
+            }, 5000);
+        }
+        
+        document.getElementById('save-profile-btn').addEventListener('click', saveUserProfile);
+        document.getElementById('search-profile-input').addEventListener('keyup', renderUsersProfilesList);
+
         // --- CONSUMPTION REPORT LOGIC ---
         document.getElementById('consumptions-btn').addEventListener('click', () => {
             const filterSelect = document.getElementById('cons-filter-station');
@@ -2350,7 +2869,6 @@
                 const isCurrentUser = (currentUser && currentUser.username === uName);
                 const isActive = user.active !== false;
                 
-                // تحقق من الصلاحيات
                 const canDelete = currentUser && 
                                  currentUser.permissions.delete_users && 
                                  currentUser.permissions.can_delete_types.includes(user.type) &&
@@ -2359,7 +2877,6 @@
                 const canSeePassword = currentUser && 
                                       currentUser.permissions.view_passwords;
                 
-                // إنشاء صف المستخدم (بدون عمود الحالة)
                 let rowHTML = `
                     <tr>
                         <td style="font-weight: bold;">
@@ -2391,7 +2908,6 @@
             });
         }
 
-        // تبديل رؤية كلمة المرور (للمدير فقط)
         window.togglePasswordVisibility = function(username) {
             const cell = document.getElementById(`password-cell-${username}`);
             const user = appData.users[username];
@@ -2413,7 +2929,6 @@
             }
         };
 
-        // حذف المستخدم
         window.deleteUser = function(username) {
             const currentUser = appData.currentUser;
             const targetUser = appData.users[username];
@@ -2450,7 +2965,6 @@
             }
         };
 
-        // إضافة مستخدم جديد
         document.getElementById('add-user-btn').addEventListener('click', () => {
             const currentUser = appData.currentUser;
             
@@ -2466,7 +2980,6 @@
             const sel = document.getElementById('new-user-type');
             sel.innerHTML = '';
             
-            // إظهار الأنواع المسموح بها فقط
             currentUser.permissions.can_add_types.forEach(k => {
                 sel.innerHTML += `<option value="${k}">${appData.userTypes[k].name}</option>`;
             });
