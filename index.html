@@ -141,6 +141,7 @@
         .login-form { max-width: 400px; margin: 40px auto; text-align: center; }
         
         .pagination-controls { text-align: center; margin-top: 20px; padding-bottom: 20px; }
+        .pagination-btn { margin: 10px; }
         .status-text { font-size: 0.85rem; color: #666; margin-bottom: 10px; }
         
         .scada-icon-svg { vertical-align: text-bottom; }
@@ -574,6 +575,108 @@
         .type-engineer { background-color: #1976d2; color: white; }
         .type-supervisor { background-color: #388e3c; color: white; }
         .type-operator { background-color: #f57c00; color: white; }
+
+        /* NEW: جدول بيانات المستخدمين مع تنسيق محسن */
+        .users-data-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            border-radius: 8px;
+            overflow: hidden;
+        }
+        
+        .users-data-table thead {
+            background: linear-gradient(135deg, var(--profile-color), #8e44ad);
+        }
+        
+        .users-data-table th {
+            padding: 14px 12px;
+            font-weight: 600;
+            font-size: 0.95rem;
+            text-align: center;
+            border-right: 1px solid rgba(255,255,255,0.1);
+        }
+        
+        .users-data-table th:first-child {
+            border-right: none;
+        }
+        
+        .users-data-table td {
+            padding: 12px;
+            text-align: center;
+            border-bottom: 1px solid #eee;
+            font-size: 0.9rem;
+        }
+        
+        .users-data-table tr:hover {
+            background-color: #f5f9ff;
+        }
+        
+        .users-data-table .action-cell {
+            min-width: 120px;
+        }
+        
+        /* Pagination styles */
+        .pagination-info {
+            text-align: center;
+            margin: 15px 0;
+            color: #666;
+            font-size: 0.9rem;
+        }
+        
+        .load-more-btn {
+            display: block;
+            margin: 20px auto;
+            padding: 10px 25px;
+            background: linear-gradient(135deg, var(--secondary-color), #3498db);
+            color: white;
+            border: none;
+            border-radius: 25px;
+            font-size: 0.95rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 12px rgba(52, 152, 219, 0.2);
+        }
+        
+        .load-more-btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 6px 15px rgba(52, 152, 219, 0.3);
+            background: linear-gradient(135deg, #2980b9, var(--secondary-color));
+        }
+        
+        .load-more-btn:disabled {
+            background: #95a5a6;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+
+        /* Card for user data screen */
+        .user-data-card {
+            background: white;
+            border-radius: 12px;
+            padding: 25px;
+            margin: 20px 0;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.08);
+            border: 1px solid #e0e0e0;
+        }
+        
+        .user-data-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 25px;
+            padding-bottom: 15px;
+            border-bottom: 2px solid var(--header-bg);
+        }
+        
+        .user-data-title {
+            color: var(--profile-color);
+            font-size: 1.3rem;
+            font-weight: 700;
+        }
     </style>
 </head>
 <body>
@@ -997,13 +1100,61 @@
                         <div>لا توجد بيانات مستخدمين مسجلة في النظام</div>
                         <div style="font-size: 0.9rem; margin-top: 10px;">يمكنك تسجيل بياناتك الشخصية في القسم الأيسر</div>
                     </div>
+                    
+                    <!-- Pagination for user profiles -->
+                    <div class="pagination-info" id="profiles-pagination-info"></div>
+                    <button id="load-more-profiles-btn" class="load-more-btn" style="display: none;">عرض المزيد من البيانات (100)</button>
                 </div>
+            </div>
+        </div>
+
+        <!-- شاشة إدارة بيانات المستخدمين -->
+        <div id="users-data-screen" class="screen">
+            <div class="user-data-card">
+                <div class="user-data-header">
+                    <h2 class="user-data-title">إدارة بيانات المستخدمين</h2>
+                    <button id="back-to-stations-from-users-data" class="btn btn-outline">عودة للرئيسية</button>
+                </div>
+                
+                <div class="users-search-container">
+                    <span class="users-search-icon">🔍</span>
+                    <input type="text" id="search-users-data-input" placeholder="البحث عن مستخدم (الاسم أو المحطة أو الهاتف)..." style="width: 100%;">
+                </div>
+                
+                <div class="table-responsive">
+                    <table class="users-data-table">
+                        <thead>
+                            <tr>
+                                <th>#</th>
+                                <th>اسم المستخدم</th>
+                                <th>الاسم الثلاثي</th>
+                                <th>نوع المستخدم</th>
+                                <th>المحطة</th>
+                                <th>رقم الهاتف</th>
+                                <th>البريد الإلكتروني</th>
+                                <th class="action-cell">الإجراءات</th>
+                            </tr>
+                        </thead>
+                        <tbody id="users-data-table-body">
+                            <!-- سيتم ملؤها بالبيانات -->
+                        </tbody>
+                    </table>
+                </div>
+                
+                <div id="no-users-data-message" class="no-users-message" style="display: none;">
+                    <div style="font-size: 2rem; margin-bottom: 10px;">👥</div>
+                    <div>لا توجد بيانات مستخدمين مسجلة في النظام</div>
+                </div>
+                
+                <!-- Pagination controls -->
+                <div class="pagination-info" id="users-data-pagination-info"></div>
+                <button id="load-more-users-data-btn" class="load-more-btn">عرض المزيد من المستخدمين (100)</button>
             </div>
         </div>
 
         <div id="users-screen" class="screen">
             <div class="users-header">
-                <h2>إدارة المستخدمين</h2>
+                <h2>إدارة حسابات المستخدمين</h2>
                 <button id="back-to-stations-from-users" class="btn btn-outline">عودة للرئيسية</button>
             </div>
             
@@ -1030,7 +1181,7 @@
             </div>
             
             <div style="margin: 25px 0 15px; display:flex; justify-content:space-between; align-items:center;">
-                <h3>قائمة المستخدمين</h3>
+                <h3>قائمة حسابات المستخدمين</h3>
                 <button id="add-user-btn" class="btn btn-primary">➕ إضافة مستخدم جديد</button>
             </div>
             
@@ -1058,6 +1209,10 @@
                 <div>لا توجد مستخدمين مسجلين في النظام</div>
                 <div style="font-size: 0.9rem; margin-top: 10px;">اضغط على زر "إضافة مستخدم جديد" لبدء إضافة المستخدمين</div>
             </div>
+            
+            <!-- Pagination for users -->
+            <div class="pagination-info" id="users-pagination-info"></div>
+            <button id="load-more-users-btn" class="load-more-btn">عرض المزيد من المستخدمين (100)</button>
         </div>
 
         <div id="history-screen" class="screen">
@@ -1220,8 +1375,15 @@
             operationHistory: [], 
             faultsLog: [], 
             consumptionLog: [],
-            historyLimit: 100, 
-            faultsLimit: 100
+            // Pagination limits
+            historyLimit: 100,
+            faultsLimit: 100,
+            usersLimit: 100,
+            usersDataLimit: 100,
+            profilesLimit: 100,
+            currentUsersPage: 0,
+            currentUsersDataPage: 0,
+            currentProfilesPage: 0
         };
         
         const pumpsData = {
@@ -1463,6 +1625,9 @@
                     renderUserProfileForm();
                     renderUsersProfilesList();
                 }
+                if (document.getElementById('users-data-screen').classList.contains('active')) {
+                    renderUsersDataManagement();
+                }
             });
             
             db.ref('users').on('value', (snapshot) => {
@@ -1516,6 +1681,9 @@
                 if (document.getElementById('user-profile-screen').classList.contains('active')) {
                     renderUserProfileForm();
                     renderUsersProfilesList();
+                }
+                if (document.getElementById('users-data-screen').classList.contains('active')) {
+                    renderUsersDataManagement();
                 }
             });
             
@@ -1602,7 +1770,12 @@
                 renderStations(activeTab ? activeTab.dataset.zone : 'all');
             }
             if(screenId === 'users') {
+                appData.currentUsersPage = 0;
                 renderUsersManagement();
+            }
+            if(screenId === 'users-data') {
+                appData.currentUsersDataPage = 0;
+                renderUsersDataManagement();
             }
             if(screenId === 'history') {
                 renderHistoryTable(true);
@@ -1612,6 +1785,7 @@
                 renderFaultsLog();
             }
             if(screenId === 'user-profile') {
+                appData.currentProfilesPage = 0;
                 renderUserProfileForm();
                 renderUsersProfilesList();
             }
@@ -1717,6 +1891,14 @@
         document.getElementById('back-to-stations-from-cons').addEventListener('click', () => showScreen('stations'));
         document.getElementById('back-from-inspection').addEventListener('click', () => { showStationDetails(appData.currentStation); });
         document.getElementById('back-to-stations-from-profile').addEventListener('click', () => showScreen('stations'));
+        document.getElementById('back-to-stations-from-users-data').addEventListener('click', () => showScreen('stations'));
+
+        // New button for user data management
+        document.getElementById('profile-btn').addEventListener('dblclick', () => {
+            if (appData.currentUser && appData.currentUser.type === 'admin') {
+                showScreen('users-data');
+            }
+        });
 
         // --- SHIFT CHECK LOGIC ---
         function checkShiftAdherence(lastUpdateStr) {
@@ -1886,7 +2068,7 @@
             
             document.getElementById('last-update-value').textContent = s.lastUpdate;
             document.getElementById('station-comments-value').textContent = s.comments || 'لا يوجد ملاحظات';
-            
+
             const cons = s.consumption || {};
             document.getElementById('view-cons-t1').textContent = cons.t1 || '-';
             document.getElementById('view-cons-t2').textContent = cons.t2 || '-';
@@ -2060,9 +2242,9 @@
                 let newOperator = '';
                 if (appData.currentUser) {
                     newOperator = appData.currentUser.username || 
-                                 appData.currentUser.id || 
-                                 appData.currentUser.name || 
-                                 'غير معرّف';
+                                     appData.currentUser.id || 
+                                     appData.currentUser.name || 
+                                     'غير معرّف';
                 } else {
                     newOperator = getVal('operator-name') || 'غير معرّف';
                 }
@@ -2374,6 +2556,8 @@
             const tbody = document.getElementById('users-profiles-list');
             const searchInput = document.getElementById('search-profile-input').value.toLowerCase();
             const noProfilesMessage = document.getElementById('no-profiles-message');
+            const loadMoreBtn = document.getElementById('load-more-profiles-btn');
+            const paginationInfo = document.getElementById('profiles-pagination-info');
             
             tbody.innerHTML = '';
             
@@ -2403,8 +2587,14 @@
                 return true;
             });
             
-            if (filteredProfiles.length === 0) {
+            const totalProfiles = filteredProfiles.length;
+            const startIndex = appData.currentProfilesPage * appData.profilesLimit;
+            const endIndex = startIndex + appData.profilesLimit;
+            const displayedProfiles = filteredProfiles.slice(startIndex, endIndex);
+            
+            if (displayedProfiles.length === 0) {
                 tbody.style.display = 'none';
+                loadMoreBtn.style.display = 'none';
                 noProfilesMessage.style.display = 'block';
                 
                 if (searchInput) {
@@ -2432,7 +2622,7 @@
             tbody.style.display = '';
             noProfilesMessage.style.display = 'none';
             
-            filteredProfiles.forEach(username => {
+            displayedProfiles.forEach((username, index) => {
                 const profile = appData.userProfiles[username];
                 const userType = appData.users[username] ? appData.users[username].type : 'غير معروف';
                 const userTypeName = appData.userTypes[userType] ? appData.userTypes[userType].name : 'غير معروف';
@@ -2464,7 +2654,27 @@
                 
                 tbody.innerHTML += rowHTML;
             });
+            
+            // Update pagination info
+            const showingTo = Math.min(startIndex + displayedProfiles.length, totalProfiles);
+            paginationInfo.textContent = `عرض ${startIndex + 1} إلى ${showingTo} من أصل ${totalProfiles} مستخدم`;
+            
+            // Show/hide load more button
+            if (endIndex < totalProfiles) {
+                loadMoreBtn.style.display = 'block';
+                loadMoreBtn.textContent = `عرض المزيد من البيانات (${Math.min(appData.profilesLimit, totalProfiles - endIndex)})`;
+            } else {
+                loadMoreBtn.style.display = 'none';
+            }
         }
+        
+        // Load more profiles button handler
+        document.getElementById('load-more-profiles-btn').addEventListener('click', function() {
+            appData.currentProfilesPage++;
+            renderUsersProfilesList();
+            // Scroll to bottom of table
+            document.querySelector('.users-profiles-table').scrollIntoView({ behavior: 'smooth', block: 'end' });
+        });
         
         function saveUserProfile() {
             const currentUser = appData.currentUser;
@@ -2645,7 +2855,441 @@
         }
         
         document.getElementById('save-profile-btn').addEventListener('click', saveUserProfile);
-        document.getElementById('search-profile-input').addEventListener('keyup', renderUsersProfilesList);
+        document.getElementById('search-profile-input').addEventListener('keyup', function() {
+            appData.currentProfilesPage = 0;
+            renderUsersProfilesList();
+        });
+
+        // --- USERS DATA MANAGEMENT (شاشة جديدة لإدارة بيانات المستخدمين) ---
+        function renderUsersDataManagement() {
+            const currentUser = appData.currentUser;
+            if (!currentUser || currentUser.type !== 'admin') {
+                alert('يجب أن تكون مديراً للوصول إلى هذه الشاشة');
+                showScreen('stations');
+                return;
+            }
+            
+            const tbody = document.getElementById('users-data-table-body');
+            const searchInput = document.getElementById('search-users-data-input').value.toLowerCase();
+            const noUsersDataMessage = document.getElementById('no-users-data-message');
+            const loadMoreBtn = document.getElementById('load-more-users-data-btn');
+            const paginationInfo = document.getElementById('users-data-pagination-info');
+            
+            tbody.innerHTML = '';
+            
+            // Combine user accounts with their profiles
+            let combinedUsers = [];
+            Object.keys(appData.users).forEach(username => {
+                const userAccount = appData.users[username];
+                const userProfile = appData.userProfiles[username] || {};
+                
+                combinedUsers.push({
+                    username: username,
+                    account: userAccount,
+                    profile: userProfile
+                });
+            });
+            
+            // Filter by search
+            let filteredUsers = combinedUsers.filter(user => {
+                if (searchInput) {
+                    const username = user.username.toLowerCase();
+                    const fullname = (user.profile.fullname || '').toLowerCase();
+                    const station = (user.profile.station || '').toLowerCase();
+                    const phone = (user.profile.phone || '').toLowerCase();
+                    const userType = appData.userTypes[user.account.type].name.toLowerCase();
+                    
+                    if (!username.includes(searchInput) && 
+                        !fullname.includes(searchInput) && 
+                        !station.includes(searchInput) &&
+                        !phone.includes(searchInput) &&
+                        !userType.includes(searchInput)) {
+                        return false;
+                    }
+                }
+                return true;
+            });
+            
+            // Sort by username
+            filteredUsers.sort((a, b) => a.username.localeCompare(b.username));
+            
+            const totalUsers = filteredUsers.length;
+            const startIndex = appData.currentUsersDataPage * appData.usersDataLimit;
+            const endIndex = startIndex + appData.usersDataLimit;
+            const displayedUsers = filteredUsers.slice(startIndex, endIndex);
+            
+            if (displayedUsers.length === 0) {
+                tbody.style.display = 'none';
+                loadMoreBtn.style.display = 'none';
+                noUsersDataMessage.style.display = 'block';
+                
+                if (searchInput) {
+                    noUsersDataMessage.innerHTML = `
+                        <div style="font-size: 2rem; margin-bottom: 10px;">🔍</div>
+                        <div>لا توجد نتائج بحث مطابقة لـ "${searchInput}"</div>
+                        <div style="font-size: 0.9rem; margin-top: 10px;">جرب استخدام مصطلحات بحث أخرى</div>
+                    `;
+                } else {
+                    noUsersDataMessage.innerHTML = `
+                        <div style="font-size: 2rem; margin-bottom: 10px;">👥</div>
+                        <div>لا توجد بيانات مستخدمين مسجلة في النظام</div>
+                    `;
+                }
+                return;
+            }
+            
+            tbody.style.display = '';
+            noUsersDataMessage.style.display = 'none';
+            
+            displayedUsers.forEach((user, index) => {
+                const account = user.account;
+                const profile = user.profile;
+                const userTypeName = appData.userTypes[account.type].name;
+                const typeClass = `type-${account.type}`;
+                const isCurrentUser = (user.username === currentUser.username);
+                const rowNum = startIndex + index + 1;
+                
+                let rowHTML = `
+                    <tr>
+                        <td>${rowNum}</td>
+                        <td style="font-weight: bold;">
+                            ${user.username}
+                            ${isCurrentUser ? ' <span style="color:#1976d2; font-size:0.8rem;">(أنت)</span>' : ''}
+                        </td>
+                        <td>${profile.fullname || 'غير مسجل'}</td>
+                        <td><span class="user-type-badge ${typeClass}">${userTypeName}</span></td>
+                        <td>${profile.station || 'غير محدد'}</td>
+                        <td>${profile.phone || 'غير مسجل'}</td>
+                        <td>${profile.email || 'غير مسجل'}</td>
+                        <td class="action-cell">
+                            ${!isCurrentUser ? 
+                                `<button class="delete-user-btn" onclick="deleteUserFromDataScreen('${user.username}')" title="حذف المستخدم">
+                                    🗑️ حذف
+                                </button>` : 
+                                '<span style="color:#888; font-size:0.8rem;">-</span>'
+                            }
+                        </td>
+                    </tr>`;
+                
+                tbody.innerHTML += rowHTML;
+            });
+            
+            // Update pagination info
+            const showingTo = Math.min(startIndex + displayedUsers.length, totalUsers);
+            paginationInfo.textContent = `عرض ${startIndex + 1} إلى ${showingTo} من أصل ${totalUsers} مستخدم`;
+            
+            // Show/hide load more button
+            if (endIndex < totalUsers) {
+                loadMoreBtn.style.display = 'block';
+                loadMoreBtn.textContent = `عرض المزيد من المستخدمين (${Math.min(appData.usersDataLimit, totalUsers - endIndex)})`;
+            } else {
+                loadMoreBtn.style.display = 'none';
+            }
+        }
+        
+        // Load more users data button handler
+        document.getElementById('load-more-users-data-btn').addEventListener('click', function() {
+            appData.currentUsersDataPage++;
+            renderUsersDataManagement();
+            // Scroll to bottom of table
+            document.querySelector('.users-data-table').scrollIntoView({ behavior: 'smooth', block: 'end' });
+        });
+        
+        window.deleteUserFromDataScreen = function(username) {
+            const currentUser = appData.currentUser;
+            
+            if (!currentUser || currentUser.type !== 'admin') {
+                alert('ليس لديك صلاحية لحذف المستخدمين');
+                return;
+            }
+            
+            if (username === 'admin') {
+                alert('لا يمكن حذف حساب المدير الرئيسي (admin)');
+                return;
+            }
+            
+            if (username === currentUser.username) {
+                alert('لا يمكن حذف حسابك الخاص أثناء استخدام النظام');
+                return;
+            }
+            
+            if (confirm(`هل أنت متأكد من حذف المستخدم "${username}"؟\n\nهذا الإجراء سيمسح حساب المستخدم وبياناته الشخصية ولا يمكن التراجع عنه.`)) {
+                // Delete user account
+                db.ref('users/' + username).remove()
+                    .then(() => {
+                        // Delete user profile if exists
+                        return db.ref('userProfiles/' + username).remove();
+                    })
+                    .then(() => {
+                        alert('✅ تم حذف المستخدم وبياناته بنجاح');
+                        renderUsersDataManagement();
+                    })
+                    .catch(err => {
+                        alert('خطأ في حذف المستخدم: ' + err.message);
+                    });
+            }
+        };
+        
+        // Search in users data screen
+        document.getElementById('search-users-data-input').addEventListener('keyup', function() {
+            appData.currentUsersDataPage = 0;
+            renderUsersDataManagement();
+        });
+
+        // --- USERS MANAGEMENT (SIMPLIFIED - بدون عمود الحالة) ---
+        function renderUsersManagement() {
+            const tbody = document.getElementById('users-table-body');
+            const search = document.getElementById('search-user-input').value.toLowerCase();
+            const noUsersMessage = document.getElementById('no-users-message');
+            const currentUser = appData.currentUser;
+            const loadMoreBtn = document.getElementById('load-more-users-btn');
+            const paginationInfo = document.getElementById('users-pagination-info');
+            
+            tbody.innerHTML = '';
+            
+            let filteredUsers = Object.keys(appData.users).filter(uName => {
+                if (search && !uName.toLowerCase().includes(search)) return false;
+                return true;
+            });
+            
+            const totalUsers = filteredUsers.length;
+            const startIndex = appData.currentUsersPage * appData.usersLimit;
+            const endIndex = startIndex + appData.usersLimit;
+            const displayedUsers = filteredUsers.slice(startIndex, endIndex);
+            
+            if (displayedUsers.length === 0) {
+                tbody.style.display = 'none';
+                loadMoreBtn.style.display = 'none';
+                noUsersMessage.style.display = 'block';
+                if (search) {
+                    noUsersMessage.innerHTML = `
+                        <div style="font-size: 2rem; margin-bottom: 10px;">🔍</div>
+                        <div>لا توجد نتائج بحث مطابقة لـ "${search}"</div>
+                        <div style="font-size: 0.9rem; margin-top: 10px;">جرب استخدام مصطلحات بحث أخرى</div>
+                    `;
+                }
+                return;
+            }
+            
+            tbody.style.display = '';
+            noUsersMessage.style.display = 'none';
+            
+            displayedUsers.forEach((uName, index) => {
+                const user = appData.users[uName];
+                const typeName = appData.userTypes[user.type].name;
+                const typeClass = `type-${user.type}`;
+                const isCurrentUser = (currentUser && currentUser.username === uName);
+                const isActive = user.active !== false;
+                const rowNum = startIndex + index + 1;
+                
+                const canDelete = currentUser && 
+                                 currentUser.permissions.delete_users && 
+                                 currentUser.permissions.can_delete_types.includes(user.type) &&
+                                 !isCurrentUser;
+                
+                const canSeePassword = currentUser && 
+                                      currentUser.permissions.view_passwords;
+                
+                let rowHTML = `
+                    <tr>
+                        <td style="font-weight: bold;">
+                            ${uName}
+                            ${isCurrentUser ? ' <span style="color:#1976d2; font-size:0.8rem;">(أنت)</span>' : ''}
+                        </td>
+                        <td><span class="user-type-badge ${typeClass}">${typeName}</span></td>
+                        <td class="password-cell" id="password-cell-${uName}">
+                            ${canSeePassword ? 
+                                `<span class="password-visible">${user.password}</span>` : 
+                                `<span class="password-masked">••••••••</span>`
+                            }
+                            ${canSeePassword ? 
+                                `<button class="toggle-password-cell" onclick="togglePasswordVisibility('${uName}')" title="إخفاء">👁️</button>` : 
+                                ''
+                            }
+                        </td>
+                        <td>
+                            ${canDelete ? 
+                                `<button class="delete-user-btn" onclick="deleteUser('${uName}')" title="حذف المستخدم">
+                                    🗑️ حذف
+                                </button>` : 
+                                ''
+                            }
+                        </td>
+                    </tr>`;
+                
+                tbody.innerHTML += rowHTML;
+            });
+            
+            // Update pagination info
+            const showingTo = Math.min(startIndex + displayedUsers.length, totalUsers);
+            paginationInfo.textContent = `عرض ${startIndex + 1} إلى ${showingTo} من أصل ${totalUsers} مستخدم`;
+            
+            // Show/hide load more button
+            if (endIndex < totalUsers) {
+                loadMoreBtn.style.display = 'block';
+                loadMoreBtn.textContent = `عرض المزيد من المستخدمين (${Math.min(appData.usersLimit, totalUsers - endIndex)})`;
+            } else {
+                loadMoreBtn.style.display = 'none';
+            }
+        }
+
+        window.togglePasswordVisibility = function(username) {
+            const cell = document.getElementById(`password-cell-${username}`);
+            const user = appData.users[username];
+            const span = cell.querySelector('span');
+            const button = cell.querySelector('button');
+            
+            if (span.classList.contains('password-masked')) {
+                span.classList.remove('password-masked');
+                span.classList.add('password-visible');
+                span.textContent = user.password;
+                button.title = "إخفاء";
+                button.textContent = "🔒";
+            } else {
+                span.classList.remove('password-visible');
+                span.classList.add('password-masked');
+                span.textContent = '••••••••';
+                button.title = "إظهار";
+                button.textContent = "👁️";
+            }
+        };
+
+        window.deleteUser = function(username) {
+            const currentUser = appData.currentUser;
+            const targetUser = appData.users[username];
+            
+            if (!currentUser || !currentUser.permissions.delete_users) {
+                alert('ليس لديك صلاحية لحذف المستخدمين');
+                return;
+            }
+            
+            if (!currentUser.permissions.can_delete_types.includes(targetUser.type)) {
+                alert('ليس لديك صلاحية لحذف هذا النوع من المستخدمين');
+                return;
+            }
+            
+            if (username === 'admin') {
+                alert('لا يمكن حذف حساب المدير الرئيسي (admin)');
+                return;
+            }
+            
+            if (username === currentUser.username) {
+                alert('لا يمكن حذف حسابك الخاص أثناء استخدام النظام');
+                return;
+            }
+            
+            if (confirm(`هل أنت متأكد من حذف المستخدم "${username}"؟\n\nهذا الإجراء لا يمكن التراجع عنه.`)) {
+                db.ref('users/' + username).remove()
+                    .then(() => {
+                        alert('✅ تم حذف المستخدم بنجاح');
+                        appData.currentUsersPage = 0; // Reset to first page
+                        renderUsersManagement();
+                    })
+                    .catch(err => {
+                        alert('خطأ في حذف المستخدم: ' + err.message);
+                    });
+            }
+        };
+
+        // Load more users button handler
+        document.getElementById('load-more-users-btn').addEventListener('click', function() {
+            appData.currentUsersPage++;
+            renderUsersManagement();
+            // Scroll to bottom of table
+            document.querySelector('.users-table').scrollIntoView({ behavior: 'smooth', block: 'end' });
+        });
+
+        document.getElementById('add-user-btn').addEventListener('click', () => {
+            const currentUser = appData.currentUser;
+            
+            if (!currentUser || !currentUser.permissions.add_users) {
+                alert('ليس لديك صلاحية لإضافة مستخدمين');
+                return;
+            }
+            
+            document.getElementById('user-form-container').style.display = 'block';
+            document.getElementById('new-username').value = '';
+            document.getElementById('new-password').value = '';
+            
+            const sel = document.getElementById('new-user-type');
+            sel.innerHTML = '';
+            
+            currentUser.permissions.can_add_types.forEach(k => {
+                sel.innerHTML += `<option value="${k}">${appData.userTypes[k].name}</option>`;
+            });
+            
+            if (sel.options.length === 0) {
+                alert('ليس لديك صلاحية لإضافة أي نوع من المستخدمين');
+                document.getElementById('user-form-container').style.display = 'none';
+            }
+        });
+
+        document.getElementById('cancel-user-btn').addEventListener('click', () => {
+            document.getElementById('user-form-container').style.display = 'none';
+            document.getElementById('new-username').value = '';
+            document.getElementById('new-password').value = '';
+        });
+
+        document.getElementById('save-user-btn').addEventListener('click', () => {
+            const currentUser = appData.currentUser;
+            
+            if (!currentUser || !currentUser.permissions.add_users) {
+                alert('ليس لديك صلاحية لإضافة مستخدمين');
+                return;
+            }
+            
+            const name = document.getElementById('new-username').value.trim();
+            const pass = document.getElementById('new-password').value.trim();
+            const type = document.getElementById('new-user-type').value;
+            
+            if (!currentUser.permissions.can_add_types.includes(type)) {
+                alert('ليس لديك صلاحية لإضافة هذا النوع من المستخدمين');
+                return;
+            }
+            
+            if(!name) {
+                alert('يرجى إدخال اسم المستخدم');
+                document.getElementById('new-username').focus();
+                return;
+            }
+            
+            if(!pass) {
+                alert('يرجى إدخال كلمة المرور');
+                document.getElementById('new-password').focus();
+                return;
+            }
+            
+            if(name.toLowerCase() === 'admin') {
+                alert('لا يمكن استخدام اسم "admin" لمستخدم جديد');
+                return;
+            }
+            
+            if(appData.users[name]) {
+                alert('المستخدم موجود بالفعل في النظام');
+                return;
+            }
+            
+            db.ref('users/' + name).set({
+                type: type,
+                password: pass,
+                active: true
+            }).then(() => {
+                alert('✅ تمت إضافة المستخدم بنجاح');
+                document.getElementById('user-form-container').style.display = 'none';
+                document.getElementById('new-username').value = '';
+                document.getElementById('new-password').value = '';
+                appData.currentUsersPage = 0; // Reset to first page
+                renderUsersManagement();
+            }).catch(err => {
+                alert('خطأ في إضافة المستخدم: ' + err.message);
+            });
+        });
+
+        // Search in users management
+        document.getElementById('search-user-input').addEventListener('keyup', function() {
+            appData.currentUsersPage = 0;
+            renderUsersManagement();
+        });
 
         // --- CONSUMPTION REPORT LOGIC ---
         document.getElementById('consumptions-btn').addEventListener('click', () => {
@@ -3037,224 +3681,6 @@
             showScreen('inspection'); 
         });
 
-        // --- USERS MANAGEMENT (SIMPLIFIED - بدون عمود الحالة) ---
-        function renderUsersManagement() {
-            const tbody = document.getElementById('users-table-body');
-            const search = document.getElementById('search-user-input').value.toLowerCase();
-            const noUsersMessage = document.getElementById('no-users-message');
-            const currentUser = appData.currentUser;
-            
-            tbody.innerHTML = '';
-            
-            let filteredUsers = Object.keys(appData.users).filter(uName => {
-                if (search && !uName.toLowerCase().includes(search)) return false;
-                return true;
-            });
-            
-            if (filteredUsers.length === 0) {
-                tbody.style.display = 'none';
-                noUsersMessage.style.display = 'block';
-                if (search) {
-                    noUsersMessage.innerHTML = `
-                        <div style="font-size: 2rem; margin-bottom: 10px;">🔍</div>
-                        <div>لا توجد نتائج بحث مطابقة لـ "${search}"</div>
-                        <div style="font-size: 0.9rem; margin-top: 10px;">جرب استخدام مصطلحات بحث أخرى</div>
-                    `;
-                }
-                return;
-            }
-            
-            tbody.style.display = '';
-            noUsersMessage.style.display = 'none';
-            
-            filteredUsers.forEach(uName => {
-                const user = appData.users[uName];
-                const typeName = appData.userTypes[user.type].name;
-                const typeClass = `type-${user.type}`;
-                const isCurrentUser = (currentUser && currentUser.username === uName);
-                const isActive = user.active !== false;
-                
-                const canDelete = currentUser && 
-                                 currentUser.permissions.delete_users && 
-                                 currentUser.permissions.can_delete_types.includes(user.type) &&
-                                 !isCurrentUser;
-                
-                const canSeePassword = currentUser && 
-                                      currentUser.permissions.view_passwords;
-                
-                let rowHTML = `
-                    <tr>
-                        <td style="font-weight: bold;">
-                            ${uName}
-                            ${isCurrentUser ? ' <span style="color:#1976d2; font-size:0.8rem;">(أنت)</span>' : ''}
-                        </td>
-                        <td><span class="user-type-badge ${typeClass}">${typeName}</span></td>
-                        <td class="password-cell" id="password-cell-${uName}">
-                            ${canSeePassword ? 
-                                `<span class="password-visible">${user.password}</span>` : 
-                                `<span class="password-masked">••••••••</span>`
-                            }
-                            ${canSeePassword ? 
-                                `<button class="toggle-password-cell" onclick="togglePasswordVisibility('${uName}')" title="إخفاء">👁️</button>` : 
-                                ''
-                            }
-                        </td>
-                        <td>
-                            ${canDelete ? 
-                                `<button class="delete-user-btn" onclick="deleteUser('${uName}')" title="حذف المستخدم">
-                                    🗑️ حذف
-                                </button>` : 
-                                ''
-                            }
-                        </td>
-                    </tr>`;
-                
-                tbody.innerHTML += rowHTML;
-            });
-        }
-
-        window.togglePasswordVisibility = function(username) {
-            const cell = document.getElementById(`password-cell-${username}`);
-            const user = appData.users[username];
-            const span = cell.querySelector('span');
-            const button = cell.querySelector('button');
-            
-            if (span.classList.contains('password-masked')) {
-                span.classList.remove('password-masked');
-                span.classList.add('password-visible');
-                span.textContent = user.password;
-                button.title = "إخفاء";
-                button.textContent = "🔒";
-            } else {
-                span.classList.remove('password-visible');
-                span.classList.add('password-masked');
-                span.textContent = '••••••••';
-                button.title = "إظهار";
-                button.textContent = "👁️";
-            }
-        };
-
-        window.deleteUser = function(username) {
-            const currentUser = appData.currentUser;
-            const targetUser = appData.users[username];
-            
-            if (!currentUser || !currentUser.permissions.delete_users) {
-                alert('ليس لديك صلاحية لحذف المستخدمين');
-                return;
-            }
-            
-            if (!currentUser.permissions.can_delete_types.includes(targetUser.type)) {
-                alert('ليس لديك صلاحية لحذف هذا النوع من المستخدمين');
-                return;
-            }
-            
-            if (username === 'admin') {
-                alert('لا يمكن حذف حساب المدير الرئيسي (admin)');
-                return;
-            }
-            
-            if (username === currentUser.username) {
-                alert('لا يمكن حذف حسابك الخاص أثناء استخدام النظام');
-                return;
-            }
-            
-            if (confirm(`هل أنت متأكد من حذف المستخدم "${username}"؟\n\nهذا الإجراء لا يمكن التراجع عنه.`)) {
-                db.ref('users/' + username).remove()
-                    .then(() => {
-                        alert('✅ تم حذف المستخدم بنجاح');
-                        renderUsersManagement();
-                    })
-                    .catch(err => {
-                        alert('خطأ في حذف المستخدم: ' + err.message);
-                    });
-            }
-        };
-
-        document.getElementById('add-user-btn').addEventListener('click', () => {
-            const currentUser = appData.currentUser;
-            
-            if (!currentUser || !currentUser.permissions.add_users) {
-                alert('ليس لديك صلاحية لإضافة مستخدمين');
-                return;
-            }
-            
-            document.getElementById('user-form-container').style.display = 'block';
-            document.getElementById('new-username').value = '';
-            document.getElementById('new-password').value = '';
-            
-            const sel = document.getElementById('new-user-type');
-            sel.innerHTML = '';
-            
-            currentUser.permissions.can_add_types.forEach(k => {
-                sel.innerHTML += `<option value="${k}">${appData.userTypes[k].name}</option>`;
-            });
-            
-            if (sel.options.length === 0) {
-                alert('ليس لديك صلاحية لإضافة أي نوع من المستخدمين');
-                document.getElementById('user-form-container').style.display = 'none';
-            }
-        });
-
-        document.getElementById('cancel-user-btn').addEventListener('click', () => {
-            document.getElementById('user-form-container').style.display = 'none';
-            document.getElementById('new-username').value = '';
-            document.getElementById('new-password').value = '';
-        });
-
-        document.getElementById('save-user-btn').addEventListener('click', () => {
-            const currentUser = appData.currentUser;
-            
-            if (!currentUser || !currentUser.permissions.add_users) {
-                alert('ليس لديك صلاحية لإضافة مستخدمين');
-                return;
-            }
-            
-            const name = document.getElementById('new-username').value.trim();
-            const pass = document.getElementById('new-password').value.trim();
-            const type = document.getElementById('new-user-type').value;
-            
-            if (!currentUser.permissions.can_add_types.includes(type)) {
-                alert('ليس لديك صلاحية لإضافة هذا النوع من المستخدمين');
-                return;
-            }
-            
-            if(!name) {
-                alert('يرجى إدخال اسم المستخدم');
-                document.getElementById('new-username').focus();
-                return;
-            }
-            
-            if(!pass) {
-                alert('يرجى إدخال كلمة المرور');
-                document.getElementById('new-password').focus();
-                return;
-            }
-            
-            if(name.toLowerCase() === 'admin') {
-                alert('لا يمكن استخدام اسم "admin" لمستخدم جديد');
-                return;
-            }
-            
-            if(appData.users[name]) {
-                alert('المستخدم موجود بالفعل في النظام');
-                return;
-            }
-            
-            db.ref('users/' + name).set({
-                type: type,
-                password: pass,
-                active: true
-            }).then(() => {
-                alert('✅ تمت إضافة المستخدم بنجاح');
-                document.getElementById('user-form-container').style.display = 'none';
-                document.getElementById('new-username').value = '';
-                document.getElementById('new-password').value = '';
-                renderUsersManagement();
-            }).catch(err => {
-                alert('خطأ في إضافة المستخدم: ' + err.message);
-            });
-        });
-
         // --- FAULTS & HISTORY LOGIC ---
         function renderHistoryTable(applyFilters = false) {
             const tbody = document.getElementById('history-table-body');
@@ -3288,7 +3714,7 @@
                 }
             });
             
-            const viewData = data.slice(0, 100);
+            const viewData = data.slice(0, appData.historyLimit);
             viewData.forEach(log => {
                 tbody.innerHTML += `<tr>
                     <td>
@@ -3302,12 +3728,26 @@
             });
             
             document.getElementById('history-status-text').textContent = `عرض ${viewData.length} من أصل ${data.length}`;
+            
+            const loadMoreBtn = document.getElementById('load-more-history-btn');
+            if (viewData.length < data.length) {
+                loadMoreBtn.style.display = 'block';
+            } else {
+                loadMoreBtn.style.display = 'none';
+            }
         }
+        
+        // Load more history button handler
+        document.getElementById('load-more-history-btn').addEventListener('click', function() {
+            appData.historyLimit += 100;
+            renderHistoryTable(true);
+        });
         
         function renderFaultsLog() {
             const activeBody = document.getElementById('active-faults-body');
             const historyBody = document.getElementById('history-faults-body');
             const fStation = document.getElementById('fault-archive-station-filter').value;
+            const loadMoreBtn = document.getElementById('load-more-faults-btn');
             
             activeBody.innerHTML = '';
             historyBody.innerHTML = '';
@@ -3327,7 +3767,11 @@
             
             let histFaults = appData.faultsLog.filter(f => !f.active);
             if (fStation !== 'all') histFaults = histFaults.filter(f => f.station === fStation);
-            histFaults.slice(0, appData.faultsLimit).forEach(f => {
+            
+            const totalFaults = histFaults.length;
+            const displayedFaults = histFaults.slice(0, appData.faultsLimit);
+            
+            displayedFaults.forEach(f => {
                 const icon = faultIcons[f.type] || '⚠️';
                 historyBody.innerHTML += `<tr>
                     <td>${f.station}</td>
@@ -3338,12 +3782,27 @@
                 </tr>`;
             });
             
+            document.getElementById('faults-status-text').textContent = `عرض ${displayedFaults.length} من أصل ${totalFaults} عطل`;
+            
+            if (displayedFaults.length < totalFaults) {
+                loadMoreBtn.style.display = 'block';
+                loadMoreBtn.textContent = `عرض 100 عطل إضافي (إجمالي ${Math.min(appData.faultsLimit + 100, totalFaults)})`;
+            } else {
+                loadMoreBtn.style.display = 'none';
+            }
+            
             const filterSel = document.getElementById('fault-archive-station-filter');
             if (filterSel.options.length <= 1) {
                 const sorted = Object.values(appData.stations).sort((a,b) => a.name.localeCompare(b.name));
                 sorted.forEach(s => filterSel.innerHTML += `<option value="${s.name}">${s.name}</option>`);
             }
         }
+
+        // Load more faults button handler
+        document.getElementById('load-more-faults-btn').addEventListener('click', function() {
+            appData.faultsLimit += 100;
+            renderFaultsLog();
+        });
 
         function updateStationFilter() {
             const z = document.getElementById('filter-zone').value;
@@ -3358,5 +3817,4 @@
         loadSystemData();
     </script>
 </body>
-                                    </html>
-
+    </html>
