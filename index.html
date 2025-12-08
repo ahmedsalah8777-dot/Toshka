@@ -20,48 +20,237 @@
             --grey-color: #95a5a6;
             --profile-color: #9b59b6;
         }
-        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
-        body { background-color: var(--light-bg); color: #333; line-height: 1.6; min-height: 100vh; display: flex; flex-direction: column; }
-        .container { max-width: 1400px; margin: 0 auto; padding: 10px; flex: 1; width: 100%; }
+        
+        * { 
+            margin: 0; 
+            padding: 0; 
+            box-sizing: border-box; 
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
+        }
+        
+        body { 
+            background-color: var(--light-bg); 
+            color: #333; 
+            line-height: 1.6; 
+            min-height: 100vh; 
+            display: flex; 
+            flex-direction: column; 
+            -webkit-tap-highlight-color: transparent;
+        }
+        
+        .container { 
+            max-width: 1400px; 
+            margin: 0 auto; 
+            padding: 10px; 
+            flex: 1; 
+            width: 100%; 
+        }
 
         /* Header */
-        header { background: linear-gradient(135deg, var(--primary-color), var(--secondary-color)); color: white; padding: 10px 0; box-shadow: 0 2px 10px rgba(0,0,0,0.1); position: sticky; top: 0; z-index: 1000; }
-        .header-content { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; }
-        .logo { display: flex; align-items: center; gap: 10px; font-size: 20px; font-weight: bold; }
+        header { 
+            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color)); 
+            color: white; 
+            padding: 10px 0; 
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1); 
+            position: sticky; 
+            top: 0; 
+            z-index: 1000; 
+        }
         
+        .header-content { 
+            display: flex; 
+            justify-content: space-between; 
+            align-items: center; 
+            flex-wrap: wrap; 
+            gap: 10px; 
+        }
+        
+        .logo { 
+            display: flex; 
+            align-items: center; 
+            gap: 10px; 
+            font-size: 18px; 
+            font-weight: bold; 
+        }
+        
+        @media (max-width: 768px) {
+            .logo { font-size: 16px; }
+            .header-content { gap: 8px; }
+        }
+
         /* Network Status Indicator */
-        .network-status { font-size: 0.8rem; padding: 4px 8px; border-radius: 12px; font-weight: bold; display: flex; align-items: center; gap: 5px; }
+        .network-status { 
+            font-size: 0.8rem; 
+            padding: 4px 8px; 
+            border-radius: 12px; 
+            font-weight: bold; 
+            display: flex; 
+            align-items: center; 
+            gap: 5px; 
+            white-space: nowrap;
+        }
+        
         .net-online { background: #d4edda; color: #155724; }
         .net-offline { background: #f8d7da; color: #721c24; }
         .syncing { animation: spin 1s linear infinite; }
-        @keyframes spin { 100% { transform: rotate(360deg); } }
+        
+        @keyframes spin { 
+            100% { transform: rotate(360deg); } 
+        }
 
         /* Ticker Styles */
-        .ticker-container { background-color: var(--danger-color); color: white; height: 40px; overflow: hidden; border-radius: 4px; margin-bottom: 15px; display: none; align-items: center; box-shadow: 0 3px 5px rgba(0,0,0,0.1); border: 2px solid #922b21; }
+        .ticker-container { 
+            background-color: var(--danger-color); 
+            color: white; 
+            height: 40px; 
+            overflow: hidden; 
+            border-radius: 4px; 
+            margin-bottom: 15px; 
+            display: none; 
+            align-items: center; 
+            box-shadow: 0 3px 5px rgba(0,0,0,0.1); 
+            border: 2px solid #922b21; 
+        }
+        
         .ticker-container.active { display: flex; }
-        .ticker-label { background: rgba(0,0,0,0.3); height: 100%; padding: 0 10px; display: flex; align-items: center; font-weight: bold; white-space: nowrap; z-index: 2; }
-        .ticker-text-wrap { flex: 1; overflow: hidden; white-space: nowrap; position: relative; height: 100%; display: flex; align-items: center; }
-        .ticker { display: inline-block; white-space: nowrap; padding-right: 100%; animation-name: ticker; animation-timing-function: linear; animation-iteration-count: infinite; }
-        .ticker-item { display: inline-flex; align-items: center; gap: 5px; padding: 0 2px; font-weight: bold; font-size: 1rem; color: white !important; }
-        .ticker-separator { display: inline-block; margin: 0 8px; color: rgba(255, 255, 255, 0.8); font-weight: normal; }
-        @keyframes ticker { 0% { transform: translate3d(0, 0, 0); } 100% { transform: translate3d(100%, 0, 0); } }
+        
+        .ticker-label { 
+            background: rgba(0,0,0,0.3); 
+            height: 100%; 
+            padding: 0 10px; 
+            display: flex; 
+            align-items: center; 
+            font-weight: bold; 
+            white-space: nowrap; 
+            z-index: 2; 
+        }
+        
+        .ticker-text-wrap { 
+            flex: 1; 
+            overflow: hidden; 
+            white-space: nowrap; 
+            position: relative; 
+            height: 100%; 
+            display: flex; 
+            align-items: center; 
+        }
+        
+        .ticker { 
+            display: inline-block; 
+            white-space: nowrap; 
+            padding-right: 100%; 
+            animation-name: ticker; 
+            animation-timing-function: linear; 
+            animation-iteration-count: infinite; 
+        }
+        
+        .ticker-item { 
+            display: inline-flex; 
+            align-items: center; 
+            gap: 5px; 
+            padding: 0 2px; 
+            font-weight: bold; 
+            font-size: 1rem; 
+            color: white !important; 
+        }
+        
+        .ticker-separator { 
+            display: inline-block; 
+            margin: 0 8px; 
+            color: rgba(255, 255, 255, 0.8); 
+            font-weight: normal; 
+        }
+        
+        @keyframes ticker { 
+            0% { transform: translate3d(0, 0, 0); } 
+            100% { transform: translate3d(100%, 0, 0); } 
+        }
 
         /* User Info & Alarm */
-        .user-info { display: none; align-items: center; gap: 8px; flex-wrap: wrap; justify-content: flex-end; }
-        .user-badge { background: rgba(255,255,255,0.2); padding: 5px 10px; border-radius: 20px; font-size: 12px; white-space: nowrap; }
-        .alarm-btn, .profile-btn { background: transparent; border: none; color: white; font-size: 1.4rem; cursor: pointer; position: relative; margin-left: 10px; }
-        .alarm-btn.flashing { animation: bell-shake 1s infinite cubic-bezier(.36,.07,.19,.97) both, red-glow 1.5s infinite; color: #ffcccc; }
-        .alarm-count { position: absolute; top: -5px; right: -5px; background: red; color: white; border-radius: 50%; width: 18px; height: 18px; font-size: 10px; display: flex; align-items: center; justify-content: center; border: 1px solid white; }
-        @keyframes bell-shake { 10%, 90% { transform: translate3d(-1px, 0, 0); } 20%, 80% { transform: translate3d(2px, 0, 0); } 30%, 50%, 70% { transform: translate3d(-4px, 0, 0); } 40%, 60% { transform: translate3d(4px, 0, 0); } }
-        @keyframes red-glow { 0% { text-shadow: 0 0 5px red; } 50% { text-shadow: 0 0 20px red; } 100% { text-shadow: 0 0 5px red; } }
-
-        /* Shift Warning Icon */
-        .missed-update-icon { display: inline-flex; align-items: center; justify-content: center; width: 20px; height: 20px; background-color: #e74c3c; color: white; border-radius: 50%; font-size: 14px; font-weight: bold; margin-right: 5px; box-shadow: 0 2px 4px rgba(0,0,0,0.2); animation: pulse-red 2s infinite; vertical-align: middle; }
-        @keyframes pulse-red { 0% { transform: scale(1); box-shadow: 0 0 0 0 rgba(231, 76, 60, 0.7); } 70% { transform: scale(1.05); box-shadow: 0 0 0 6px rgba(231, 76, 60, 0); } 100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(231, 76, 60, 0); } }
+        .user-info { 
+            display: none; 
+            align-items: center; 
+            gap: 8px; 
+            flex-wrap: wrap; 
+            justify-content: flex-end; 
+        }
+        
+        .user-badge { 
+            background: rgba(255,255,255,0.2); 
+            padding: 5px 10px; 
+            border-radius: 20px; 
+            font-size: 12px; 
+            white-space: nowrap; 
+        }
+        
+        .alarm-btn, .profile-btn { 
+            background: transparent; 
+            border: none; 
+            color: white; 
+            font-size: 1.4rem; 
+            cursor: pointer; 
+            position: relative; 
+            margin-left: 10px; 
+            touch-action: manipulation;
+        }
+        
+        .alarm-btn.flashing { 
+            animation: bell-shake 1s infinite cubic-bezier(.36,.07,.19,.97) both, red-glow 1.5s infinite; 
+            color: #ffcccc; 
+        }
+        
+        .alarm-count { 
+            position: absolute; 
+            top: -5px; 
+            right: -5px; 
+            background: red; 
+            color: white; 
+            border-radius: 50%; 
+            width: 18px; 
+            height: 18px; 
+            font-size: 10px; 
+            display: flex; 
+            align-items: center; 
+            justify-content: center; 
+            border: 1px solid white; 
+        }
+        
+        @keyframes bell-shake { 
+            10%, 90% { transform: translate3d(-1px, 0, 0); } 
+            20%, 80% { transform: translate3d(2px, 0, 0); } 
+            30%, 50%, 70% { transform: translate3d(-4px, 0, 0); } 
+            40%, 60% { transform: translate3d(4px, 0, 0); } 
+        }
+        
+        @keyframes red-glow { 
+            0% { text-shadow: 0 0 5px red; } 
+            50% { text-shadow: 0 0 20px red; } 
+            100% { text-shadow: 0 0 5px red; } 
+        }
 
         /* UI Components */
-        .btn { padding: 8px 12px; border: none; border-radius: 4px; cursor: pointer; font-weight: 500; transition: all 0.3s ease; display: inline-flex; align-items: center; gap: 5px; font-size: 14px; justify-content: center; }
-        .btn-sm { padding: 4px 8px; font-size: 12px; }
+        .btn { 
+            padding: 8px 12px; 
+            border: none; 
+            border-radius: 4px; 
+            cursor: pointer; 
+            font-weight: 500; 
+            transition: all 0.3s ease; 
+            display: inline-flex; 
+            align-items: center; 
+            gap: 5px; 
+            font-size: 14px; 
+            justify-content: center; 
+            touch-action: manipulation;
+            min-height: 36px;
+        }
+        
+        .btn-sm { 
+            padding: 4px 8px; 
+            font-size: 12px; 
+            min-height: 28px;
+        }
+        
         .btn-primary { background-color: var(--secondary-color); color: white; }
         .btn-success { background-color: var(--success-color); color: white; }
         .btn-danger { background-color: var(--danger-color); color: white; }
@@ -70,38 +259,166 @@
         .btn-info { background-color: #17a2b8; color: white; }
         .btn-consumption { background-color: var(--consumption-color); color: white; }
         .btn-profile { background-color: var(--profile-color); color: white; }
-        .btn:hover { opacity: 0.9; transform: translateY(-2px); }
-
-        .screen { display: none; background: var(--card-bg); border-radius: 10px; box-shadow: 0 5px 15px rgba(0,0,0,0.05); padding: 15px; margin-top: 15px; min-height: 500px; }
-        .active { display: block; animation: fadeIn 0.4s ease; }
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
-
-        h2 { color: var(--primary-color); margin-bottom: 15px; padding-bottom: 10px; border-bottom: 1px solid #eee; font-size: 1.2rem; }
         
-        /* Grid System */
-        .stations-grid { display: grid; gap: 10px; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); }
-        .station-details { display: grid; gap: 10px; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); margin-top: 20px; }
-        .dashboard-stats { display: grid; gap: 15px; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); }
-
+        .btn:hover { opacity: 0.9; transform: translateY(-2px); }
+        
         @media (max-width: 768px) {
-            .stations-grid { grid-template-columns: 1fr 1fr !important; gap: 8px; }
-            .station-card { padding: 8px; font-size: 0.85rem; }
-            .station-card div { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-            .dashboard-stats { display: flex !important; flex-direction: row; gap: 5px; }
-            .dashboard-stats .stat-card { flex: 1; padding: 8px; text-align: center; min-width: 0; }
-            .dashboard-stats .stat-label { font-size: 0.75rem; white-space: nowrap; }
-            .dashboard-stats .stat-value { font-size: 1.1rem; }
+            .btn {
+                padding: 6px 10px;
+                font-size: 13px;
+                min-height: 32px;
+            }
+        }
+
+        .screen { 
+            display: none; 
+            background: var(--card-bg); 
+            border-radius: 10px; 
+            box-shadow: 0 5px 15px rgba(0,0,0,0.05); 
+            padding: 15px; 
+            margin-top: 15px; 
+            min-height: 500px; 
         }
         
-        .stat-card, .station-card, .detail-card { background: var(--card-bg); border-radius: 8px; padding: 15px; box-shadow: 0 3px 6px rgba(0,0,0,0.05); border: 1px solid #eee; }
-        .station-card { border-top: 4px solid var(--secondary-color); cursor: pointer; transition: 0.3s; padding: 10px; font-size: 0.95rem; position: relative; overflow: hidden; }
+        .active { 
+            display: block; 
+            animation: fadeIn 0.4s ease; 
+        }
+        
+        @keyframes fadeIn { 
+            from { opacity: 0; transform: translateY(10px); } 
+            to { opacity: 1; transform: translateY(0); } 
+        }
+
+        h2 { 
+            color: var(--primary-color); 
+            margin-bottom: 15px; 
+            padding-bottom: 10px; 
+            border-bottom: 1px solid #eee; 
+            font-size: 1.2rem; 
+        }
+        
+        @media (max-width: 768px) {
+            h2 { font-size: 1.1rem; }
+            .screen { padding: 12px; }
+        }
+
+        /* Grid System */
+        .stations-grid { 
+            display: grid; 
+            gap: 10px; 
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); 
+        }
+        
+        .station-details { 
+            display: grid; 
+            gap: 10px; 
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); 
+            margin-top: 20px; 
+        }
+        
+        .dashboard-stats { 
+            display: grid; 
+            gap: 15px; 
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); 
+        }
+
+        @media (max-width: 768px) {
+            .stations-grid { 
+                grid-template-columns: repeat(2, 1fr) !important; 
+                gap: 8px; 
+            }
+            
+            .station-card { 
+                padding: 8px; 
+                font-size: 0.85rem; 
+            }
+            
+            .station-card div { 
+                white-space: nowrap; 
+                overflow: hidden; 
+                text-overflow: ellipsis; 
+            }
+            
+            .dashboard-stats { 
+                grid-template-columns: repeat(3, 1fr) !important; 
+                gap: 8px; 
+            }
+            
+            .dashboard-stats .stat-card { 
+                padding: 8px; 
+                text-align: center; 
+            }
+            
+            .dashboard-stats .stat-label { 
+                font-size: 0.75rem; 
+                white-space: nowrap; 
+            }
+            
+            .dashboard-stats .stat-value { 
+                font-size: 1.1rem; 
+            }
+            
+            .station-details {
+                grid-template-columns: repeat(2, 1fr);
+                gap: 8px;
+            }
+        }
+        
+        .stat-card, .station-card, .detail-card { 
+            background: var(--card-bg); 
+            border-radius: 8px; 
+            padding: 15px; 
+            box-shadow: 0 3px 6px rgba(0,0,0,0.05); 
+            border: 1px solid #eee; 
+        }
+        
+        .station-card { 
+            border-top: 4px solid var(--secondary-color); 
+            cursor: pointer; 
+            transition: 0.3s; 
+            padding: 10px; 
+            font-size: 0.95rem; 
+            position: relative; 
+            overflow: hidden; 
+        }
+        
         .station-card:active { transform: scale(0.98); }
-        .station-card.fault-active { border-top-color: var(--danger-color); animation: card-flash 2s infinite; background-color: #fff5f5; border: 1px solid var(--danger-color); }
-        .station-card.fault-active.scada-fault { border-top-color: var(--scada-fault-color); background-color: #fffaf0; border: 1px solid var(--scada-fault-color); }
         
-        @keyframes card-flash { 0% { box-shadow: 0 0 0 0 rgba(192, 57, 43, 0.4); } 70% { box-shadow: 0 0 0 10px rgba(192, 57, 43, 0); } 100% { box-shadow: 0 0 0 0 rgba(192, 57, 43, 0); } }
+        .station-card.fault-active { 
+            border-top-color: var(--danger-color); 
+            animation: card-flash 2s infinite; 
+            background-color: #fff5f5; 
+            border: 1px solid var(--danger-color); 
+        }
         
-        .fault-badge { display: flex; align-items: center; justify-content: center; gap: 5px; background: var(--danger-color); color: white; font-size: 0.8rem; padding: 2px 8px; border-radius: 4px; margin-top: 5px; text-align: center; font-weight: bold; }
+        .station-card.fault-active.scada-fault { 
+            border-top-color: var(--scada-fault-color); 
+            background-color: #fffaf0; 
+            border: 1px solid var(--scada-fault-color); 
+        }
+        
+        @keyframes card-flash { 
+            0% { box-shadow: 0 0 0 0 rgba(192, 57, 43, 0.4); } 
+            70% { box-shadow: 0 0 0 10px rgba(192, 57, 43, 0); } 
+            100% { box-shadow: 0 0 0 0 rgba(192, 57, 43, 0); } 
+        }
+        
+        .fault-badge { 
+            display: flex; 
+            align-items: center; 
+            justify-content: center; 
+            gap: 5px; 
+            background: var(--danger-color); 
+            color: white; 
+            font-size: 0.8rem; 
+            padding: 2px 8px; 
+            border-radius: 4px; 
+            margin-top: 5px; 
+            text-align: center; 
+            font-weight: bold; 
+        }
+        
         .fault-badge.scada-badge { background: var(--scada-fault-color); }
 
         .stat-value { font-size: 24px; font-weight: bold; color: var(--primary-color); }
@@ -109,28 +426,138 @@
         .detail-value { font-size: 1.2rem; font-weight: 600; color: #333; word-break: break-all; }
         .detail-value.operator-highlight { color: var(--secondary-color); }
 
-        .table-responsive { overflow-x: auto; margin-top: 15px; border-radius: 8px; }
-        table { width: 100%; border-collapse: collapse; min-width: 600px; }
-        th { background-color: var(--primary-color); color: white; padding: 12px; text-align: right; }
-        td { padding: 10px 12px; text-align: right; border-bottom: 1px solid #eee; vertical-align: top; }
+        .table-responsive { 
+            overflow-x: auto; 
+            margin-top: 15px; 
+            border-radius: 8px; 
+            -webkit-overflow-scrolling: touch;
+        }
+        
+        table { 
+            width: 100%; 
+            border-collapse: collapse; 
+            min-width: 600px; 
+        }
+        
+        th { 
+            background-color: var(--primary-color); 
+            color: white; 
+            padding: 12px; 
+            text-align: right; 
+        }
+        
+        td { 
+            padding: 10px 12px; 
+            text-align: right; 
+            border-bottom: 1px solid #eee; 
+            vertical-align: top; 
+        }
+        
         tr:nth-child(even) { background-color: #f9f9f9; }
+        
+        @media (max-width: 768px) {
+            .table-responsive {
+                margin-left: -10px;
+                margin-right: -10px;
+                width: calc(100% + 20px);
+            }
+            
+            table {
+                min-width: 700px;
+            }
+            
+            th, td {
+                padding: 8px 10px;
+                font-size: 0.85rem;
+            }
+        }
 
         .form-group { margin-bottom: 15px; position: relative; }
         label { display: block; margin-bottom: 5px; font-weight: 600; }
-        input, select, textarea { width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 6px; background: #fff; }
+        input, select, textarea { 
+            width: 100%; 
+            padding: 10px; 
+            border: 1px solid #ddd; 
+            border-radius: 6px; 
+            background: #fff; 
+            font-size: 0.95rem;
+        }
         
-        .station-status { display: inline-block; padding: 4px 10px; border-radius: 12px; font-size: 12px; font-weight: bold; }
+        @media (max-width: 768px) {
+            .form-group { margin-bottom: 12px; }
+            input, select, textarea { 
+                padding: 8px; 
+                font-size: 0.9rem; 
+            }
+        }
+        
+        .station-status { 
+            display: inline-block; 
+            padding: 4px 10px; 
+            border-radius: 12px; 
+            font-size: 12px; 
+            font-weight: bold; 
+        }
+        
         .status-active { background-color: #d4edda; color: #155724; }
         .status-inactive { background-color: #f8d7da; color: #721c24; }
 
-        .zone-separator { grid-column: 1 / -1; background-color: var(--header-bg); color: var(--primary-color); padding: 10px 15px; border-radius: 6px; margin-top: 20px; margin-bottom: 10px; font-weight: bold; font-size: 1.1rem; border-right: 5px solid var(--secondary-color); display: flex; justify-content: space-between; align-items: center; }
-        .nav-tabs { display: flex; overflow-x: auto; gap: 8px; padding-bottom: 10px; margin-bottom: 20px; border-bottom: 1px solid #ddd; }
-        .nav-tab { padding: 8px 16px; border-radius: 20px; background: #eee; cursor: pointer; white-space: nowrap; border:none; }
+        .zone-separator { 
+            grid-column: 1 / -1; 
+            background-color: var(--header-bg); 
+            color: var(--primary-color); 
+            padding: 10px 15px; 
+            border-radius: 6px; 
+            margin-top: 20px; 
+            margin-bottom: 10px; 
+            font-weight: bold; 
+            font-size: 1.1rem; 
+            border-right: 5px solid var(--secondary-color); 
+            display: flex; 
+            justify-content: space-between; 
+            align-items: center; 
+        }
+        
+        .nav-tabs { 
+            display: flex; 
+            overflow-x: auto; 
+            gap: 8px; 
+            padding-bottom: 10px; 
+            margin-bottom: 20px; 
+            border-bottom: 1px solid #ddd; 
+            -webkit-overflow-scrolling: touch;
+        }
+        
+        .nav-tab { 
+            padding: 8px 16px; 
+            border-radius: 20px; 
+            background: #eee; 
+            cursor: pointer; 
+            white-space: nowrap; 
+            border: none; 
+            touch-action: manipulation;
+        }
+        
         .nav-tab.active { background-color: var(--secondary-color); color: white; }
         
         .password-container { position: relative; }
-        .toggle-password { position: absolute; left: 10px; top: 50%; transform: translateY(-50%); cursor: pointer; color: #666; }
-        .checkbox-group { display: flex; align-items: center; gap: 10px; justify-content: flex-start; margin-bottom: 15px; }
+        .toggle-password { 
+            position: absolute; 
+            left: 10px; 
+            top: 50%; 
+            transform: translateY(-50%); 
+            cursor: pointer; 
+            color: #666; 
+        }
+        
+        .checkbox-group { 
+            display: flex; 
+            align-items: center; 
+            gap: 10px; 
+            justify-content: flex-start; 
+            margin-bottom: 15px; 
+        }
+        
         .checkbox-group input { width: auto; margin: 0; }
         .pump-controls { display: grid; gap: 15px; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); }
         .pump-control { background: #f8f9fa; padding: 15px; border-radius: 8px; border: 1px solid #e9ecef; }
@@ -140,28 +567,127 @@
         .signature { text-align: center; margin-top: 30px; font-size: 12px; color: #888; border-top: 1px solid #eee; padding-top: 15px; font-weight: bold; }
         .login-form { max-width: 400px; margin: 40px auto; text-align: center; }
         
-        .pagination-controls { text-align: center; margin-top: 20px; padding-bottom: 20px; }
-        .status-text { font-size: 0.85rem; color: #666; margin-bottom: 10px; }
+        .pagination-controls { 
+            text-align: center; 
+            margin-top: 20px; 
+            padding-bottom: 20px; 
+        }
+        
+        .pagination-controls .btn {
+            margin: 5px;
+            min-width: 120px;
+        }
+        
+        .status-text { 
+            font-size: 0.85rem; 
+            color: #666; 
+            margin-bottom: 10px; 
+        }
         
         .scada-icon-svg { vertical-align: text-bottom; }
-        .fault-row-action { display: flex; justify-content: space-between; align-items: center; background: white; padding: 8px; border-radius: 4px; margin-bottom: 8px; border-right: 3px solid var(--danger-color); }
-        .desc-input { margin-top: 5px; font-size: 0.9rem; background: #fff; border: 1px solid #ccc; }
+        .fault-row-action { 
+            display: flex; 
+            justify-content: space-between; 
+            align-items: center; 
+            background: white; 
+            padding: 8px; 
+            border-radius: 4px; 
+            margin-bottom: 8px; 
+            border-right: 3px solid var(--danger-color); 
+        }
+        
+        .desc-input { 
+            margin-top: 5px; 
+            font-size: 0.9rem; 
+            background: #fff; 
+            border: 1px solid #ccc; 
+        }
 
         /* --- INSPECTION SCREEN STYLES (MOBILE OPTIMIZED) --- */
-        .section-accordion { margin-bottom: 10px; border-radius: 8px; overflow: hidden; border: 1px solid #ddd; background: #fff; }
-        .section-header-static { background: #eaf2f8; color: var(--primary-color); padding: 12px 15px; font-weight: bold; font-size: 1.1rem; border-bottom: 1px solid #ddd; }
-        .section-accordion-header { background: linear-gradient(to right, #2c3e50, #34495e); color: white; padding: 15px; cursor: pointer; display: flex; justify-content: space-between; align-items: center; font-weight: bold; font-size: 1.1rem; border-radius: 8px; transition: all 0.2s; }
+        .section-accordion { 
+            margin-bottom: 10px; 
+            border-radius: 8px; 
+            overflow: hidden; 
+            border: 1px solid #ddd; 
+            background: #fff; 
+        }
+        
+        .section-header-static { 
+            background: #eaf2f8; 
+            color: var(--primary-color); 
+            padding: 12px 15px; 
+            font-weight: bold; 
+            font-size: 1.1rem; 
+            border-bottom: 1px solid #ddd; 
+        }
+        
+        .section-accordion-header { 
+            background: linear-gradient(to right, #2c3e50, #34495e); 
+            color: white; 
+            padding: 15px; 
+            cursor: pointer; 
+            display: flex; 
+            justify-content: space-between; 
+            align-items: center; 
+            font-weight: bold; 
+            font-size: 1.1rem; 
+            border-radius: 8px; 
+            transition: all 0.2s; 
+            touch-action: manipulation;
+        }
+        
         .section-accordion-header:active { transform: scale(0.99); }
         .section-accordion-header .arrow { transition: transform 0.3s; }
         .section-accordion-header.active .arrow { transform: rotate(180deg); }
         .section-accordion-body { display: none; padding: 10px; background: #fff; }
         .section-accordion-body.open { display: block; animation: fadeIn 0.3s; }
         .section-body-static { display: block; padding: 10px; background: #fff; }
-        .inspection-row { display: grid; grid-template-columns: 1fr; gap: 8px; padding: 12px; border-bottom: 1px solid #f0f0f0; background: #fff; margin-bottom: 5px; border-radius: 8px; border: 1px solid #eee; }
+        
+        .inspection-row { 
+            display: grid; 
+            grid-template-columns: 1fr; 
+            gap: 8px; 
+            padding: 12px; 
+            border-bottom: 1px solid #f0f0f0; 
+            background: #fff; 
+            margin-bottom: 5px; 
+            border-radius: 8px; 
+            border: 1px solid #eee; 
+        }
+        
         .inspection-row:last-child { margin-bottom: 0; }
-        @media (min-width: 768px) { .inspection-row { grid-template-columns: 1fr 180px 1.5fr; align-items: center; gap: 15px; } }
-        .inspection-label { font-size: 1rem; font-weight: 600; color: var(--secondary-color); margin-bottom: 2px; }
-        .inspection-status-select { padding: 10px; border-radius: 8px; font-size: 1rem; font-weight: 500; width: 100%; border: 1px solid #ccc; appearance: none; -webkit-appearance: none; background-image: url("data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22292.4%22%20height%3D%22292.4%22%3E%3Cpath%20fill%3D%22%23007CB2%22%20d%3D%22M287%2069.4a17.6%2017.6%200%200%200-13-5.4H18.4c-5%200-9.3%201.8-12.9%205.4A17.6%2017.6%200%200%200%200%2082.2c0%205%201.8%209.3%205.4%2012.9l128%20127.9c3.6%203.6%207.8%205.4%2012.8%205.4s9.2-1.8%2012.8-5.4L287%2095c3.5-3.5%205.4-7.8%205.4-12.8%200-5-1.9-9.2-5.5-12.8z%22%2F%3E%3C%2Fsvg%3E"); background-repeat: no-repeat; background-position: left 10px top 50%; background-size: 12px; padding-left: 30px; }
+        
+        @media (min-width: 768px) { 
+            .inspection-row { 
+                grid-template-columns: 1fr 180px 1.5fr; 
+                align-items: center; 
+                gap: 15px; 
+            } 
+        }
+        
+        .inspection-label { 
+            font-size: 1rem; 
+            font-weight: 600; 
+            color: var(--secondary-color); 
+            margin-bottom: 2px; 
+        }
+        
+        .inspection-status-select { 
+            padding: 10px; 
+            border-radius: 8px; 
+            font-size: 1rem; 
+            font-weight: 500; 
+            width: 100%; 
+            border: 1px solid #ccc; 
+            appearance: none; 
+            -webkit-appearance: none; 
+            background-image: url("data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22292.4%22%20height%3D%22292.4%22%3E%3Cpath%20fill%3D%22%23007CB2%22%20d%3D%22M287%2069.4a17.6%2017.6%200%200%200-13-5.4H18.4c-5%200-9.3%201.8-12.9%205.4A17.6%2017.6%200%200%200%200%2082.2c0%205%201.8%209.3%205.4%2012.9l128%20127.9c3.6%203.6%207.8%205.4%2012.8%205.4s9.2-1.8%2012.8-5.4L287%2095c3.5-3.5%205.4-7.8%205.4-12.8%200-5-1.9-9.2-5.5-12.8z%22%2F%3E%3C%2Fsvg%3E"); 
+            background-repeat: no-repeat; 
+            background-position: left 10px top 50%; 
+            background-size: 12px; 
+            padding-left: 30px; 
+        }
+        
         .inspection-status-select.efficient { color: #155724; border-color: #28a745; background-color: #d4edda; }
         .inspection-status-select.fault { color: #856404; border-color: #ffeeba; background-color: #fff3cd; }
         .inspection-status-select.broken { color: #721c24; border-color: #f5c6cb; background-color: #f8d7da; }
@@ -176,23 +702,44 @@
         .pump-header-red { background: linear-gradient(45deg, #c0392b, #e74c3c); }
         .pump-accordion-body { display: none; padding: 10px; background: #fff; border: 1px solid #eee; border-top: none; }
         .pump-accordion-body.open { display: block; animation: slideDown 0.3s ease-out; }
-        @keyframes slideDown { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
         
-        .pump-section-divider { background-color: #f0f4f8; padding: 8px 10px; font-weight: bold; color: #2c3e50; border-right: 4px solid var(--secondary-color); margin: 15px 0 5px 0; font-size: 0.95rem; border-radius: 2px; }
+        @keyframes slideDown { 
+            from { opacity: 0; transform: translateY(-10px); } 
+            to { opacity: 1; transform: translateY(0); } 
+        }
+        
+        .pump-section-divider { 
+            background-color: #f0f4f8; 
+            padding: 8px 10px; 
+            font-weight: bold; 
+            color: #2c3e50; 
+            border-right: 4px solid var(--secondary-color); 
+            margin: 15px 0 5px 0; 
+            font-size: 0.95rem; 
+            border-radius: 2px; 
+        }
 
-        #save-inspection-btn { width: 100%; box-shadow: 0 -2px 10px rgba(0,0,0,0.1); padding: 8px; font-size: 0.95rem; border-radius: 20px; margin-bottom: 5px; }
+        #save-inspection-btn { 
+            width: 100%; 
+            box-shadow: 0 -2px 10px rgba(0,0,0,0.1); 
+            padding: 8px; 
+            font-size: 0.95rem; 
+            border-radius: 20px; 
+            margin-bottom: 5px; 
+        }
 
         /* Offline Banner */
-        #offline-sync-banner { display: none; background: #fff3cd; border: 1px solid #ffeeba; color: #856404; padding: 10px; text-align: center; margin-bottom: 10px; border-radius: 8px; }
+        #offline-sync-banner { 
+            display: none; 
+            background: #fff3cd; 
+            border: 1px solid #ffeeba; 
+            color: #856404; 
+            padding: 10px; 
+            text-align: center; 
+            margin-bottom: 10px; 
+            border-radius: 8px; 
+        }
 
-        /* NEW STYLES FOR CONSUMPTION TABLE (V1.5.9 Modified) */
-        .cons-cell { text-align: center; font-size: 0.9rem; padding: 8px !important; }
-        .cons-sub-item { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px dashed #eee; padding: 4px 0; text-align: right; }
-        .cons-label { font-size: 0.8rem; color: #555; }
-        .cons-date-small { display: block; font-size: 0.7rem; color: #888; margin-top: 2px; line-height: 1.2; width: 100%; text-align: left; }
-        .cons-result { background-color: #e8f6f3; color: var(--primary-color); font-weight: bold; padding: 6px; margin-top: 5px; border-radius: 4px; text-align: center; }
-        .cons-val-wrapper { text-align: left; }
-        
         /* --- USER PROFILES MANAGEMENT STYLES (ENHANCED FOR MOBILE) --- */
         .profile-container {
             display: grid;
@@ -213,6 +760,23 @@
             padding: 20px;
             box-shadow: 0 4px 12px rgba(0,0,0,0.08);
             border: 1px solid #eee;
+            overflow: hidden;
+        }
+        
+        @media (max-width: 768px) {
+            .profile-card {
+                padding: 15px;
+                margin-left: -10px;
+                margin-right: -10px;
+                width: calc(100% + 20px);
+                border-radius: 0;
+                border-left: none;
+                border-right: none;
+            }
+            
+            .profile-container {
+                gap: 15px;
+            }
         }
         
         .profile-form-grid {
@@ -270,6 +834,9 @@
                 display: block;
                 width: 100%;
                 overflow-x: auto;
+                margin-left: -10px;
+                margin-right: -10px;
+                width: calc(100% + 20px);
             }
             
             .users-profiles-table th,
@@ -360,7 +927,7 @@
             border: 1px solid #f5c6cb;
         }
         
-        /* Action buttons */
+        /* Action buttons - FIXED FOR MOBILE */
         .delete-profile-btn {
             background: linear-gradient(135deg, #c0392b, #e74c3c);
             color: white;
@@ -374,6 +941,8 @@
             gap: 5px;
             transition: all 0.3s ease;
             margin: 0 auto;
+            touch-action: manipulation;
+            white-space: nowrap;
         }
         
         .delete-profile-btn:hover {
@@ -382,18 +951,19 @@
             box-shadow: 0 4px 8px rgba(192, 57, 43, 0.3);
         }
         
+        /* Mobile action menu - ADDED FOR MOBILE SUPPORT */
         .mobile-action-menu {
             display: none;
+            position: relative;
         }
         
         @media (max-width: 768px) {
             .desktop-actions {
-                display: none;
+                display: none !important;
             }
             
             .mobile-action-menu {
                 display: block;
-                position: relative;
             }
             
             .mobile-action-btn {
@@ -407,6 +977,7 @@
                 justify-content: center;
                 cursor: pointer;
                 font-size: 1.2rem;
+                touch-action: manipulation;
             }
             
             .mobile-action-dropdown {
@@ -419,6 +990,7 @@
                 min-width: 150px;
                 z-index: 100;
                 display: none;
+                margin-top: 5px;
             }
             
             .mobile-action-dropdown.show {
@@ -432,6 +1004,8 @@
                 display: flex;
                 align-items: center;
                 gap: 8px;
+                font-size: 0.9rem;
+                touch-action: manipulation;
             }
             
             .mobile-action-item:hover {
@@ -451,6 +1025,16 @@
             margin: 20px 0;
             padding-bottom: 15px;
             border-bottom: 2px solid var(--header-bg);
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+        
+        @media (max-width: 768px) {
+            .users-header {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 15px;
+            }
         }
         
         .user-form-card {
@@ -493,6 +1077,8 @@
             align-items: center;
             gap: 5px;
             transition: all 0.3s ease;
+            touch-action: manipulation;
+            white-space: nowrap;
         }
         
         .delete-user-btn:hover {
@@ -529,6 +1115,7 @@
             padding-right: 15px;
             padding-left: 45px;
             font-size: 0.95rem;
+            width: 100%;
         }
         
         /* NEW STYLES FOR PASSWORD VISIBILITY */
@@ -575,42 +1162,27 @@
         .type-supervisor { background-color: #388e3c; color: white; }
         .type-operator { background-color: #f57c00; color: white; }
         
-        /* --- PAGINATION STYLES --- */
-        .pagination-info {
-            text-align: center;
-            margin: 15px 0;
-            color: #666;
-            font-size: 0.9rem;
-        }
-        
+        /* Pagination buttons optimization */
         .load-more-btn {
-            background: linear-gradient(135deg, var(--secondary-color), var(--primary-color));
-            color: white;
-            border: none;
-            padding: 10px 20px;
-            border-radius: 6px;
-            cursor: pointer;
-            font-size: 0.9rem;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 8px;
-            margin: 20px auto;
-            transition: all 0.3s ease;
-            width: 200px;
+            min-width: 100px !important;
+            padding: 6px 12px !important;
+            font-size: 0.85rem !important;
         }
         
-        .load-more-btn:hover {
-            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
-            transform: translateY(-2px);
-            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        .load-more-btn span {
+            font-size: 0.8rem;
+            background: rgba(255,255,255,0.2);
+            padding: 2px 6px;
+            border-radius: 10px;
+            margin-right: 5px;
         }
         
-        .load-more-btn:disabled {
-            background: #cccccc;
-            cursor: not-allowed;
-            transform: none;
-            box-shadow: none;
+        @media (max-width: 768px) {
+            .load-more-btn {
+                min-width: 80px !important;
+                padding: 5px 10px !important;
+                font-size: 0.8rem !important;
+            }
         }
     </style>
 </head>
@@ -714,9 +1286,9 @@
                 <div class="detail-card"><div class="detail-title">التدفق (L/Sec)</div><div class="detail-value" id="water-flow-value">-</div></div>
                 <div class="detail-card"><div class="detail-title">النظام</div><div class="detail-value" id="system-mode-value">-</div></div>
                 
-                <div style="grid-column: 1 / -1; display: flex; gap: 10px;">
-                    <div class="detail-card" style="flex: 1;"><div class="detail-title">وقت بدء التشغيل</div><div class="detail-value" id="start-time-value" style="color:var(--success-color); font-weight:bold;">-</div></div>
-                    <div class="detail-card" style="flex: 1;"><div class="detail-title">وقت الإيقاف</div><div class="detail-value" id="stop-time-value" style="color:var(--danger-color); font-weight:bold;">-</div></div>
+                <div style="grid-column: 1 / -1; display: flex; gap: 10px; flex-wrap: wrap;">
+                    <div class="detail-card" style="flex: 1; min-width: 200px;"><div class="detail-title">وقت بدء التشغيل</div><div class="detail-value" id="start-time-value" style="color:var(--success-color); font-weight:bold;">-</div></div>
+                    <div class="detail-card" style="flex: 1; min-width: 200px;"><div class="detail-title">وقت الإيقاف</div><div class="detail-value" id="stop-time-value" style="color:var(--danger-color); font-weight:bold;">-</div></div>
                 </div>
 
                 <div style="grid-column: 1 / -1; margin-top:10px; border-top: 1px solid #eee; padding-top:10px;">
@@ -760,7 +1332,7 @@
         <div id="operator-screen" class="screen">
             <h2>تحديث بيانات / إدارة الأعطال</h2>
             <h3 id="editing-station-name" style="text-align: center; color: var(--secondary-color); margin-bottom: 20px; border-bottom: none;"></h3>
-            <div style="display:flex; justify-content:space-between; margin-bottom: 15px;">
+            <div style="display:flex; justify-content:space-between; margin-bottom: 15px; flex-wrap: wrap; gap: 10px;">
                 <button id="back-to-station" class="btn btn-outline">إلغاء</button>
                 <button id="edit-inspection-btn" class="btn btn-info">📋 شاشة الفحص</button>
             </div>
@@ -783,12 +1355,12 @@
                 <div class="form-section">
                     <h3>بيانات عامة</h3>
                     <div class="form-group"><label>المشغل الحالي</label><input type="text" id="operator-name" readonly style="background: #eee;"></div>
-                    <div style="display: flex; gap: 10px;">
-                        <div class="form-group" style="flex: 1;">
+                    <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+                        <div class="form-group" style="flex: 1; min-width: 150px;">
                             <label>وقت التشغيل 🟢</label>
                             <input type="time" id="operator-start-time" style="direction: ltr;">
                         </div>
-                        <div class="form-group" style="flex: 1;">
+                        <div class="form-group" style="flex: 1; min-width: 150px;">
                             <label>وقت الإيقاف 🔴</label>
                             <input type="time" id="operator-stop-time" style="direction: ltr;">
                         </div>
@@ -851,12 +1423,12 @@
 
                     <div class="form-group" style="border: 2px solid var(--consumption-color); padding: 10px; border-radius: 6px; background: #eaf2f8; margin-top: 15px;">
                         <label style="color: var(--consumption-color); font-size: 1.1rem;">⚡ تسجيل استهلاكات المحطة</label>
-                        <div style="display: flex; gap: 10px; margin-bottom: 10px;">
-                            <div style="flex:1">
+                        <div style="display: flex; gap: 10px; margin-bottom: 10px; flex-wrap: wrap;">
+                            <div style="flex:1; min-width: 120px;">
                                 <label style="font-size: 0.9rem;">محول (1) KW</label>
                                 <input type="number" id="cons-trans-1" placeholder="KW">
                             </div>
-                            <div style="flex:1">
+                            <div style="flex:1; min-width: 120px;">
                                 <label style="font-size: 0.9rem;">محول (2) KW</label>
                                 <input type="number" id="cons-trans-2" placeholder="KW">
                             </div>
@@ -875,7 +1447,7 @@
 
         <div id="inspection-screen" class="screen">
             <h2 id="inspection-title">شاشة الفحص الشامل</h2>
-            <div style="display:flex; justify-content:space-between; margin-bottom: 20px;">
+            <div style="display:flex; justify-content:space-between; margin-bottom: 20px; flex-wrap: wrap; gap: 10px;">
                 <button id="back-from-inspection" class="btn btn-outline">عودة</button>
             </div>
             
@@ -917,7 +1489,7 @@
 
         <div id="faults-log-screen" class="screen">
             <h2 style="color: var(--danger-color);">سجل الأعطال</h2>
-            <div style="display:flex; justify-content:space-between; align-items:center;">
+            <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap: wrap; gap: 10px;">
                 <button id="back-to-stations-from-faults" class="btn btn-outline">عودة</button>
             </div>
             
@@ -931,9 +1503,9 @@
                 </div>
                 
                 <h3 style="margin-bottom:10px; margin-top:30px;">أرشيف الأعطال السابقة</h3>
-                <div style="margin-bottom: 15px; display: flex; gap: 10px; align-items: center; background: #fff3cd; padding: 10px; border-radius: 6px; border: 1px solid #ffeeba;">
+                <div style="margin-bottom: 15px; display: flex; gap: 10px; align-items: center; background: #fff3cd; padding: 10px; border-radius: 6px; border: 1px solid #ffeeba; flex-wrap: wrap;">
                     <label style="margin:0; font-weight:bold;">🔍 تصفية الأرشيف:</label>
-                    <select id="fault-archive-station-filter" style="flex:1; max-width:300px;" onchange="appData.faultsLimit=100; renderFaultsLog();">
+                    <select id="fault-archive-station-filter" style="flex:1; max-width:300px; min-width: 150px;" onchange="appData.faultsLimit=100; renderFaultsLog();">
                         <option value="all">-- عرض كافة المحطات --</option>
                     </select>
                 </div>
@@ -947,7 +1519,9 @@
 
                 <div class="pagination-controls">
                     <p id="faults-status-text" class="status-text"></p>
-                    <button id="load-more-faults-btn" class="btn btn-warning" style="display: none; width: 200px; margin: 0 auto;">⚠️ عرض 100 عطل إضافي</button>
+                    <button id="load-more-faults-btn" class="btn btn-warning load-more-btn" style="display: none;">
+                        <span id="faults-count">0</span> مزيد
+                    </button>
                 </div>
             </div>
         </div>
@@ -1030,14 +1604,6 @@
                         </table>
                     </div>
                     
-                    <!-- معلومات التجزئة -->
-                    <div class="pagination-info" id="profiles-pagination-info"></div>
-                    
-                    <!-- زر عرض المزيد -->
-                    <button class="load-more-btn" id="load-more-profiles-btn" style="display: none;">
-                        <span>⬇️ عرض 100 مستخدم إضافي</span>
-                    </button>
-                    
                     <div id="no-profiles-message" class="no-profiles-message" style="display: none;">
                         <div style="font-size: 2rem; margin-bottom: 10px;">📋</div>
                         <div>لا توجد بيانات مستخدمين مسجلة في النظام</div>
@@ -1075,7 +1641,7 @@
                 </div>
             </div>
             
-            <div style="margin: 25px 0 15px; display:flex; justify-content:space-between; align-items:center;">
+            <div style="margin: 25px 0 15px; display:flex; justify-content:space-between; align-items:center; flex-wrap: wrap; gap: 10px;">
                 <h3>قائمة المستخدمين</h3>
                 <button id="add-user-btn" class="btn btn-primary">➕ إضافة مستخدم جديد</button>
             </div>
@@ -1098,14 +1664,6 @@
                     <tbody id="users-table-body"></tbody>
                 </table>
             </div>
-            
-            <!-- معلومات التجزئة -->
-            <div class="pagination-info" id="users-pagination-info"></div>
-            
-            <!-- زر عرض المزيد -->
-            <button class="load-more-btn" id="load-more-users-btn" style="display: none;">
-                <span>⬇️ عرض 100 مستخدم إضافي</span>
-            </button>
             
             <div id="no-users-message" class="no-users-message" style="display: none;">
                 <div style="font-size: 2rem; margin-bottom: 10px;">👥</div>
@@ -1137,7 +1695,9 @@
 
             <div class="pagination-controls">
                 <p id="history-status-text" class="status-text"></p>
-                <button id="load-more-history-btn" class="btn btn-primary" style="display: none; width: 200px; margin: 0 auto;">⬇️ عرض 100 سجل إضافي</button>
+                <button id="load-more-history-btn" class="btn btn-primary load-more-btn" style="display: none;">
+                    <span id="history-count">0</span> مزيد
+                </button>
             </div>
         </div>
     </div>
@@ -1156,32 +1716,64 @@
             messagingSenderId: "513322987318",
             appId: "1:513322987318:web:155e963acb3b97bc918d97"
         };
-        if (!firebase.apps.length) { firebase.initializeApp(firebaseConfig); }
+        
+        if (!firebase.apps.length) { 
+            firebase.initializeApp(firebaseConfig); 
+        }
+        
         const db = firebase.database();
 
         const faultIcons = {
-            "انقطاع التيار الكهربي": "⚡", "انخفاض جهد": "⚡📉", "ارتفاع جهد": "⚡📈",
-            "انخفاض منسوب": "📉", "توقف منظومة التحضير": "⚙️", "انسدادات": "▦", 
-            "تسريب مياه": "💧", "كسر في الشبكة": "🛠️", "عجز تحقيق الضغط": "🔻",
+            "انقطاع التيار الكهربي": "⚡", 
+            "انخفاض جهد": "⚡📉", 
+            "ارتفاع جهد": "⚡📈",
+            "انخفاض منسوب": "📉", 
+            "توقف منظومة التحضير": "⚙️", 
+            "انسدادات": "▦", 
+            "تسريب مياه": "💧", 
+            "كسر في الشبكة": "🛠️", 
+            "عجز تحقيق الضغط": "🔻",
             "انقطاع الاتصال SCADA": `<svg viewBox="0 0 24 24" width="20" height="20" class="scada-icon-svg" style="color:#d32f2f;" fill="currentColor"><path d="M12 3C7.79 3 3.7 4.41 0.38 7/L2.6 9.22C5.35 7.15 8.55 6 12 6C15.45 6 18.65 7.15 21.4 9.22L23.62 7C20.3 4.41 16.21 3 12 3Z" /><path d="M12 8C9.48 8 7.15 8.76 5.18 10.05L7.4 12.27C8.71 11.47 10.28 11 12 11C13.72 11 15.29 11.47 16.6 12.27L18.82 10.05C16.85 8.76 14.52 8 12 8Z" /><path d="M12 13L6 21H18L12 13ZM11 18H13V19.5H11V18ZM11 15.5H13V17.5H11V15.5Z" /></svg>`
         };
         
         const inspectionSchema = {
-            prepSystem: { title: "منظومة التحضير", items: ["الكومبريوسر", "طلمبة تحضير 1", "طلمبة تحضير 2", "تانك التعويض", "تانك التحضير", "لوحه التحضير"] },
+            prepSystem: { 
+                title: "منظومة التحضير", 
+                items: ["الكومبريوسر", "طلمبة تحضير 1", "طلمبة تحضير 2", "تانك التعويض", "تانك التحضير", "لوحه التحضير"] 
+            },
             pumps: {
-                title: "المضخات", isDynamic: true,
+                title: "المضخات", 
+                isDynamic: true,
                 items: [
                     "محبس فراشه", "وصله فك و تركيب", "وصله مرنه", "عداد السحب", "حساس السحب", // Suction
                     "المضخه", // Pump
                     "عداد الطرد", "حساس الطرد", "وصله مرنه", "اير فينت", "محبس عدم رجوع", "وصله فك و تركيب", "محبس فراشه" // Discharge
                 ]
             },
-            mainLine: { title: "خط الطرد الرئيسي", items: ["اير فينت", "محبس عدم رجوع", "وصله فك و تركيب 1", "الفلوميتر", "حساس ضغط", "عداد ضغط", "وصله فك و تركيب 2", "محبس فراشه", "محبس درين"] },
-            waterHammer: { title: "منظومة الطرق المائي", items: ["كومبريسور1", "كومبريسور2", "كومبريسور3", "تانك 1", "تانك 2", "تانك 3", "لوحه كونترول"] },
-            submersibles: { title: "الغواطس", items: ["طلمبة غاطس 1", "طلمبة غاطس 2"] },
-            ac: { title: "تكييفات المحطه", items: ["تكييف 1", "تكييف 2", "تكييف 3", "تكييف 4", "تكييف 5", "تكييف 6", "تكييف 7", "تكييف 8", "9-PLC", "10-PLC"] },
-            ventilation: { title: "التهوية", items: ["غرفه المضخات", "غرفه محول 1", "غرفه محول 2", "غرفه رينج"] },
-            crane: { title: "الونش", items: ["الونش"] }
+            mainLine: { 
+                title: "خط الطرد الرئيسي", 
+                items: ["اير فينت", "محبس عدم رجوع", "وصله فك و تركيب 1", "الفلوميتر", "حساس ضغط", "عداد ضغط", "وصله فك و تركيب 2", "محبس فراشه", "محبس درين"] 
+            },
+            waterHammer: { 
+                title: "منظومة الطرق المائي", 
+                items: ["كومبريسور1", "كومبريسور2", "كومبريسور3", "تانك 1", "تانك 2", "تانك 3", "لوحه كونترول"] 
+            },
+            submersibles: { 
+                title: "الغواطس", 
+                items: ["طلمبة غاطس 1", "طلمبة غاطس 2"] 
+            },
+            ac: { 
+                title: "تكييفات المحطه", 
+                items: ["تكييف 1", "تكييف 2", "تكييف 3", "تكييف 4", "تكييف 5", "تكييف 6", "تكييف 7", "تكييف 8", "9-PLC", "10-PLC"] 
+            },
+            ventilation: { 
+                title: "التهوية", 
+                items: ["غرفه المضخات", "غرفه محول 1", "غرفه محول 2", "غرفه رينج"] 
+            },
+            crane: { 
+                title: "الونش", 
+                items: ["الونش"] 
+            }
         };
         
         const statusOptions = [
@@ -1276,8 +1868,8 @@
             consumptionLog: [],
             historyLimit: 100, 
             faultsLimit: 100,
-            profilesLimit: 100,
-            usersLimit: 100
+            historyDisplayed: 100,
+            faultsDisplayed: 100
         };
         
         const pumpsData = {
@@ -1304,7 +1896,9 @@
             if (!str) return str;
             str = str.trim();
             const arabicNumbers = ["٠", "١", "٢", "٣", "٤", "٥", "٦", "٧", "٨", "٩"];
-            return str.replace(/[٠-٩]/g, function(w) { return arabicNumbers.indexOf(w); });
+            return str.replace(/[٠-٩]/g, function(w) { 
+                return arabicNumbers.indexOf(w); 
+            });
         }
 
         function getStandardDateTime() {
@@ -1346,11 +1940,13 @@
             const icon = document.getElementById('net-icon');
             const text = document.getElementById('net-text');
             const loginBtn = document.getElementById('login-btn');
+            
             if (navigator.onLine) {
                 indicator.className = 'network-status net-online';
                 icon.textContent = '🟢';
                 text.textContent = 'متصل';
                 processOfflineQueue(); 
+                
                 if(loginBtn && appData.users && Object.keys(appData.users).length > 0) {
                     loginBtn.disabled = false;
                     loginBtn.textContent = "دخول";
@@ -1363,6 +1959,7 @@
                 indicator.className = 'network-status net-offline';
                 icon.textContent = '🔴';
                 text.textContent = 'غير متصل';
+                
                 if(loginBtn && appData.users && Object.keys(appData.users).length > 0) {
                     loginBtn.disabled = false;
                     loginBtn.textContent = 'دخول (Offline)';
@@ -1373,12 +1970,17 @@
                 }
             }
         }
+        
         window.addEventListener('online', updateNetworkStatus);
         window.addEventListener('offline', updateNetworkStatus);
 
         function addToOfflineQueue(actionType, data) {
             let queue = JSON.parse(localStorage.getItem('toshka_offline_queue') || '[]');
-            queue.push({ type: actionType, data: data, timestamp: Date.now() });
+            queue.push({ 
+                type: actionType, 
+                data: data, 
+                timestamp: Date.now() 
+            });
             localStorage.setItem('toshka_offline_queue', JSON.stringify(queue));
             updateOfflineBanner();
         }
@@ -1398,6 +2000,7 @@
 
         function processOfflineQueue() {
             if (!navigator.onLine) return;
+            
             let queue = JSON.parse(localStorage.getItem('toshka_offline_queue') || '[]');
             if (queue.length === 0) return;
 
@@ -1408,101 +2011,120 @@
             icon.textContent = '🔄';
             icon.classList.add('syncing');
             text.textContent = 'جاري المزامنة...';
-            const item = queue.shift();
             
-            let promise;
-            if (item.type === 'update_station') {
-                promise = db.ref('stations/' + item.data.stationId).update(item.data.updates)
-                    .then(() => {
-                        if(item.data.log) db.ref('history').push(item.data.log);
-                        if(item.data.consLog) db.ref('consumption_logs').push(item.data.consLog);
-                        if(item.data.newFaults) {
-                            db.ref('faults_log').once('value').then(snap => {
-                                let rawVal = snap.val();
-                                let logs = Array.isArray(rawVal) ? rawVal : (rawVal ? Object.values(rawVal) : []);
-                                item.data.newFaults.forEach(f => logs.unshift(f));
-                                item.data.resolvedFaults.forEach(rf => {
-                                    const idx = logs.findIndex(x => x.station === item.data.stationId && x.type === rf.type && x.active);
-                                    if(idx !== -1) { 
-                                        logs[idx].active = false;
-                                        logs[idx].endTime = rf.endTime; 
-                                    }
+            const processNext = () => {
+                if (queue.length === 0) {
+                    icon.classList.remove('syncing');
+                    updateNetworkStatus();
+                    alert("تمت مزامنة البيانات المخزنة بنجاح! ✅");
+                    return;
+                }
+                
+                const item = queue[0];
+                let promise;
+                
+                if (item.type === 'update_station') {
+                    promise = db.ref('stations/' + item.data.stationId).update(item.data.updates)
+                        .then(() => {
+                            if(item.data.log) db.ref('history').push(item.data.log);
+                            if(item.data.consLog) db.ref('consumption_logs').push(item.data.consLog);
+                            if(item.data.newFaults) {
+                                db.ref('faults_log').once('value').then(snap => {
+                                    let rawVal = snap.val();
+                                    let logs = Array.isArray(rawVal) ? rawVal : (rawVal ? Object.values(rawVal) : []);
+                                    item.data.newFaults.forEach(f => logs.unshift(f));
+                                    item.data.resolvedFaults.forEach(rf => {
+                                        const idx = logs.findIndex(x => x.station === item.data.stationId && x.type === rf.type && x.active);
+                                        if(idx !== -1) { 
+                                            logs[idx].active = false;
+                                            logs[idx].endTime = rf.endTime; 
+                                        }
+                                    });
+                                    db.ref('faults_log').set(logs);
                                 });
-                                db.ref('faults_log').set(logs);
-                            });
-                        }
-                    });
-            } else if (item.type === 'update_inspection') {
-                promise = db.ref(`stations/${item.data.stationId}/inspectionData`).update(item.data.inspectionData)
-                    .then(() => {
-                        if(item.data.log) db.ref('history').push(item.data.log);
-                    });
-            } else if (item.type === 'update_profile') {
-                promise = db.ref('userProfiles/' + item.data.username).set(item.data.profileData)
-                    .then(() => {
-                        const nowStd = getStandardDateTime();
-                        const log = {
-                            date: nowStd.date,
-                            time: nowStd.time,
-                            station: item.data.profileData.station || 'غير محدد',
-                            operator: item.data.username,
-                            details: `تحديث البيانات الشخصية (مزامنة): ${item.data.profileData.fullname}`
-                        };
-                        db.ref('history').push(log);
-                    });
-            } else if (item.type === 'delete_profile') {
-                promise = db.ref('userProfiles/' + item.data.username).remove()
-                    .then(() => {
-                        const nowStd = getStandardDateTime();
-                        const log = {
-                            date: nowStd.date,
-                            time: nowStd.time,
-                            station: 'النظام',
-                            operator: item.data.deletedBy,
-                            details: `حذف البيانات الشخصية للمستخدم: ${item.data.username}`
-                        };
-                        db.ref('history').push(log);
-                    });
-            }
+                            }
+                        });
+                } else if (item.type === 'update_inspection') {
+                    promise = db.ref(`stations/${item.data.stationId}/inspectionData`).update(item.data.inspectionData)
+                        .then(() => {
+                            if(item.data.log) db.ref('history').push(item.data.log);
+                        });
+                } else if (item.type === 'update_profile') {
+                    promise = db.ref('userProfiles/' + item.data.username).set(item.data.profileData)
+                        .then(() => {
+                            const nowStd = getStandardDateTime();
+                            const log = {
+                                date: nowStd.date,
+                                time: nowStd.time,
+                                station: item.data.profileData.station || 'غير محدد',
+                                operator: item.data.username,
+                                details: `تحديث البيانات الشخصية (مزامنة): ${item.data.profileData.fullname}`
+                            };
+                            db.ref('history').push(log);
+                        });
+                } else if (item.type === 'delete_profile') {
+                    promise = db.ref('userProfiles/' + item.data.username).remove()
+                        .then(() => {
+                            const nowStd = getStandardDateTime();
+                            const log = {
+                                date: nowStd.date,
+                                time: nowStd.time,
+                                station: 'النظام',
+                                operator: item.data.deletedBy,
+                                details: `حذف البيانات الشخصية للمستخدم: ${item.data.username}`
+                            };
+                            db.ref('history').push(log);
+                        });
+                }
 
-            if (promise) {
-                promise.then(() => {
-                    localStorage.setItem('toshka_offline_queue', JSON.stringify(queue));
-                    updateOfflineBanner();
-                    if (queue.length > 0) {
-                        setTimeout(processOfflineQueue, 500); 
-                    } else {
+                if (promise) {
+                    promise.then(() => {
+                        queue.shift();
+                        localStorage.setItem('toshka_offline_queue', JSON.stringify(queue));
+                        updateOfflineBanner();
+                        setTimeout(processNext, 500);
+                    }).catch(err => {
+                        console.error("Sync Error", err);
                         icon.classList.remove('syncing');
                         updateNetworkStatus();
-                        alert("تمت مزامنة البيانات المخزنة بنجاح! ✅");
-                    }
-                }).catch(err => {
-                    console.error("Sync Error", err);
-                    updateNetworkStatus();
-                });
-            }
+                        alert("حدث خطأ في المزامنة: " + err.message);
+                    });
+                } else {
+                    queue.shift();
+                    localStorage.setItem('toshka_offline_queue', JSON.stringify(queue));
+                    updateOfflineBanner();
+                    setTimeout(processNext, 500);
+                }
+            };
+            
+            processNext();
         }
 
         // --- CORE FUNCTIONS ---
         function loadSystemData() {
+            // تحميل البيانات المخزنة محلياً
             const cachedStations = localStorage.getItem('toshka_stations_cache');
             if (cachedStations) {
                 appData.stations = JSON.parse(cachedStations);
                 renderStations('all');
             }
+            
             const cachedUsers = localStorage.getItem('toshka_users_cache');
             if(cachedUsers) {
                 appData.users = JSON.parse(cachedUsers);
             }
+            
             const cachedProfiles = localStorage.getItem('toshka_user_profiles_cache');
             if(cachedProfiles) {
                 appData.userProfiles = JSON.parse(cachedProfiles);
             }
 
+            // الاستماع للتحديثات من Firebase
             db.ref('stations').on('value', (snapshot) => {
                 let data = snapshot.val();
-                if (!data) { forceRepairStations(); } 
-                else { 
+                if (!data) { 
+                    forceRepairStations(); 
+                } else { 
                     appData.stations = data; 
                     localStorage.setItem('toshka_stations_cache', JSON.stringify(data)); 
                     forceRepairStations(); 
@@ -1512,9 +2134,11 @@
                     const activeTab = document.querySelector('.nav-tab.active');
                     renderStations(activeTab ? activeTab.dataset.zone : 'all');
                 }
+                
                 if (document.getElementById('station-screen').classList.contains('active') && appData.currentStation) {
                     showStationDetails(appData.currentStation);
                 }
+                
                 if (document.getElementById('user-profile-screen').classList.contains('active')) {
                     renderUserProfileForm();
                     renderUsersProfilesList();
@@ -1535,8 +2159,7 @@
                         loginBtn.style.cursor = 'pointer';
                         loginBtn.classList.add('btn-primary');
                     }
-                }
-                else {
+                } else {
                     const defaultUsers = {
                         admin: { type: 'admin', password: 'admin123', active: true },
                         engineer1: { type: 'engineer', password: 'eng123', active: true },
@@ -1580,22 +2203,35 @@
                 if(val) {
                     appData.operationHistory = Object.values(val).reverse();
                     cleanHistoricalData();
+                } else {
+                    appData.operationHistory = [];
                 }
-                else appData.operationHistory = [];
-                if (document.getElementById('history-screen').classList.contains('active')) renderHistoryTable(true);
+                
+                if (document.getElementById('history-screen').classList.contains('active')) {
+                    renderHistoryTable(true);
+                }
             });
             
             db.ref('faults_log').on('value', (snapshot) => {
                 const val = snapshot.val();
-                if (val) appData.faultsLog = Array.isArray(val) ? val : Object.values(val);
-                else appData.faultsLog = [];
-                if (document.getElementById('faults-log-screen').classList.contains('active')) renderFaultsLog();
+                if (val) {
+                    appData.faultsLog = Array.isArray(val) ? val : Object.values(val);
+                } else {
+                    appData.faultsLog = [];
+                }
+                
+                if (document.getElementById('faults-log-screen').classList.contains('active')) {
+                    renderFaultsLog();
+                }
             });
             
             db.ref('consumption_logs').on('value', (snapshot) => {
                 const val = snapshot.val();
-                if(val) appData.consumptionLog = Object.values(val);
-                else appData.consumptionLog = [];
+                if(val) {
+                    appData.consumptionLog = Object.values(val);
+                } else {
+                    appData.consumptionLog = [];
+                }
             });
             
             updateNetworkStatus();
@@ -1611,7 +2247,10 @@
                 const exists = appData.stations && appData.stations[stationName];
                 if (!exists) {
                     let zone = 'Unknown';
-                    appData.zones.forEach(z => { if(stationName.startsWith(z.split('_')[1])) zone = z; });
+                    appData.zones.forEach(z => { 
+                        if(stationName.startsWith(z.split('_')[1])) zone = z; 
+                    });
+                    
                     if(stationName.startsWith('A')) zone='Zone_A';
                     
                     const pumpCount = pumpsData[stationName] || 4;
@@ -1643,7 +2282,10 @@
                     repairCount++;
                 }
             });
-            if (repairCount > 0 && navigator.onLine) db.ref('stations').update(updates);
+            
+            if (repairCount > 0 && navigator.onLine) {
+                db.ref('stations').update(updates);
+            }
         }
 
         function showScreen(screenId) {
@@ -1653,20 +2295,25 @@
             
             const userInfoDiv = document.getElementById('header-user-info');
             userInfoDiv.style.display = (screenId === 'login') ? 'none' : 'flex';
+            
             if(screenId === 'stations') {
                 const activeTab = document.querySelector('.nav-tab.active');
                 renderStations(activeTab ? activeTab.dataset.zone : 'all');
             }
+            
             if(screenId === 'users') {
                 renderUsersManagement();
             }
+            
             if(screenId === 'history') {
                 renderHistoryTable(true);
             }
+            
             if(screenId === 'faults-log') {
                 appData.faultsLimit = 100;
                 renderFaultsLog();
             }
+            
             if(screenId === 'user-profile') {
                 renderUserProfileForm();
                 renderUsersProfilesList();
@@ -1706,8 +2353,7 @@
                 if (remember) { 
                     localStorage.setItem('toshka_user', u); 
                     localStorage.setItem('toshka_pass', p); 
-                } 
-                else { 
+                } else { 
                     localStorage.removeItem('toshka_user'); 
                     localStorage.removeItem('toshka_pass'); 
                 }
@@ -1774,32 +2420,13 @@
         document.getElementById('back-from-inspection').addEventListener('click', () => { showStationDetails(appData.currentStation); });
         document.getElementById('back-to-stations-from-profile').addEventListener('click', () => showScreen('stations'));
 
-        // --- SHIFT CHECK LOGIC ---
-        function checkShiftAdherence(lastUpdateStr) {
-            if (!lastUpdateStr) return true;
-            const lastUpdate = parseCustomDate(lastUpdateStr);
-            if (!lastUpdate || isNaN(lastUpdate.getTime())) return true;
-
-            const now = new Date();
-            const currentHour = now.getHours();
-            let shiftStart = new Date(now);
-            shiftStart.setMinutes(0); shiftStart.setSeconds(0); shiftStart.setMilliseconds(0);
-
-            if (currentHour >= 6 && currentHour < 18) {
-                shiftStart.setHours(6);
-                return lastUpdate < shiftStart;
-            } else {
-                if (currentHour >= 18) { shiftStart.setHours(18); } 
-                else { shiftStart.setDate(shiftStart.getDate() - 1); shiftStart.setHours(18); }
-                return lastUpdate < shiftStart;
-            }
-        }
-
         // --- DASHBOARD RENDERER ---
         function renderZonesTabs() {
             const c = document.getElementById('zones-tabs');
             c.innerHTML = `<button class="nav-tab active" data-zone="all" onclick="handleTabClick('all', this)">الكل</button>`;
-            appData.zones.forEach(z => c.innerHTML += `<button class="nav-tab" data-zone="${z}" onclick="handleTabClick('${z}', this)">${z}</button>`);
+            appData.zones.forEach(z => {
+                c.innerHTML += `<button class="nav-tab" data-zone="${z}" onclick="handleTabClick('${z}', this)">${z}</button>`;
+            });
         }
         
         window.handleTabClick = (zone, btn) => {
@@ -1821,6 +2448,7 @@
             const activeCount = allStations.filter(s => s.status === 'نشطة').length;
             const inactiveCount = allStations.filter(s => s.status === 'متوقفة' && !s.currentFault).length;
             const faultedStations = allStations.filter(s => s.currentFault || s.secondaryFault);
+            
             document.getElementById('total-stations').textContent = allStations.length;
             document.getElementById('active-stations').textContent = activeCount;
             document.getElementById('inactive-stations').textContent = inactiveCount;
@@ -1842,7 +2470,9 @@
                         const icon = faultIcons[s.secondaryFault] || '⚠️';
                         tickerHtml += `<span class="ticker-item">${icon} ${s.name}: ${s.secondaryFault}</span>`;
                     }
-                    if (index < faultedStations.length - 1) { tickerHtml += `<span class="ticker-separator">•</span>`; }
+                    if (index < faultedStations.length - 1) { 
+                        tickerHtml += `<span class="ticker-separator">•</span>`; 
+                    }
                 });
                 tickerContent.innerHTML = tickerHtml;
                 
@@ -1854,6 +2484,7 @@
                     const finalDuration = Math.max(duration, 5); 
                     tickerContent.style.animationDuration = `${finalDuration}s`;
                 }, 100);
+                
                 alarmBtn.classList.add('flashing');
                 alarmCount.style.display = 'flex';
                 alarmCount.textContent = faultedStations.length;
@@ -1880,10 +2511,14 @@
                         let cardClass = 'station-card';
                         if (isFault) {
                             cardClass += ' fault-active';
-                            if (s.currentFault === 'انقطاع الاتصال SCADA' || s.secondaryFault === 'انقطاع الاتصال SCADA') cardClass += ' scada-fault';
+                            if (s.currentFault === 'انقطاع الاتصال SCADA' || s.secondaryFault === 'انقطاع الاتصال SCADA') {
+                                cardClass += ' scada-fault';
+                            }
                         }
+                        
                         const card = document.createElement('div');
                         card.className = cardClass;
+                        
                         let faultHtml = '';
                         if(isFault) {
                             if(s.currentFault) {
@@ -1901,8 +2536,13 @@
                         }
 
                         let missedUpdateHtml = '';
-                        if (checkShiftAdherence(s.lastUpdate)) { 
-                            missedUpdateHtml = `<span class="missed-update-icon" title="لم يتم التحديث في الموعد">!</span>`;
+                        const lastUpdate = parseCustomDate(s.lastUpdate);
+                        if (lastUpdate) {
+                            const now = new Date();
+                            const hoursDiff = (now - lastUpdate) / (1000 * 60 * 60);
+                            if (hoursDiff > 12) { 
+                                missedUpdateHtml = `<span class="missed-update-icon" title="لم يتم التحديث في الموعد">!</span>`;
+                            }
                         }
 
                         card.innerHTML = `
@@ -1915,6 +2555,7 @@
                                 <div style="color:var(--secondary-color);">التدفق: ${s.waterFlow} L/Sec</div>
                                 <div>المضخات: ${s.activePumps}</div>
                             </div>`;
+                        
                         card.onclick = () => showStationDetails(s.name);
                         grid.appendChild(card);
                     });
@@ -1927,6 +2568,7 @@
         function showStationDetails(stationId) {
             const s = appData.stations[stationId];
             if (!s) return;
+            
             appData.currentStation = stationId;
             
             document.getElementById('station-title').textContent = s.name;
@@ -1939,7 +2581,6 @@
             document.getElementById('system-mode-value').textContent = s.systemMode;
             document.getElementById('start-time-value').textContent = s.startTime || '-';
             document.getElementById('stop-time-value').textContent = s.stopTime || '-';
-            
             document.getElementById('last-update-value').textContent = s.lastUpdate;
             document.getElementById('station-comments-value').textContent = s.comments || 'لا يوجد ملاحظات';
             
@@ -1951,26 +2592,29 @@
 
             const banner = document.getElementById('station-fault-banner');
             const faultList = document.getElementById('station-fault-list');
+            
             if (s.currentFault || s.secondaryFault) {
                 banner.style.display = 'block';
                 faultList.innerHTML = '';
                 let hasScadaFault = false;
+                
                 if(s.currentFault) {
                     if (s.currentFault === 'انقطاع الاتصال SCADA') hasScadaFault = true;
                     const descText = s.fault1Desc ? ` <span style="font-weight:normal; color:#d32f2f">(${s.fault1Desc})</span>` : '';
                     faultList.innerHTML += `<li>${s.currentFault}${descText} <span style="font-size:0.8em; color:#666">(${s.faultStartTime || '-'})</span></li>`;
                 }
+                
                 if(s.secondaryFault) {
                     if (s.secondaryFault === 'انقطاع الاتصال SCADA') hasScadaFault = true;
                     const descText = s.fault2Desc ? ` <span style="font-weight:normal; color:#d32f2f">(${s.fault2Desc})</span>` : '';
                     faultList.innerHTML += `<li>${s.secondaryFault}${descText}</li>`;
                 }
+                
                 if (hasScadaFault) { 
                     banner.style.background = '#fff3cd';
                     banner.style.color = '#856404'; 
                     banner.style.borderColor = '#ffeeba'; 
-                } 
-                else { 
+                } else { 
                     banner.style.background = '#ffecec';
                     banner.style.color = '#b71c1c'; 
                     banner.style.borderColor = '#ffcdd2'; 
@@ -1981,10 +2625,17 @@
 
             const tbody = document.getElementById('pumps-table-body');
             tbody.innerHTML = '';
+            
             s.pumps.forEach(p => {
-                let statusColor = p.status==='نشطة'?'green':'red';
-                if(p.status === 'معطلة') statusColor = 'orange';
-                tbody.innerHTML += `<tr><td>${p.id}</td><td style="color:${statusColor}">${p.status}</td><td>${p.suctionPressure||'-'}</td><td>${p.dischargePressure||'-'}</td><td>${p.frequency||'-'}</td></tr>`;
+                let statusColor = p.status === 'نشطة' ? 'green' : (p.status === 'معطلة' ? 'orange' : 'red');
+                tbody.innerHTML += `
+                    <tr>
+                        <td>${p.id}</td>
+                        <td style="color:${statusColor}">${p.status}</td>
+                        <td>${p.suctionPressure || '-'}</td>
+                        <td>${p.dischargePressure || '-'}</td>
+                        <td>${p.frequency || '-'}</td>
+                    </tr>`;
             });
             
             const canEdit = appData.currentUser && (
@@ -1992,6 +2643,7 @@
                 appData.currentUser.permissions.edit_some || 
                 appData.currentUser.permissions.edit_own
             );
+            
             document.getElementById('edit-station-btn').style.display = canEdit ? 'block' : 'none';
             showScreen('station');
         }
@@ -2008,6 +2660,7 @@
                                      appData.currentUser.id || 
                                      'غير معرّف';
             }
+            
             document.getElementById('operator-name').value = currentOperatorName;
             
             const now = new Date();
@@ -2030,11 +2683,20 @@
             const row1 = document.getElementById('fault-row-1');
             const row2 = document.getElementById('fault-row-2');
             
-            row1.style.display = 'none'; row2.style.display = 'none'; faultControl.style.display = 'none';
+            row1.style.display = 'none'; 
+            row2.style.display = 'none'; 
+            faultControl.style.display = 'none';
+            
             if (s.currentFault || s.secondaryFault) {
                 faultControl.style.display = 'block';
-                if(s.currentFault) { row1.style.display = 'flex'; document.getElementById('txt-fault-1').textContent = s.currentFault; }
-                if(s.secondaryFault) { row2.style.display = 'flex'; document.getElementById('txt-fault-2').textContent = s.secondaryFault; }
+                if(s.currentFault) { 
+                    row1.style.display = 'flex'; 
+                    document.getElementById('txt-fault-1').textContent = s.currentFault; 
+                }
+                if(s.secondaryFault) { 
+                    row2.style.display = 'flex'; 
+                    document.getElementById('txt-fault-2').textContent = s.secondaryFault; 
+                }
             }
 
             document.getElementById('fault-selector').value = s.currentFault || "";
@@ -2045,22 +2707,24 @@
             updateFaultExclusions();
             const c = document.getElementById('pumps-form-container');
             let pumpsHtml = '';
+            
             s.pumps.forEach(p => {
                 pumpsHtml += `
                     <div class="pump-control">
                         <div style="display:flex; justify-content:space-between; margin-bottom:10px;">
                             <b>مضخة ${p.id}</b>
                             <select id="p_stat_${p.id}" onchange="togglePumpInputs(${p.id})">
-                                <option value="نشطة" ${p.status==='نشطة'?'selected':''}>نشطة</option>
-                                <option value="متوقفة" ${p.status==='متوقفة'?'selected':''}>متوقفة</option>
-                                <option value="معطلة" ${p.status==='معطلة'?'selected':''}>معطلة</option>
+                                <option value="نشطة" ${p.status === 'نشطة' ? 'selected' : ''}>نشطة</option>
+                                <option value="متوقفة" ${p.status === 'متوقفة' ? 'selected' : ''}>متوقفة</option>
+                                <option value="معطلة" ${p.status === 'معطلة' ? 'selected' : ''}>معطلة</option>
                             </select>
                         </div>
-                        <input type="number" placeholder="سحب" id="p_suc_${p.id}" value="${p.suctionPressure||''}" class="p_inp_${p.id}">
-                        <input type="number" placeholder="طرد" id="p_dis_${p.id}" value="${p.dischargePressure||''}" class="p_inp_${p.id}" style="margin-top:5px">
-                        <input type="number" placeholder="تردد" id="p_freq_${p.id}" value="${p.frequency||''}" class="p_inp_${p.id}" style="margin-top:5px">
+                        <input type="number" placeholder="سحب" id="p_suc_${p.id}" value="${p.suctionPressure || ''}" class="p_inp_${p.id}">
+                        <input type="number" placeholder="طرد" id="p_dis_${p.id}" value="${p.dischargePressure || ''}" class="p_inp_${p.id}" style="margin-top:5px">
+                        <input type="number" placeholder="تردد" id="p_freq_${p.id}" value="${p.frequency || ''}" class="p_inp_${p.id}" style="margin-top:5px">
                     </div>`;
             });
+            
             c.innerHTML = pumpsHtml;
             s.pumps.forEach(p => { togglePumpInputs(p.id); });
             showScreen('operator');
@@ -2070,19 +2734,22 @@
             const active = document.getElementById(`p_stat_${id}`).value === 'نشطة';
             document.querySelectorAll(`.p_inp_${id}`).forEach(i => {
                 i.disabled = !active;
-                if(!active) i.style.background = '#eee'; else i.style.background = '#fff';
+                i.style.background = active ? '#fff' : '#eee';
             });
         };
         
         function updateFaultExclusions() {
             const f1 = document.getElementById('fault-selector');
             const f2 = document.getElementById('fault-selector-secondary');
+            
             Array.from(f2.options).forEach(opt => opt.disabled = false);
             Array.from(f1.options).forEach(opt => opt.disabled = false);
+            
             if(f1.value) { 
                 const optIn2 = f2.querySelector(`option[value="${f1.value}"]`);
                 if(optIn2) optIn2.disabled = true; 
             }
+            
             if(f2.value) { 
                 const optIn1 = f1.querySelector(`option[value="${f2.value}"]`);
                 if(optIn1) optIn1.disabled = true; 
@@ -2093,8 +2760,13 @@
         document.getElementById('fault-selector-secondary').addEventListener('change', updateFaultExclusions);
 
         document.getElementById('save-operator-data').addEventListener('click', () => saveDataInternal({}));
-        document.getElementById('btn-resolve-f1').addEventListener('click', () => { if(confirm("هل تم إصلاح العطل الأول؟")) saveDataInternal({ resolveTarget: 'currentFault' }); });
-        document.getElementById('btn-resolve-f2').addEventListener('click', () => { if(confirm("هل تم إصلاح العطل الثاني؟")) saveDataInternal({ resolveTarget: 'secondaryFault' }); });
+        document.getElementById('btn-resolve-f1').addEventListener('click', () => { 
+            if(confirm("هل تم إصلاح العطل الأول؟")) saveDataInternal({ resolveTarget: 'currentFault' }); 
+        });
+        
+        document.getElementById('btn-resolve-f2').addEventListener('click', () => { 
+            if(confirm("هل تم إصلاح العطل الثاني؟")) saveDataInternal({ resolveTarget: 'secondaryFault' }); 
+        });
         
         function saveDataInternal(options = {}) {
             try {
@@ -2161,7 +2833,13 @@
                 if (options.resolveTarget === 'currentFault') {
                     if (safeOldFault1) { 
                         changesDetails.push(`✅ إصلاح: ${safeOldFault1}`);
-                        resolvedFaultEntries.push({ station: sName, type: safeOldFault1, startTime: faultStartTime, endTime: stationFullDateTime, active: false });
+                        resolvedFaultEntries.push({ 
+                            station: sName, 
+                            type: safeOldFault1, 
+                            startTime: faultStartTime, 
+                            endTime: stationFullDateTime, 
+                            active: false 
+                        });
                     }
                     finalFault = null;
                     finalFaultDesc = null; 
@@ -2169,7 +2847,13 @@
                 } else if (options.resolveTarget === 'secondaryFault') {
                     if (safeOldFault2) { 
                         changesDetails.push(`✅ إصلاح: ${safeOldFault2}`);
-                        resolvedFaultEntries.push({ station: sName, type: safeOldFault2, startTime: faultStartTime, endTime: stationFullDateTime, active: false });
+                        resolvedFaultEntries.push({ 
+                            station: sName, 
+                            type: safeOldFault2, 
+                            startTime: faultStartTime, 
+                            endTime: stationFullDateTime, 
+                            active: false 
+                        });
                     }
                     finalFaultSec = null;
                     finalFaultSecDesc = null; 
@@ -2179,7 +2863,9 @@
                     const selDesc1 = getVal('fault-1-desc');
                     let sel2 = getVal('fault-selector-secondary');
                     let selDesc2 = getVal('fault-2-desc');
+                    
                     if (sel1 && sel1 === sel2) sel2 = "";
+                    
                     finalFault = sel1 || null; 
                     finalFaultDesc = finalFault ? selDesc1 : null; 
                     finalFaultSec = sel2 || null; 
@@ -2188,39 +2874,66 @@
                     if (finalFault !== safeOldFault1) {
                         if (finalFault) { 
                             changesDetails.push(`⚠️ تسجيل عطل 1: ${finalFault}`);
-                            newFaultEntries.push({ station: sName, type: finalFault, startTime: stationFullDateTime, endTime: null, active: true }); 
+                            newFaultEntries.push({ 
+                                station: sName, 
+                                type: finalFault, 
+                                startTime: stationFullDateTime, 
+                                endTime: null, 
+                                active: true 
+                            }); 
                             if(!safeOldFault1) faultStartTime = stationFullDateTime;
-                        } 
-                        else { 
+                        } else { 
                             if (safeOldFault1) { 
                                 changesDetails.push(`✅ إصلاح: ${safeOldFault1}`);
-                                resolvedFaultEntries.push({ station: sName, type: safeOldFault1, startTime: faultStartTime, endTime: stationFullDateTime, active: false }); 
+                                resolvedFaultEntries.push({ 
+                                    station: sName, 
+                                    type: safeOldFault1, 
+                                    startTime: faultStartTime, 
+                                    endTime: stationFullDateTime, 
+                                    active: false 
+                                }); 
                             } 
                             if (!finalFaultSec) faultStartTime = null;
                         }
                     }
+                    
                     if (finalFaultSec !== safeOldFault2) {
                         if (finalFaultSec) { 
                             changesDetails.push(`⚠️ تسجيل عطل 2: ${finalFaultSec}`);
-                            newFaultEntries.push({ station: sName, type: finalFaultSec, startTime: stationFullDateTime, endTime: null, active: true }); 
+                            newFaultEntries.push({ 
+                                station: sName, 
+                                type: finalFaultSec, 
+                                startTime: stationFullDateTime, 
+                                endTime: null, 
+                                active: true 
+                            }); 
                             if (!faultStartTime) faultStartTime = stationFullDateTime;
-                        } 
-                        else { 
+                        } else { 
                             if (safeOldFault2) { 
                                 changesDetails.push(`✅ إصلاح: ${safeOldFault2}`);
-                                resolvedFaultEntries.push({ station: sName, type: safeOldFault2, startTime: stationFullDateTime, endTime: stationFullDateTime, active: false });
+                                resolvedFaultEntries.push({ 
+                                    station: sName, 
+                                    type: safeOldFault2, 
+                                    startTime: stationFullDateTime, 
+                                    endTime: stationFullDateTime, 
+                                    active: false 
+                                });
                             } 
                         }
                     }
                 }
 
-                const isCriticalFault = (finalFault && !nonStoppingFaults.includes(finalFault)) || (finalFaultSec && !nonStoppingFaults.includes(finalFaultSec));
+                const isCriticalFault = (finalFault && !nonStoppingFaults.includes(finalFault)) || 
+                                      (finalFaultSec && !nonStoppingFaults.includes(finalFaultSec));
+                
                 if (isCriticalFault) { 
                     currentStatus = 'متوقفة'; 
                     activeCount = 0; 
                     newPressure = 0; 
                     newFlow = 0;
-                    if (finalFault === 'انقطاع التيار الكهربي' || finalFaultSec === 'انقطاع التيار الكهربي') newVoltage = 0;
+                    if (finalFault === 'انقطاع التيار الكهربي' || finalFaultSec === 'انقطاع التيار الكهربي') {
+                        newVoltage = 0;
+                    }
                 }
                 
                 if (!oldData.pumps) oldData.pumps = [];
@@ -2228,7 +2941,11 @@
                     const statElem = document.getElementById(`p_stat_${p.id}`);
                     let newStatus = statElem ? statElem.value : p.status;
                     if (isCriticalFault && newStatus === 'نشطة') newStatus = 'متوقفة';
-                    if(p.status != newStatus) changesDetails.push(`مضخة ${p.id}: ${p.status} -> ${newStatus}`);
+                    
+                    if(p.status != newStatus) {
+                        changesDetails.push(`مضخة ${p.id}: ${p.status} -> ${newStatus}`);
+                    }
+                    
                     let pumpData = { 
                         id: p.id, 
                         status: newStatus, 
@@ -2236,39 +2953,46 @@
                         dischargePressure: null, 
                         frequency: null 
                     };
+                    
                     if(newStatus === 'نشطة') { 
                         activeCount++; 
                         pumpData.suctionPressure = getVal(`p_suc_${p.id}`); 
                         pumpData.dischargePressure = getVal(`p_dis_${p.id}`); 
                         pumpData.frequency = getVal(`p_freq_${p.id}`); 
                     }
+                    
                     return pumpData;
                 });
                 
                 if (!isCriticalFault) { 
-                    if (activeCount > 0) currentStatus = 'نشطة'; 
-                    else { 
+                    if (activeCount > 0) {
+                        currentStatus = 'نشطة'; 
+                    } else { 
                         currentStatus = 'متوقفة'; 
                         newPressure = 0;
                         newFlow = 0; 
                     } 
                 }
+                
                 if (currentStatus === 'نشطة') { 
                     newStopTime = '';
                     if (!newStartTime) newStartTime = sysTimeShort; 
-                } 
-                else { 
+                } else { 
                     if (isCriticalFault || !newStopTime) newStopTime = sysTimeShort;
                 }
 
-                if(oldData.pressure != newPressure) changesDetails.push(`الضغط: ${oldData.pressure} -> ${newPressure}`);
+                if(oldData.pressure != newPressure) {
+                    changesDetails.push(`الضغط: ${oldData.pressure} -> ${newPressure}`);
+                }
                 
                 let consumptionLogData = null;
                 const oldCons = oldData.consumption || {};
+                
                 if (consTrans1 || consTrans2 || consWater) {
                     if (consTrans1 != oldCons.t1 || consTrans2 != oldCons.t2 || consWater != oldCons.m3) {
                         changesDetails.push('تم تحديث الاستهلاكات');
                     }
+                    
                     consumptionLogData = {
                         date: updateDate, 
                         time: updateTime, 
@@ -2325,23 +3049,50 @@
                 
                 if (navigator.onLine) {
                     db.ref('stations/' + sName).update(updates).then(() => {
-                        if (appData.operationHistory.length >= 20000) db.ref('history').orderByKey().limitToFirst(1).once('child_added', (snapshot) => { snapshot.ref.remove(); });
+                        if (appData.operationHistory.length >= 20000) {
+                            db.ref('history').orderByKey().limitToFirst(1).once('child_added', (snapshot) => { 
+                                snapshot.ref.remove(); 
+                            });
+                        }
+                        
                         db.ref('history').push(log);
-                        if(consumptionLogData) db.ref('consumption_logs').push(consumptionLogData);
+                        
+                        if(consumptionLogData) {
+                            db.ref('consumption_logs').push(consumptionLogData);
+                        }
+                        
                         if (newFaultEntries.length > 0 || resolvedFaultEntries.length > 0) {
                             db.ref('faults_log').once('value').then(snap => {
                                 let rawVal = snap.val(); 
                                 let logs = []; 
+                                
                                 if (rawVal) { 
-                                    if (Array.isArray(rawVal)) logs = rawVal; 
-                                    else logs = Object.values(rawVal); 
+                                    if (Array.isArray(rawVal)) {
+                                        logs = rawVal; 
+                                    } else {
+                                        logs = Object.values(rawVal); 
+                                    }
                                 }
+                                
                                 newFaultEntries.forEach(newF => { 
-                                    const exists = logs.some(existingF => existingF.active === true && existingF.station === newF.station && existingF.type === newF.type); 
-                                    if (!exists) logs.unshift(newF);
+                                    const exists = logs.some(existingF => 
+                                        existingF.active === true && 
+                                        existingF.station === newF.station && 
+                                        existingF.type === newF.type
+                                    ); 
+                                    
+                                    if (!exists) {
+                                        logs.unshift(newF);
+                                    }
                                 });
+                                
                                 resolvedFaultEntries.forEach(rf => { 
-                                    const index = logs.findIndex(f => f.station === sName && f.type === rf.type && f.active === true); 
+                                    const index = logs.findIndex(f => 
+                                        f.station === sName && 
+                                        f.type === rf.type && 
+                                        f.active === true
+                                    ); 
+                                    
                                     if (index !== -1) { 
                                         logs[index].active = false; 
                                         logs[index].endTime = stationFullDateTime; 
@@ -2349,12 +3100,19 @@
                                         logs.unshift(rf); 
                                     } 
                                 });
-                                if (logs.length > 20000) logs = logs.slice(0, 20000); 
+                                
+                                if (logs.length > 20000) {
+                                    logs = logs.slice(0, 20000); 
+                                }
+                                
                                 db.ref('faults_log').set(logs);
                             });
                         }
+                        
                         showSuccessFeedback(sName);
-                    }).catch(err => { alert("خطأ قاعدة البيانات: " + err.message); });
+                    }).catch(err => { 
+                        alert("خطأ قاعدة البيانات: " + err.message); 
+                    });
                 } else {
                     addToOfflineQueue('update_station', { 
                         stationId: sName, 
@@ -2364,6 +3122,7 @@
                         newFaults: newFaultEntries, 
                         resolvedFaults: resolvedFaultEntries 
                     });
+                    
                     showSuccessFeedback(sName, true);
                 }
             } catch (e) { 
@@ -2374,9 +3133,13 @@
 
         function showSuccessFeedback(sName, isOffline = false) {
             const alertDiv = document.getElementById('operator-alert');
-            alertDiv.textContent = isOffline ? 'تم الحفظ في الجهاز (سيتم الرفع عند الاتصال) ⏳' : 'تم الحفظ والمزامنة! ✅';
+            alertDiv.textContent = isOffline ? 
+                'تم الحفظ في الجهاز (سيتم الرفع عند الاتصال) ⏳' : 
+                'تم الحفظ والمزامنة! ✅';
+            
             alertDiv.className = isOffline ? 'alert alert-warning' : 'alert alert-success';
             alertDiv.style.display = 'block';
+            
             setTimeout(() => { 
                 alertDiv.style.display = 'none'; 
                 showStationDetails(sName); 
@@ -2430,13 +3193,11 @@
             const tbody = document.getElementById('users-profiles-list');
             const searchInput = document.getElementById('search-profile-input').value.toLowerCase();
             const noProfilesMessage = document.getElementById('no-profiles-message');
-            const loadMoreBtn = document.getElementById('load-more-profiles-btn');
-            const paginationInfo = document.getElementById('profiles-pagination-info');
             
             tbody.innerHTML = '';
             
             const canViewAllProfiles = currentUser.permissions.view_profiles;
-            const canDeleteProfiles = currentUser.permissions.delete_profiles && currentUser.type === 'admin';
+            const canDeleteProfiles = currentUser.permissions.delete_profiles;
             
             let filteredProfiles = Object.keys(appData.userProfiles).filter(username => {
                 const profile = appData.userProfiles[username];
@@ -2461,14 +3222,8 @@
                 return true;
             });
             
-            const totalProfiles = filteredProfiles.length;
-            const currentLimit = searchInput ? totalProfiles : appData.profilesLimit;
-            const displayedProfiles = filteredProfiles.slice(0, currentLimit);
-            
-            if (displayedProfiles.length === 0) {
+            if (filteredProfiles.length === 0) {
                 tbody.style.display = 'none';
-                loadMoreBtn.style.display = 'none';
-                paginationInfo.style.display = 'none';
                 noProfilesMessage.style.display = 'block';
                 
                 if (searchInput) {
@@ -2496,13 +3251,13 @@
             tbody.style.display = '';
             noProfilesMessage.style.display = 'none';
             
-            displayedProfiles.forEach(username => {
+            filteredProfiles.forEach(username => {
                 const profile = appData.userProfiles[username];
                 const userType = appData.users[username] ? appData.users[username].type : 'غير معروف';
                 const userTypeName = appData.userTypes[userType] ? appData.userTypes[userType].name : 'غير معروف';
                 
                 const isCurrentUser = (username === currentUser.username);
-                const canDeleteThisProfile = canDeleteProfiles && !isCurrentUser;
+                const canDeleteThisProfile = canDeleteProfiles && !isCurrentUser && currentUser.type === 'admin';
                 
                 let rowHTML = `
                     <tr>
@@ -2516,35 +3271,54 @@
                         <td>${profile.phone || 'غير مسجل'}</td>
                         <td>${profile.whatsapp || 'غير مسجل'}</td>
                         <td>${profile.email || 'غير مسجل'}</td>
-                        <td class="desktop-actions">
-                            ${canDeleteThisProfile ? 
-                                `<button class="delete-profile-btn" onclick="deleteUserProfile('${username}')" title="حذف بيانات المستخدم">
-                                    🗑️ حذف
-                                </button>` : 
-                                '<span style="color:#888; font-size:0.8rem;">-</span>'
-                            }
+                        <td>
+                            <div class="desktop-actions">
+                                ${canDeleteThisProfile ? 
+                                    `<button class="delete-profile-btn" onclick="deleteUserProfile('${username}')" title="حذف بيانات المستخدم">
+                                        🗑️ حذف
+                                    </button>` : 
+                                    '<span style="color:#888; font-size:0.8rem;">-</span>'
+                                }
+                            </div>
+                            <div class="mobile-action-menu">
+                                ${canDeleteThisProfile ? 
+                                    `<button class="mobile-action-btn" onclick="toggleMobileMenu('${username}')">⋮</button>
+                                    <div class="mobile-action-dropdown" id="mobile-menu-${username}">
+                                        <div class="mobile-action-item" onclick="deleteUserProfile('${username}')">
+                                            🗑️ حذف
+                                        </div>
+                                    </div>` : 
+                                    '<span style="color:#888; font-size:0.8rem;">-</span>'
+                                }
+                            </div>
                         </td>
                     </tr>`;
                 
                 tbody.innerHTML += rowHTML;
             });
-            
-            // تحديث معلومات التجزئة
-            if (searchInput) {
-                paginationInfo.textContent = `عرض ${displayedProfiles.length} من أصل ${totalProfiles} نتيجة بحث`;
-                loadMoreBtn.style.display = 'none';
-            } else {
-                paginationInfo.textContent = `عرض ${displayedProfiles.length} من أصل ${totalProfiles} مستخدم`;
-                if (totalProfiles > displayedProfiles.length) {
-                    loadMoreBtn.style.display = 'flex';
-                    loadMoreBtn.disabled = false;
-                    loadMoreBtn.innerHTML = '<span>⬇️ عرض 100 مستخدم إضافي</span>';
-                } else {
-                    loadMoreBtn.style.display = 'none';
-                }
-            }
-            paginationInfo.style.display = 'block';
         }
+        
+        // دالة لإظهار/إخفاء القائمة المنسدلة للجوال
+        window.toggleMobileMenu = function(username) {
+            const menu = document.getElementById(`mobile-menu-${username}`);
+            if (menu) {
+                // إغلاق جميع القوائم الأخرى
+                document.querySelectorAll('.mobile-action-dropdown').forEach(m => {
+                    if (m !== menu) m.classList.remove('show');
+                });
+                
+                menu.classList.toggle('show');
+            }
+        };
+        
+        // إغلاق القوائم عند النقر في أي مكان آخر
+        document.addEventListener('click', function(event) {
+            if (!event.target.closest('.mobile-action-menu')) {
+                document.querySelectorAll('.mobile-action-dropdown').forEach(menu => {
+                    menu.classList.remove('show');
+                });
+            }
+        });
         
         function saveUserProfile() {
             const currentUser = appData.currentUser;
@@ -2649,10 +3423,9 @@
             }
         }
         
-        function deleteUserProfile(username) {
+        window.deleteUserProfile = function(username) {
             const currentUser = appData.currentUser;
             
-            // التحقق من صلاحية الحذف - للمديرين فقط (admin)
             if (!currentUser || currentUser.type !== 'admin') {
                 alert('ليس لديك صلاحية لحذف بيانات المستخدمين');
                 return;
@@ -2697,9 +3470,7 @@
                     renderUsersProfilesList();
                 }
             }
-        }
-        
-        window.deleteUserProfile = deleteUserProfile;
+        };
         
         function showProfileAlert(message, type = 'info') {
             const alertDiv = document.getElementById('profile-alert');
@@ -2727,12 +3498,6 @@
         
         document.getElementById('save-profile-btn').addEventListener('click', saveUserProfile);
         document.getElementById('search-profile-input').addEventListener('keyup', renderUsersProfilesList);
-        
-        // إضافة حدث لزر عرض المزيد للملفات الشخصية
-        document.getElementById('load-more-profiles-btn').addEventListener('click', function() {
-            appData.profilesLimit += 100;
-            renderUsersProfilesList();
-        });
 
         // --- CONSUMPTION REPORT LOGIC ---
         document.getElementById('consumptions-btn').addEventListener('click', () => {
@@ -2741,11 +3506,14 @@
                 const sorted = Object.values(appData.stations).sort((a,b) => a.name.localeCompare(b.name));
                 sorted.forEach(s => filterSelect.innerHTML += `<option value="${s.name}">${s.name}</option>`);
             }
+            
             const today = new Date();
             const firstDayThisMonth = new Date(today.getFullYear(), today.getMonth(), 1);
             const firstDayLastMonth = new Date(today.getFullYear(), today.getMonth() - 1, 1);
+            
             document.getElementById('cons-filter-date-to').valueAsDate = firstDayThisMonth;
             document.getElementById('cons-filter-date-from').valueAsDate = firstDayLastMonth;
+            
             renderConsumptionsTable();
             showScreen('consumptions-report');
         });
@@ -2755,6 +3523,7 @@
             const fStation = document.getElementById('cons-filter-station').value;
             const fDateFrom = document.getElementById('cons-filter-date-from').value;
             const fDateTo = document.getElementById('cons-filter-date-to').value;
+            
             if (!fDateFrom || !fDateTo) { 
                 tbody.innerHTML = '<tr><td colspan="4" style="text-align:center">يرجى تحديد فترة المقارنة</td></tr>'; 
                 return; 
@@ -2765,10 +3534,10 @@
 
             let allLogs = appData.consumptionLog || [];
             let targetStations = [];
+            
             if (fStation === 'all') { 
                 targetStations = Object.keys(appData.stations); 
-            } 
-            else { 
+            } else { 
                 targetStations = [fStation];
             }
 
@@ -2815,6 +3584,7 @@
                     </tr>`;
                 }
             });
+            
             if(tbody.innerHTML === '') { 
                 tbody.innerHTML = '<tr><td colspan="4" style="text-align:center">لا توجد بيانات مطابقة للفترة المحددة</td></tr>';
             }
@@ -2824,7 +3594,11 @@
             const fStation = document.getElementById('cons-filter-station').value;
             const fDateFrom = document.getElementById('cons-filter-date-from').value;
             const fDateTo = document.getElementById('cons-filter-date-to').value;
-            if (!fDateFrom || !fDateTo) { alert('يرجى تحديد فترة المقارنة أولاً.'); return; }
+            
+            if (!fDateFrom || !fDateTo) { 
+                alert('يرجى تحديد فترة المقارنة أولاً.'); 
+                return; 
+            }
 
             const fromTime = new Date(fDateFrom).getTime();
             const toTime = new Date(fDateTo).getTime();
@@ -2883,7 +3657,8 @@
             link.click();
             document.body.removeChild(link);
         }
-        window.exportConsumptionsToCSV = exportConsumptionsToCSV; 
+        
+        window.exportConsumptionsToCSV = exportConsumptionsToCSV;
 
         function exportConsumptionsToExcel() {
             const table = document.getElementById("consumptions-table-export");
@@ -2903,7 +3678,9 @@
             container.innerHTML = '';
             const sName = appData.currentStation;
             const sData = appData.stations[sName];
+            
             if(!sData) return;
+            
             const insData = sData.inspectionData || {};
             const isEdit = (mode === 'edit');
             const saveBtn = document.getElementById('inspection-actions');
@@ -2913,17 +3690,18 @@
                 const schema = inspectionSchema[key];
                 const sectionDiv = document.createElement('div');
                 sectionDiv.className = 'section-accordion';
+                
                 let title = schema.title;
                 if (key === 'pumps') { 
                     const totalPumps = sData.pumps ? sData.pumps.length : 4; 
                     title += ` (${totalPumps})`; 
                 }
+                
                 const headerDiv = document.createElement('div');
                 if (isEdit) { 
                     headerDiv.className = 'section-header-static'; 
                     headerDiv.innerHTML = `<span>${title}</span>`; 
-                } 
-                else {
+                } else {
                     headerDiv.className = 'section-accordion-header'; 
                     headerDiv.innerHTML = `<span>${title}</span> <span class="arrow">▼</span>`;
                     headerDiv.onclick = function() { 
@@ -2932,9 +3710,11 @@
                         this.classList.toggle('active'); 
                     };
                 }
+                
                 const bodyDiv = document.createElement('div');
-                if (isEdit) bodyDiv.className = 'section-body-static'; 
-                else { 
+                if (isEdit) {
+                    bodyDiv.className = 'section-body-static'; 
+                } else { 
                     bodyDiv.className = 'section-accordion-body'; 
                     bodyDiv.id = `section-body-${key}`;
                 }
@@ -2942,6 +3722,7 @@
                 if (key === 'pumps') {
                     const totalPumps = sData.pumps ? sData.pumps.length : 4; 
                     const pumpsInsData = insData.pumps || {};
+                    
                     for (let i = 1; i <= totalPumps; i++) {
                         const pData = pumpsInsData[i] || {};
                         let headerClass = 'pump-header-green'; 
@@ -2949,6 +3730,7 @@
                         const criticalIndices = [1, 5, 10, 11, 12];
                         let isRed = false; 
                         let isYellow = false;
+                        
                         schema.items.forEach((item, idx) => { 
                             const status = pData[idx] ? pData[idx].status : 'efficient'; 
                             if (criticalIndices.includes(idx)) { 
@@ -2956,6 +3738,7 @@
                             } 
                             if (status === 'fault') isYellow = true; 
                         });
+                        
                         if (isRed) { 
                             headerClass = 'pump-header-red'; 
                             icon = '🛑'; 
@@ -2963,8 +3746,10 @@
                             headerClass = 'pump-header-yellow'; 
                             icon = '⚠️';
                         }
+                        
                         const pumpItemDiv = document.createElement('div');
                         pumpItemDiv.className = 'pump-accordion-item';
+                        
                         const pumpHeaderDiv = document.createElement('div'); 
                         pumpHeaderDiv.className = `pump-accordion-header ${headerClass}`; 
                         pumpHeaderDiv.innerHTML = `<span>مضخة رقم ${i}</span> <span class="icon-state">${icon}</span>`;
@@ -2972,30 +3757,32 @@
                             e.stopPropagation(); 
                             togglePumpAccordion(i); 
                         };
+                        
                         const pumpBodyDiv = document.createElement('div'); 
                         pumpBodyDiv.className = 'pump-accordion-body'; 
                         pumpBodyDiv.id = `pump-body-${i}`;
+                        
                         schema.items.forEach((item, idx) => {
                             if (idx === 0) { 
                                 const subHeader = document.createElement('div'); 
                                 subHeader.className = 'pump-section-divider'; 
                                 subHeader.textContent = '1- خط السحب'; 
                                 pumpBodyDiv.appendChild(subHeader); 
-                            } 
-                            else if (idx === 5) { 
+                            } else if (idx === 5) { 
                                 const subHeader = document.createElement('div'); 
                                 subHeader.className = 'pump-section-divider'; 
                                 subHeader.textContent = '2- المضخة'; 
                                 pumpBodyDiv.appendChild(subHeader); 
-                            } 
-                            else if (idx === 6) { 
+                            } else if (idx === 6) { 
                                 const subHeader = document.createElement('div'); 
                                 subHeader.className = 'pump-section-divider'; 
                                 subHeader.textContent = '3- خط الطرد'; 
                                 pumpBodyDiv.appendChild(subHeader); 
                             }
+                            
                             pumpBodyDiv.appendChild(createInspectionRow(idx, item, pData[idx] || {}, `pumps_${i}`, isEdit));
                         });
+                        
                         pumpItemDiv.appendChild(pumpHeaderDiv); 
                         pumpItemDiv.appendChild(pumpBodyDiv); 
                         bodyDiv.appendChild(pumpItemDiv);
@@ -3006,6 +3793,7 @@
                         bodyDiv.appendChild(createInspectionRow(idx, item, sectionData[idx] || {}, key, isEdit)); 
                     });
                 }
+                
                 sectionDiv.appendChild(headerDiv); 
                 sectionDiv.appendChild(bodyDiv); 
                 container.appendChild(sectionDiv);
@@ -3018,13 +3806,16 @@
             const savedStatus = dataObj && dataObj.status ? dataObj.status : 'efficient'; 
             const savedDesc = dataObj && dataObj.desc ? dataObj.desc : ''; 
             const inputId = `${prefix}_${itemKey}`;
+            
             let optionsHtml = '';
             statusOptions.forEach(opt => { 
                 const isSel = savedStatus === opt.val ? 'selected' : ''; 
                 optionsHtml += `<option value="${opt.val}" ${isSel}>${opt.text}</option>`; 
             });
+            
             let selectHtml = `<select class="inspection-status-select ${savedStatus}" id="stat_${inputId}" ${isEdit ? '' : 'disabled'} onchange="updateInspectionColor(this)">${optionsHtml}</select>`;
             let descHtml = `<input type="text" class="inspection-desc-input" id="desc_${inputId}" value="${savedDesc}" placeholder="ملاحظات..." ${isEdit ? '' : 'readonly'}>`;
+            
             row.innerHTML = `<div class="inspection-label">${label}</div><div>${selectHtml}</div><div>${descHtml}</div>`; 
             return row;
         }
@@ -3046,15 +3837,18 @@
         document.getElementById('save-inspection-btn').addEventListener('click', () => {
             const sName = appData.currentStation; 
             if(!sName) return;
+            
             const oldInsData = (appData.stations[sName].inspectionData) || {}; 
             let newInsData = JSON.parse(JSON.stringify(oldInsData));
             
             Object.keys(inspectionSchema).forEach(key => {
                 if (key === 'pumps') return; 
                 if (!newInsData[key]) newInsData[key] = {};
+                
                 inspectionSchema[key].items.forEach((item, idx) => { 
                     const statEl = document.getElementById(`stat_${key}_${idx}`); 
                     const descEl = document.getElementById(`desc_${key}_${idx}`); 
+                    
                     if (statEl) { 
                         newInsData[key][idx] = { 
                             status: statEl.value, 
@@ -3066,12 +3860,15 @@
             
             if (!newInsData.pumps) newInsData.pumps = {}; 
             const totalPumps = appData.stations[sName].pumps ? appData.stations[sName].pumps.length : 4;
+            
             for(let i=1; i<=totalPumps; i++) {
                 if (!newInsData.pumps[i]) newInsData.pumps[i] = {};
+                
                 inspectionSchema.pumps.items.forEach((item, idx) => { 
                     const prefix = `pumps_${i}`; 
                     const statEl = document.getElementById(`stat_${prefix}_${idx}`); 
                     const descEl = document.getElementById(`desc_${prefix}_${idx}`); 
+                    
                     if (statEl) { 
                         newInsData.pumps[i][idx] = { 
                             status: statEl.value, 
@@ -3090,7 +3887,10 @@
                 details: `تحديث سجل الفحص الشامل` 
             };
             
-            if (!appData.stations[sName].inspectionData) appData.stations[sName].inspectionData = {}; 
+            if (!appData.stations[sName].inspectionData) {
+                appData.stations[sName].inspectionData = {}; 
+            }
+            
             appData.stations[sName].inspectionData = newInsData; 
             localStorage.setItem('toshka_stations_cache', JSON.stringify(appData.stations));
             
@@ -3100,8 +3900,7 @@
                     alert("تم حفظ بيانات الفحص بنجاح ✅"); 
                     renderInspection('edit'); 
                 });
-            } 
-            else { 
+            } else { 
                 addToOfflineQueue('update_inspection', { 
                     stationId: sName, 
                     inspectionData: newInsData, 
@@ -3129,8 +3928,6 @@
             const tbody = document.getElementById('users-table-body');
             const search = document.getElementById('search-user-input').value.toLowerCase();
             const noUsersMessage = document.getElementById('no-users-message');
-            const loadMoreBtn = document.getElementById('load-more-users-btn');
-            const paginationInfo = document.getElementById('users-pagination-info');
             const currentUser = appData.currentUser;
             
             tbody.innerHTML = '';
@@ -3140,15 +3937,10 @@
                 return true;
             });
             
-            const totalUsers = filteredUsers.length;
-            const currentLimit = search ? totalUsers : appData.usersLimit;
-            const displayedUsers = filteredUsers.slice(0, currentLimit);
-            
-            if (displayedUsers.length === 0) {
+            if (filteredUsers.length === 0) {
                 tbody.style.display = 'none';
-                loadMoreBtn.style.display = 'none';
-                paginationInfo.style.display = 'none';
                 noUsersMessage.style.display = 'block';
+                
                 if (search) {
                     noUsersMessage.innerHTML = `
                         <div style="font-size: 2rem; margin-bottom: 10px;">🔍</div>
@@ -3162,7 +3954,7 @@
             tbody.style.display = '';
             noUsersMessage.style.display = 'none';
             
-            displayedUsers.forEach(uName => {
+            filteredUsers.forEach(uName => {
                 const user = appData.users[uName];
                 const typeName = appData.userTypes[user.type].name;
                 const typeClass = `type-${user.type}`;
@@ -3206,22 +3998,6 @@
                 
                 tbody.innerHTML += rowHTML;
             });
-            
-            // تحديث معلومات التجزئة
-            if (search) {
-                paginationInfo.textContent = `عرض ${displayedUsers.length} من أصل ${totalUsers} نتيجة بحث`;
-                loadMoreBtn.style.display = 'none';
-            } else {
-                paginationInfo.textContent = `عرض ${displayedUsers.length} من أصل ${totalUsers} مستخدم`;
-                if (totalUsers > displayedUsers.length) {
-                    loadMoreBtn.style.display = 'flex';
-                    loadMoreBtn.disabled = false;
-                    loadMoreBtn.innerHTML = '<span>⬇️ عرض 100 مستخدم إضافي</span>';
-                } else {
-                    loadMoreBtn.style.display = 'none';
-                }
-            }
-            paginationInfo.style.display = 'block';
         }
 
         window.togglePasswordVisibility = function(username) {
@@ -3366,15 +4142,12 @@
             });
         });
 
-        // إضافة حدث لزر عرض المزيد للمستخدمين
-        document.getElementById('load-more-users-btn').addEventListener('click', function() {
-            appData.usersLimit += 100;
-            renderUsersManagement();
-        });
-
         // --- FAULTS & HISTORY LOGIC ---
         function renderHistoryTable(applyFilters = false) {
             const tbody = document.getElementById('history-table-body');
+            const statusText = document.getElementById('history-status-text');
+            const loadMoreBtn = document.getElementById('load-more-history-btn');
+            
             tbody.innerHTML = '';
             let data = [...appData.operationHistory];
             
@@ -3384,14 +4157,14 @@
                 const fDateFrom = document.getElementById('filter-date-from').value;
                 const fDateTo = document.getElementById('filter-date-to').value;
                 
-                if (fZone !== 'all') {
-                }
                 if (fStation !== 'all') {
                     data = data.filter(d => d.station === fStation);
                 }
+                
                 if (fDateFrom) {
                     data = data.filter(d => parseCustomDate(d.date + ' ' + d.time) >= new Date(fDateFrom));
                 }
+                
                 if (fDateTo) {
                     const toDate = new Date(fDateTo);
                     toDate.setHours(23,59,59);
@@ -3405,7 +4178,9 @@
                 }
             });
             
-            const viewData = data.slice(0, 100);
+            const totalItems = data.length;
+            const viewData = data.slice(0, appData.historyDisplayed);
+            
             viewData.forEach(log => {
                 tbody.innerHTML += `<tr>
                     <td>
@@ -3418,12 +4193,31 @@
                 </tr>`;
             });
             
-            document.getElementById('history-status-text').textContent = `عرض ${viewData.length} من أصل ${data.length}`;
+            statusText.textContent = `عرض ${viewData.length} من أصل ${totalItems}`;
+            
+            if (viewData.length < totalItems) {
+                loadMoreBtn.style.display = 'inline-block';
+                document.getElementById('history-count').textContent = totalItems - viewData.length;
+                
+                loadMoreBtn.onclick = () => {
+                    appData.historyDisplayed += 100;
+                    renderHistoryTable(applyFilters);
+                };
+            } else {
+                loadMoreBtn.style.display = 'none';
+            }
         }
+        
+        window.loadMoreHistory = function() {
+            appData.historyDisplayed += 100;
+            renderHistoryTable(true);
+        };
         
         function renderFaultsLog() {
             const activeBody = document.getElementById('active-faults-body');
             const historyBody = document.getElementById('history-faults-body');
+            const statusText = document.getElementById('faults-status-text');
+            const loadMoreBtn = document.getElementById('load-more-faults-btn');
             const fStation = document.getElementById('fault-archive-station-filter').value;
             
             activeBody.innerHTML = '';
@@ -3440,11 +4234,19 @@
                 </tr>`;
             });
             
-            if(activeFaults.length === 0) activeBody.innerHTML = `<tr><td colspan="4" style="text-align:center; color:green">لا توجد أعطال نشطة حالياً</td></tr>`;
+            if(activeFaults.length === 0) {
+                activeBody.innerHTML = `<tr><td colspan="4" style="text-align:center; color:green">لا توجد أعطال نشطة حالياً</td></tr>`;
+            }
             
             let histFaults = appData.faultsLog.filter(f => !f.active);
-            if (fStation !== 'all') histFaults = histFaults.filter(f => f.station === fStation);
-            histFaults.slice(0, appData.faultsLimit).forEach(f => {
+            if (fStation !== 'all') {
+                histFaults = histFaults.filter(f => f.station === fStation);
+            }
+            
+            const totalHistFaults = histFaults.length;
+            const viewHistFaults = histFaults.slice(0, appData.faultsDisplayed);
+            
+            viewHistFaults.forEach(f => {
                 const icon = faultIcons[f.type] || '⚠️';
                 historyBody.innerHTML += `<tr>
                     <td>${f.station}</td>
@@ -3455,24 +4257,52 @@
                 </tr>`;
             });
             
+            statusText.textContent = `عرض ${viewHistFaults.length} من أصل ${totalHistFaults} عطل سابق`;
+            
+            if (viewHistFaults.length < totalHistFaults) {
+                loadMoreBtn.style.display = 'inline-block';
+                document.getElementById('faults-count').textContent = totalHistFaults - viewHistFaults.length;
+                
+                loadMoreBtn.onclick = () => {
+                    appData.faultsDisplayed += 100;
+                    renderFaultsLog();
+                };
+            } else {
+                loadMoreBtn.style.display = 'none';
+            }
+            
             const filterSel = document.getElementById('fault-archive-station-filter');
             if (filterSel.options.length <= 1) {
                 const sorted = Object.values(appData.stations).sort((a,b) => a.name.localeCompare(b.name));
                 sorted.forEach(s => filterSel.innerHTML += `<option value="${s.name}">${s.name}</option>`);
             }
         }
+        
+        window.loadMoreFaults = function() {
+            appData.faultsDisplayed += 100;
+            renderFaultsLog();
+        };
 
         function updateStationFilter() {
             const z = document.getElementById('filter-zone').value;
             const s = document.getElementById('filter-station');
             s.innerHTML = '<option value="all">كل المحطات</option>';
+            
             const list = Object.values(appData.stations).filter(st => z === 'all' || st.zone === z);
             list.forEach(st => s.innerHTML += `<option value="${st.name}">${st.name}</option>`);
         }
+
+        // إعادة تعيين العدادات عند تغيير الشاشة
+        document.querySelectorAll('button[id*="back-to"]').forEach(btn => {
+            btn.addEventListener('click', () => {
+                appData.historyDisplayed = 100;
+                appData.faultsDisplayed = 100;
+            });
+        });
 
         // Initial Load
         checkRememberedUser();
         loadSystemData();
     </script>
 </body>
-                            </html>
+</html>
