@@ -20,178 +20,342 @@
             --grey-color: #95a5a6;
             --profile-color: #9b59b6;
         }
-        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
-        body { background-color: var(--light-bg); color: #333; line-height: 1.6; min-height: 100vh; display: flex; flex-direction: column; }
-        .container { max-width: 1400px; margin: 0 auto; padding: 10px; flex: 1; width: 100%; }
+        * { margin: 0; padding: 0; box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+        body { background-color: var(--light-bg);
+            color: #333; line-height: 1.6; min-height: 100vh; display: flex; flex-direction: column;
+            }
+        .container { max-width: 1400px; margin: 0 auto; padding: 10px; flex: 1;
+            width: 100%; }
 
         /* Header */
-        header { background: linear-gradient(135deg, var(--primary-color), var(--secondary-color)); color: white; padding: 10px 0; box-shadow: 0 2px 10px rgba(0,0,0,0.1); position: sticky; top: 0; z-index: 1000; }
-        .header-content { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; }
-        .logo { display: flex; align-items: center; gap: 10px; font-size: 20px; font-weight: bold; }
+        header { background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+            color: white; padding: 10px 0; box-shadow: 0 2px 10px rgba(0,0,0,0.1); position: sticky; top: 0; z-index: 1000;
+            }
+        .header-content { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;
+            }
+        .logo { display: flex; align-items: center; gap: 10px; font-size: 20px; font-weight: bold;
+            }
         
         /* Network Status Indicator */
-        .network-status { font-size: 0.8rem; padding: 4px 8px; border-radius: 12px; font-weight: bold; display: flex; align-items: center; gap: 5px; }
-        .net-online { background: #d4edda; color: #155724; }
-        .net-offline { background: #f8d7da; color: #721c24; }
-        .syncing { animation: spin 1s linear infinite; }
-        @keyframes spin { 100% { transform: rotate(360deg); } }
+        .network-status { font-size: 0.8rem;
+            padding: 4px 8px; border-radius: 12px; font-weight: bold; display: flex; align-items: center; gap: 5px;
+            }
+        .net-online { background: #d4edda; color: #155724;
+            }
+        .net-offline { background: #f8d7da; color: #721c24;
+            }
+        .syncing { animation: spin 1s linear infinite;
+            }
+        @keyframes spin { 100% { transform: rotate(360deg);
+            } }
 
         /* Ticker Styles */
-        .ticker-container { background-color: var(--danger-color); color: white; height: 40px; overflow: hidden; border-radius: 4px; margin-bottom: 15px; display: none; align-items: center; box-shadow: 0 3px 5px rgba(0,0,0,0.1); border: 2px solid #922b21; }
-        .ticker-container.active { display: flex; }
-        .ticker-label { background: rgba(0,0,0,0.3); height: 100%; padding: 0 10px; display: flex; align-items: center; font-weight: bold; white-space: nowrap; z-index: 2; }
-        .ticker-text-wrap { flex: 1; overflow: hidden; white-space: nowrap; position: relative; height: 100%; display: flex; align-items: center; }
-        .ticker { display: inline-block; white-space: nowrap; padding-right: 100%; animation-name: ticker; animation-timing-function: linear; animation-iteration-count: infinite; }
-        .ticker-item { display: inline-flex; align-items: center; gap: 5px; padding: 0 2px; font-weight: bold; font-size: 1rem; color: white !important; }
-        .ticker-separator { display: inline-block; margin: 0 8px; color: rgba(255, 255, 255, 0.8); font-weight: normal; }
-        @keyframes ticker { 0% { transform: translate3d(0, 0, 0); } 100% { transform: translate3d(100%, 0, 0); } }
+        .ticker-container { background-color: var(--danger-color);
+            color: white; height: 40px; overflow: hidden; border-radius: 4px; margin-bottom: 15px; display: none; align-items: center; box-shadow: 0 3px 5px rgba(0,0,0,0.1);
+            border: 2px solid #922b21; }
+        .ticker-container.active { display: flex;
+            }
+        .ticker-label { background: rgba(0,0,0,0.3); height: 100%; padding: 0 10px; display: flex;
+            align-items: center; font-weight: bold; white-space: nowrap; z-index: 2; }
+        .ticker-text-wrap { flex: 1;
+            overflow: hidden; white-space: nowrap; position: relative; height: 100%; display: flex; align-items: center;
+            }
+        .ticker { display: inline-block; white-space: nowrap; padding-right: 100%; animation-name: ticker; animation-timing-function: linear;
+            animation-iteration-count: infinite; }
+        .ticker-item { display: inline-flex; align-items: center; gap: 5px;
+            padding: 0 2px; font-weight: bold; font-size: 1rem; color: white !important;
+            }
+        .ticker-separator { display: inline-block; margin: 0 8px; color: rgba(255, 255, 255, 0.8);
+            font-weight: normal; }
+        @keyframes ticker { 0% { transform: translate3d(0, 0, 0);
+            } 100% { transform: translate3d(100%, 0, 0); } }
 
         /* User Info & Alarm */
-        .user-info { display: none; align-items: center; gap: 8px; flex-wrap: wrap; justify-content: flex-end; }
-        .user-badge { background: rgba(255,255,255,0.2); padding: 5px 10px; border-radius: 20px; font-size: 12px; white-space: nowrap; }
-        .alarm-btn, .profile-btn { background: transparent; border: none; color: white; font-size: 1.4rem; cursor: pointer; position: relative; margin-left: 10px; }
-        .alarm-btn.flashing { animation: bell-shake 1s infinite cubic-bezier(.36,.07,.19,.97) both, red-glow 1.5s infinite; color: #ffcccc; }
-        .alarm-count { position: absolute; top: -5px; right: -5px; background: red; color: white; border-radius: 50%; width: 18px; height: 18px; font-size: 10px; display: flex; align-items: center; justify-content: center; border: 1px solid white; }
-        @keyframes bell-shake { 10%, 90% { transform: translate3d(-1px, 0, 0); } 20%, 80% { transform: translate3d(2px, 0, 0); } 30%, 50%, 70% { transform: translate3d(-4px, 0, 0); } 40%, 60% { transform: translate3d(4px, 0, 0); } }
-        @keyframes red-glow { 0% { text-shadow: 0 0 5px red; } 50% { text-shadow: 0 0 20px red; } 100% { text-shadow: 0 0 5px red; } }
+        .user-info { display: none;
+            align-items: center; gap: 8px; flex-wrap: wrap; justify-content: flex-end; }
+        .user-badge { background: rgba(255,255,255,0.2);
+            padding: 5px 10px; border-radius: 20px; font-size: 12px; white-space: nowrap; }
+        .alarm-btn, .profile-btn { background: transparent;
+            border: none; color: white; font-size: 1.4rem; cursor: pointer; position: relative; margin-left: 10px;
+            }
+        .alarm-btn.flashing { animation: bell-shake 1s infinite cubic-bezier(.36,.07,.19,.97) both, red-glow 1.5s infinite;
+            color: #ffcccc; }
+        .alarm-count { position: absolute; top: -5px; right: -5px; background: red;
+            color: white; border-radius: 50%; width: 18px; height: 18px; font-size: 10px; display: flex; align-items: center; justify-content: center; border: 1px solid white;
+            }
+        @keyframes bell-shake { 10%, 90% { transform: translate3d(-1px, 0, 0);
+            } 20%, 80% { transform: translate3d(2px, 0, 0); } 30%, 50%, 70% { transform: translate3d(-4px, 0, 0);
+            } 40%, 60% { transform: translate3d(4px, 0, 0); } }
+        @keyframes red-glow { 0% { text-shadow: 0 0 5px red;
+            } 50% { text-shadow: 0 0 20px red; } 100% { text-shadow: 0 0 5px red;
+            } }
 
         /* Shift Warning Icon */
-        .missed-update-icon { display: inline-flex; align-items: center; justify-content: center; width: 20px; height: 20px; background-color: #e74c3c; color: white; border-radius: 50%; font-size: 14px; font-weight: bold; margin-right: 5px; box-shadow: 0 2px 4px rgba(0,0,0,0.2); animation: pulse-red 2s infinite; vertical-align: middle; }
-        @keyframes pulse-red { 0% { transform: scale(1); box-shadow: 0 0 0 0 rgba(231, 76, 60, 0.7); } 70% { transform: scale(1.05); box-shadow: 0 0 0 6px rgba(231, 76, 60, 0); } 100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(231, 76, 60, 0); } }
+        .missed-update-icon { display: inline-flex;
+            align-items: center; justify-content: center; width: 20px; height: 20px; background-color: #e74c3c; color: white; border-radius: 50%; font-size: 14px; font-weight: bold; margin-right: 5px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2); animation: pulse-red 2s infinite; vertical-align: middle;
+            }
+        @keyframes pulse-red { 0% { transform: scale(1);
+            box-shadow: 0 0 0 0 rgba(231, 76, 60, 0.7); } 70% { transform: scale(1.05);
+            box-shadow: 0 0 0 6px rgba(231, 76, 60, 0); } 100% { transform: scale(1);
+            box-shadow: 0 0 0 0 rgba(231, 76, 60, 0); } }
 
         /* UI Components */
-        .btn { padding: 8px 12px; border: none; border-radius: 4px; cursor: pointer; font-weight: 500; transition: all 0.3s ease; display: inline-flex; align-items: center; gap: 5px; font-size: 14px; justify-content: center; }
-        .btn-sm { padding: 4px 8px; font-size: 12px; }
-        .btn-primary { background-color: var(--secondary-color); color: white; }
-        .btn-success { background-color: var(--success-color); color: white; }
-        .btn-danger { background-color: var(--danger-color); color: white; }
-        .btn-outline { background-color: transparent; border: 1px solid var(--secondary-color); color: var(--secondary-color); }
-        .btn-warning { background-color: var(--warning-color); color: white; }
-        .btn-info { background-color: #17a2b8; color: white; }
-        .btn-consumption { background-color: var(--consumption-color); color: white; }
-        .btn-profile { background-color: var(--profile-color); color: white; }
-        .btn:hover { opacity: 0.9; transform: translateY(-2px); }
+        .btn { padding: 8px 12px;
+            border: none; border-radius: 4px; cursor: pointer; font-weight: 500; transition: all 0.3s ease; display: inline-flex; align-items: center; gap: 5px; font-size: 14px;
+            justify-content: center; }
+        .btn-sm { padding: 4px 8px; font-size: 12px;
+            }
+        .btn-primary { background-color: var(--secondary-color); color: white;
+            }
+        .btn-success { background-color: var(--success-color); color: white;
+            }
+        .btn-danger { background-color: var(--danger-color); color: white;
+            }
+        .btn-outline { background-color: transparent; border: 1px solid var(--secondary-color); color: var(--secondary-color);
+            }
+        .btn-warning { background-color: var(--warning-color); color: white;
+            }
+        .btn-info { background-color: #17a2b8; color: white;
+            }
+        .btn-consumption { background-color: var(--consumption-color); color: white;
+            }
+        .btn-profile { background-color: var(--profile-color); color: white;
+            }
+        .btn:hover { opacity: 0.9; transform: translateY(-2px);
+            }
 
-        .screen { display: none; background: var(--card-bg); border-radius: 10px; box-shadow: 0 5px 15px rgba(0,0,0,0.05); padding: 15px; margin-top: 15px; min-height: 500px; }
-        .active { display: block; animation: fadeIn 0.4s ease; }
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        .screen { display: none; background: var(--card-bg); border-radius: 10px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.05); padding: 15px; margin-top: 15px; min-height: 500px;
+            }
+        .active { display: block; animation: fadeIn 0.4s ease;
+            }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px);
+            } to { opacity: 1; transform: translateY(0); } }
 
-        h2 { color: var(--primary-color); margin-bottom: 15px; padding-bottom: 10px; border-bottom: 1px solid #eee; font-size: 1.2rem; }
+        h2 { color: var(--primary-color);
+            margin-bottom: 15px; padding-bottom: 10px; border-bottom: 1px solid #eee; font-size: 1.2rem;
+            }
         
         /* Grid System */
-        .stations-grid { display: grid; gap: 10px; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); }
-        .station-details { display: grid; gap: 10px; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); margin-top: 20px; }
-        .dashboard-stats { display: grid; gap: 15px; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); }
+        .stations-grid { display: grid;
+            gap: 10px; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); }
+        .station-details { display: grid; gap: 10px;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); margin-top: 20px; }
+        .dashboard-stats { display: grid; gap: 15px;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); }
 
         @media (max-width: 768px) {
-            .stations-grid { grid-template-columns: 1fr 1fr !important; gap: 8px; }
-            .station-card { padding: 8px; font-size: 0.85rem; }
-            .station-card div { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-            .dashboard-stats { display: flex !important; flex-direction: row; gap: 5px; }
-            .dashboard-stats .stat-card { flex: 1; padding: 8px; text-align: center; min-width: 0; }
-            .dashboard-stats .stat-label { font-size: 0.75rem; white-space: nowrap; }
-            .dashboard-stats .stat-value { font-size: 1.1rem; }
+            .stations-grid { grid-template-columns: 1fr 1fr !important;
+                gap: 8px; }
+            .station-card { padding: 8px; font-size: 0.85rem;
+                }
+            .station-card div { white-space: nowrap; overflow: hidden;
+                text-overflow: ellipsis; }
+            .dashboard-stats { display: flex !important;
+                flex-direction: row; gap: 5px; }
+            .dashboard-stats .stat-card { flex: 1;
+                padding: 8px; text-align: center; min-width: 0; }
+            .dashboard-stats .stat-label { font-size: 0.75rem;
+                white-space: nowrap; }
+            .dashboard-stats .stat-value { font-size: 1.1rem;
+                }
         }
         
-        .stat-card, .station-card, .detail-card { background: var(--card-bg); border-radius: 8px; padding: 15px; box-shadow: 0 3px 6px rgba(0,0,0,0.05); border: 1px solid #eee; }
-        .station-card { border-top: 4px solid var(--secondary-color); cursor: pointer; transition: 0.3s; padding: 10px; font-size: 0.95rem; position: relative; overflow: hidden; }
-        .station-card:active { transform: scale(0.98); }
-        .station-card.fault-active { border-top-color: var(--danger-color); animation: card-flash 2s infinite; background-color: #fff5f5; border: 1px solid var(--danger-color); }
-        .station-card.fault-active.scada-fault { border-top-color: var(--scada-fault-color); background-color: #fffaf0; border: 1px solid var(--scada-fault-color); }
+        .stat-card, .station-card, .detail-card { background: var(--card-bg);
+            border-radius: 8px; padding: 15px; box-shadow: 0 3px 6px rgba(0,0,0,0.05); border: 1px solid #eee;
+            }
+        .station-card { border-top: 4px solid var(--secondary-color); cursor: pointer; transition: 0.3s; padding: 10px;
+            font-size: 0.95rem; position: relative; overflow: hidden; }
+        .station-card:active { transform: scale(0.98);
+            }
+        .station-card.fault-active { border-top-color: var(--danger-color); animation: card-flash 2s infinite; background-color: #fff5f5;
+            border: 1px solid var(--danger-color); }
+        .station-card.fault-active.scada-fault { border-top-color: var(--scada-fault-color); background-color: #fffaf0;
+            border: 1px solid var(--scada-fault-color); }
         
-        @keyframes card-flash { 0% { box-shadow: 0 0 0 0 rgba(192, 57, 43, 0.4); } 70% { box-shadow: 0 0 0 10px rgba(192, 57, 43, 0); } 100% { box-shadow: 0 0 0 0 rgba(192, 57, 43, 0); } }
+        @keyframes card-flash { 0% { box-shadow: 0 0 0 0 rgba(192, 57, 43, 0.4);
+            } 70% { box-shadow: 0 0 0 10px rgba(192, 57, 43, 0);
+            } 100% { box-shadow: 0 0 0 0 rgba(192, 57, 43, 0);
+            } }
         
-        .fault-badge { display: flex; align-items: center; justify-content: center; gap: 5px; background: var(--danger-color); color: white; font-size: 0.8rem; padding: 2px 8px; border-radius: 4px; margin-top: 5px; text-align: center; font-weight: bold; }
-        .fault-badge.scada-badge { background: var(--scada-fault-color); }
+        .fault-badge { display: flex;
+            align-items: center; justify-content: center; gap: 5px; background: var(--danger-color); color: white; font-size: 0.8rem; padding: 2px 8px; border-radius: 4px; margin-top: 5px;
+            text-align: center; font-weight: bold; }
+        .fault-badge.scada-badge { background: var(--scada-fault-color);
+            }
 
-        .stat-value { font-size: 24px; font-weight: bold; color: var(--primary-color); }
-        .detail-title { font-size: 0.9rem; color: #777; margin-bottom: 5px; }
-        .detail-value { font-size: 1.2rem; font-weight: 600; color: #333; word-break: break-all; }
-        .detail-value.operator-highlight { color: var(--secondary-color); }
+        .stat-value { font-size: 24px; font-weight: bold; color: var(--primary-color);
+            }
+        .detail-title { font-size: 0.9rem; color: #777; margin-bottom: 5px;
+            }
+        .detail-value { font-size: 1.2rem; font-weight: 600; color: #333; word-break: break-all;
+            }
+        .detail-value.operator-highlight { color: var(--secondary-color);
+            }
 
-        .table-responsive { overflow-x: auto; margin-top: 15px; border-radius: 8px; }
-        table { width: 100%; border-collapse: collapse; min-width: 600px; }
-        th { background-color: var(--primary-color); color: white; padding: 12px; text-align: right; }
-        td { padding: 10px 12px; text-align: right; border-bottom: 1px solid #eee; vertical-align: top; }
-        tr:nth-child(even) { background-color: #f9f9f9; }
+        .table-responsive { overflow-x: auto; margin-top: 15px; border-radius: 8px;
+            }
+        table { width: 100%; border-collapse: collapse; min-width: 600px;
+            }
+        th { background-color: var(--primary-color); color: white; padding: 12px; text-align: right;
+            }
+        td { padding: 10px 12px; text-align: right; border-bottom: 1px solid #eee;
+            vertical-align: top; }
+        tr:nth-child(even) { background-color: #f9f9f9;
+            }
 
-        .form-group { margin-bottom: 15px; position: relative; }
-        label { display: block; margin-bottom: 5px; font-weight: 600; }
-        input, select, textarea { width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 6px; background: #fff; }
+        .form-group { margin-bottom: 15px; position: relative;
+            }
+        label { display: block; margin-bottom: 5px; font-weight: 600;
+            }
+        input, select, textarea { width: 100%; padding: 10px; border: 1px solid #ddd;
+            border-radius: 6px; background: #fff; }
         
-        .station-status { display: inline-block; padding: 4px 10px; border-radius: 12px; font-size: 12px; font-weight: bold; }
-        .status-active { background-color: #d4edda; color: #155724; }
-        .status-inactive { background-color: #f8d7da; color: #721c24; }
+        .station-status { display: inline-block;
+            padding: 4px 10px; border-radius: 12px; font-size: 12px; font-weight: bold; }
+        .status-active { background-color: #d4edda;
+            color: #155724; }
+        .status-inactive { background-color: #f8d7da; color: #721c24;
+            }
 
-        .zone-separator { grid-column: 1 / -1; background-color: var(--header-bg); color: var(--primary-color); padding: 10px 15px; border-radius: 6px; margin-top: 20px; margin-bottom: 10px; font-weight: bold; font-size: 1.1rem; border-right: 5px solid var(--secondary-color); display: flex; justify-content: space-between; align-items: center; }
-        .nav-tabs { display: flex; overflow-x: auto; gap: 8px; padding-bottom: 10px; margin-bottom: 20px; border-bottom: 1px solid #ddd; }
-        .nav-tab { padding: 8px 16px; border-radius: 20px; background: #eee; cursor: pointer; white-space: nowrap; border:none; }
-        .nav-tab.active { background-color: var(--secondary-color); color: white; }
+        .zone-separator { grid-column: 1 / -1; background-color: var(--header-bg); color: var(--primary-color);
+            padding: 10px 15px; border-radius: 6px; margin-top: 20px; margin-bottom: 10px; font-weight: bold; font-size: 1.1rem; border-right: 5px solid var(--secondary-color); display: flex;
+            justify-content: space-between; align-items: center; }
+        .nav-tabs { display: flex; overflow-x: auto; gap: 8px;
+            padding-bottom: 10px; margin-bottom: 20px; border-bottom: 1px solid #ddd; }
+        .nav-tab { padding: 8px 16px;
+            border-radius: 20px; background: #eee; cursor: pointer; white-space: nowrap; border:none; }
+        .nav-tab.active { background-color: var(--secondary-color);
+            color: white; }
         
-        .password-container { position: relative; }
-        .toggle-password { position: absolute; left: 10px; top: 50%; transform: translateY(-50%); cursor: pointer; color: #666; }
-        .checkbox-group { display: flex; align-items: center; gap: 10px; justify-content: flex-start; margin-bottom: 15px; }
-        .checkbox-group input { width: auto; margin: 0; }
-        .pump-controls { display: grid; gap: 15px; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); }
-        .pump-control { background: #f8f9fa; padding: 15px; border-radius: 8px; border: 1px solid #e9ecef; }
-        .alert { padding: 15px; border-radius: 6px; margin-bottom: 20px; display: none; }
-        .alert-success { background-color: #d4edda; color: #155724; }
-        .alert-warning { background-color: #fff3cd; color: #856404; }
-        .signature { text-align: center; margin-top: 30px; font-size: 12px; color: #888; border-top: 1px solid #eee; padding-top: 15px; font-weight: bold; }
-        .login-form { max-width: 400px; margin: 40px auto; text-align: center; }
+        .password-container { position: relative;
+            }
+        .toggle-password { position: absolute; left: 10px; top: 50%; transform: translateY(-50%); cursor: pointer;
+            color: #666; }
+        .checkbox-group { display: flex; align-items: center; gap: 10px; justify-content: flex-start;
+            margin-bottom: 15px; }
+        .checkbox-group input { width: auto; margin: 0;
+            }
+        .pump-controls { display: grid; gap: 15px; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            }
+        .pump-control { background: #f8f9fa; padding: 15px; border-radius: 8px; border: 1px solid #e9ecef;
+            }
+        .alert { padding: 15px; border-radius: 6px; margin-bottom: 20px; display: none;
+            }
+        .alert-success { background-color: #d4edda; color: #155724;
+            }
+        .alert-warning { background-color: #fff3cd; color: #856404;
+            }
+        .signature { text-align: center; margin-top: 30px; font-size: 12px; color: #888;
+            border-top: 1px solid #eee; padding-top: 15px; font-weight: bold; }
+        .login-form { max-width: 400px;
+            margin: 40px auto; text-align: center; }
         
-        .pagination-controls { text-align: center; margin-top: 20px; padding-bottom: 20px; }
-        .status-text { font-size: 0.85rem; color: #666; margin-bottom: 10px; }
+        .pagination-controls { text-align: center;
+            margin-top: 20px; padding-bottom: 20px; }
+        .status-text { font-size: 0.85rem; color: #666; margin-bottom: 10px;
+            }
         
-        .scada-icon-svg { vertical-align: text-bottom; }
-        .fault-row-action { display: flex; justify-content: space-between; align-items: center; background: white; padding: 8px; border-radius: 4px; margin-bottom: 8px; border-right: 3px solid var(--danger-color); }
-        .desc-input { margin-top: 5px; font-size: 0.9rem; background: #fff; border: 1px solid #ccc; }
+        .scada-icon-svg { vertical-align: text-bottom;
+            }
+        .fault-row-action { display: flex; justify-content: space-between; align-items: center; background: white; padding: 8px;
+            border-radius: 4px; margin-bottom: 8px; border-right: 3px solid var(--danger-color); }
+        .desc-input { margin-top: 5px;
+            font-size: 0.9rem; background: #fff; border: 1px solid #ccc; }
 
         /* --- INSPECTION SCREEN STYLES (MOBILE OPTIMIZED) --- */
-        .section-accordion { margin-bottom: 10px; border-radius: 8px; overflow: hidden; border: 1px solid #ddd; background: #fff; }
-        .section-header-static { background: #eaf2f8; color: var(--primary-color); padding: 12px 15px; font-weight: bold; font-size: 1.1rem; border-bottom: 1px solid #ddd; }
-        .section-accordion-header { background: linear-gradient(to right, #2c3e50, #34495e); color: white; padding: 15px; cursor: pointer; display: flex; justify-content: space-between; align-items: center; font-weight: bold; font-size: 1.1rem; border-radius: 8px; transition: all 0.2s; }
-        .section-accordion-header:active { transform: scale(0.99); }
-        .section-accordion-header .arrow { transition: transform 0.3s; }
-        .section-accordion-header.active .arrow { transform: rotate(180deg); }
-        .section-accordion-body { display: none; padding: 10px; background: #fff; }
-        .section-accordion-body.open { display: block; animation: fadeIn 0.3s; }
-        .section-body-static { display: block; padding: 10px; background: #fff; }
-        .inspection-row { display: grid; grid-template-columns: 1fr; gap: 8px; padding: 12px; border-bottom: 1px solid #f0f0f0; background: #fff; margin-bottom: 5px; border-radius: 8px; border: 1px solid #eee; }
-        .inspection-row:last-child { margin-bottom: 0; }
-        @media (min-width: 768px) { .inspection-row { grid-template-columns: 1fr 180px 1.5fr; align-items: center; gap: 15px; } }
-        .inspection-label { font-size: 1rem; font-weight: 600; color: var(--secondary-color); margin-bottom: 2px; }
-        .inspection-status-select { padding: 10px; border-radius: 8px; font-size: 1rem; font-weight: 500; width: 100%; border: 1px solid #ccc; appearance: none; -webkit-appearance: none; background-image: url("data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22292.4%22%20height%3D%22292.4%22%3E%3Cpath%20fill%3D%22%23007CB2%22%20d%3D%22M287%2069.4a17.6%2017.6%200%200%200-13-5.4H18.4c-5%200-9.3%201.8-12.9%205.4A17.6%2017.6%200%200%200%200%2082.2c0%205%201.8%209.3%205.4%2012.9l128%20127.9c3.6%203.6%207.8%205.4%2012.8%205.4s9.2-1.8%2012.8-5.4L287%2095c3.5-3.5%205.4-7.8%205.4-12.8%200-5-1.9-9.2-5.5-12.8z%22%2F%3E%3C%2Fsvg%3E"); background-repeat: no-repeat; background-position: left 10px top 50%; background-size: 12px; padding-left: 30px; }
-        .inspection-status-select.efficient { color: #155724; border-color: #28a745; background-color: #d4edda; }
-        .inspection-status-select.fault { color: #856404; border-color: #ffeeba; background-color: #fff3cd; }
-        .inspection-status-select.broken { color: #721c24; border-color: #f5c6cb; background-color: #f8d7da; }
-        .inspection-status-select.none { color: #333; border-color: #ccc; background-color: #e2e3e5; }
-        .inspection-desc-input { padding: 10px; border-radius: 8px; border: 1px solid #ddd; width: 100%; font-size: 0.9rem; }
+        .section-accordion { margin-bottom: 10px;
+            border-radius: 8px; overflow: hidden; border: 1px solid #ddd; background: #fff;
+            }
+        .section-header-static { background: #eaf2f8; color: var(--primary-color); padding: 12px 15px; font-weight: bold;
+            font-size: 1.1rem; border-bottom: 1px solid #ddd; }
+        .section-accordion-header { background: linear-gradient(to right, #2c3e50, #34495e);
+            color: white; padding: 15px; cursor: pointer; display: flex; justify-content: space-between; align-items: center; font-weight: bold; font-size: 1.1rem; border-radius: 8px;
+            transition: all 0.2s; }
+        .section-accordion-header:active { transform: scale(0.99);
+            }
+        .section-accordion-header .arrow { transition: transform 0.3s;
+            }
+        .section-accordion-header.active .arrow { transform: rotate(180deg);
+            }
+        .section-accordion-body { display: none; padding: 10px; background: #fff;
+            }
+        .section-accordion-body.open { display: block; animation: fadeIn 0.3s;
+            }
+        .section-body-static { display: block; padding: 10px; background: #fff;
+            }
+        .inspection-row { display: grid; grid-template-columns: 1fr; gap: 8px; padding: 12px;
+            border-bottom: 1px solid #f0f0f0; background: #fff; margin-bottom: 5px; border-radius: 8px; border: 1px solid #eee;
+            }
+        .inspection-row:last-child { margin-bottom: 0;
+            }
+        @media (min-width: 768px) { .inspection-row { grid-template-columns: 1fr 180px 1.5fr; align-items: center;
+            gap: 15px; } }
+        .inspection-label { font-size: 1rem; font-weight: 600; color: var(--secondary-color);
+            margin-bottom: 2px; }
+        .inspection-status-select { padding: 10px; border-radius: 8px; font-size: 1rem; font-weight: 500;
+            width: 100%; border: 1px solid #ccc; appearance: none; -webkit-appearance: none; background-image: url("data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22292.4%22%20height%3D%22292.4%22%3E%3Cpath%20fill%3D%22%23007CB2%22%20d%3D%22M287%2069.4a17.6%2017.6%200%200%200-13-5.4H18.4c-5%200-9.3%201.8-12.9%205.4A17.6%2017.6%200%200%200%200%2082.2c0%205%201.8%209.3%205.4%2012.9l128%20127.9c3.6%203.6%207.8%205.4%2012.8%205.4s9.2-1.8%2012.8-5.4L287%2095c3.5-3.5%205.4-7.8%205.4-12.8%200-5-1.9-9.2-5.5-12.8z%22%2F%3E%3C%2Fsvg%3E"); background-repeat: no-repeat; background-position: left 10px top 50%;
+            background-size: 12px; padding-left: 30px; }
+        .inspection-status-select.efficient { color: #155724; border-color: #28a745; background-color: #d4edda;
+            }
+        .inspection-status-select.fault { color: #856404; border-color: #ffeeba; background-color: #fff3cd;
+            }
+        .inspection-status-select.broken { color: #721c24; border-color: #f5c6cb; background-color: #f8d7da;
+            }
+        .inspection-status-select.none { color: #333; border-color: #ccc; background-color: #e2e3e5;
+            }
+        .inspection-desc-input { padding: 10px; border-radius: 8px; border: 1px solid #ddd; width: 100%;
+            font-size: 0.9rem; }
         
-        .pump-accordion-item { margin-bottom: 10px; border-radius: 8px; overflow: hidden; border: 1px solid transparent; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
-        .pump-accordion-header { padding: 12px; cursor: pointer; display: flex; justify-content: space-between; align-items: center; font-weight: bold; font-size: 1rem; color: white; transition: background 0.3s; }
-        .pump-accordion-header .icon-state { font-size: 1.1rem; background: rgba(0,0,0,0.2); width: 25px; height: 25px; border-radius: 50%; display: flex; align-items: center; justify-content: center; }
-        .pump-header-green { background: linear-gradient(45deg, #27ae60, #2ecc71); }
-        .pump-header-yellow { background: linear-gradient(45deg, #f39c12, #f1c40f); color: #fff; text-shadow: 0 1px 2px rgba(0,0,0,0.1); }
-        .pump-header-red { background: linear-gradient(45deg, #c0392b, #e74c3c); }
-        .pump-accordion-body { display: none; padding: 10px; background: #fff; border: 1px solid #eee; border-top: none; }
-        .pump-accordion-body.open { display: block; animation: slideDown 0.3s ease-out; }
-        @keyframes slideDown { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
+        .pump-accordion-item { margin-bottom: 10px;
+            border-radius: 8px; overflow: hidden; border: 1px solid transparent; box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+            }
+        .pump-accordion-header { padding: 12px; cursor: pointer; display: flex; justify-content: space-between; align-items: center;
+            font-weight: bold; font-size: 1rem; color: white; transition: background 0.3s; }
+        .pump-accordion-header .icon-state { font-size: 1.1rem;
+            background: rgba(0,0,0,0.2); width: 25px; height: 25px; border-radius: 50%; display: flex; align-items: center; justify-content: center;
+            }
+        .pump-header-green { background: linear-gradient(45deg, #27ae60, #2ecc71);
+            }
+        .pump-header-yellow { background: linear-gradient(45deg, #f39c12, #f1c40f); color: #fff;
+            text-shadow: 0 1px 2px rgba(0,0,0,0.1); }
+        .pump-header-red { background: linear-gradient(45deg, #c0392b, #e74c3c);
+            }
+        .pump-accordion-body { display: none; padding: 10px; background: #fff; border: 1px solid #eee;
+            border-top: none; }
+        .pump-accordion-body.open { display: block; animation: slideDown 0.3s ease-out;
+            }
+        @keyframes slideDown { from { opacity: 0; transform: translateY(-10px);
+            } to { opacity: 1; transform: translateY(0); } }
         
-        .pump-section-divider { background-color: #f0f4f8; padding: 8px 10px; font-weight: bold; color: #2c3e50; border-right: 4px solid var(--secondary-color); margin: 15px 0 5px 0; font-size: 0.95rem; border-radius: 2px; }
+        .pump-section-divider { background-color: #f0f4f8;
+            padding: 8px 10px; font-weight: bold; color: #2c3e50; border-right: 4px solid var(--secondary-color); margin: 15px 0 5px 0; font-size: 0.95rem; border-radius: 2px;
+            }
 
-        #save-inspection-btn { width: 100%; box-shadow: 0 -2px 10px rgba(0,0,0,0.1); padding: 8px; font-size: 0.95rem; border-radius: 20px; margin-bottom: 5px; }
+        #save-inspection-btn { width: 100%; box-shadow: 0 -2px 10px rgba(0,0,0,0.1); padding: 8px;
+            font-size: 0.95rem; border-radius: 20px; margin-bottom: 5px; }
 
         /* Offline Banner */
-        #offline-sync-banner { display: none; background: #fff3cd; border: 1px solid #ffeeba; color: #856404; padding: 10px; text-align: center; margin-bottom: 10px; border-radius: 8px; }
+        #offline-sync-banner { display: none;
+            background: #fff3cd; border: 1px solid #ffeeba; color: #856404; padding: 10px; text-align: center; margin-bottom: 10px; border-radius: 8px;
+            }
 
         /* NEW STYLES FOR CONSUMPTION TABLE (V1.5.9 Modified) */
-        .cons-cell { text-align: center; font-size: 0.9rem; padding: 8px !important; }
-        .cons-sub-item { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px dashed #eee; padding: 4px 0; text-align: right; }
-        .cons-label { font-size: 0.8rem; color: #555; }
-        .cons-date-small { display: block; font-size: 0.7rem; color: #888; margin-top: 2px; line-height: 1.2; width: 100%; text-align: left; }
-        .cons-result { background-color: #e8f6f3; color: var(--primary-color); font-weight: bold; padding: 6px; margin-top: 5px; border-radius: 4px; text-align: center; }
-        .cons-val-wrapper { text-align: left; }
+        .cons-cell { text-align: center;
+            font-size: 0.9rem; padding: 8px !important; }
+        .cons-sub-item { display: flex; justify-content: space-between;
+            align-items: center; border-bottom: 1px dashed #eee; padding: 4px 0; text-align: right;
+            }
+        .cons-label { font-size: 0.8rem; color: #555;
+            }
+        .cons-date-small { display: block; font-size: 0.7rem; color: #888; margin-top: 2px; line-height: 1.2;
+            width: 100%; text-align: left; }
+        .cons-result { background-color: #e8f6f3; color: var(--primary-color); font-weight: bold;
+            padding: 6px; margin-top: 5px; border-radius: 4px; text-align: center; }
+        .cons-val-wrapper { text-align: left;
+            }
         
         /* --- USER PROFILES MANAGEMENT STYLES (ENHANCED FOR MOBILE) --- */
         .profile-container {
@@ -264,32 +428,34 @@
             background-color: #f9f9f9;
         }
         
-        /* Mobile optimization for tables */
+        /* Mobile optimization for tables (Customized for better display) */
         @media (max-width: 768px) {
-            .users-profiles-table {
-                display: block;
-                width: 100%;
-                overflow-x: auto;
-            }
-            
+            /* Make table columns minimum width and allow scrolling */
             .users-profiles-table th,
             .users-profiles-table td {
                 padding: 8px 6px;
                 font-size: 0.8rem;
-                min-width: 100px;
+                min-width: 120px; /* Adjusted min-width for better content display */
             }
             
+            /* Pin the first column on mobile */
             .users-profiles-table th:first-child,
             .users-profiles-table td:first-child {
                 position: sticky;
                 left: 0;
-                background-color: white;
+                background-color: var(--profile-color); /* Header bg color */
                 z-index: 5;
-                min-width: 120px;
+            }
+            .users-profiles-table td:first-child {
+                background-color: white; /* Content bg color */
             }
             
             .users-profiles-table tr:nth-child(even) td:first-child {
                 background-color: #f9f9f9;
+            }
+            .users-profiles-table th:last-child,
+            .users-profiles-table td:last-child {
+                min-width: 80px; /* Action column */
             }
         }
         
@@ -360,7 +526,7 @@
             border: 1px solid #f5c6cb;
         }
         
-        /* Action buttons */
+        /* Action buttons - Merged styles for consistent appearance */
         .delete-profile-btn {
             background: linear-gradient(135deg, #c0392b, #e74c3c);
             color: white;
@@ -369,7 +535,7 @@
             border-radius: 4px;
             cursor: pointer;
             font-size: 12px;
-            display: flex;
+            display: inline-flex;
             align-items: center;
             gap: 5px;
             transition: all 0.3s ease;
@@ -382,66 +548,7 @@
             box-shadow: 0 4px 8px rgba(192, 57, 43, 0.3);
         }
         
-        .mobile-action-menu {
-            display: none;
-        }
-        
-        @media (max-width: 768px) {
-            .desktop-actions {
-                display: none;
-            }
-            
-            .mobile-action-menu {
-                display: block;
-                position: relative;
-            }
-            
-            .mobile-action-btn {
-                background: #f0f0f0;
-                border: none;
-                border-radius: 50%;
-                width: 36px;
-                height: 36px;
-                display: flex;
-                align-items: center;
-                justify-content: center;
-                cursor: pointer;
-                font-size: 1.2rem;
-            }
-            
-            .mobile-action-dropdown {
-                position: absolute;
-                top: 100%;
-                left: 0;
-                background: white;
-                border-radius: 8px;
-                box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-                min-width: 150px;
-                z-index: 100;
-                display: none;
-            }
-            
-            .mobile-action-dropdown.show {
-                display: block;
-            }
-            
-            .mobile-action-item {
-                padding: 10px 15px;
-                border-bottom: 1px solid #eee;
-                cursor: pointer;
-                display: flex;
-                align-items: center;
-                gap: 8px;
-            }
-            
-            .mobile-action-item:hover {
-                background: #f5f5f5;
-            }
-            
-            .mobile-action-item:last-child {
-                border-bottom: none;
-            }
-        }
+        /* Removed unnecessary mobile action menu styles as per request to simplify */
 
         /* --- USERS MANAGEMENT STYLES (SIMPLIFIED) --- */
         .users-header {
@@ -570,10 +677,14 @@
             font-weight: bold;
         }
         
-        .type-admin { background-color: #d32f2f; color: white; }
-        .type-engineer { background-color: #1976d2; color: white; }
-        .type-supervisor { background-color: #388e3c; color: white; }
-        .type-operator { background-color: #f57c00; color: white; }
+        .type-admin { background-color: #d32f2f;
+            color: white; }
+        .type-engineer { background-color: #1976d2; color: white;
+            }
+        .type-supervisor { background-color: #388e3c; color: white;
+            }
+        .type-operator { background-color: #f57c00; color: white;
+            }
     </style>
 </head>
 <body>
@@ -588,20 +699,24 @@
                     <span id="net-icon">🟢</span> <span id="net-text">متصل</span>
                 </div>
                 <div class="user-info" id="header-user-info">
-                    <button id="profile-btn" class="profile-btn" title="بيانات المستخدم">
+                    <button id="profile-btn" class="profile-btn" title="بيانات 
+المستخدم">
                         👤
                     </button>
                     <button id="alarm-btn" class="alarm-btn" title="سجل الأعطال">
                         🔔
+        
                         <span id="alarm-count" class="alarm-count" style="display:none">0</span>
                     </button>
                     <div class="user-badge" id="current-user">مرحباً</div>
                     
+                   
                     <button id="users-management-btn" class="btn btn-warning" style="display: none;">المستخدمين</button>
                     <button id="consumptions-btn" class="btn btn-consumption" style="display: none;">⚡ الاستهلاكات</button>
                     <button id="history-management-btn" class="btn btn-info" style="display: none;">السجل العام</button>
                     <button id="logout-btn" class="btn btn-danger">خروج</button>
                 </div>
+   
             </div>
         </div>
     </header>
@@ -609,7 +724,7 @@
     <div class="container">
         <div id="offline-sync-banner">
             يوجد <b><span id="offline-count">0</span></b> عمليات معلقة.
-سيتم رفعها تلقائياً عند عودة الإنترنت. ⏳
+            سيتم رفعها تلقائياً عند عودة الإنترنت. ⏳
         </div>
 
         <div id="login-screen" class="screen active">
@@ -617,20 +732,24 @@
                 <h2>تسجيل الدخول</h2>
                 <div class="form-group">
                     <label>اسم المستخدم</label>
+       
                     <input type="text" id="username" placeholder="admin">
                 </div>
                 <div class="form-group">
                     <label>كلمة المرور</label>
                     <div class="password-container">
+         
                         <input type="password" id="password" placeholder="admin123">
                         <span class="toggle-password" id="toggle-password-icon">👁️</span>
                     </div>
                 </div>
                 <div class="checkbox-group">
+   
                     <input type="checkbox" id="remember-me">
                     <label for="remember-me">تذكرني</label>
                 </div>
-                <button id="login-btn" class="btn" style="width: 100%; background-color: #bdc3c7; color: #fff; cursor: not-allowed;" disabled>جاري الاتصال بالنظام...</button>
+                <button id="login-btn" class="btn" style="width: 100%; background-color: #bdc3c7;
+color: #fff; cursor: not-allowed;" disabled>جاري الاتصال بالنظام...</button>
             </div>
             <div class="signature">Implemented by Ahmed Salah Ibrahim 2025 V1.5.9</div>
         </div>
@@ -638,6 +757,7 @@
         <div id="stations-screen" class="screen">
             <div id="ticker-container" class="ticker-container">
                 <div class="ticker-label">⚠️</div>
+              
                 <div class="ticker-text-wrap">
                     <div id="ticker-content" class="ticker"></div>
                 </div>
@@ -645,72 +765,97 @@
 
             <div class="dashboard-stats">
                 <div class="stat-card"><div class="stat-label">الإجمالي</div><div class="stat-value" id="total-stations">0</div></div>
+              
                 <div class="stat-card"><div class="stat-label">النشطة</div><div class="stat-value" id="active-stations">0</div></div>
                 <div class="stat-card"><div class="stat-label">المتوقفة</div><div class="stat-value" id="inactive-stations">0</div></div>
             </div>
-            <div id="repair-alert" class="alert alert-success" style="display:none; margin-top:10px;"></div>
+            <div id="repair-alert" class="alert alert-success" style="display:none;
+margin-top:10px;"></div>
             <div class="nav-tabs" id="zones-tabs"></div>
             <div id="stations-container" class="stations-wrapper">
-                <div style="text-align:center; padding:20px; color:#666;">جاري تحميل البيانات ومزامنة المحطات...</div>
+                <div style="text-align:center;
+padding:20px; color:#666;">جاري تحميل البيانات ومزامنة المحطات...</div>
             </div>
         </div>
 
         <div id="station-screen" class="screen">
             <h2 id="station-title">التفاصيل</h2>
-            <div style="display:flex; gap:10px; flex-wrap:wrap;">
+            <div style="display:flex;
+gap:10px; flex-wrap:wrap;">
                 <button id="back-to-stations" class="btn btn-outline">عودة للقائمة</button>
                 <button id="view-inspection-btn" class="btn btn-info">📋 عرض الفحص</button>
             </div>
             
-            <div id="station-fault-banner" class="alert" style="background: #ffecec; color: #b71c1c; border: 1px solid #ffcdd2; margin-top: 15px; display: none;">
+            <div id="station-fault-banner" class="alert" style="background: #ffecec;
+color: #b71c1c; border: 1px solid #ffcdd2; margin-top: 15px; display: none;">
                 <div style="margin-bottom: 5px;">⚠️ <b>الأعطال المسجلة حالياً:</b></div>
-                <ul id="station-fault-list" style="padding-right: 20px; margin: 0;"></ul>
+                <ul id="station-fault-list" style="padding-right: 20px;
+margin: 0;"></ul>
             </div>
 
             <div class="station-details" style="margin-top: 20px;">
                 <div class="detail-card"><div class="detail-title">الحالة</div><div class="detail-value" id="station-status-value">-</div></div>
                 <div class="detail-card"><div class="detail-title">المشغل</div><div class="detail-value operator-highlight" id="operator-name-value">-</div></div>
                 <div class="detail-card"><div class="detail-title">الجهد الكهربي (V)</div><div class="detail-value" id="voltage-value">-</div></div>
+         
                 <div class="detail-card"><div class="detail-title">الضغط (Bar)</div><div class="detail-value" id="station-pressure-value">-</div></div>
                 <div class="detail-card"><div class="detail-title">المضخات العاملة</div><div class="detail-value" id="active-pumps-value">-</div></div>
                 <div class="detail-card"><div class="detail-title">التدفق (L/Sec)</div><div class="detail-value" id="water-flow-value">-</div></div>
                 <div class="detail-card"><div class="detail-title">النظام</div><div class="detail-value" id="system-mode-value">-</div></div>
                 
-                <div style="grid-column: 1 / -1; display: flex; gap: 10px;">
-                    <div class="detail-card" style="flex: 1;"><div class="detail-title">وقت بدء التشغيل</div><div class="detail-value" id="start-time-value" style="color:var(--success-color); font-weight:bold;">-</div></div>
-                    <div class="detail-card" style="flex: 1;"><div class="detail-title">وقت الإيقاف</div><div class="detail-value" id="stop-time-value" style="color:var(--danger-color); font-weight:bold;">-</div></div>
+          
+                <div style="grid-column: 1 / -1; display: flex;
+gap: 10px;">
+                    <div class="detail-card" style="flex: 1;"><div class="detail-title">وقت بدء التشغيل</div><div class="detail-value" id="start-time-value" style="color:var(--success-color);
+font-weight:bold;">-</div></div>
+                    <div class="detail-card" style="flex: 1;"><div class="detail-title">وقت الإيقاف</div><div class="detail-value" id="stop-time-value" style="color:var(--danger-color);
+font-weight:bold;">-</div></div>
                 </div>
 
-                <div style="grid-column: 1 / -1; margin-top:10px; border-top: 1px solid #eee; padding-top:10px;">
-                    <h4 style="color:var(--consumption-color); margin-bottom:10px;">📊 آخر قراءة استهلاك</h4>
-                    <div style="display:flex; gap:10px; flex-wrap:wrap;">
-                        <div class="detail-card" style="flex:1; min-width:140px; border-left: 3px solid var(--consumption-color);">
+                <div style="grid-column: 1 / -1;
+margin-top:10px; border-top: 1px solid #eee; padding-top:10px;">
+                    <h4 style="color:var(--consumption-color);
+margin-bottom:10px;">📊 آخر قراءة استهلاك</h4>
+                    <div style="display:flex;
+gap:10px; flex-wrap:wrap;">
+                        <div class="detail-card" style="flex:1;
+min-width:140px; border-left: 3px solid var(--consumption-color);">
                             <div class="detail-title">محول 1 (KW)</div>
                             <div class="detail-value" id="view-cons-t1">-</div>
                         </div>
-                        <div class="detail-card" style="flex:1; min-width:140px; border-left: 3px solid var(--consumption-color);">
+           
+                        <div class="detail-card" style="flex:1; min-width:140px;
+border-left: 3px solid var(--consumption-color);">
                             <div class="detail-title">محول 2 (KW)</div>
                             <div class="detail-value" id="view-cons-t2">-</div>
                         </div>
-                        <div class="detail-card" style="flex:1; min-width:140px; border-left: 3px solid var(--consumption-color);">
+            
+                        <div class="detail-card" style="flex:1; min-width:140px;
+border-left: 3px solid var(--consumption-color);">
                             <div class="detail-title">مياه (M3)</div>
                             <div class="detail-value" id="view-cons-m3">-</div>
                         </div>
+             
                     </div>
-                    <div style="text-align:left; font-size:0.8rem; color:#888; margin-top:5px;">تاريخ آخر تحديث للاستهلاك: <span id="view-cons-date">-</span></div>
+                    <div style="text-align:left;
+font-size:0.8rem; color:#888; margin-top:5px;">تاريخ آخر تحديث للاستهلاك: <span id="view-cons-date">-</span></div>
                 </div>
 
-                <div class="detail-card" style="grid-column: 1 / -1; margin-top:10px;"><div class="detail-title">آخر تحديث (System)</div><div class="detail-value" id="last-update-value" style="font-size:0.8rem; color:#666;">-</div></div>
+                <div class="detail-card" style="grid-column: 1 / -1;
+margin-top:10px;"><div class="detail-title">آخر تحديث (System)</div><div class="detail-value" id="last-update-value" style="font-size:0.8rem; color:#666;">-</div></div>
                 
-                <div class="detail-card" style="grid-column: 1 / -1; background-color: #fffde7;">
+                <div class="detail-card" style="grid-column: 1 / -1;
+background-color: #fffde7;">
                     <div class="detail-title">ملاحظات التشغيل</div>
-                    <div class="detail-value" id="station-comments-value" style="font-weight: normal; font-size: 1rem;">-</div>
+                    <div class="detail-value" id="station-comments-value" style="font-weight: normal;
+font-size: 1rem;">-</div>
                 </div>
             </div>
             <h3>المضخات</h3>
             <div class="table-responsive">
                 <table class="pumps-table">
                     <thead><tr><th>رقم</th><th>الحالة</th><th>سحب</th><th>طرد</th><th>تردد</th></tr></thead>
+         
                     <tbody id="pumps-table-body"></tbody>
                 </table>
             </div>
@@ -719,131 +864,169 @@
             </div>
         </div>
 
-        <div id="operator-screen" class="screen">
+  
+                <div id="operator-screen" class="screen">
             <h2>تحديث بيانات / إدارة الأعطال</h2>
-            <h3 id="editing-station-name" style="text-align: center; color: var(--secondary-color); margin-bottom: 20px; border-bottom: none;"></h3>
-            <div style="display:flex; justify-content:space-between; margin-bottom: 15px;">
+            <h3 id="editing-station-name" style="text-align: center;
+color: var(--secondary-color); margin-bottom: 20px; border-bottom: none;"></h3>
+            <div style="display:flex; justify-content:space-between;
+margin-bottom: 15px;">
                 <button id="back-to-station" class="btn btn-outline">إلغاء</button>
                 <button id="edit-inspection-btn" class="btn btn-info">📋 شاشة الفحص</button>
             </div>
             <div id="operator-alert" class="alert"></div>
 
-            <div id="active-fault-control" style="background: #fff3cd; border: 1px solid #ffeeba; padding: 15px; border-radius: 6px; margin-bottom: 20px; display: none;">
-                <h4 style="color: #856404; margin-bottom: 10px;">🛑 تنبيه: أعطال نشطة</h4>
+            <div id="active-fault-control" style="background: #fff3cd;
+border: 1px solid #ffeeba; padding: 15px; border-radius: 6px; margin-bottom: 20px;
+display: none;">
+                <h4 style="color: #856404;
+margin-bottom: 10px;">🛑 تنبيه: أعطال نشطة</h4>
                 <div id="fault-row-1" class="fault-row-action" style="display:none;">
                     <div><span style="font-weight:bold;">عطل 1:</span> <span id="txt-fault-1"></span></div>
                     <button id="btn-resolve-f1" class="btn btn-success btn-sm">✅ إصلاح</button>
                 </div>
             
+ 
                 <div id="fault-row-2" class="fault-row-action" style="display:none;">
                     <div><span style="font-weight:bold;">عطل 2:</span> <span id="txt-fault-2"></span></div>
                     <button id="btn-resolve-f2" class="btn btn-success btn-sm">✅ إصلاح</button>
                 </div>
             </div>
 
-            <div class="operator-form">
+    
+                <div class="operator-form">
                 <div class="form-section">
                     <h3>بيانات عامة</h3>
                     <div class="form-group"><label>المشغل الحالي</label><input type="text" id="operator-name" readonly style="background: #eee;"></div>
-                    <div style="display: flex; gap: 10px;">
+                    <div style="display: flex;
+gap: 10px;">
                         <div class="form-group" style="flex: 1;">
                             <label>وقت التشغيل 🟢</label>
                             <input type="time" id="operator-start-time" style="direction: ltr;">
+          
                         </div>
                         <div class="form-group" style="flex: 1;">
                             <label>وقت الإيقاف 🔴</label>
-                            <input type="time" id="operator-stop-time" style="direction: ltr;">
+                            <input 
+type="time" id="operator-stop-time" style="direction: ltr;">
                         </div>
                     </div>
 
                     <div class="form-group"><label>الجهد الكهربي (V)</label><input type="number" id="operator-voltage"></div>
                     <div class="form-group"><label>الضغط (Bar)</label><input type="number" id="operator-pressure" step="0.1"></div>
+   
                     <div class="form-group"><label>التدفق (L/Sec)</label><input type="number" id="operator-water-flow"></div>
                     <div class="form-group">
                         <label>النظام</label>
                         <select id="operator-system-mode">
+         
                             <option value="SCADA">SCADA</option><option value="PLC">PLC</option><option value="MIMIC">MIMIC</option><option value="LCP">LCP</option><option value="Marshlling">Marshlling</option><option value="HMI">HMI</option>
                         </select>
                     </div>
                 </div>
                
+ 
 
                 <div class="form-section">
                     <h3>حالة المضخات</h3>
                     <div id="pumps-form-container" class="pump-controls"></div>
                 </div>
                 
+        
                 <div class="form-section">
-                    <div class="form-group" style="border: 2px dashed var(--danger-color); padding: 10px; border-radius: 6px; background: #fff5f5;">
+                    <div class="form-group" style="border: 2px dashed var(--danger-color);
+padding: 10px; border-radius: 6px; background: #fff5f5;">
                         <label style="color: var(--danger-color);">⚠️ تسجيل عطل جديد</label>
                         <div id="fault-selectors-group">
-                            <label style="font-size:0.9rem; margin-top:5px;">عطل رقم (1):</label>
+                            <label style="font-size:0.9rem;
+margin-top:5px;">عطل رقم (1):</label>
                             <select id="fault-selector" style="border-color: var(--danger-color);">
                                 <option value="">-- المحطة تعمل بشكل طبيعي --</option>
+                             
                                 <option value="انقطاع التيار الكهربي">انقطاع التيار الكهربي ⚡</option>
                                 <option value="انخفاض جهد">انخفاض جهد ⚡📉</option>
                                 <option value="ارتفاع جهد">ارتفاع جهد ⚡📈</option>
+                   
                                 <option value="انخفاض منسوب">انخفاض منسوب 📉</option>
                                 <option value="توقف منظومة التحضير">توقف منظومة التحضير عن العمل ⚙️</option>
                                 <option value="انسدادات">انسدادات ▦</option>
+         
                                 <option value="تسريب مياه">تسريب مياه بالمحطة 💧</option>
                                 <option value="كسر في الشبكة">كسر في شبكة المياه 🛠️</option>
-                                <option value="عجز تحقيق الضغط">عجز تحقيق الضغط 🔻</option>
+                                <option 
+value="عجز تحقيق الضغط">عجز تحقيق الضغط 🔻</option>
                                 <option value="انقطاع الاتصال SCADA">انقطاع الاتصال SCADA 📡</option>
                             </select>
-                            <input type="text" id="fault-1-desc" placeholder="وصف العطل / ملاحظات..." class="desc-input">
+                            <input 
+type="text" id="fault-1-desc" placeholder="وصف العطل / ملاحظات..." class="desc-input">
 
-                            <label style="font-size:0.9rem; margin-top:10px;">عطل رقم (2):</label>
+                            <label style="font-size:0.9rem;
+margin-top:10px;">عطل رقم (2):</label>
                             <select id="fault-selector-secondary" style="border-color: #e67e22;">
                                 <option value="">-- لا يوجد عطل آخر --</option>
+                             
                                 <option value="انقطاع التيار الكهربي">انقطاع التيار الكهربي ⚡</option>
                                 <option value="انخفاض جهد">انخفاض جهد ⚡📉</option>
                                 <option value="ارتفاع جهد">ارتفاع جهد ⚡📈</option>
+                   
                                 <option value="انخفاض منسوب">انخفاض منسوب 📉</option>
                                 <option value="توقف منظومة التحضير">توقف منظومة التحضير عن العمل ⚙️</option>
                                 <option value="انسدادات">انسدادات ▦</option>
+         
                                 <option value="تسريب مياه">تسريب مياه بالمحطة 💧</option>
                                 <option value="كسر في الشبكة">كسر في شبكة المياه 🛠️</option>
-                                <option value="عجز تحقيق الضغط">عجز تحقيق الضغط 🔻</option>
+                                <option 
+value="عجز تحقيق الضغط">عجز تحقيق الضغط 🔻</option>
                                 <option value="انقطاع الاتصال SCADA">انقطاع الاتصال SCADA 📡</option>
                             </select>
-                            <input type="text" id="fault-2-desc" placeholder="وصف العطل / ملاحظات..." class="desc-input">
+                            <input 
+type="text" id="fault-2-desc" placeholder="وصف العطل / ملاحظات..." class="desc-input">
                         </div>
                     </div>
 
-                    <div class="form-group" style="border: 2px solid var(--consumption-color); padding: 10px; border-radius: 6px; background: #eaf2f8; margin-top: 15px;">
-                        <label style="color: var(--consumption-color); font-size: 1.1rem;">⚡ تسجيل استهلاكات المحطة</label>
-                        <div style="display: flex; gap: 10px; margin-bottom: 10px;">
+                    <div class="form-group" style="border: 2px solid var(--consumption-color);
+padding: 10px; border-radius: 6px; background: #eaf2f8; margin-top: 15px;">
+                        <label style="color: var(--consumption-color);
+font-size: 1.1rem;">⚡ تسجيل استهلاكات المحطة</label>
+                        <div style="display: flex;
+gap: 10px; margin-bottom: 10px;">
                             <div style="flex:1">
                                 <label style="font-size: 0.9rem;">محول (1) KW</label>
+                                
                                 <input type="number" id="cons-trans-1" placeholder="KW">
                             </div>
                             <div style="flex:1">
                                 <label style="font-size: 0.9rem;">محول (2) KW</label>
+    
                                 <input type="number" id="cons-trans-2" placeholder="KW">
                             </div>
                         </div>
+                 
                         <div style="margin-bottom: 10px;">
                             <label style="font-size: 0.9rem;">المنصرف من المياه (M3)</label>
                             <input type="number" id="cons-water-m3" placeholder="متر مكعب">
                         </div>
+  
                     </div>
 
                     <div class="form-group"><label>ملاحظات عامة</label><textarea id="operator-comments" rows="3"></textarea></div>
                     <div class="form-actions"><button id="save-operator-data" class="btn btn-success" style="width: 100%;">حفظ البيانات</button></div>
                 </div>
             </div>
+   
         </div>
 
         <div id="inspection-screen" class="screen">
             <h2 id="inspection-title">شاشة الفحص الشامل</h2>
-            <div style="display:flex; justify-content:space-between; margin-bottom: 20px;">
+            <div style="display:flex;
+justify-content:space-between; margin-bottom: 20px;">
                 <button id="back-from-inspection" class="btn btn-outline">عودة</button>
             </div>
             
             <div id="inspection-container"></div>
             
-            <div id="inspection-actions" style="margin-top:10px; display:none; position:sticky; bottom:10px; z-index:999;">
+            <div id="inspection-actions" style="margin-top:10px;
+display:none; position:sticky; bottom:10px; z-index:999;">
                 <button id="save-inspection-btn" class="btn btn-success">💾 حفظ الفحص بالكامل</button>
             </div>
         </div>
@@ -851,25 +1034,32 @@
         <div id="consumptions-report-screen" class="screen">
             <h2 style="color: var(--consumption-color);">تقرير معدلات الاستهلاك</h2>
             <button id="back-to-stations-from-cons" class="btn btn-outline">عودة</button>
-            <div style="font-size:0.9rem; color:#666; margin-top:5px;">يقوم التقرير بحساب الاستهلاك بطرح (أول قراءة في فترة "إلى" - أول قراءة في فترة "من").</div>
-            <div class="filters-container" style="background: #f9f9f9; padding: 15px; border-radius: 8px; border: 1px solid #eee; margin-bottom: 20px; margin-top:10px; display: grid; gap: 10px; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));">
+            <div style="font-size:0.9rem;
+color:#666; margin-top:5px;">يقوم التقرير بحساب الاستهلاك بطرح (أول قراءة في فترة "إلى" - أول قراءة في فترة "من").</div>
+            <div class="filters-container" style="background: #f9f9f9;
+padding: 15px; border-radius: 8px; border: 1px solid #eee; margin-bottom: 20px; margin-top:10px; display: grid; gap: 10px;
+grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));">
                 <div class="filter-item"><label>المحطة</label><select id="cons-filter-station"><option value="all">كل المحطات</option></select></div>
                 <div class="filter-item"><label>من تاريخ (بداية الفترة السابقة)</label><input type="date" id="cons-filter-date-from"></div>
                 <div class="filter-item"><label>إلى تاريخ (بداية الفترة الحالية)</label><input type="date" id="cons-filter-date-to"></div>
-                <div class="filter-item" style="display:flex; align-items:flex-end; gap:5px;">
+                <div class="filter-item" style="display:flex;
+align-items:flex-end; gap:5px;">
                     <button class="btn btn-primary" onclick="renderConsumptionsTable()" style="flex:1">حساب</button>
                     <button class="btn btn-success" onclick="exportConsumptionsToCSV()" style="flex:1" title="تصدير CSV">CSV 📥</button>
                 </div>
             </div>
             
-            <div class="table-responsive">
+        
+                <div class="table-responsive">
                 <table class="history-table" id="consumptions-table-export">
                     <thead>
                         <tr>
                             <th>المحطة</th>
+     
                             <th>استهلاك محول 1 (KW)</th>
                             <th>استهلاك محول 2 (KW)</th>
                             <th>استهلاك مياه (M3)</th>
+             
                         </tr>
                     </thead>
                     <tbody id="consumptions-table-body"></tbody>
@@ -878,124 +1068,156 @@
         </div>
 
         <div id="faults-log-screen" class="screen">
-            <h2 style="color: var(--danger-color);">سجل الأعطال</h2>
-            <div style="display:flex; justify-content:space-between; align-items:center;">
+  
+                <h2 style="color: var(--danger-color);">سجل الأعطال</h2>
+            <div style="display:flex;
+justify-content:space-between; align-items:center;">
                 <button id="back-to-stations-from-faults" class="btn btn-outline">عودة</button>
             </div>
             
             <div style="margin-top:20px;">
                 <h3 style="margin-bottom:10px;">الأعطال النشطة حالياً</h3>
                 <div class="table-responsive">
+       
                     <table class="faults-table">
                         <thead><tr><th>المحطة</th><th>العطل</th><th>وقت البدء</th><th>المدة</th></tr></thead>
                         <tbody id="active-faults-body"></tbody>
                     </table>
+                
                 </div>
                 
-                <h3 style="margin-bottom:10px; margin-top:30px;">أرشيف الأعطال السابقة</h3>
-                <div style="margin-bottom: 15px; display: flex; gap: 10px; align-items: center; background: #fff3cd; padding: 10px; border-radius: 6px; border: 1px solid #ffeeba;">
-                    <label style="margin:0; font-weight:bold;">🔍 تصفية الأرشيف:</label>
-                    <select id="fault-archive-station-filter" style="flex:1; max-width:300px;" onchange="appData.faultsLimit=100; renderFaultsLog();">
+                <h3 style="margin-bottom:10px;
+margin-top:30px;">أرشيف الأعطال السابقة</h3>
+                <div style="margin-bottom: 15px;
+display: flex; gap: 10px; align-items: center; background: #fff3cd; padding: 10px; border-radius: 6px;
+border: 1px solid #ffeeba;">
+                    <label style="margin:0;
+font-weight:bold;">🔍 تصفية الأرشيف:</label>
+                    <select id="fault-archive-station-filter" style="flex:1;
+max-width:300px;" onchange="appData.faultsLimit=100; renderFaultsLog();">
                         <option value="all">-- عرض كافة المحطات --</option>
                     </select>
                 </div>
 
                 <div class="table-responsive">
+                
                     <table class="faults-table">
                         <thead><tr><th>المحطة</th><th>العطل</th><th>وقت البدء</th><th>وقت الإصلاح</th><th>الحالة</th></tr></thead>
                         <tbody id="history-faults-body"></tbody>
                     </table>
                 </div>
 
+        
                 <div class="pagination-controls">
                     <p id="faults-status-text" class="status-text"></p>
-                    <button id="load-more-faults-btn" class="btn btn-warning" style="display: none; width: 200px; margin: 0 auto;">⚠️ عرض 100 عطل إضافي</button>
+                    <button id="load-more-faults-btn" class="btn btn-warning" style="display: none;
+width: 200px; margin: 0 auto;">⚠️ عرض 100 عطل إضافي</button>
                 </div>
             </div>
         </div>
 
-        <!-- شاشة بيانات المستخدم الجديدة -->
         <div id="user-profile-screen" class="screen">
             <h2 style="color: var(--profile-color);">إدارة بيانات المستخدمين</h2>
             <button id="back-to-stations-from-profile" class="btn btn-outline">عودة للرئيسية</button>
+ 
             
             <div class="profile-alert" id="profile-alert"></div>
             
             <div class="profile-container">
-                <!-- القسم الأول: تسجيل البيانات الشخصية -->
                 <div class="profile-card">
-                    <h3 style="color: var(--profile-color); margin-bottom: 20px;">📝 تسجيل البيانات الشخصية</h3>
+           
+                    <h3 style="color: var(--profile-color);
+margin-bottom: 20px;">📝 تسجيل البيانات الشخصية</h3>
                     <div class="profile-form-grid">
                         <div class="form-group full-width">
                             <label>اسم المستخدم الحالي</label>
-                            <input type="text" id="profile-username" readonly style="background: #f0f0f0; font-weight: bold;">
+                   
+                            <input type="text" id="profile-username" readonly style="background: #f0f0f0;
+font-weight: bold;">
                         </div>
                         
                         <div class="form-group">
+                          
                             <label>الاسم الثلاثي <span style="color: red;">*</span></label>
                             <input type="text" id="profile-fullname" placeholder="الاسم الكامل">
                         </div>
                         
+              
                         <div class="form-group">
                             <label>رقم المحطة <span style="color: red;">*</span></label>
                             <select id="profile-station">
+                            
                                 <option value="">-- اختر المحطة --</option>
                             </select>
                         </div>
                         
+                
                         <div class="form-group">
                             <label>رقم الهاتف <span style="color: red;">*</span></label>
                             <input type="tel" id="profile-phone" placeholder="مثال: 01012345678">
                         </div>
-                        
+   
+                                             
                         <div class="form-group">
                             <label>رقم الواتساب</label>
+                         
                             <input type="tel" id="profile-whatsapp" placeholder="مثال: 01012345678">
                         </div>
                         
                         <div class="form-group full-width">
+                   
                             <label>البريد الإلكتروني</label>
                             <input type="email" id="profile-email" placeholder="مثال: user@example.com">
                         </div>
                         
+          
                         <div class="form-group full-width" style="margin-top: 20px;">
                             <button id="save-profile-btn" class="btn btn-profile" style="width: 100%;">💾 حفظ البيانات الشخصية</button>
                         </div>
                     </div>
+  
                 </div>
                 
-                <!-- القسم الثاني: قائمة بيانات المستخدمين المسجلين -->
                 <div class="profile-card">
-                    <h3 style="color: var(--profile-color); margin-bottom: 20px;">👥 بيانات المستخدمين المسجلين</h3>
+                    <h3 style="color: var(--profile-color);
+margin-bottom: 20px;">👥 بيانات المستخدمين المسجلين</h3>
                     
                     <div class="profile-search-container">
                         <span class="profile-search-icon">🔍</span>
-                        <input type="text" id="search-profile-input" placeholder="البحث عن مستخدم (الاسم أو المحطة)..." style="width: 100%;">
+                        <input type="text" id="search-profile-input" placeholder="البحث عن مستخدم 
+(الاسم أو المحطة)..." style="width: 100%;">
                     </div>
                     
                     <div class="table-responsive">
                         <table class="users-profiles-table">
+          
                             <thead>
                                 <tr>
                                     <th>اسم المستخدم</th>
+             
                                     <th>رقم المحطة</th>
                                     <th>الاسم الثلاثي</th>
                                     <th>رقم الهاتف</th>
+  
                                     <th>رقم الواتساب</th>
                                     <th>البريد الإلكتروني</th>
+                            
                                     <th>الإجراءات</th>
                                 </tr>
                             </thead>
                             <tbody id="users-profiles-list">
-                                <!-- سيتم ملؤها بالبيانات من JavaScript -->
-                            </tbody>
+   
+                                </tbody>
                         </table>
+             
                     </div>
                     
                     <div id="no-profiles-message" class="no-profiles-message" style="display: none;">
-                        <div style="font-size: 2rem; margin-bottom: 10px;">📋</div>
+                        <div style="font-size: 2rem;
+margin-bottom: 10px;">📋</div>
                         <div>لا توجد بيانات مستخدمين مسجلة في النظام</div>
-                        <div style="font-size: 0.9rem; margin-top: 10px;">يمكنك تسجيل بياناتك الشخصية في القسم الأيسر</div>
+                        <div style="font-size: 0.9rem;
+margin-top: 10px;">يمكنك تسجيل بياناتك الشخصية في القسم الأيسر</div>
                     </div>
                 </div>
             </div>
@@ -1003,79 +1225,97 @@
 
         <div id="users-screen" class="screen">
             <div class="users-header">
+              
                 <h2>إدارة المستخدمين</h2>
                 <button id="back-to-stations-from-users" class="btn btn-outline">عودة للرئيسية</button>
             </div>
             
             <div id="user-form-container" class="user-form-card" style="display: none;">
-                <h4 id="user-form-title" style="margin-bottom:15px; color: var(--secondary-color);">مستخدم جديد</h4>
+                <h4 id="user-form-title" style="margin-bottom:15px;
+color: var(--secondary-color);">مستخدم جديد</h4>
                 <div class="user-form-grid">
                     <div class="form-group">
                         <label>اسم المستخدم</label>
                         <input type="text" id="new-username" placeholder="أدخل اسم المستخدم">
+      
                     </div>
                     <div class="form-group">
                         <label>كلمة المرور</label>
                         <input type="text" id="new-password" placeholder="أدخل كلمة المرور">
+           
                     </div>
                     <div class="form-group">
                         <label>نوع المستخدم</label>
                         <select id="new-user-type"></select>
+                    
                     </div>
                 </div>
                 <div class="user-action-buttons">
                     <button id="save-user-btn" class="btn btn-success" style="flex:1">💾 حفظ المستخدم</button>
                     <button id="cancel-user-btn" class="btn btn-danger" style="flex:1">❌ إلغاء</button>
+                
                 </div>
             </div>
             
-            <div style="margin: 25px 0 15px; display:flex; justify-content:space-between; align-items:center;">
+            <div style="margin: 25px 0 15px;
+display:flex; justify-content:space-between; align-items:center;">
                 <h3>قائمة المستخدمين</h3>
                 <button id="add-user-btn" class="btn btn-primary">➕ إضافة مستخدم جديد</button>
             </div>
             
             <div class="users-search-container">
                 <span class="users-search-icon">🔍</span>
+     
                 <input type="text" id="search-user-input" placeholder="البحث عن مستخدم (الاسم)..." onkeyup="renderUsersManagement()" style="width: 100%;">
             </div>
             
             <div class="table-responsive">
                 <table class="users-table">
                     <thead>
+      
                         <tr>
                             <th>اسم المستخدم</th>
                             <th>نوع المستخدم</th>
+                        
                             <th>كلمة المرور</th>
                             <th>الإجراءات</th>
                         </tr>
                     </thead>
                     <tbody id="users-table-body"></tbody>
+  
                 </table>
             </div>
             
             <div id="no-users-message" class="no-users-message" style="display: none;">
-                <div style="font-size: 2rem; margin-bottom: 10px;">👥</div>
+                <div style="font-size: 2rem;
+margin-bottom: 10px;">👥</div>
                 <div>لا توجد مستخدمين مسجلين في النظام</div>
-                <div style="font-size: 0.9rem; margin-top: 10px;">اضغط على زر "إضافة مستخدم جديد" لبدء إضافة المستخدمين</div>
+                <div style="font-size: 0.9rem;
+margin-top: 10px;">اضغط على زر "إضافة مستخدم جديد" لبدء إضافة المستخدمين</div>
             </div>
         </div>
 
         <div id="history-screen" class="screen">
             <h2>سجل العمليات العام</h2>
             <button id="back-to-stations-from-history" class="btn btn-outline">عودة</button>
-            <div class="filters-container" style="background: #f9f9f9; padding: 15px; border-radius: 8px; border: 1px solid #eee; margin-bottom: 20px; display: grid; gap: 10px; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));">
+            <div class="filters-container" style="background: #f9f9f9;
+padding: 15px; border-radius: 8px; border: 1px solid #eee; margin-bottom: 20px; display: grid; gap: 10px;
+grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));">
                 <div class="filter-item"><label>المنطقة</label><select id="filter-zone" onchange="updateStationFilter()"><option value="all">كل المناطق</option></select></div>
                 <div class="filter-item"><label>المحطة</label><select id="filter-station"><option value="all">كل المحطات</option></select></div>
                 <div class="filter-item"><label>من تاريخ</label><input type="date" id="filter-date-from"></div>
                 <div class="filter-item"><label>إلى تاريخ</label><input type="date" id="filter-date-to"></div>
                 
-                <div class="filter-item" style="display:flex; align-items:flex-end;">
+ 
+                <div class="filter-item" style="display:flex;
+align-items:flex-end;">
                     <button class="btn btn-primary" onclick="renderHistoryTable(true)" style="width:100%">بحث وتصفية</button>
                 </div>
             </div>
             
             <div class="table-responsive">
                 <table class="history-table">
+     
                     <thead><tr><th style="width:15%">التاريخ والوقت</th><th style="width:15%">المحطة</th><th style="width:15%">المشغل</th><th>تفاصيل</th></tr></thead>
                     <tbody id="history-table-body"></tbody>
                 </table>
@@ -1083,7 +1323,9 @@
 
             <div class="pagination-controls">
                 <p id="history-status-text" class="status-text"></p>
-                <button id="load-more-history-btn" class="btn btn-primary" style="display: none; width: 200px; margin: 0 auto;">⬇️ عرض 100 سجل إضافي</button>
+ 
+                <button id="load-more-history-btn" class="btn btn-primary" style="display: none;
+width: 200px; margin: 0 auto;">⬇️ عرض 100 سجل إضافي</button>
             </div>
         </div>
     </div>
@@ -1096,6 +1338,7 @@
         const firebaseConfig = {
             apiKey: "AIzaSyAJiiq8qdeRFZkaHnEew-6sisbCRaypJQ8",
             authDomain: "toshka-4db86.firebaseapp.com",
+    
             databaseURL: "https://toshka-4db86-default-rtdb.firebaseio.com",
             projectId: "toshka-4db86",
             storageBucket: "toshka-4db86.firebasestorage.app",
@@ -1105,110 +1348,124 @@
         if (!firebase.apps.length) { firebase.initializeApp(firebaseConfig); }
         const db = firebase.database();
 
+        
         const faultIcons = {
             "انقطاع التيار الكهربي": "⚡", "انخفاض جهد": "⚡📉", "ارتفاع جهد": "⚡📈",
             "انخفاض منسوب": "📉", "توقف منظومة التحضير": "⚙️", "انسدادات": "▦", 
             "تسريب مياه": "💧", "كسر في الشبكة": "🛠️", "عجز تحقيق الضغط": "🔻",
-            "انقطاع الاتصال SCADA": `<svg viewBox="0 0 24 24" width="20" height="20" class="scada-icon-svg" style="color:#d32f2f;" fill="currentColor"><path d="M12 3C7.79 3 3.7 4.41 0.38 7/L2.6 9.22C5.35 7.15 8.55 6 12 6C15.45 6 18.65 7.15 21.4 9.22L23.62 7C20.3 4.41 16.21 3 12 3Z" /><path d="M12 8C9.48 8 7.15 8.76 5.18 10.05L7.4 12.27C8.71 11.47 10.28 11 12 11C13.72 11 15.29 11.47 16.6 12.27L18.82 10.05C16.85 8.76 14.52 8 12 8Z" /><path d="M12 13L6 21H18L12 13ZM11 18H13V19.5H11V18ZM11 15.5H13V17.5H11V15.5Z" /></svg>`
+            "انقطاع الاتصال SCADA": `<svg viewBox="0 0 24 24" width="20" height="20" class="scada-icon-svg" style="color:#d32f2f;" fill="currentColor"><path d="M12 3C7.79 3 3.7 4.41 0.38 7/L2.6 9.22C5.35 
+7.15 8.55 6 12 6C15.45 6 18.65 7.15 21.4 9.22L23.62 7C20.3 4.41 16.21 3 12 3Z" /><path d="M12 8C9.48 8 7.15 8.76 5.18 10.05L7.4 12.27C8.71 11.47 10.28 11 12 11C13.72 11 15.29 11.47 16.6 12.27L18.82 10.05C16.85 8.76 14.52 8 12 8Z" /><path d="M12 13L6 21H18L12 13ZM11 18H13V19.5H11V18ZM11 15.5H13V17.5H11V15.5Z" /></svg>`
         };
-        
         const inspectionSchema = {
             prepSystem: { title: "منظومة التحضير", items: ["الكومبريوسر", "طلمبة تحضير 1", "طلمبة تحضير 2", "تانك التعويض", "تانك التحضير", "لوحه التحضير"] },
             pumps: {
                 title: "المضخات", isDynamic: true,
                 items: [
+                 
                     "محبس فراشه", "وصله فك و تركيب", "وصله مرنه", "عداد السحب", "حساس السحب", // Suction
                     "المضخه", // Pump
                     "عداد الطرد", "حساس الطرد", "وصله مرنه", "اير فينت", "محبس عدم رجوع", "وصله فك و تركيب", "محبس فراشه" // Discharge
                 ]
+        
             },
             mainLine: { title: "خط الطرد الرئيسي", items: ["اير فينت", "محبس عدم رجوع", "وصله فك و تركيب 1", "الفلوميتر", "حساس ضغط", "عداد ضغط", "وصله فك و تركيب 2", "محبس فراشه", "محبس درين"] },
             waterHammer: { title: "منظومة الطرق المائي", items: ["كومبريسور1", "كومبريسور2", "كومبريسور3", "تانك 1", "تانك 2", "تانك 3", "لوحه كونترول"] },
-            submersibles: { title: "الغواطس", items: ["طلمبة غاطس 1", "طلمبة غاطس 2"] },
+            submersibles: { title: "الغواطس", items: ["طلمبة غاطس 1", "طلمبة غاطس 2"] 
+},
             ac: { title: "تكييفات المحطه", items: ["تكييف 1", "تكييف 2", "تكييف 3", "تكييف 4", "تكييف 5", "تكييف 6", "تكييف 7", "تكييف 8", "9-PLC", "10-PLC"] },
             ventilation: { title: "التهوية", items: ["غرفه المضخات", "غرفه محول 1", "غرفه محول 2", "غرفه رينج"] },
             crane: { title: "الونش", items: ["الونش"] }
         };
-        
         const statusOptions = [
             { val: "efficient", text: "✅ يعمل بكفاءة", class: "efficient" },
             { val: "fault", text: "⚠️ عطل / ملاحظة", class: "fault" },
             { val: "broken", text: "🛑 لا يعمل", class: "broken" },
             { val: "none", text: "⚪ لا يوجد", class: "none" }
         ];
-        
         // --- USER TYPES & PERMISSIONS DEFINITION ---
         const userTypes = {
             admin: {
                 name: "مدير",
                 permissions: {
                     view_all: true,
+              
                     edit_all: true,
                     manage_users: true,
                     add_users: true,
                     delete_users: true,
                     view_history: true,
+         
                     view_passwords: true,
                     view_profiles: true,
                     delete_profiles: true,
                     can_manage_types: ['admin', 'engineer', 'supervisor', 'operator'],
-                    can_add_types: ['admin', 'engineer', 'supervisor', 'operator'],
+                    can_add_types: ['admin', 
+'engineer', 'supervisor', 'operator'],
                     can_delete_types: ['admin', 'engineer', 'supervisor', 'operator']
                 }
             },
             engineer: {
                 name: "مهندس",
+                
                 permissions: {
                     view_all: true,
                     edit_all: true,
                     manage_users: true,
                     add_users: true,
+               
                     delete_users: true,
                     view_history: true,
                     view_passwords: false,
                     view_profiles: true,
                     delete_profiles: false,
+          
                     can_manage_types: ['supervisor', 'operator'],
                     can_add_types: ['supervisor', 'operator'],
                     can_delete_types: ['supervisor', 'operator']
                 }
             },
             supervisor: {
+   
                 name: "مشرف",
                 permissions: {
                     view_all: true,
                     edit_some: true,
                     manage_users: true,
+      
                     add_users: true,
                     delete_users: true,
                     view_history: false,
                     view_passwords: false,
                     view_profiles: true,
+ 
                     delete_profiles: false,
                     can_manage_types: ['operator'],
                     can_add_types: ['operator'],
                     can_delete_types: ['operator']
                 }
+ 
             },
             operator: {
                 name: "مشغل",
                 permissions: {
                     view_some: true,
-                    edit_own: true,
+                    edit_own: 
+true,
                     manage_users: false,
                     add_users: false,
                     delete_users: false,
                     view_history: false,
+                
                     view_passwords: false,
                     view_profiles: false,
                     delete_profiles: false,
                     can_manage_types: [],
                     can_add_types: [],
+           
                     can_delete_types: []
                 }
             }
         };
-        
         let appData = {
             currentUser: null, 
             currentStation: null, 
@@ -1216,34 +1473,40 @@
             users: {},
             userProfiles: {},
             userTypes: userTypes,
-            zones: ['Zone_A', 'Zone_B', 'Zone_C', 'Zone_D', 'Zone_E', 'Zone_F', 'Zone_G', 'Zone_H', 'Zone_I', 'Zone_J', 'Zone_K', 'Zone_L', 'Zone_O1', 'Zone_O2', 'Zone_O3', 'Zone_O4', 'Zone_O5', 'Zone_O2dashO6', 'Zone_O8', 'Zone_R', 'Zone_S'],
+            zones: ['Zone_A', 'Zone_B', 'Zone_C', 
+'Zone_D', 'Zone_E', 'Zone_F', 'Zone_G', 'Zone_H', 'Zone_I', 'Zone_J', 'Zone_K', 'Zone_L', 'Zone_O1', 'Zone_O2', 'Zone_O3', 'Zone_O4', 'Zone_O5', 'Zone_O2dashO6', 'Zone_O8', 'Zone_R', 'Zone_S'],
             operationHistory: [], 
             faultsLog: [], 
             consumptionLog: [],
             historyLimit: 100, 
             faultsLimit: 100
         };
-        
         const pumpsData = {
             'A01': 4, 'A02': 4, 'A04': 2, 'A06': 5, 'A07': 5, 'A08': 4, 'A09': 5, 'A10': 5, 'A11': 5, 'A12': 5, 'A13': 5, 'A14': 4, 'A15': 4,
             'B01': 5, 'B02': 5, 'B03': 5, 'B04': 5, 'B05': 4, 'B06': 2, 'B07': 4, 'B08': 5, 'B09': 3, 'B10': 5, 'B11': 5, 'B12': 2, 'B13': 5, 'C01': 5, 'C02': 5, 'C03': 5,
-            'D01': 3, 'D02': 5, 'D03': 3, 'D04': 5, 'D05': 5, 'D06': 2, 'D07': 3, 'D08': 3, 'D09': 3, 'D10': 5, 'D11': 3, 'D12': 3, 'D13': 3, 'D14': 3, 'D15': 5, 'D16': 4, 'D17': 4, 'D18': 5, 'D19': 5, 'D20': 5,
+            'D01': 3, 'D02': 5, 'D03': 
+3, 'D04': 5, 'D05': 5, 'D06': 2, 'D07': 3, 'D08': 3, 'D09': 3, 'D10': 5, 'D11': 3, 'D12': 3, 'D13': 3, 'D14': 3, 'D15': 5, 'D16': 4, 'D17': 4, 'D18': 5, 'D19': 5, 'D20': 5,
             'E01': 5, 'E02': 5, 'E03': 5, 'E04': 5, 'E05': 5, 'E06': 5, 'E07': 5, 'E08': 5, 'E09': 5, 'E10': 4, 'E11': 5, 'F01': 5, 'F02': 5, 'G01': 5, 'G02': 5, 'G03': 4, 'H01': 5, 'H02': 5, 'I01': 5, 'J01': 5, 'J02': 5,
-            'K01': 5, 'K02': 5, 'K03': 5, 'K04': 5, 'K05': 5, 'K06': 5, 'K07': 5, 'K08': 5, 'K09': 5, 'K10': 3,
+            'K01': 
+5, 'K02': 5, 'K03': 5, 'K04': 5, 'K05': 5, 'K06': 5, 'K07': 5, 'K08': 5, 'K09': 5, 'K10': 3,
             'L01_1': 5, 'L01_2': 5, 'L02': 7, 'L03': 5, 'L04': 6, 'L05': 5, 'L06': 5, 'L07_1': 5, 'L07_2': 4, 'L08': 4, 'L09': 5, 'L10': 7, 'L11': 5, 'L12': 5, 'L13': 5, 'L14_1': 6, 'L14_2': 6, 'L14_3': 6, 'L14_4': 7,
-            'O1-1-P1': 4, 'O1-2-P2': 4, 'O1-2-P2-B1': 4, 'O1-3-P3': 4, 'O1-4-P4': 4, 'O1-4-P4-B2': 4, 'O1-5-P5': 4, 'O1-5-P5-B3': 4, 'O1-5-P6': 4, 'O1-5-P7': 4, 'O1-6-P8': 4, 'O1-6-P9': 4, 'O1-6-P9-B4': 4, 'O1-6-P10': 4, 'O1-6-P10-B5': 4, 'O1-7-P11': 4, 'O1-7-P11-B7': 4, 'O1-7-P12': 4, 'O1-7-P12-B6': 4, 'O1-7-P13': 4, 'O1-8-P14': 4, 'O1-8-P15': 4, 'O1-8-P16': 4, 'O1-8-P16-B8': 4,
+            'O1-1-P1': 4, 'O1-2-P2': 4, 'O1-2-P2-B1': 4, 'O1-3-P3': 4, 'O1-4-P4': 4, 'O1-4-P4-B2': 4, 'O1-5-P5': 4, 'O1-5-P5-B3': 4, 'O1-5-P6': 4, 'O1-5-P7': 4, 'O1-6-P8': 
+4, 'O1-6-P9': 4, 'O1-6-P9-B4': 4, 'O1-6-P10': 4, 'O1-6-P10-B5': 4, 'O1-7-P11': 4, 'O1-7-P11-B7': 4, 'O1-7-P12': 4, 'O1-7-P12-B6': 4, 'O1-7-P13': 4, 'O1-8-P14': 4, 'O1-8-P15': 4, 'O1-8-P16': 4, 'O1-8-P16-B8': 4,
             'O2-1-P1': 4, 'O2-2-P3': 5, 'O2-2-P3-B2': 5, 'O2-2-P4': 4, 'O2-3-P5': 5, 'O2-3-P6': 4, 'O2-3-P6-B3': 4, 'O2-4-P7': 4, 'O2-4-P8': 4, 'O2-4-P9': 4, 'O2-4-P9-B4': 4, 'O2-5-P10': 4, 'O2-5-P10-B5': 4, 'O2-5-P11': 4, 'O2-5-P12': 4, 'O2-6-P13': 4, 'O2-6-P13-B7': 4, 'O2-6-P14': 5, 'O2-6-P14-B6': 5, 'O2-6-P15': 5, 'O2-7-P17-B8': 4, 'O2-7-P17-B9': 4,
-            'O3-1-P1': 5, 'O3-1-P2': 4, 'O3-1-P3': 6, 'O3-2-P4': 6, 'O3-3-P5': 4, 'O3-3-P6': 4, 'O3-4-P7': 4, 'O3-5-P8': 4, 'O3-6-P9': 5, 'O3-6-P10': 6, 'O3-7-P11': 3, 'O3-7-P12': 4, 'O3-7-P13': 4, 'O3-7-P14': 5, 'O3-7-P15': 5, 'O3-7-P16': 6,
+            'O3-1-P1': 5, 'O3-1-P2': 4, 'O3-1-P3': 6, 'O3-2-P4': 
+6, 'O3-3-P5': 4, 'O3-3-P6': 4, 'O3-4-P7': 4, 'O3-5-P8': 4, 'O3-6-P9': 5, 'O3-6-P10': 6, 'O3-7-P11': 3, 'O3-7-P12': 4, 'O3-7-P13': 4, 'O3-7-P14': 5, 'O3-7-P15': 5, 'O3-7-P16': 6,
             'O4-1-P1': 5, 'O4-1-P2': 5, 'O4-1-P3': 4, 'O4-1-P4': 5, 'O4-1-P5': 4, 'O4-2-P6': 4, 'O4-2-P7': 4, 'O4-2-P8': 5, 'O4-3-P9': 5, 'O4-4-P10': 4, 'O4-5-P11': 4, 'O4-6-P12': 4, 'O4-7-P13': 4, 'O4-8-P14': 4, 'O4-9-P15': 4, 'O4-9-P16': 4, 'O4-9-P17': 4, 'O4-9-P18': 4, 'O4-10-P19': 4, 'O4-10-P20': 5, 'O4-10-P21': 5, 'O4-10-P22': 5,
-            'O5-1-P1': 4, 'O5-2-P2': 4, 'O5-3-P4': 5, 'O5-3-P5': 4, 'O5-3-P6': 3, 'O5-4-P7': 3, 'O5-4-P8': 5, 'O5-5-P10': 2, 'O5-5-P9': 5, 'O5-6-P11': 4, 'O5-6-P12': 3, 'O5-7-P13': 5, 'O5-8-P14': 5,
+            'O5-1-P1': 4, 'O5-2-P2': 4, 'O5-3-P4': 5, 'O5-3-P5': 4, 'O5-3-P6': 
+3, 'O5-4-P7': 3, 'O5-4-P8': 5, 'O5-5-P10': 2, 'O5-5-P9': 5, 'O5-6-P11': 4, 'O5-6-P12': 3, 'O5-7-P13': 5, 'O5-8-P14': 5,
             'O6-1-P1': 4, 'O6-2-P2': 3, 'O6-3-P3': 4, 'O6-3-P4': 5, 'O6-3-P5': 5, 'O6-3-P6': 6, 'O6-3-P7': 6,
             'O8-1-P1': 4, 'O8-2-P2': 6, 'O8-3-P3': 4, 'O8-4-P4': 5, 'O8-5-P5': 5, 'O8-6-P6': 6, 'O8-7-P7': 5, 'O8-8-P8': 4, 'O8-8-P9': 5, 'O8-8-P10': 6, 'O8-8-P11': 5, 'O8-8-P12': 5, 'O8-9-P13': 5, 'O8-10-P14': 4,
             'Lifting-1A': 10, 'Lifting-1B': 10, 'Lifting-2A': 10, 'Lifting-2B': 10,
+ 
             'R01': 4, 'R02': 6, 'R03*': 6, 'R03-A': 7, 'R03-B': 5, 'R04': 7, 'R05-A': 7, 'R05-B': 8, 'R05-C': 8, 'R05-D': 6, 'R05-E': 7, 'R05-F': 6, 'R05-G': 7, 'R05-H': 7, 'R05-I': 7, 'R05-J1': 7, 'R05-J2': 7, 'R05-K': 7, 'R06': 7, 'R07': 8, 'R08-A': 7, 'R08-B': 7, 'R08-C': 5, 'R08-D': 6, 'R08-E': 7, 'R08-F1': 7, 'R08-F2': 7, 'R08-F3': 7, 'R09-A': 8, 'R09-B': 8, 'R09-C': 8, 'R10': 7, 'R11': 7, 'R12-A': 6, 'R12-B': 7,
             'Lifting-57S': 6, 'Lifting-8S': 12, 'Lifting-17S': 12,
+   
             'S01-A': 7, 'S01-B': 7, 'S02-A': 6, 'S02-B': 7, 'S03': 6, 'S04': 6, 'S05-A': 6, 'S05-B': 6, 'S06': 6, 'S07-A': 7, 'S07-B': 7, 'S08': 6, 'S09-A': 7, 'S09-B': 7, 'S09-C': 8, 'S09-D': 8, 'S09-E': 6, 'S09-F': 6
         };
-        
         function toEnglishDigits(str) {
             if (!str) return str;
             str = str.trim();
@@ -1360,14 +1623,18 @@
                     .then(() => {
                         if(item.data.log) db.ref('history').push(item.data.log);
                         if(item.data.consLog) db.ref('consumption_logs').push(item.data.consLog);
+    
                         if(item.data.newFaults) {
                             db.ref('faults_log').once('value').then(snap => {
                                 let rawVal = snap.val();
+              
                                 let logs = Array.isArray(rawVal) ? rawVal : (rawVal ? Object.values(rawVal) : []);
                                 item.data.newFaults.forEach(f => logs.unshift(f));
                                 item.data.resolvedFaults.forEach(rf => {
+   
                                     const idx = logs.findIndex(x => x.station === item.data.stationId && x.type === rf.type && x.active);
                                     if(idx !== -1) { 
+              
                                         logs[idx].active = false;
                                         logs[idx].endTime = rf.endTime; 
                                     }
@@ -1385,27 +1652,33 @@
                 promise = db.ref('userProfiles/' + item.data.username).set(item.data.profileData)
                     .then(() => {
                         const nowStd = getStandardDateTime();
-                        const log = {
+                        const 
+log = {
                             date: nowStd.date,
                             time: nowStd.time,
                             station: item.data.profileData.station || 'غير محدد',
+        
                             operator: item.data.username,
                             details: `تحديث البيانات الشخصية (مزامنة): ${item.data.profileData.fullname}`
                         };
+                      
                         db.ref('history').push(log);
                     });
             } else if (item.type === 'delete_profile') {
                 promise = db.ref('userProfiles/' + item.data.username).remove()
                     .then(() => {
                         const nowStd = getStandardDateTime();
-                        const log = {
+                        const 
+log = {
                             date: nowStd.date,
                             time: nowStd.time,
                             station: 'النظام',
+           
                             operator: item.data.deletedBy,
                             details: `حذف البيانات الشخصية للمستخدم: ${item.data.username}`
                         };
                         db.ref('history').push(log);
+ 
                     });
             }
 
@@ -1414,14 +1687,17 @@
                     localStorage.setItem('toshka_offline_queue', JSON.stringify(queue));
                     updateOfflineBanner();
                     if (queue.length > 0) {
+   
                         setTimeout(processOfflineQueue, 500); 
                     } else {
                         icon.classList.remove('syncing');
                         updateNetworkStatus();
+       
                         alert("تمت مزامنة البيانات المخزنة بنجاح! ✅");
                     }
                 }).catch(err => {
                     console.error("Sync Error", err);
+                  
                     updateNetworkStatus();
                 });
             }
@@ -1448,50 +1724,56 @@
                 if (!data) { forceRepairStations(); } 
                 else { 
                     appData.stations = data; 
+    
                     localStorage.setItem('toshka_stations_cache', JSON.stringify(data)); 
                     forceRepairStations(); 
                 }
                 
                 if (document.getElementById('stations-screen').classList.contains('active')) {
+           
                     const activeTab = document.querySelector('.nav-tab.active');
                     renderStations(activeTab ? activeTab.dataset.zone : 'all');
                 }
                 if (document.getElementById('station-screen').classList.contains('active') && appData.currentStation) {
                     showStationDetails(appData.currentStation);
+        
                 }
                 if (document.getElementById('user-profile-screen').classList.contains('active')) {
                     renderUserProfileForm();
                     renderUsersProfilesList();
                 }
             });
-            
             db.ref('users').on('value', (snapshot) => {
                 const loginBtn = document.getElementById('login-btn');
                 if (snapshot.val()) {
                     appData.users = snapshot.val();
                     localStorage.setItem('toshka_users_cache', JSON.stringify(appData.users)); 
-                    
+                
+     
                     if (loginBtn) {
                         loginBtn.disabled = false;
                         loginBtn.textContent = "دخول";
+                      
                         loginBtn.style.backgroundColor = '';
                         loginBtn.style.color = '';
                         loginBtn.style.cursor = 'pointer';
                         loginBtn.classList.add('btn-primary');
+                    
                     }
                 }
                 else {
                     const defaultUsers = {
                         admin: { type: 'admin', password: 'admin123', active: true },
+            
                         engineer1: { type: 'engineer', password: 'eng123', active: true },
                         supervisor1: { type: 'supervisor', password: 'sup123', active: true },
                         operator1: { type: 'operator', password: 'op123', active: true }
+                
                     };
                     
                     db.ref('users').set(defaultUsers);
                     appData.users = defaultUsers;
                     localStorage.setItem('toshka_users_cache', JSON.stringify(defaultUsers));
-                    
                     if (loginBtn) {
                         loginBtn.disabled = false;
                         loginBtn.textContent = "دخول";
@@ -1502,46 +1784,44 @@
                     }
                 }
             });
-            
             db.ref('userProfiles').on('value', (snapshot) => {
                 const data = snapshot.val();
                 if (data) {
                     appData.userProfiles = data;
                     localStorage.setItem('toshka_user_profiles_cache', JSON.stringify(data));
-                } else {
+                } 
+                else {
                     appData.userProfiles = {};
                     localStorage.setItem('toshka_user_profiles_cache', JSON.stringify({}));
                 }
                 
                 if (document.getElementById('user-profile-screen').classList.contains('active')) {
+      
                     renderUserProfileForm();
                     renderUsersProfilesList();
                 }
             });
-            
             db.ref('history').limitToLast(20000).on('value', (snapshot) => {
                 const val = snapshot.val();
                 if(val) {
                     appData.operationHistory = Object.values(val).reverse();
                     cleanHistoricalData();
                 }
+   
                 else appData.operationHistory = [];
                 if (document.getElementById('history-screen').classList.contains('active')) renderHistoryTable(true);
             });
-            
             db.ref('faults_log').on('value', (snapshot) => {
                 const val = snapshot.val();
                 if (val) appData.faultsLog = Array.isArray(val) ? val : Object.values(val);
                 else appData.faultsLog = [];
                 if (document.getElementById('faults-log-screen').classList.contains('active')) renderFaultsLog();
             });
-            
             db.ref('consumption_logs').on('value', (snapshot) => {
                 const val = snapshot.val();
                 if(val) appData.consumptionLog = Object.values(val);
                 else appData.consumptionLog = [];
             });
-            
             updateNetworkStatus();
             updateOfflineBanner();
         }
@@ -1556,32 +1836,40 @@
                 if (!exists) {
                     let zone = 'Unknown';
                     appData.zones.forEach(z => { if(stationName.startsWith(z.split('_')[1])) zone = z; });
+ 
                     if(stationName.startsWith('A')) zone='Zone_A';
                     
                     const pumpCount = pumpsData[stationName] || 4;
                     updates[stationName] = {
+             
                         name: stationName, 
                         zone: zone, 
                         status: 'متوقفة', 
                         pressure: 0, 
+         
                         activePumps: 0,
                         voltage: 380, 
                         waterFlow: 0, 
                         systemMode: 'SCADA', 
+      
                         operatorName: 'النظام',
                         lastUpdate: nowStd.full, 
                         comments: '',
                         startTime: '', 
+    
                         stopTime: '',
                         currentFault: null, 
                         secondaryFault: null,
-                        pumps: Array(pumpCount).fill().map((_, index) => ({ 
+                        pumps: Array(pumpCount).fill().map((_, index) => 
+({ 
                             id: index + 1, 
                             status: 'متوقفة', 
                             suctionPressure: null, 
+       
                             dischargePressure: null, 
                             frequency: null 
                         })),
+                       
                         consumption: { t1: '', t2: '', m3: '', lastUpdate: '' }
                     };
                     repairCount++;
@@ -1622,14 +1910,12 @@
             appData.currentUser = null; 
             showScreen('login'); 
         });
-        
         document.getElementById('toggle-password-icon').addEventListener('click', function() {
             const passwordInput = document.getElementById('password');
             const type = passwordInput.getAttribute('type') === 'password' ? 'text' : 'password';
             passwordInput.setAttribute('type', type);
             this.textContent = type === 'password' ? '👁️' : '🔒';
         });
-        
         function checkRememberedUser() {
             const savedUser = localStorage.getItem('toshka_user');
             const savedPass = localStorage.getItem('toshka_pass');
@@ -1645,25 +1931,28 @@
             const p = document.getElementById('password').value.trim();
             const user = appData.users[u];
             const remember = document.getElementById('remember-me').checked;
-            
+       
+             
             if (user && user.password === p && user.active !== false) {
                 if (remember) { 
                     localStorage.setItem('toshka_user', u); 
                     localStorage.setItem('toshka_pass', p); 
-                } 
+          
+                    } 
                 else { 
                     localStorage.removeItem('toshka_user'); 
                     localStorage.removeItem('toshka_pass'); 
                 }
                 
+ 
                 appData.currentUser = {
                     username: u,
                     id: u,
                     name: u,
+                    
                     type: user.type,
                     permissions: appData.userTypes[user.type].permissions
                 };
-                
                 document.getElementById('current-user').textContent = `${appData.userTypes[user.type].name}: ${u}`;
                 
                 const userType = user.type;
@@ -1682,7 +1971,7 @@
                 renderZonesTabs();
                 renderStations('all');
             } else { 
-                alert('بيانات خاطئة أو المستخدم غير مفعل'); 
+                alert('بيانات خاطئة أو المستخدم غير مفعل');
             }
         });
 
@@ -1693,11 +1982,11 @@
                 return;
             }
             
+ 
             showScreen('user-profile');
             renderUserProfileForm();
             renderUsersProfilesList();
         });
-        
         document.getElementById('users-management-btn').addEventListener('click', () => {
             if (appData.currentUser && appData.currentUser.permissions.manage_users) {
                 showScreen('users');
@@ -1705,7 +1994,6 @@
                 alert('ليس لديك صلاحية للوصول إلى إدارة المستخدمين');
             }
         });
-        
         document.getElementById('history-management-btn').addEventListener('click', () => showScreen('history'));
         document.getElementById('alarm-btn').addEventListener('click', () => showScreen('faults-log'));
 
@@ -1733,8 +2021,10 @@
                 shiftStart.setHours(6);
                 return lastUpdate < shiftStart;
             } else {
-                if (currentHour >= 18) { shiftStart.setHours(18); } 
-                else { shiftStart.setDate(shiftStart.getDate() - 1); shiftStart.setHours(18); }
+                if (currentHour >= 18) { shiftStart.setHours(18);
+                } 
+                else { shiftStart.setDate(shiftStart.getDate() - 1);
+                shiftStart.setHours(18); }
                 return lastUpdate < shiftStart;
             }
         }
@@ -1743,7 +2033,7 @@
         function renderZonesTabs() {
             const c = document.getElementById('zones-tabs');
             c.innerHTML = `<button class="nav-tab active" data-zone="all" onclick="handleTabClick('all', this)">الكل</button>`;
-            appData.zones.forEach(z => c.innerHTML += `<button class="nav-tab" data-zone="${z}" onclick="handleTabClick('${z}', this)">${z}</button>`);
+            appData.zones.forEach(z => c.innerHTML += `<button class="nav-tab" data-zone="${z}" onclick="handleTabClick('${z}', this)">${z}</option>`);
         }
         
         window.handleTabClick = (zone, btn) => {
@@ -1781,10 +2071,12 @@
                     if (s.currentFault) {
                         const icon = faultIcons[s.currentFault] || '⚠️';
                         tickerHtml += `<span class="ticker-item">${icon} ${s.name}: ${s.currentFault}</span>`;
+             
                     }
                     if (s.secondaryFault) {
                         const icon = faultIcons[s.secondaryFault] || '⚠️';
                         tickerHtml += `<span class="ticker-item">${icon} ${s.name}: ${s.secondaryFault}</span>`;
+             
                     }
                     if (index < faultedStations.length - 1) { tickerHtml += `<span class="ticker-separator">•</span>`; }
                 });
@@ -1794,7 +2086,8 @@
                     const contentWidth = tickerContent.scrollWidth;
                     const containerWidth = tickerContainer.offsetWidth;
                     const speed = 100;
-                    const duration = (contentWidth + containerWidth) / speed;
+                    const duration = (contentWidth + containerWidth) 
+/ speed;
                     const finalDuration = Math.max(duration, 5); 
                     tickerContent.style.animationDuration = `${finalDuration}s`;
                 }, 100);
@@ -1807,37 +2100,44 @@
                 alarmCount.style.display = 'none';
             }
 
-            let zonesToRender = zoneFilter === 'all' ? appData.zones : [zoneFilter];
+            let zonesToRender = zoneFilter === 'all' ?
+                appData.zones : [zoneFilter];
             zonesToRender.forEach(zoneName => {
                 const zoneStations = allStations.filter(s => s.zone === zoneName);
                 if (zoneStations.length > 0) {
                     const separator = document.createElement('div');
                     separator.className = 'zone-separator';
+       
                     separator.innerHTML = `<span>${zoneName}</span> <span style="font-size:0.9rem; opacity:0.8;">(${zoneStations.length})</span>`;
                     container.appendChild(separator);
                     
                     const grid = document.createElement('div');
+                   
                     grid.className = 'stations-grid';
                     
                     zoneStations.forEach(s => {
                         const isFault = (s.currentFault || s.secondaryFault) ? true : false;
+                      
                         let cardClass = 'station-card';
                         if (isFault) {
                             cardClass += ' fault-active';
-                            if (s.currentFault === 'انقطاع الاتصال SCADA' || s.secondaryFault === 'انقطاع الاتصال SCADA') cardClass += ' scada-fault';
+                            if (s.currentFault === 'انقطاع الاتصال SCADA' ||
+s.secondaryFault === 'انقطاع الاتصال SCADA') cardClass += ' scada-fault';
                         }
                         const card = document.createElement('div');
                         card.className = cardClass;
                         let faultHtml = '';
                         if(isFault) {
                             if(s.currentFault) {
-                                const icon = faultIcons[s.currentFault] || '⚠️';
+                                const icon = faultIcons[s.currentFault] ||
+'⚠️';
                                 let badgeClass = 'fault-badge';
                                 if (s.currentFault === 'انقطاع الاتصال SCADA') badgeClass += ' scada-badge';
                                 faultHtml += `<div class="${badgeClass}">${icon} ${s.currentFault}</div>`;
                             }
                             if(s.secondaryFault) {
-                                const icon = faultIcons[s.secondaryFault] || '⚠️';
+                                const icon = faultIcons[s.secondaryFault] ||
+'⚠️';
                                 let badgeClass = 'fault-badge';
                                 if (s.secondaryFault === 'انقطاع الاتصال SCADA') badgeClass += ' scada-badge';
                                 faultHtml += `<div class="${badgeClass}" style="margin-top:2px;">${icon} ${s.secondaryFault}</div>`;
@@ -1852,12 +2152,15 @@
                         card.innerHTML = `
                             <div style="font-weight:bold; color:var(--primary-color)">${missedUpdateHtml}${s.name}</div>
                             <span class="station-status ${s.status === 'نشطة' ? 'status-active' : 'status-inactive'}">${s.status}</span>
+        
                             ${faultHtml}
                             <div style="margin-top:10px; font-size:13px;">
                                 <div>الضغط: ${s.pressure} Bar</div>
+                
                                 <div>الجهد: ${s.voltage} V</div>
                                 <div style="color:var(--secondary-color);">التدفق: ${s.waterFlow} L/Sec</div>
                                 <div>المضخات: ${s.activePumps}</div>
+              
                             </div>`;
                         card.onclick = () => showStationDetails(s.name);
                         grid.appendChild(card);
@@ -1866,7 +2169,6 @@
                 }
             });
         };
-
         // --- STATION DETAILS ---
         function showStationDetails(stationId) {
             const s = appData.stations[stationId];
@@ -1887,11 +2189,13 @@
             document.getElementById('last-update-value').textContent = s.lastUpdate;
             document.getElementById('station-comments-value').textContent = s.comments || 'لا يوجد ملاحظات';
             
-            const cons = s.consumption || {};
+            const cons = s.consumption ||
+{};
             document.getElementById('view-cons-t1').textContent = cons.t1 || '-';
             document.getElementById('view-cons-t2').textContent = cons.t2 || '-';
             document.getElementById('view-cons-m3').textContent = cons.m3 || '-';
-            document.getElementById('view-cons-date').textContent = cons.lastUpdate || 'غير مسجل';
+            document.getElementById('view-cons-date').textContent = cons.lastUpdate ||
+'غير مسجل';
 
             const banner = document.getElementById('station-fault-banner');
             const faultList = document.getElementById('station-fault-list');
@@ -1930,7 +2234,6 @@
                 if(p.status === 'معطلة') statusColor = 'orange';
                 tbody.innerHTML += `<tr><td>${p.id}</td><td style="color:${statusColor}">${p.status}</td><td>${p.suctionPressure||'-'}</td><td>${p.dischargePressure||'-'}</td><td>${p.frequency||'-'}</td></tr>`;
             });
-            
             const canEdit = appData.currentUser && (
                 appData.currentUser.permissions.edit_all || 
                 appData.currentUser.permissions.edit_some || 
@@ -1946,18 +2249,22 @@
             document.getElementById('editing-station-name').textContent = `محطة: ${s.name}`;
             
             let currentOperatorName = 'غير معرّف';
+        
             if (appData.currentUser) {
                 currentOperatorName = appData.currentUser.username || 
                                      appData.currentUser.name || 
-                                     appData.currentUser.id || 
+                                   
+                    appData.currentUser.id || 
                                      'غير معرّف';
             }
             document.getElementById('operator-name').value = currentOperatorName;
             
             const now = new Date();
+    
             const timeString = now.getHours().toString().padStart(2, '0') + ':' + now.getMinutes().toString().padStart(2, '0');
             
-            document.getElementById('operator-start-time').value = s.startTime || timeString;
+            document.getElementById('operator-start-time').value = s.startTime ||
+timeString;
             document.getElementById('operator-stop-time').value = s.stopTime || '';
             document.getElementById('operator-pressure').value = s.pressure;
             document.getElementById('operator-water-flow').value = s.waterFlow;
@@ -1974,14 +2281,17 @@
             const row1 = document.getElementById('fault-row-1');
             const row2 = document.getElementById('fault-row-2');
             
-            row1.style.display = 'none'; row2.style.display = 'none'; faultControl.style.display = 'none';
+            row1.style.display = 'none';
+            row2.style.display = 'none'; faultControl.style.display = 'none';
             if (s.currentFault || s.secondaryFault) {
                 faultControl.style.display = 'block';
                 if(s.currentFault) { row1.style.display = 'flex'; document.getElementById('txt-fault-1').textContent = s.currentFault; }
-                if(s.secondaryFault) { row2.style.display = 'flex'; document.getElementById('txt-fault-2').textContent = s.secondaryFault; }
+                if(s.secondaryFault) { row2.style.display = 'flex';
+                document.getElementById('txt-fault-2').textContent = s.secondaryFault; }
             }
 
-            document.getElementById('fault-selector').value = s.currentFault || "";
+            document.getElementById('fault-selector').value = s.currentFault ||
+"";
             document.getElementById('fault-selector-secondary').value = s.secondaryFault || "";
             document.getElementById('fault-1-desc').value = s.fault1Desc || "";
             document.getElementById('fault-2-desc').value = s.fault2Desc || "";
@@ -1993,13 +2303,16 @@
                 pumpsHtml += `
                     <div class="pump-control">
                         <div style="display:flex; justify-content:space-between; margin-bottom:10px;">
+                        
                             <b>مضخة ${p.id}</b>
                             <select id="p_stat_${p.id}" onchange="togglePumpInputs(${p.id})">
                                 <option value="نشطة" ${p.status==='نشطة'?'selected':''}>نشطة</option>
+                               
                                 <option value="متوقفة" ${p.status==='متوقفة'?'selected':''}>متوقفة</option>
                                 <option value="معطلة" ${p.status==='معطلة'?'selected':''}>معطلة</option>
                             </select>
                         </div>
+           
                         <input type="number" placeholder="سحب" id="p_suc_${p.id}" value="${p.suctionPressure||''}" class="p_inp_${p.id}">
                         <input type="number" placeholder="طرد" id="p_dis_${p.id}" value="${p.dischargePressure||''}" class="p_inp_${p.id}" style="margin-top:5px">
                         <input type="number" placeholder="تردد" id="p_freq_${p.id}" value="${p.frequency||''}" class="p_inp_${p.id}" style="margin-top:5px">
@@ -2009,7 +2322,6 @@
             s.pumps.forEach(p => { togglePumpInputs(p.id); });
             showScreen('operator');
         });
-        
         window.togglePumpInputs = (id) => {
             const active = document.getElementById(`p_stat_${id}`).value === 'نشطة';
             document.querySelectorAll(`.p_inp_${id}`).forEach(i => {
@@ -2039,18 +2351,17 @@
         document.getElementById('save-operator-data').addEventListener('click', () => saveDataInternal({}));
         document.getElementById('btn-resolve-f1').addEventListener('click', () => { if(confirm("هل تم إصلاح العطل الأول؟")) saveDataInternal({ resolveTarget: 'currentFault' }); });
         document.getElementById('btn-resolve-f2').addEventListener('click', () => { if(confirm("هل تم إصلاح العطل الثاني؟")) saveDataInternal({ resolveTarget: 'secondaryFault' }); });
-        
         function saveDataInternal(options = {}) {
             try {
                 const sName = appData.currentStation;
                 if (!sName || !appData.stations[sName]) { 
-                    alert("خطأ: لا توجد محطة محددة!"); 
+                    alert("خطأ: لا توجد محطة محددة!");
                     return; 
                 }
                 
                 const oldData = appData.stations[sName];
                 const getVal = (id) => { 
-                    const el = document.getElementById(id); 
+                    const el = document.getElementById(id);
                     return el ? el.value : ''; 
                 };
                 
@@ -2059,31 +2370,31 @@
 
                 let newOperator = '';
                 if (appData.currentUser) {
-                    newOperator = appData.currentUser.username || 
-                                 appData.currentUser.id || 
+                    newOperator = appData.currentUser.username ||
+appData.currentUser.id || 
                                  appData.currentUser.name || 
                                  'غير معرّف';
                 } else {
-                    newOperator = getVal('operator-name') || 'غير معرّف';
+                    newOperator = getVal('operator-name') ||
+'غير معرّف';
                 }
                 
                 if (!newOperator || newOperator.trim() === '' || newOperator === 'undefined') {
                     newOperator = 'مستخدم النظام';
                 }
                 
-                let newPressure = parseFloat(getVal('operator-pressure')) || 0;
+                let newPressure = parseFloat(getVal('operator-pressure')) ||
+0;
                 let newFlow = parseFloat(getVal('operator-water-flow')) || 0;
                 let newVoltage = getVal('operator-voltage');
                 const newMode = getVal('operator-system-mode');
                 const newComments = getVal('operator-comments');
-                
                 let consTrans1 = getVal('cons-trans-1');
                 let consTrans2 = getVal('cons-trans-2');
                 let consWater = getVal('cons-water-m3');
 
                 let newStartTime = getVal('operator-start-time');
                 let newStopTime = getVal('operator-stop-time');
-                
                 const nowStd = getStandardDateTime();
                 const updateDate = nowStd.date;
                 const updateTime = nowStd.time;
@@ -2125,10 +2436,10 @@
                     let selDesc2 = getVal('fault-2-desc');
                     if (sel1 && sel1 === sel2) sel2 = "";
                     finalFault = sel1 || null; 
-                    finalFaultDesc = finalFault ? selDesc1 : null; 
+                    finalFaultDesc = finalFault ?
+selDesc1 : null; 
                     finalFaultSec = sel2 || null; 
                     finalFaultSecDesc = finalFaultSec ? selDesc2 : null;
-                    
                     if (finalFault !== safeOldFault1) {
                         if (finalFault) { 
                             changesDetails.push(`⚠️ تسجيل عطل 1: ${finalFault}`);
@@ -2138,15 +2449,16 @@
                         else { 
                             if (safeOldFault1) { 
                                 changesDetails.push(`✅ إصلاح: ${safeOldFault1}`);
-                                resolvedFaultEntries.push({ station: sName, type: safeOldFault1, startTime: faultStartTime, endTime: stationFullDateTime, active: false }); 
+                                resolvedFaultEntries.push({ station: sName, type: safeOldFault1, startTime: faultStartTime, endTime: stationFullDateTime, active: false });
                             } 
                             if (!finalFaultSec) faultStartTime = null;
                         }
                     }
                     if (finalFaultSec !== safeOldFault2) {
                         if (finalFaultSec) { 
-                            changesDetails.push(`⚠️ تسجيل عطل 2: ${finalFaultSec}`);
-                            newFaultEntries.push({ station: sName, type: finalFaultSec, startTime: stationFullDateTime, endTime: null, active: true }); 
+                            changesDetails.push(`⚠️ 
+تسجيل عطل 2: ${finalFaultSec}`);
+                            newFaultEntries.push({ station: sName, type: finalFaultSec, startTime: stationFullDateTime, endTime: null, active: true });
                             if (!faultStartTime) faultStartTime = stationFullDateTime;
                         } 
                         else { 
@@ -2158,9 +2470,10 @@
                     }
                 }
 
-                const isCriticalFault = (finalFault && !nonStoppingFaults.includes(finalFault)) || (finalFaultSec && !nonStoppingFaults.includes(finalFaultSec));
+                const isCriticalFault = (finalFault && !nonStoppingFaults.includes(finalFault)) ||
+(finalFaultSec && !nonStoppingFaults.includes(finalFaultSec));
                 if (isCriticalFault) { 
-                    currentStatus = 'متوقفة'; 
+                    currentStatus = 'متوقفة';
                     activeCount = 0; 
                     newPressure = 0; 
                     newFlow = 0;
@@ -2172,27 +2485,31 @@
                     const statElem = document.getElementById(`p_stat_${p.id}`);
                     let newStatus = statElem ? statElem.value : p.status;
                     if (isCriticalFault && newStatus === 'نشطة') newStatus = 'متوقفة';
+                 
                     if(p.status != newStatus) changesDetails.push(`مضخة ${p.id}: ${p.status} -> ${newStatus}`);
                     let pumpData = { 
                         id: p.id, 
                         status: newStatus, 
+              
                         suctionPressure: null, 
                         dischargePressure: null, 
                         frequency: null 
                     };
+                
                     if(newStatus === 'نشطة') { 
                         activeCount++; 
                         pumpData.suctionPressure = getVal(`p_suc_${p.id}`); 
                         pumpData.dischargePressure = getVal(`p_dis_${p.id}`); 
-                        pumpData.frequency = getVal(`p_freq_${p.id}`); 
+             
+                        pumpData.frequency = getVal(`p_freq_${p.id}`);
                     }
                     return pumpData;
                 });
                 
                 if (!isCriticalFault) { 
-                    if (activeCount > 0) currentStatus = 'نشطة'; 
+                    if (activeCount > 0) currentStatus = 'نشطة';
                     else { 
-                        currentStatus = 'متوقفة'; 
+                        currentStatus = 'متوقفة';
                         newPressure = 0;
                         newFlow = 0; 
                     } 
@@ -2206,7 +2523,6 @@
                 }
 
                 if(oldData.pressure != newPressure) changesDetails.push(`الضغط: ${oldData.pressure} -> ${newPressure}`);
-                
                 let consumptionLogData = null;
                 const oldCons = oldData.consumption || {};
                 if (consTrans1 || consTrans2 || consWater) {
@@ -2217,9 +2533,11 @@
                         date: updateDate, 
                         time: updateTime, 
                         station: sName,
+ 
                         t1: consTrans1, 
                         t2: consTrans2, 
                         m3: consWater,
+                        
                         operator: newOperator
                     };
                 }
@@ -2228,42 +2546,47 @@
                     changesDetails.push(`المشغل: ${oldData.operatorName || 'غير معرّف'} -> ${newOperator}`);
                 }
                 
-                const changesString = changesDetails.length > 0 ? changesDetails.join(', ') : "تحديث دوري";
+                const changesString = changesDetails.length > 0 ?
+changesDetails.join(', ') : "تحديث دوري";
                 
                 const log = { 
                     date: updateDate, 
                     time: updateTime, 
                     station: sName, 
                     operator: newOperator,
+    
                     details: changesString 
                 };
-                
                 const updates = {
                     pressure: newPressure, 
                     waterFlow: newFlow, 
                     voltage: newVoltage,
                     systemMode: newMode, 
+          
                     operatorName: newOperator,
                     comments: newComments,
                     lastUpdate: stationFullDateTime, 
                     startTime: newStartTime, 
                     stopTime: newStopTime, 
+  
                     activePumps: activeCount,
                     status: currentStatus, 
                     currentFault: finalFault, 
                     fault1Desc: finalFaultDesc,
+                
                     secondaryFault: finalFaultSec, 
                     fault2Desc: finalFaultSecDesc,
                     faultStartTime: faultStartTime,
                     pumps: updatedPumps,
                     consumption: { 
+         
                         t1: consTrans1, 
                         t2: consTrans2, 
                         m3: consWater, 
                         lastUpdate: stationFullDateTime 
+     
                     }
                 };
-                
                 Object.assign(appData.stations[sName], updates);
                 localStorage.setItem('toshka_stations_cache', JSON.stringify(appData.stations));
                 
@@ -2271,26 +2594,33 @@
                     db.ref('stations/' + sName).update(updates).then(() => {
                         if (appData.operationHistory.length >= 20000) db.ref('history').orderByKey().limitToFirst(1).once('child_added', (snapshot) => { snapshot.ref.remove(); });
                         db.ref('history').push(log);
+             
                         if(consumptionLogData) db.ref('consumption_logs').push(consumptionLogData);
                         if (newFaultEntries.length > 0 || resolvedFaultEntries.length > 0) {
                             db.ref('faults_log').once('value').then(snap => {
+                          
                                 let rawVal = snap.val(); 
                                 let logs = []; 
                                 if (rawVal) { 
+                   
                                     if (Array.isArray(rawVal)) logs = rawVal; 
                                     else logs = Object.values(rawVal); 
                                 }
+      
                                 newFaultEntries.forEach(newF => { 
-                                    const exists = logs.some(existingF => existingF.active === true && existingF.station === newF.station && existingF.type === newF.type); 
+                                    const exists = logs.some(existingF => existingF.active === true && existingF.station === newF.station && existingF.type === newF.type);
                                     if (!exists) logs.unshift(newF);
                                 });
                                 resolvedFaultEntries.forEach(rf => { 
                                     const index = logs.findIndex(f => f.station === sName && f.type === rf.type && f.active === true); 
                                     if (index !== -1) { 
+ 
                                         logs[index].active = false; 
                                         logs[index].endTime = stationFullDateTime; 
+              
                                     } else { 
                                         logs.unshift(rf); 
+                                  
                                     } 
                                 });
                                 if (logs.length > 20000) logs = logs.slice(0, 20000); 
@@ -2303,10 +2633,12 @@
                     addToOfflineQueue('update_station', { 
                         stationId: sName, 
                         updates: updates, 
+                        
                         log: log, 
                         consLog: consumptionLogData, 
                         newFaults: newFaultEntries, 
                         resolvedFaults: resolvedFaultEntries 
+                    
                     });
                     showSuccessFeedback(sName, true);
                 }
@@ -2331,7 +2663,8 @@
             if (appData.operationHistory && appData.operationHistory.length > 0) {
                 appData.operationHistory = appData.operationHistory.map(log => {
                     if (!log.operator || log.operator === 'undefined') {
-                        return { ...log, operator: 'مستخدم النظام' };
+                        return { 
+                            ...log, operator: 'مستخدم النظام' };
                     }
                     return log;
                 });
@@ -2348,7 +2681,8 @@
             
             const userProfile = appData.userProfiles[username] || {};
             
-            document.getElementById('profile-fullname').value = userProfile.fullname || '';
+            document.getElementById('profile-fullname').value = userProfile.fullname ||
+'';
             document.getElementById('profile-phone').value = userProfile.phone || '';
             document.getElementById('profile-whatsapp').value = userProfile.whatsapp || '';
             document.getElementById('profile-email').value = userProfile.email || '';
@@ -2361,7 +2695,6 @@
                 const selected = (userProfile.station === station.name) ? 'selected' : '';
                 stationSelect.innerHTML += `<option value="${station.name}" ${selected}>${station.name}</option>`;
             });
-            
             if (!userProfile.station && appData.currentStation) {
                 stationSelect.value = appData.currentStation;
             }
@@ -2376,33 +2709,36 @@
             const noProfilesMessage = document.getElementById('no-profiles-message');
             
             tbody.innerHTML = '';
-            
             const canViewAllProfiles = currentUser.permissions.view_profiles;
-            const canDeleteProfiles = currentUser.permissions.delete_profiles;
+            // *** تم تغيير الشرط هنا ليصبح فقط "admin" كما هو مطلوب ***
+            const canDeleteProfiles = currentUser.permissions.delete_profiles && currentUser.type === 'admin';
             
             let filteredProfiles = Object.keys(appData.userProfiles).filter(username => {
                 const profile = appData.userProfiles[username];
                 
                 if (!canViewAllProfiles && username !== currentUser.username) {
                     return false;
+         
                 }
                 
                 if (searchInput) {
                     const fullname = (profile.fullname || '').toLowerCase();
                     const station = (profile.station || '').toLowerCase();
+         
                     const phone = (profile.phone || '').toLowerCase();
                     
                     if (!fullname.includes(searchInput) && 
                         !station.includes(searchInput) && 
+               
                         !phone.includes(searchInput) &&
                         !username.toLowerCase().includes(searchInput)) {
                         return false;
                     }
                 }
-                
+    
+             
                 return true;
             });
-            
             if (filteredProfiles.length === 0) {
                 tbody.style.display = 'none';
                 noProfilesMessage.style.display = 'block';
@@ -2411,18 +2747,21 @@
                     noProfilesMessage.innerHTML = `
                         <div style="font-size: 2rem; margin-bottom: 10px;">🔍</div>
                         <div>لا توجد نتائج بحث مطابقة لـ "${searchInput}"</div>
+               
                         <div style="font-size: 0.9rem; margin-top: 10px;">جرب استخدام مصطلحات بحث أخرى</div>
                     `;
                 } else if (!canViewAllProfiles) {
                     noProfilesMessage.innerHTML = `
                         <div style="font-size: 2rem; margin-bottom: 10px;">📋</div>
                         <div>لا توجد بيانات شخصية مسجلة لك</div>
+                 
                         <div style="font-size: 0.9rem; margin-top: 10px;">يمكنك تسجيل بياناتك الشخصية في القسم الأيسر</div>
                     `;
                 } else {
                     noProfilesMessage.innerHTML = `
                         <div style="font-size: 2rem; margin-bottom: 10px;">📋</div>
                         <div>لا توجد بيانات مستخدمين مسجلة في النظام</div>
+                  
                         <div style="font-size: 0.9rem; margin-top: 10px;">يمكن للمستخدمين تسجيل بياناتهم الشخصية في القسم الأيسر</div>
                     `;
                 }
@@ -2437,31 +2776,39 @@
                 const userType = appData.users[username] ? appData.users[username].type : 'غير معروف';
                 const userTypeName = appData.userTypes[userType] ? appData.userTypes[userType].name : 'غير معروف';
                 
+            
                 const isCurrentUser = (username === currentUser.username);
-                const canDeleteThisProfile = canDeleteProfiles && !isCurrentUser && currentUser.type === 'admin';
+                // *** تم تغيير الشرط هنا ليتطابق مع زر الحذف الذي تم تعديل صلاحيته أعلاه ***
+                const canDeleteThisProfile = canDeleteProfiles && !isCurrentUser;
                 
                 let rowHTML = `
                     <tr>
+           
                         <td>
                             ${username}
                             ${isCurrentUser ? ' <span class="user-profile-badge">أنت</span>' : ''}
+                         
                             <div style="font-size: 0.8rem; color: #666; margin-top: 3px;">${userTypeName}</div>
                         </td>
                         <td>${profile.station || 'غير محدد'}</td>
-                        <td>${profile.fullname || 'غير مسجل'}</td>
-                        <td>${profile.phone || 'غير مسجل'}</td>
-                        <td>${profile.whatsapp || 'غير مسجل'}</td>
-                        <td>${profile.email || 'غير مسجل'}</td>
-                        <td class="desktop-actions">
-                            ${canDeleteThisProfile ? 
-                                `<button class="delete-profile-btn" onclick="deleteUserProfile('${username}')" title="حذف بيانات المستخدم">
+                        <td>${profile.fullname ||
+'غير مسجل'}</td>
+                        <td>${profile.phone ||
+'غير مسجل'}</td>
+                        <td>${profile.whatsapp ||
+'غير مسجل'}</td>
+                        <td>${profile.email ||
+'غير مسجل'}</td>
+                        <td>
+                            ${canDeleteThisProfile ?
+`<button class="delete-profile-btn" onclick="deleteUserProfile('${username}')" title="حذف بيانات المستخدم">
                                     🗑️ حذف
                                 </button>` : 
-                                '<span style="color:#888; font-size:0.8rem;">-</span>'
+                        
+                            '<span style="color:#888; font-size:0.8rem;">-</span>'
                             }
                         </td>
                     </tr>`;
-                
                 tbody.innerHTML += rowHTML;
             });
         }
@@ -2479,7 +2826,6 @@
             const phone = document.getElementById('profile-phone').value.trim();
             const whatsapp = document.getElementById('profile-whatsapp').value.trim();
             const email = document.getElementById('profile-email').value.trim();
-            
             if (!fullname) {
                 showProfileAlert('الاسم الثلاثي مطلوب', 'error');
                 document.getElementById('profile-fullname').focus();
@@ -2526,32 +2872,38 @@
                 fullname: fullname,
                 station: station,
                 phone: phone,
-                whatsapp: whatsapp || '',
-                email: email || '',
+                whatsapp: whatsapp ||
+'',
+                email: email ||
+'',
                 lastUpdate: nowStd.full,
                 userType: currentUser.type
             };
-            
             if (navigator.onLine) {
                 db.ref('userProfiles/' + username).set(profileData)
                     .then(() => {
                         showProfileAlert('تم حفظ البيانات الشخصية بنجاح ✅', 'success');
                         
+    
                         appData.userProfiles[username] = profileData;
                         localStorage.setItem('toshka_user_profiles_cache', JSON.stringify(appData.userProfiles));
                         
                         renderUsersProfilesList();
-                        
+     
+                       
                         const log = {
                             date: nowStd.date,
+                         
                             time: nowStd.time,
                             station: station,
                             operator: username,
                             details: `تحديث البيانات الشخصية للمستخدم: ${fullname}`
+     
                         };
                         db.ref('history').push(log);
                     })
                     .catch(err => {
+               
                         console.error('Error saving profile:', err);
                         showProfileAlert('حدث خطأ في حفظ البيانات: ' + err.message, 'error');
                     });
@@ -2563,7 +2915,6 @@
                     username: username,
                     profileData: profileData
                 });
-                
                 showProfileAlert('تم حفظ البيانات في الجهاز (سيتم المزامنة عند الاتصال) ⏳', 'warning');
                 renderUsersProfilesList();
             }
@@ -2571,7 +2922,7 @@
         
         function deleteUserProfile(username) {
             const currentUser = appData.currentUser;
-            
+            // *** تم تغيير الشرط هنا ليصبح فقط "admin" كما هو مطلوب ***
             if (!currentUser || currentUser.type !== 'admin') {
                 alert('ليس لديك صلاحية لحذف بيانات المستخدمين');
                 return;
@@ -2585,19 +2936,24 @@
             if (confirm(`هل أنت متأكد من حذف البيانات الشخصية للمستخدم "${username}"؟\n\nهذا الإجراء لا يمكن التراجع عنه.`)) {
                 if (navigator.onLine) {
                     db.ref('userProfiles/' + username).remove()
+                    
                         .then(() => {
                             showProfileAlert('تم حذف البيانات الشخصية بنجاح ✅', 'success');
                             renderUsersProfilesList();
                             
+    
                             const nowStd = getStandardDateTime();
                             const log = {
                                 date: nowStd.date,
+         
                                 time: nowStd.time,
                                 station: 'النظام',
                                 operator: currentUser.username,
+          
                                 details: `حذف البيانات الشخصية للمستخدم: ${username}`
                             };
                             db.ref('history').push(log);
+                 
                         })
                         .catch(err => {
                             console.error('Error deleting profile:', err);
@@ -2608,7 +2964,6 @@
                         username: username,
                         deletedBy: currentUser.username
                     });
-                    
                     delete appData.userProfiles[username];
                     localStorage.setItem('toshka_user_profiles_cache', JSON.stringify(appData.userProfiles));
                     
@@ -2619,7 +2974,6 @@
         }
         
         window.deleteUserProfile = deleteUserProfile;
-        
         function showProfileAlert(message, type = 'info') {
             const alertDiv = document.getElementById('profile-alert');
             alertDiv.textContent = message;
@@ -2638,7 +2992,6 @@
             }
             
             alertDiv.style.display = 'block';
-            
             setTimeout(() => {
                 alertDiv.style.display = 'none';
             }, 5000);
@@ -2646,13 +2999,13 @@
         
         document.getElementById('save-profile-btn').addEventListener('click', saveUserProfile);
         document.getElementById('search-profile-input').addEventListener('keyup', renderUsersProfilesList);
-
         // --- CONSUMPTION REPORT LOGIC ---
         document.getElementById('consumptions-btn').addEventListener('click', () => {
             const filterSelect = document.getElementById('cons-filter-station');
             if (filterSelect.options.length <= 1) {
                 const sorted = Object.values(appData.stations).sort((a,b) => a.name.localeCompare(b.name));
                 sorted.forEach(s => filterSelect.innerHTML += `<option value="${s.name}">${s.name}</option>`);
+           
             }
             const today = new Date();
             const firstDayThisMonth = new Date(today.getFullYear(), today.getMonth(), 1);
@@ -2660,16 +3013,16 @@
             document.getElementById('cons-filter-date-to').valueAsDate = firstDayThisMonth;
             document.getElementById('cons-filter-date-from').valueAsDate = firstDayLastMonth;
             renderConsumptionsTable();
+     
             showScreen('consumptions-report');
         });
-
         function renderConsumptionsTable() {
             const tbody = document.getElementById('consumptions-table-body');
             const fStation = document.getElementById('cons-filter-station').value;
             const fDateFrom = document.getElementById('cons-filter-date-from').value;
             const fDateTo = document.getElementById('cons-filter-date-to').value;
             if (!fDateFrom || !fDateTo) { 
-                tbody.innerHTML = '<tr><td colspan="4" style="text-align:center">يرجى تحديد فترة المقارنة</td></tr>'; 
+                tbody.innerHTML = '<tr><td colspan="4" style="text-align:center">يرجى تحديد فترة المقارنة</td></tr>';
                 return; 
             }
 
@@ -2679,7 +3032,7 @@
             let allLogs = appData.consumptionLog || [];
             let targetStations = [];
             if (fStation === 'all') { 
-                targetStations = Object.keys(appData.stations); 
+                targetStations = Object.keys(appData.stations);
             } 
             else { 
                 targetStations = [fStation];
@@ -2693,28 +3046,33 @@
                 logs.sort((a,b) => parseCustomDate(a.date+' '+a.time) - parseCustomDate(b.date+' '+b.time));
 
                 const startLog = logs.find(l => parseCustomDate(l.date + " 00:00:00").getTime() >= fromTime);
+        
                 const endLog = logs.find(l => parseCustomDate(l.date + " 00:00:00").getTime() >= toTime);
 
                 if (startLog && endLog) {
                     const diffT1 = (endLog.t1 && startLog.t1) ? (parseFloat(endLog.t1) - parseFloat(startLog.t1)) : 0;
-                    const diffT2 = (endLog.t2 && startLog.t2) ? (parseFloat(endLog.t2) - parseFloat(startLog.t2)) : 0;
+                    const diffT2 = (endLog.t2 && startLog.t2) ? (parseFloat(endLog.t2) - parseFloat(startLog.t2)) : 
+0;
                     const diffM3 = (endLog.m3 && startLog.m3) ? (parseFloat(endLog.m3) - parseFloat(startLog.m3)) : 0;
                     const dateStartStr = `${startLog.date}`;
                     const dateEndStr = `${endLog.date}`;
-                    
                     const createCellContent = (startVal, endVal, diffVal, startDate, endDate) => {
                         return `
                             <div class="cons-val-wrapper">
                                 <div class="cons-sub-item">
+    
                                     <span class="cons-label">سابق: <b>${startVal}</b></span>
                                 </div>
                                 <span class="cons-date-small">${startDate}</span>
+ 
                                 
                                 <div class="cons-sub-item" style="margin-top:4px;">
+                                   
                                     <span class="cons-label">حالي: <b>${endVal}</b></span>
                                 </div>
                                 <span class="cons-date-small">${endDate}</span>
                                 
+ 
                                 <div class="cons-result">استهلاك: ${diffVal.toFixed(1)}</div>
                             </div>
                         `;
@@ -2724,6 +3082,7 @@
                         <td style="vertical-align: middle;"><b>${stName}</b></td>
                         <td class="cons-cell">${createCellContent(startLog.t1 || 0, endLog.t1 || 0, diffT1, dateStartStr, dateEndStr)}</td>
                         <td class="cons-cell">${createCellContent(startLog.t2 || 0, endLog.t2 || 0, diffT2, dateStartStr, dateEndStr)}</td>
+     
                         <td class="cons-cell">${createCellContent(startLog.m3 || 0, endLog.m3 || 0, diffM3, dateStartStr, dateEndStr)}</td>
                     </tr>`;
                 }
@@ -2737,52 +3096,56 @@
             const fStation = document.getElementById('cons-filter-station').value;
             const fDateFrom = document.getElementById('cons-filter-date-from').value;
             const fDateTo = document.getElementById('cons-filter-date-to').value;
-            if (!fDateFrom || !fDateTo) { alert('يرجى تحديد فترة المقارنة أولاً.'); return; }
+            if (!fDateFrom || !fDateTo) { alert('يرجى تحديد فترة المقارنة أولاً.'); return;
+            }
 
             const fromTime = new Date(fDateFrom).getTime();
             const toTime = new Date(fDateTo).getTime();
 
             let allLogs = appData.consumptionLog || [];
-            let targetStations = fStation === 'all' ? Object.keys(appData.stations) : [fStation];
+            let targetStations = fStation === 'all' ?
+Object.keys(appData.stations) : [fStation];
             
             let csvContent = "data:text/csv;charset=utf-8,\uFEFF";
             csvContent += "المحطة,تاريخ القراءة السابقة,قراءة محول 1 السابقة (KW),تاريخ القراءة الحالية,قراءة محول 1 الحالية (KW),استهلاك محول 1 (KW),قراءة محول 2 السابقة (KW),قراءة محول 2 الحالية (KW),استهلاك محول 2 (KW),قراءة المياه السابقة (M3),قراءة المياه الحالية (M3),استهلاك المياه (M3)\n";
-
             targetStations.forEach(stName => {
                 const logs = allLogs.filter(l => l.station === stName);
                 if (logs.length === 0) return;
 
                 logs.sort((a, b) => parseCustomDate(a.date + ' ' + a.time) - parseCustomDate(b.date + ' ' + b.time));
 
-                const startLog = logs.find(l => parseCustomDate(l.date + " 00:00:00").getTime() >= fromTime);
+                const startLog = logs.find(l => parseCustomDate(l.date + " 
+00:00:00").getTime() >= fromTime);
                 const endLog = logs.find(l => parseCustomDate(l.date + " 00:00:00").getTime() >= toTime);
 
                 if (startLog && endLog) {
                     const t1_start = parseFloat(startLog.t1 || 0);
                     const t1_end = parseFloat(endLog.t1 || 0);
+  
                     const t2_start = parseFloat(startLog.t2 || 0);
                     const t2_end = parseFloat(endLog.t2 || 0);
                     const m3_start = parseFloat(startLog.m3 || 0);
                     const m3_end = parseFloat(endLog.m3 || 0);
+  
                     
                     const diffT1 = t1_end - t1_start;
                     const diffT2 = t2_end - t2_start;
                     const diffM3 = m3_end - m3_start;
-
                     const row = [
                         stName,
                         startLog.date, t1_start.toFixed(1),
                         endLog.date, t1_end.toFixed(1),
+                       
                         diffT1.toFixed(1),
                         t2_start.toFixed(1), t2_end.toFixed(1),
                         diffT2.toFixed(1),
                         m3_start.toFixed(1), m3_end.toFixed(1),
                         diffM3.toFixed(1)
+ 
                     ].join(',');
                     csvContent += row + "\n";
                 }
             });
-
             if (targetStations.length > 0 && csvContent.split('\n').length <= 1) {
                 alert('لا توجد بيانات استهلاك مطابقة للفترة المحددة لإنشاء ملف CSV.');
                 return;
@@ -2796,8 +3159,7 @@
             link.click();
             document.body.removeChild(link);
         }
-        window.exportConsumptionsToCSV = exportConsumptionsToCSV; 
-
+        window.exportConsumptionsToCSV = exportConsumptionsToCSV;
         function exportConsumptionsToExcel() {
             const table = document.getElementById("consumptions-table-export");
             const html = table.outerHTML;
@@ -2821,26 +3183,28 @@
             const isEdit = (mode === 'edit');
             const saveBtn = document.getElementById('inspection-actions');
             saveBtn.style.display = isEdit ? 'block' : 'none';
-            
             Object.keys(inspectionSchema).forEach((key) => {
                 const schema = inspectionSchema[key];
                 const sectionDiv = document.createElement('div');
                 sectionDiv.className = 'section-accordion';
                 let title = schema.title;
                 if (key === 'pumps') { 
+  
                     const totalPumps = sData.pumps ? sData.pumps.length : 4; 
                     title += ` (${totalPumps})`; 
                 }
                 const headerDiv = document.createElement('div');
+               
                 if (isEdit) { 
                     headerDiv.className = 'section-header-static'; 
                     headerDiv.innerHTML = `<span>${title}</span>`; 
                 } 
                 else {
+                
                     headerDiv.className = 'section-accordion-header'; 
                     headerDiv.innerHTML = `<span>${title}</span> <span class="arrow">▼</span>`;
                     headerDiv.onclick = function() { 
-                        const body = this.nextElementSibling; 
+                        const body = this.nextElementSibling;
                         body.classList.toggle('open'); 
                         this.classList.toggle('active'); 
                     };
@@ -2848,15 +3212,17 @@
                 const bodyDiv = document.createElement('div');
                 if (isEdit) bodyDiv.className = 'section-body-static'; 
                 else { 
-                    bodyDiv.className = 'section-accordion-body'; 
+                    bodyDiv.className = 'section-accordion-body';
                     bodyDiv.id = `section-body-${key}`;
                 }
                 
                 if (key === 'pumps') {
-                    const totalPumps = sData.pumps ? sData.pumps.length : 4; 
+                    const totalPumps = sData.pumps ?
+sData.pumps.length : 4; 
                     const pumpsInsData = insData.pumps || {};
                     for (let i = 1; i <= totalPumps; i++) {
-                        const pData = pumpsInsData[i] || {};
+                        const pData = pumpsInsData[i] ||
+{};
                         let headerClass = 'pump-header-green'; 
                         let icon = '✅'; 
                         const criticalIndices = [1, 5, 10, 11, 12];
@@ -2865,15 +3231,17 @@
                         schema.items.forEach((item, idx) => { 
                             const status = pData[idx] ? pData[idx].status : 'efficient'; 
                             if (criticalIndices.includes(idx)) { 
+                     
                                 if (status === 'broken') isRed = true; 
                             } 
                             if (status === 'fault') isYellow = true; 
+                  
                         });
                         if (isRed) { 
-                            headerClass = 'pump-header-red'; 
+                            headerClass = 'pump-header-red';
                             icon = '🛑'; 
                         } else if (isYellow) { 
-                            headerClass = 'pump-header-yellow'; 
+                            headerClass = 'pump-header-yellow';
                             icon = '⚠️';
                         }
                         const pumpItemDiv = document.createElement('div');
@@ -2882,7 +3250,7 @@
                         pumpHeaderDiv.className = `pump-accordion-header ${headerClass}`; 
                         pumpHeaderDiv.innerHTML = `<span>مضخة رقم ${i}</span> <span class="icon-state">${icon}</span>`;
                         pumpHeaderDiv.onclick = (e) => { 
-                            e.stopPropagation(); 
+                            e.stopPropagation();
                             togglePumpAccordion(i); 
                         };
                         const pumpBodyDiv = document.createElement('div'); 
@@ -2891,21 +3259,26 @@
                         schema.items.forEach((item, idx) => {
                             if (idx === 0) { 
                                 const subHeader = document.createElement('div'); 
+                            
                                 subHeader.className = 'pump-section-divider'; 
                                 subHeader.textContent = '1- خط السحب'; 
                                 pumpBodyDiv.appendChild(subHeader); 
+                       
                             } 
                             else if (idx === 5) { 
                                 const subHeader = document.createElement('div'); 
+                        
                                 subHeader.className = 'pump-section-divider'; 
                                 subHeader.textContent = '2- المضخة'; 
                                 pumpBodyDiv.appendChild(subHeader); 
+                    
                             } 
                             else if (idx === 6) { 
                                 const subHeader = document.createElement('div'); 
+                     
                                 subHeader.className = 'pump-section-divider'; 
                                 subHeader.textContent = '3- خط الطرد'; 
-                                pumpBodyDiv.appendChild(subHeader); 
+                                pumpBodyDiv.appendChild(subHeader);
                             }
                             pumpBodyDiv.appendChild(createInspectionRow(idx, item, pData[idx] || {}, `pumps_${i}`, isEdit));
                         });
@@ -2914,7 +3287,8 @@
                         bodyDiv.appendChild(pumpItemDiv);
                     }
                 } else {
-                    const sectionData = insData[key] || {};
+                    const sectionData = insData[key] ||
+{};
                     schema.items.forEach((item, idx) => { 
                         bodyDiv.appendChild(createInspectionRow(idx, item, sectionData[idx] || {}, key, isEdit)); 
                     });
@@ -2929,7 +3303,8 @@
             const row = document.createElement('div');
             row.className = 'inspection-row';
             const savedStatus = dataObj && dataObj.status ? dataObj.status : 'efficient'; 
-            const savedDesc = dataObj && dataObj.desc ? dataObj.desc : ''; 
+            const savedDesc = dataObj && dataObj.desc ?
+dataObj.desc : ''; 
             const inputId = `${prefix}_${itemKey}`;
             let optionsHtml = '';
             statusOptions.forEach(opt => { 
@@ -2947,12 +3322,12 @@
             const allPumpBodies = document.querySelectorAll('.pump-accordion-body'); 
             allPumpBodies.forEach(b => { 
                 if(b !== target) b.classList.remove('open'); 
-            }); 
+            });
             target.classList.toggle('open'); 
         };
         
         window.updateInspectionColor = (selectElem) => { 
-            selectElem.classList.remove('efficient', 'fault', 'broken', 'none'); 
+            selectElem.classList.remove('efficient', 'fault', 'broken', 'none');
             selectElem.classList.add(selectElem.value); 
         };
         
@@ -2963,20 +3338,22 @@
             let newInsData = JSON.parse(JSON.stringify(oldInsData));
             
             Object.keys(inspectionSchema).forEach(key => {
+       
                 if (key === 'pumps') return; 
                 if (!newInsData[key]) newInsData[key] = {};
                 inspectionSchema[key].items.forEach((item, idx) => { 
                     const statEl = document.getElementById(`stat_${key}_${idx}`); 
-                    const descEl = document.getElementById(`desc_${key}_${idx}`); 
+                    const descEl 
+= document.getElementById(`desc_${key}_${idx}`); 
                     if (statEl) { 
                         newInsData[key][idx] = { 
                             status: statEl.value, 
+                  
                             desc: descEl.value 
                         }; 
                     } 
                 });
             });
-            
             if (!newInsData.pumps) newInsData.pumps = {}; 
             const totalPumps = appData.stations[sName].pumps ? appData.stations[sName].pumps.length : 4;
             for(let i=1; i<=totalPumps; i++) {
@@ -2986,9 +3363,11 @@
                     const statEl = document.getElementById(`stat_${prefix}_${idx}`); 
                     const descEl = document.getElementById(`desc_${prefix}_${idx}`); 
                     if (statEl) { 
+ 
                         newInsData.pumps[i][idx] = { 
                             status: statEl.value, 
                             desc: descEl.value 
+              
                         }; 
                     } 
                 });
@@ -2999,25 +3378,26 @@
                 date: nowStd.date, 
                 time: nowStd.time, 
                 station: sName, 
-                operator: appData.currentUser ? (appData.currentUser.username || appData.currentUser.name || 'مستخدم النظام') : 'مستخدم النظام',
+                operator: appData.currentUser ?
+(appData.currentUser.username || appData.currentUser.name || 'مستخدم النظام') : 'مستخدم النظام',
                 details: `تحديث سجل الفحص الشامل` 
             };
-            
             if (!appData.stations[sName].inspectionData) appData.stations[sName].inspectionData = {}; 
             appData.stations[sName].inspectionData = newInsData; 
             localStorage.setItem('toshka_stations_cache', JSON.stringify(appData.stations));
-            
             if (navigator.onLine) { 
                 db.ref(`stations/${sName}/inspectionData`).update(newInsData).then(() => { 
                     db.ref('history').push(log); 
                     alert("تم حفظ بيانات الفحص بنجاح ✅"); 
                     renderInspection('edit'); 
+          
                 });
             } 
             else { 
                 addToOfflineQueue('update_inspection', { 
                     stationId: sName, 
                     inspectionData: newInsData, 
+                
                     log: log 
                 });
                 alert("تم حفظ الفحص في الجهاز (Offline) وسيتم رفعه عند الاتصال ⏳"); 
@@ -3030,13 +3410,11 @@
             document.getElementById('inspection-title').textContent = `نتائج الفحص: ${appData.stations[appData.currentStation].name}`; 
             showScreen('inspection'); 
         });
-        
         document.getElementById('edit-inspection-btn').addEventListener('click', () => { 
             renderInspection('edit'); 
             document.getElementById('inspection-title').textContent = `تعديل الفحص: ${appData.stations[appData.currentStation].name}`; 
             showScreen('inspection'); 
         });
-
         // --- USERS MANAGEMENT (SIMPLIFIED - بدون عمود الحالة) ---
         function renderUsersManagement() {
             const tbody = document.getElementById('users-table-body');
@@ -3045,12 +3423,10 @@
             const currentUser = appData.currentUser;
             
             tbody.innerHTML = '';
-            
             let filteredUsers = Object.keys(appData.users).filter(uName => {
                 if (search && !uName.toLowerCase().includes(search)) return false;
                 return true;
             });
-            
             if (filteredUsers.length === 0) {
                 tbody.style.display = 'none';
                 noUsersMessage.style.display = 'block';
@@ -3058,6 +3434,7 @@
                     noUsersMessage.innerHTML = `
                         <div style="font-size: 2rem; margin-bottom: 10px;">🔍</div>
                         <div>لا توجد نتائج بحث مطابقة لـ "${search}"</div>
+               
                         <div style="font-size: 0.9rem; margin-top: 10px;">جرب استخدام مصطلحات بحث أخرى</div>
                     `;
                 }
@@ -3072,43 +3449,50 @@
                 const typeName = appData.userTypes[user.type].name;
                 const typeClass = `type-${user.type}`;
                 const isCurrentUser = (currentUser && currentUser.username === uName);
+               
                 const isActive = user.active !== false;
                 
                 const canDelete = currentUser && 
                                  currentUser.permissions.delete_users && 
+                      
                                  currentUser.permissions.can_delete_types.includes(user.type) &&
                                  !isCurrentUser;
                 
                 const canSeePassword = currentUser && 
-                                      currentUser.permissions.view_passwords;
+                  
+                                    currentUser.permissions.view_passwords;
                 
                 let rowHTML = `
                     <tr>
-                        <td style="font-weight: bold;">
+                        <td 
+style="font-weight: bold;">
                             ${uName}
-                            ${isCurrentUser ? ' <span style="color:#1976d2; font-size:0.8rem;">(أنت)</span>' : ''}
+                            ${isCurrentUser ?
+' <span style="color:#1976d2; font-size:0.8rem;">(أنت)</span>' : ''}
                         </td>
                         <td><span class="user-type-badge ${typeClass}">${typeName}</span></td>
                         <td class="password-cell" id="password-cell-${uName}">
-                            ${canSeePassword ? 
-                                `<span class="password-visible">${user.password}</span>` : 
+                   
+                            ${canSeePassword ?
+`<span class="password-visible">${user.password}</span>` : 
                                 `<span class="password-masked">••••••••</span>`
                             }
-                            ${canSeePassword ? 
-                                `<button class="toggle-password-cell" onclick="togglePasswordVisibility('${uName}')" title="إخفاء">👁️</button>` : 
+                            ${canSeePassword ?
+`<button class="toggle-password-cell" onclick="togglePasswordVisibility('${uName}')" title="إخفاء">👁️</button>` : 
                                 ''
                             }
                         </td>
-                        <td>
-                            ${canDelete ? 
-                                `<button class="delete-user-btn" onclick="deleteUser('${uName}')" title="حذف المستخدم">
+           
+                         <td>
+                            ${canDelete ?
+`<button class="delete-user-btn" onclick="deleteUser('${uName}')" title="حذف المستخدم">
                                     🗑️ حذف
                                 </button>` : 
-                                ''
+                         
+                        ''
                             }
                         </td>
                     </tr>`;
-                
                 tbody.innerHTML += rowHTML;
             });
         }
@@ -3118,7 +3502,6 @@
             const user = appData.users[username];
             const span = cell.querySelector('span');
             const button = cell.querySelector('button');
-            
             if (span.classList.contains('password-masked')) {
                 span.classList.remove('password-masked');
                 span.classList.add('password-visible');
@@ -3133,7 +3516,6 @@
                 button.textContent = "👁️";
             }
         };
-
         window.deleteUser = function(username) {
             const currentUser = appData.currentUser;
             const targetUser = appData.users[username];
@@ -3161,11 +3543,13 @@
             if (confirm(`هل أنت متأكد من حذف المستخدم "${username}"؟\n\nهذا الإجراء لا يمكن التراجع عنه.`)) {
                 db.ref('users/' + username).remove()
                     .then(() => {
+                      
                         alert('✅ تم حذف المستخدم بنجاح');
                         renderUsersManagement();
                     })
                     .catch(err => {
-                        alert('خطأ في حذف المستخدم: ' + err.message);
+                        alert('خطأ في حذف المستخدم: 
+' + err.message);
                     });
             }
         };
@@ -3176,6 +3560,7 @@
             if (!currentUser || !currentUser.permissions.add_users) {
                 alert('ليس لديك صلاحية لإضافة مستخدمين');
                 return;
+         
             }
             
             document.getElementById('user-form-container').style.display = 'block';
@@ -3184,13 +3569,15 @@
             
             const sel = document.getElementById('new-user-type');
             sel.innerHTML = '';
+  
             
             currentUser.permissions.can_add_types.forEach(k => {
                 sel.innerHTML += `<option value="${k}">${appData.userTypes[k].name}</option>`;
             });
             
             if (sel.options.length === 0) {
-                alert('ليس لديك صلاحية لإضافة أي نوع من المستخدمين');
+                alert('ليس 
+لديك صلاحية لإضافة أي نوع من المستخدمين');
                 document.getElementById('user-form-container').style.display = 'none';
             }
         });
@@ -3200,7 +3587,6 @@
             document.getElementById('new-username').value = '';
             document.getElementById('new-password').value = '';
         });
-
         document.getElementById('save-user-btn').addEventListener('click', () => {
             const currentUser = appData.currentUser;
             
@@ -3208,19 +3594,22 @@
                 alert('ليس لديك صلاحية لإضافة مستخدمين');
                 return;
             }
+      
             
             const name = document.getElementById('new-username').value.trim();
             const pass = document.getElementById('new-password').value.trim();
             const type = document.getElementById('new-user-type').value;
             
             if (!currentUser.permissions.can_add_types.includes(type)) {
-                alert('ليس لديك صلاحية لإضافة هذا النوع من المستخدمين');
+                alert('ليس لديك صلاحية لإضافة هذا النوع من 
+المستخدمين');
                 return;
             }
             
             if(!name) {
                 alert('يرجى إدخال اسم المستخدم');
                 document.getElementById('new-username').focus();
+            
                 return;
             }
             
@@ -3245,12 +3634,14 @@
                 password: pass,
                 active: true
             }).then(() => {
+        
                 alert('✅ تمت إضافة المستخدم بنجاح');
                 document.getElementById('user-form-container').style.display = 'none';
                 document.getElementById('new-username').value = '';
                 document.getElementById('new-password').value = '';
                 renderUsersManagement();
             }).catch(err => {
+    
                 alert('خطأ في إضافة المستخدم: ' + err.message);
             });
         });
@@ -3266,7 +3657,6 @@
                 const fStation = document.getElementById('filter-station').value;
                 const fDateFrom = document.getElementById('filter-date-from').value;
                 const fDateTo = document.getElementById('filter-date-to').value;
-                
                 if (fZone !== 'all') {
                 }
                 if (fStation !== 'all') {
@@ -3286,6 +3676,7 @@
                 if (!log.operator || log.operator === 'undefined') {
                     log.operator = 'مستخدم النظام';
                 }
+ 
             });
             
             const viewData = data.slice(0, 100);
@@ -3294,13 +3685,13 @@
                     <td>
                         <div style="font-weight:bold">${log.date}</div>
                         <div style="font-size:0.85rem; color:#666">${log.time}</div>
+         
                     </td>
                     <td>${log.station}</td>
                     <td>${log.operator}</td>
                     <td>${log.details}</td>
                 </tr>`;
             });
-            
             document.getElementById('history-status-text').textContent = `عرض ${viewData.length} من أصل ${data.length}`;
         }
         
@@ -3318,11 +3709,11 @@
                 activeBody.innerHTML += `<tr>
                     <td>${f.station}</td>
                     <td style="color:var(--danger-color); font-weight:bold">${icon} ${f.type}</td>
+               
                     <td>${f.startTime}</td>
                     <td>مستمر</td>
                 </tr>`;
             });
-            
             if(activeFaults.length === 0) activeBody.innerHTML = `<tr><td colspan="4" style="text-align:center; color:green">لا توجد أعطال نشطة حالياً</td></tr>`;
             
             let histFaults = appData.faultsLog.filter(f => !f.active);
@@ -3332,12 +3723,12 @@
                 historyBody.innerHTML += `<tr>
                     <td>${f.station}</td>
                     <td>${icon} ${f.type}</td>
+                 
                     <td>${f.startTime || '-'}</td>
                     <td>${f.endTime || '-'}</td>
                     <td style="color:green">تم الإصلاح</td>
                 </tr>`;
             });
-            
             const filterSel = document.getElementById('fault-archive-station-filter');
             if (filterSel.options.length <= 1) {
                 const sorted = Object.values(appData.stations).sort((a,b) => a.name.localeCompare(b.name));
@@ -3358,6 +3749,4 @@
         loadSystemData();
     </script>
 </body>
-    </html>
-
-
+                                    </html>
