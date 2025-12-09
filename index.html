@@ -12,7 +12,6 @@
             --warning-color: #f39c12;
             --danger-color: #c0392b;
             --consumption-color: #2980b9;
-            --inspection-color: #8e44ad; /* لون جديد لزر الفحص */
             --light-bg: #f4f6f7;
             --card-bg: #ffffff;
             --header-bg: #eaf2f8;
@@ -20,6 +19,7 @@
             --blue-fault: #87CEFA;
             --grey-color: #95a5a6;
             --profile-color: #9b59b6;
+            --excel-color: #217346;
         }
         * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
         body { background-color: var(--light-bg); color: #333; line-height: 1.6; min-height: 100vh; display: flex; flex-direction: column; }
@@ -71,7 +71,7 @@
         .btn-info { background-color: #17a2b8; color: white; }
         .btn-consumption { background-color: var(--consumption-color); color: white; }
         .btn-profile { background-color: var(--profile-color); color: white; }
-        .btn-inspection { background-color: var(--inspection-color); color: white; } /* زر الفحص الجديد */
+        .btn-excel { background-color: var(--excel-color); color: white; }
         .btn:hover { opacity: 0.9; transform: translateY(-2px); }
 
         .screen { display: none; background: var(--card-bg); border-radius: 10px; box-shadow: 0 5px 15px rgba(0,0,0,0.05); padding: 15px; margin-top: 15px; min-height: 500px; }
@@ -685,6 +685,44 @@
             font-size: 1.3rem;
             font-weight: 700;
         }
+        
+        /* تصدير Excel button */
+        .export-excel-btn {
+            background: linear-gradient(135deg, var(--excel-color), #2e8b57);
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            transition: all 0.3s ease;
+            font-weight: 600;
+        }
+        
+        .export-excel-btn:hover {
+            background: linear-gradient(135deg, #1e5e3b, var(--excel-color));
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(33, 115, 70, 0.3);
+        }
+        
+        /* شاشة تصدير تقرير الفحص */
+        .inspection-export-controls {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 8px;
+            border: 1px solid #dee2e6;
+            margin-bottom: 20px;
+        }
+        
+        .export-options {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-top: 15px;
+        }
     </style>
 </head>
 <body>
@@ -708,12 +746,10 @@
                     </button>
                     <div class="user-badge" id="current-user">مرحباً</div>
                     
-                    <!-- زر التصدير الجديد -->
-                    <button id="export-inspection-btn" class="btn btn-inspection" style="display: none;">📊 تصدير الفحص</button>
-                    
                     <button id="users-management-btn" class="btn btn-warning" style="display: none;">المستخدمين</button>
                     <button id="consumptions-btn" class="btn btn-consumption" style="display: none;">⚡ الاستهلاكات</button>
                     <button id="history-management-btn" class="btn btn-info" style="display: none;">السجل العام</button>
+                    <button id="export-inspection-report-btn" class="btn btn-excel" style="display: none;" title="تصدير تقرير الفحص">📊 تصدير الفحص</button>
                     <button id="logout-btn" class="btn btn-danger">خروج</button>
                 </div>
             </div>
@@ -953,6 +989,8 @@
             <h2 id="inspection-title">شاشة الفحص الشامل</h2>
             <div style="display:flex; justify-content:space-between; margin-bottom: 20px;">
                 <button id="back-from-inspection" class="btn btn-outline">عودة</button>
+                <!-- زر تصدير Excel -->
+                <button id="export-inspection-excel" class="btn btn-excel" style="display: none;">📊 تصدير Excel</button>
             </div>
             
             <div id="inspection-container"></div>
@@ -962,47 +1000,61 @@
             </div>
         </div>
 
-        <!-- شاشة تصدير فحص المحطات الجديدة -->
-        <div id="export-inspection-screen" class="screen">
-            <h2 style="color: var(--inspection-color);">تصدير فحص المحطات</h2>
-            <button id="back-to-stations-from-export" class="btn btn-outline">عودة</button>
+        <!-- شاشة جديدة: تصدير تقرير الفحص -->
+        <div id="inspection-export-screen" class="screen">
+            <h2 style="color: var(--excel-color);">تصدير تقرير الفحص الشامل</h2>
+            <button id="back-to-stations-from-export" class="btn btn-outline">عودة للرئيسية</button>
             
-            <div class="filters-container" style="background: #f9f9f9; padding: 15px; border-radius: 8px; border: 1px solid #eee; margin-bottom: 20px; margin-top:10px; display: grid; gap: 10px; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));">
-                <div class="filter-item">
-                    <label>المنطقة</label>
-                    <select id="inspection-filter-zone">
-                        <option value="all">كل المناطق</option>
-                        <!-- سيتم ملؤها بالمناطق -->
-                    </select>
+            <div class="inspection-export-controls">
+                <h3 style="color: var(--primary-color); margin-bottom: 15px;">🔧 إعدادات التصدير</h3>
+                <div class="export-options">
+                    <div class="form-group">
+                        <label>المنطقة</label>
+                        <select id="export-filter-zone">
+                            <option value="all">كل المناطق</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>المحطة</label>
+                        <select id="export-filter-station">
+                            <option value="all">كل المحطات</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>نوع التقرير</label>
+                        <select id="export-report-type">
+                            <option value="full">تقرير كامل</option>
+                            <option value="summary">ملخص فقط</option>
+                            <option value="faults">الأعطال فقط</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>تنسيق الملف</label>
+                        <select id="export-file-format">
+                            <option value="excel">Excel (.xlsx)</option>
+                            <option value="csv">CSV (.csv)</option>
+                        </select>
+                    </div>
                 </div>
-                <div class="filter-item">
-                    <label>المحطة</label>
-                    <select id="inspection-filter-station">
-                        <option value="all">كل المحطات</option>
-                        <!-- سيتم ملؤها بالمحطات -->
-                    </select>
+                
+                <div style="margin-top: 20px; text-align: center;">
+                    <button id="generate-inspection-report" class="export-excel-btn" style="padding: 12px 30px; font-size: 16px;">
+                        📊 توليد وتصدير التقرير
+                    </button>
                 </div>
-                <div class="filter-item" style="display:flex; align-items:flex-end; gap:5px;">
-                    <button class="btn btn-primary" onclick="renderInspectionTable()" style="flex:1">عرض البيانات</button>
-                    <button class="btn btn-success" onclick="exportInspectionToExcel()" style="flex:1" title="تصدير Excel">Excel 📊</button>
-                    <button class="btn btn-warning" onclick="exportInspectionToCSV()" style="flex:1" title="تصدير CSV">CSV 📥</button>
-                </div>
+                
+                <div id="export-status" style="margin-top: 15px; display: none; padding: 10px; border-radius: 6px; text-align: center;"></div>
             </div>
             
-            <div class="table-responsive">
-                <table class="inspection-table" id="inspection-export-table">
-                    <thead id="inspection-table-header">
-                        <!-- سيتم إنشاء رأس الجدول ديناميكياً -->
-                    </thead>
-                    <tbody id="inspection-table-body">
-                        <!-- سيتم ملؤها بالبيانات -->
-                    </tbody>
-                </table>
-            </div>
-            
-            <div style="margin-top: 20px; text-align: center; color: #666; font-size: 0.9rem;">
-                <p>ملاحظة: يتم تصدير البيانات بنفس تنسيق ملف "عرض الفحص.xlsx" المرفق</p>
-                <p>سيتم تضمين بيانات الفحص للمحطات المحددة فقط</p>
+            <div style="margin-top: 30px; background: #f8f9fa; padding: 20px; border-radius: 8px;">
+                <h4 style="color: var(--secondary-color); margin-bottom: 10px;">📋 معلومات التقرير</h4>
+                <ul style="padding-right: 20px;">
+                    <li>التقرير يشمل جميع بيانات الفحص للمحطات المحددة</li>
+                    <li>بيانات المضخات مفصلة حسب حالة كل مضخة</li>
+                    <li>يمكن تصفية البيانات في Excel باستخدام الفلاتر</li>
+                    <li>التقرير مناسب للطباعة والمراجعة الدورية</li>
+                    <li>يشمل التاريخ والوقت لتحديث كل محطة</li>
+                </ul>
             </div>
         </div>
 
@@ -1300,6 +1352,8 @@
 
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+    <!-- إضافة مكتبة SheetJS لتصدير Excel -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 
     <script>
         // --- CONFIG & INIT ---
@@ -1347,6 +1401,13 @@
             { val: "none", text: "⚪ لا يوجد", class: "none" }
         ];
         
+        const statusTextMap = {
+            "efficient": "يعمل بكفاءة",
+            "fault": "عطل / ملاحظة",
+            "broken": "لا يعمل",
+            "none": "لا يوجد"
+        };
+        
         // --- USER TYPES & PERMISSIONS DEFINITION ---
         const userTypes = {
             admin: {
@@ -1361,7 +1422,7 @@
                     view_passwords: true,
                     view_profiles: true,
                     delete_profiles: true,
-                    view_inspection_export: true, // صلاحية تصدير الفحص
+                    export_inspection: true,
                     can_manage_types: ['admin', 'engineer', 'supervisor', 'operator'],
                     can_add_types: ['admin', 'engineer', 'supervisor', 'operator'],
                     can_delete_types: ['admin', 'engineer', 'supervisor', 'operator']
@@ -1379,7 +1440,7 @@
                     view_passwords: false,
                     view_profiles: true,
                     delete_profiles: false,
-                    view_inspection_export: true, // صلاحية تصدير الفحص
+                    export_inspection: true,
                     can_manage_types: ['supervisor', 'operator'],
                     can_add_types: ['supervisor', 'operator'],
                     can_delete_types: ['supervisor', 'operator']
@@ -1397,7 +1458,7 @@
                     view_passwords: false,
                     view_profiles: true,
                     delete_profiles: false,
-                    view_inspection_export: true, // صلاحية تصدير الفحص
+                    export_inspection: true,
                     can_manage_types: ['operator'],
                     can_add_types: ['operator'],
                     can_delete_types: ['operator']
@@ -1415,7 +1476,7 @@
                     view_passwords: false,
                     view_profiles: false,
                     delete_profiles: false,
-                    view_inspection_export: false, // لا يملك صلاحية تصدير الفحص
+                    export_inspection: false,
                     can_manage_types: [],
                     can_add_types: [],
                     can_delete_types: []
@@ -1687,6 +1748,9 @@
                 if (document.getElementById('users-data-screen').classList.contains('active')) {
                     renderUsersDataManagement();
                 }
+                if (document.getElementById('inspection-export-screen').classList.contains('active')) {
+                    updateExportFilters();
+                }
             });
             
             db.ref('users').on('value', (snapshot) => {
@@ -1848,8 +1912,8 @@
                 renderUserProfileForm();
                 renderUsersProfilesList();
             }
-            if(screenId === 'export-inspection') {
-                renderInspectionExportFilters();
+            if(screenId === 'inspection-export') {
+                updateExportFilters();
             }
         }
 
@@ -1907,15 +1971,13 @@
                 
                 document.getElementById('users-management-btn').style.display = permissions.manage_users ? 'inline-block' : 'none';
                 document.getElementById('history-management-btn').style.display = permissions.view_history ? 'inline-block' : 'none';
+                document.getElementById('export-inspection-report-btn').style.display = permissions.export_inspection ? 'inline-block' : 'none';
                 
                 if (userType === 'admin' || userType === 'engineer') {
                     document.getElementById('consumptions-btn').style.display = 'inline-block';
                 } else {
                     document.getElementById('consumptions-btn').style.display = 'none';
                 }
-                
-                // عرض زر تصدير الفحص للمستخدمين المصرح لهم
-                document.getElementById('export-inspection-btn').style.display = permissions.view_inspection_export ? 'inline-block' : 'none';
 
                 showScreen('stations');
                 renderZonesTabs();
@@ -1947,13 +2009,11 @@
         
         document.getElementById('history-management-btn').addEventListener('click', () => showScreen('history'));
         document.getElementById('alarm-btn').addEventListener('click', () => showScreen('faults-log'));
-        
-        // زر تصدير الفحص الجديد
-        document.getElementById('export-inspection-btn').addEventListener('click', () => {
-            if (appData.currentUser && appData.currentUser.permissions.view_inspection_export) {
-                showScreen('export-inspection');
+        document.getElementById('export-inspection-report-btn').addEventListener('click', () => {
+            if (appData.currentUser && appData.currentUser.permissions.export_inspection) {
+                showScreen('inspection-export');
             } else {
-                alert('ليس لديك صلاحية لتصدير بيانات الفحص');
+                alert('ليس لديك صلاحية لتصدير تقارير الفحص');
             }
         });
 
@@ -2595,337 +2655,746 @@
             }
         }
 
-        // --- تصدير فحص المحطات ---
-        function renderInspectionExportFilters() {
-            const zoneSelect = document.getElementById('inspection-filter-zone');
-            const stationSelect = document.getElementById('inspection-filter-station');
+        // --- MOBILE OPTIMIZED INSPECTION LOGIC ---
+        function renderInspection(mode = 'view') {
+            const container = document.getElementById('inspection-container');
+            container.innerHTML = '';
+            const sName = appData.currentStation;
+            const sData = appData.stations[sName];
+            if(!sData) return;
+            const insData = sData.inspectionData || {};
+            const isEdit = (mode === 'edit');
+            const saveBtn = document.getElementById('inspection-actions');
+            saveBtn.style.display = isEdit ? 'block' : 'none';
             
-            // تعبئة مناطق
-            zoneSelect.innerHTML = '<option value="all">كل المناطق</option>';
-            appData.zones.forEach(z => {
-                zoneSelect.innerHTML += `<option value="${z}">${z}</option>`;
+            // إظهار زر تصدير Excel فقط في وضع العرض وليس التعديل
+            const exportBtn = document.getElementById('export-inspection-excel');
+            exportBtn.style.display = (mode === 'view' && sData.inspectionData) ? 'block' : 'none';
+            
+            Object.keys(inspectionSchema).forEach((key) => {
+                const schema = inspectionSchema[key];
+                const sectionDiv = document.createElement('div');
+                sectionDiv.className = 'section-accordion';
+                let title = schema.title;
+                if (key === 'pumps') { 
+                    const totalPumps = sData.pumps ? sData.pumps.length : 4; 
+                    title += ` (${totalPumps})`; 
+                }
+                const headerDiv = document.createElement('div');
+                if (isEdit) { 
+                    headerDiv.className = 'section-header-static'; 
+                    headerDiv.innerHTML = `<span>${title}</span>`; 
+                } 
+                else {
+                    headerDiv.className = 'section-accordion-header'; 
+                    headerDiv.innerHTML = `<span>${title}</span> <span class="arrow">▼</span>`;
+                    headerDiv.onclick = function() { 
+                        const body = this.nextElementSibling; 
+                        body.classList.toggle('open'); 
+                        this.classList.toggle('active'); 
+                    };
+                }
+                const bodyDiv = document.createElement('div');
+                if (isEdit) bodyDiv.className = 'section-body-static'; 
+                else { 
+                    bodyDiv.className = 'section-accordion-body'; 
+                    bodyDiv.id = `section-body-${key}`;
+                }
+                
+                if (key === 'pumps') {
+                    const totalPumps = sData.pumps ? sData.pumps.length : 4; 
+                    const pumpsInsData = insData.pumps || {};
+                    for (let i = 1; i <= totalPumps; i++) {
+                        const pData = pumpsInsData[i] || {};
+                        let headerClass = 'pump-header-green'; 
+                        let icon = '✅'; 
+                        const criticalIndices = [1, 5, 10, 11, 12];
+                        let isRed = false; 
+                        let isYellow = false;
+                        schema.items.forEach((item, idx) => { 
+                            const status = pData[idx] ? pData[idx].status : 'efficient'; 
+                            if (criticalIndices.includes(idx)) { 
+                                if (status === 'broken') isRed = true; 
+                            } 
+                            if (status === 'fault') isYellow = true; 
+                        });
+                        if (isRed) { 
+                            headerClass = 'pump-header-red'; 
+                            icon = '🛑'; 
+                        } else if (isYellow) { 
+                            headerClass = 'pump-header-yellow'; 
+                            icon = '⚠️';
+                        }
+                        const pumpItemDiv = document.createElement('div');
+                        pumpItemDiv.className = 'pump-accordion-item';
+                        const pumpHeaderDiv = document.createElement('div'); 
+                        pumpHeaderDiv.className = `pump-accordion-header ${headerClass}`; 
+                        pumpHeaderDiv.innerHTML = `<span>مضخة رقم ${i}</span> <span class="icon-state">${icon}</span>`;
+                        pumpHeaderDiv.onclick = (e) => { 
+                            e.stopPropagation(); 
+                            togglePumpAccordion(i); 
+                        };
+                        const pumpBodyDiv = document.createElement('div'); 
+                        pumpBodyDiv.className = 'pump-accordion-body'; 
+                        pumpBodyDiv.id = `pump-body-${i}`;
+                        schema.items.forEach((item, idx) => {
+                            if (idx === 0) { 
+                                const subHeader = document.createElement('div'); 
+                                subHeader.className = 'pump-section-divider'; 
+                                subHeader.textContent = '1- خط السحب'; 
+                                pumpBodyDiv.appendChild(subHeader); 
+                            } 
+                            else if (idx === 5) { 
+                                const subHeader = document.createElement('div'); 
+                                subHeader.className = 'pump-section-divider'; 
+                                subHeader.textContent = '2- المضخة'; 
+                                pumpBodyDiv.appendChild(subHeader); 
+                            } 
+                            else if (idx === 6) { 
+                                const subHeader = document.createElement('div'); 
+                                subHeader.className = 'pump-section-divider'; 
+                                subHeader.textContent = '3- خط الطرد'; 
+                                pumpBodyDiv.appendChild(subHeader); 
+                            }
+                            pumpBodyDiv.appendChild(createInspectionRow(idx, item, pData[idx] || {}, `pumps_${i}`, isEdit));
+                        });
+                        pumpItemDiv.appendChild(pumpHeaderDiv); 
+                        pumpItemDiv.appendChild(pumpBodyDiv); 
+                        bodyDiv.appendChild(pumpItemDiv);
+                    }
+                } else {
+                    const sectionData = insData[key] || {};
+                    schema.items.forEach((item, idx) => { 
+                        bodyDiv.appendChild(createInspectionRow(idx, item, sectionData[idx] || {}, key, isEdit)); 
+                    });
+                }
+                sectionDiv.appendChild(headerDiv); 
+                sectionDiv.appendChild(bodyDiv); 
+                container.appendChild(sectionDiv);
             });
-            
-            // تعبئة المحطات
-            stationSelect.innerHTML = '<option value="all">كل المحطات</option>';
-            const stations = Object.values(appData.stations).sort((a, b) => a.name.localeCompare(b.name));
-            stations.forEach(st => {
-                stationSelect.innerHTML += `<option value="${st.name}">${st.name}</option>`;
+        }
+
+        function createInspectionRow(itemKey, label, dataObj, prefix, isEdit) {
+            const row = document.createElement('div');
+            row.className = 'inspection-row';
+            const savedStatus = dataObj && dataObj.status ? dataObj.status : 'efficient'; 
+            const savedDesc = dataObj && dataObj.desc ? dataObj.desc : ''; 
+            const inputId = `${prefix}_${itemKey}`;
+            let optionsHtml = '';
+            statusOptions.forEach(opt => { 
+                const isSel = savedStatus === opt.val ? 'selected' : ''; 
+                optionsHtml += `<option value="${opt.val}" ${isSel}>${opt.text}</option>`; 
             });
-            
-            renderInspectionTable();
+            let selectHtml = `<select class="inspection-status-select ${savedStatus}" id="stat_${inputId}" ${isEdit ? '' : 'disabled'} onchange="updateInspectionColor(this)">${optionsHtml}</select>`;
+            let descHtml = `<input type="text" class="inspection-desc-input" id="desc_${inputId}" value="${savedDesc}" placeholder="ملاحظات..." ${isEdit ? '' : 'readonly'}>`;
+            row.innerHTML = `<div class="inspection-label">${label}</div><div>${selectHtml}</div><div>${descHtml}</div>`; 
+            return row;
         }
         
-        function renderInspectionTable() {
-            const zoneFilter = document.getElementById('inspection-filter-zone').value;
-            const stationFilter = document.getElementById('inspection-filter-station').value;
+        window.togglePumpAccordion = (id) => { 
+            const target = document.getElementById(`pump-body-${id}`);
+            const allPumpBodies = document.querySelectorAll('.pump-accordion-body'); 
+            allPumpBodies.forEach(b => { 
+                if(b !== target) b.classList.remove('open'); 
+            }); 
+            target.classList.toggle('open'); 
+        };
+        
+        window.updateInspectionColor = (selectElem) => { 
+            selectElem.classList.remove('efficient', 'fault', 'broken', 'none'); 
+            selectElem.classList.add(selectElem.value); 
+        };
+        
+        document.getElementById('save-inspection-btn').addEventListener('click', () => {
+            const sName = appData.currentStation; 
+            if(!sName) return;
+            const oldInsData = (appData.stations[sName].inspectionData) || {}; 
+            let newInsData = JSON.parse(JSON.stringify(oldInsData));
             
-            let stations = Object.values(appData.stations);
-            
-            // تطبيق التصفية حسب المنطقة
-            if (zoneFilter !== 'all') {
-                stations = stations.filter(s => s.zone === zoneFilter);
-            }
-            
-            // تطبيق التصفية حسب المحطة
-            if (stationFilter !== 'all') {
-                stations = stations.filter(s => s.name === stationFilter);
-            }
-            
-            // فرز المحطات
-            stations.sort((a, b) => a.name.localeCompare(b.name));
-            
-            const tableHeader = document.getElementById('inspection-table-header');
-            const tableBody = document.getElementById('inspection-table-body');
-            
-            // إنشاء رأس الجدول بنفس تنسيق ملف الاكسيل
-            let headerHTML = '<tr>';
-            headerHTML += '<th>المحطه</th>';
-            
-            // إضافة أقسام الفحص
-            Object.keys(inspectionSchema).forEach(sectionKey => {
-                const section = inspectionSchema[sectionKey];
-                if (sectionKey === 'pumps') {
-                    // الحصول على أقصى عدد للمضخات
-                    let maxPumps = 0;
-                    stations.forEach(station => {
-                        if (station.pumps && station.pumps.length > maxPumps) {
-                            maxPumps = station.pumps.length;
-                        }
-                    });
-                    
-                    // إضافة أعمدة لكل مضخة
-                    for (let i = 1; i <= maxPumps; i++) {
-                        headerHTML += `<th colspan="${section.items.length * 2}">مضخه رقم ${i}</th>`;
-                    }
-                } else {
-                    headerHTML += `<th colspan="${section.items.length * 2}">${section.title}</th>`;
-                }
-            });
-            
-            headerHTML += '</tr>';
-            
-            // سطر ثانوي للرأس (الحالة والملاحظات لكل عنصر)
-            headerHTML += '<tr>';
-            headerHTML += '<th></th>'; // عمود المحطة
-            
-            Object.keys(inspectionSchema).forEach(sectionKey => {
-                const section = inspectionSchema[sectionKey];
-                if (sectionKey === 'pumps') {
-                    let maxPumps = 0;
-                    stations.forEach(station => {
-                        if (station.pumps && station.pumps.length > maxPumps) {
-                            maxPumps = station.pumps.length;
-                        }
-                    });
-                    
-                    for (let i = 1; i <= maxPumps; i++) {
-                        section.items.forEach(item => {
-                            headerHTML += `<th>${item}</th>`;
-                            headerHTML += '<th>ملاحظات</th>';
-                        });
-                    }
-                } else {
-                    section.items.forEach(item => {
-                        headerHTML += `<th>${item}</th>`;
-                        headerHTML += '<th>ملاحظات</th>';
-                    });
-                }
-            });
-            
-            headerHTML += '</tr>';
-            
-            tableHeader.innerHTML = headerHTML;
-            
-            // ملء بيانات الجدول
-            tableBody.innerHTML = '';
-            
-            stations.forEach(station => {
-                const inspectionData = station.inspectionData || {};
-                let rowHTML = `<tr><td>${station.name}</td>`;
-                
-                Object.keys(inspectionSchema).forEach(sectionKey => {
-                    const section = inspectionSchema[sectionKey];
-                    
-                    if (sectionKey === 'pumps') {
-                        const pumpsData = inspectionData[sectionKey] || {};
-                        let maxPumps = 0;
-                        stations.forEach(s => {
-                            if (s.pumps && s.pumps.length > maxPumps) {
-                                maxPumps = s.pumps.length;
-                            }
-                        });
-                        
-                        for (let i = 1; i <= maxPumps; i++) {
-                            const pumpData = pumpsData[i] || {};
-                            
-                            section.items.forEach((item, idx) => {
-                                const itemData = pumpData[idx] || {};
-                                const status = itemData.status || 'efficient';
-                                const desc = itemData.desc || '';
-                                
-                                let statusText = '';
-                                let statusClass = '';
-                                
-                                switch(status) {
-                                    case 'efficient': statusText = '✅ يعمل بكفاءة'; break;
-                                    case 'fault': statusText = '⚠️ عطل / ملاحظة'; break;
-                                    case 'broken': statusText = '🛑 لا يعمل'; break;
-                                    case 'none': statusText = '⚪ لا يوجد'; break;
-                                    default: statusText = 'غير محدد';
-                                }
-                                
-                                rowHTML += `<td>${statusText}</td>`;
-                                rowHTML += `<td>${desc}</td>`;
-                            });
-                        }
-                    } else {
-                        const sectionData = inspectionData[sectionKey] || {};
-                        
-                        section.items.forEach((item, idx) => {
-                            const itemData = sectionData[idx] || {};
-                            const status = itemData.status || 'efficient';
-                            const desc = itemData.desc || '';
-                            
-                            let statusText = '';
-                            let statusClass = '';
-                            
-                            switch(status) {
-                                case 'efficient': statusText = '✅ يعمل بكفاءة'; break;
-                                case 'fault': statusText = '⚠️ عطل / ملاحظة'; break;
-                                case 'broken': statusText = '🛑 لا يعمل'; break;
-                                case 'none': statusText = '⚪ لا يوجد'; break;
-                                default: statusText = 'غير محدد';
-                            }
-                            
-                            rowHTML += `<td>${statusText}</td>`;
-                            rowHTML += `<td>${desc}</td>`;
-                        });
-                    }
+            Object.keys(inspectionSchema).forEach(key => {
+                if (key === 'pumps') return; 
+                if (!newInsData[key]) newInsData[key] = {};
+                inspectionSchema[key].items.forEach((item, idx) => { 
+                    const statEl = document.getElementById(`stat_${key}_${idx}`); 
+                    const descEl = document.getElementById(`desc_${key}_${idx}`); 
+                    if (statEl) { 
+                        newInsData[key][idx] = { 
+                            status: statEl.value, 
+                            desc: descEl.value 
+                        }; 
+                    } 
                 });
-                
-                rowHTML += '</tr>';
-                tableBody.innerHTML += rowHTML;
             });
-        }
+            
+            if (!newInsData.pumps) newInsData.pumps = {}; 
+            const totalPumps = appData.stations[sName].pumps ? appData.stations[sName].pumps.length : 4;
+            for(let i=1; i<=totalPumps; i++) {
+                if (!newInsData.pumps[i]) newInsData.pumps[i] = {};
+                inspectionSchema.pumps.items.forEach((item, idx) => { 
+                    const prefix = `pumps_${i}`; 
+                    const statEl = document.getElementById(`stat_${prefix}_${idx}`); 
+                    const descEl = document.getElementById(`desc_${prefix}_${idx}`); 
+                    if (statEl) { 
+                        newInsData.pumps[i][idx] = { 
+                            status: statEl.value, 
+                            desc: descEl.value 
+                        }; 
+                    } 
+                });
+            }
+            
+            const nowStd = getStandardDateTime();
+            const log = { 
+                date: nowStd.date, 
+                time: nowStd.time, 
+                station: sName, 
+                operator: appData.currentUser ? (appData.currentUser.username || appData.currentUser.name || 'مستخدم النظام') : 'مستخدم النظام',
+                details: `تحديث سجل الفحص الشامل` 
+            };
+            
+            if (!appData.stations[sName].inspectionData) appData.stations[sName].inspectionData = {}; 
+            appData.stations[sName].inspectionData = newInsData; 
+            localStorage.setItem('toshka_stations_cache', JSON.stringify(appData.stations));
+            
+            if (navigator.onLine) { 
+                db.ref(`stations/${sName}/inspectionData`).update(newInsData).then(() => { 
+                    db.ref('history').push(log); 
+                    alert("تم حفظ بيانات الفحص بنجاح ✅"); 
+                    renderInspection('edit'); 
+                });
+            } 
+            else { 
+                addToOfflineQueue('update_inspection', { 
+                    stationId: sName, 
+                    inspectionData: newInsData, 
+                    log: log 
+                });
+                alert("تم حفظ الفحص في الجهاز (Offline) وسيتم رفعه عند الاتصال ⏳"); 
+                renderInspection('edit');
+            }
+        });
         
-        function exportInspectionToExcel() {
-            const zoneFilter = document.getElementById('inspection-filter-zone').value;
-            const stationFilter = document.getElementById('inspection-filter-station').value;
+        document.getElementById('view-inspection-btn').addEventListener('click', () => { 
+            renderInspection('view'); 
+            document.getElementById('inspection-title').textContent = `نتائج الفحص: ${appData.stations[appData.currentStation].name}`; 
+            showScreen('inspection'); 
+        });
+        
+        document.getElementById('edit-inspection-btn').addEventListener('click', () => { 
+            renderInspection('edit'); 
+            document.getElementById('inspection-title').textContent = `تعديل الفحص: ${appData.stations[appData.currentStation].name}`; 
+            showScreen('inspection'); 
+        });
+
+        // --- تصدير تقرير الفحص إلى Excel ---
+        document.getElementById('export-inspection-excel').addEventListener('click', function() {
+            const sName = appData.currentStation;
+            const sData = appData.stations[sName];
             
-            let stations = Object.values(appData.stations);
-            
-            // تطبيق التصفية حسب المنطقة
-            if (zoneFilter !== 'all') {
-                stations = stations.filter(s => s.zone === zoneFilter);
-            }
-            
-            // تطبيق التصفية حسب المحطة
-            if (stationFilter !== 'all') {
-                stations = stations.filter(s => s.name === stationFilter);
-            }
-            
-            if (stations.length === 0) {
-                alert('لا توجد بيانات للتصدير');
+            if (!sData || !sData.inspectionData) {
+                alert('لا توجد بيانات فحص متاحة لهذه المحطة');
                 return;
             }
             
-            // فرز المحطات
-            stations.sort((a, b) => a.name.localeCompare(b.name));
+            exportSingleStationInspection(sName, sData);
+        });
+        
+        function exportSingleStationInspection(stationName, stationData) {
+            const inspectionData = stationData.inspectionData || {};
+            const now = new Date();
+            const dateStr = now.toISOString().split('T')[0];
+            const timeStr = now.toLocaleTimeString('ar-EG', { hour12: false });
             
-            // إنشاء بيانات Excel
-            let csvContent = "data:text/csv;charset=utf-8,\uFEFF";
+            // إنشاء مصفوفة البيانات للتصدير
+            let data = [];
             
-            // إنشاء رأس الجدول
-            let headerRow1 = ['المحطه'];
-            let headerRow2 = [''];
+            // رأس التقرير
+            data.push(["تقرير الفحص الشامل للمحطة", stationName]);
+            data.push(["تاريخ التصدير", `${dateStr} ${timeStr}`]);
+            data.push(["آخر تحديث للمحطة", stationData.lastUpdate || "غير متوفر"]);
+            data.push(["حالة المحطة", stationData.status || "غير متوفر"]);
+            data.push(["المشغل", stationData.operatorName || "غير متوفر"]);
+            data.push([]); // سطر فارغ
             
-            Object.keys(inspectionSchema).forEach(sectionKey => {
-                const section = inspectionSchema[sectionKey];
+            // البيانات العامة
+            data.push(["المعلومات العامة", "", "", ""]);
+            data.push(["الجهد الكهربي", `${stationData.voltage || 0} V`, "الضغط", `${stationData.pressure || 0} Bar`]);
+            data.push(["التدفق", `${stationData.waterFlow || 0} L/Sec`, "النظام", stationData.systemMode || "غير محدد"]);
+            data.push(["المضخات العاملة", stationData.activePumps || 0, "إجمالي المضخات", stationData.pumps ? stationData.pumps.length : 0]);
+            data.push([]);
+            
+            // بيانات الفحص
+            data.push(["تفاصيل الفحص الشامل", "", "", ""]);
+            data.push(["القسم", "المكون", "الحالة", "ملاحظات"]);
+            
+            // إضافة بيانات الفحص من كل قسم
+            Object.keys(inspectionSchema).forEach(key => {
+                if (key === 'pumps') return; // سنتعامل مع المضخات لاحقاً
                 
-                if (sectionKey === 'pumps') {
-                    let maxPumps = 0;
-                    stations.forEach(station => {
-                        if (station.pumps && station.pumps.length > maxPumps) {
-                            maxPumps = station.pumps.length;
-                        }
-                    });
-                    
-                    for (let i = 1; i <= maxPumps; i++) {
-                        headerRow1.push(`مضخه رقم ${i}`);
-                        for (let j = 0; j < section.items.length * 2 - 1; j++) {
-                            headerRow1.push('');
-                        }
-                        
-                        section.items.forEach(item => {
-                            headerRow2.push(item, 'ملاحظات');
-                        });
-                    }
-                } else {
-                    headerRow1.push(section.title);
-                    for (let j = 0; j < section.items.length * 2 - 1; j++) {
-                        headerRow1.push('');
-                    }
-                    
-                    section.items.forEach(item => {
-                        headerRow2.push(item, 'ملاحظات');
-                    });
-                }
+                const schema = inspectionSchema[key];
+                const sectionData = inspectionData[key] || {};
+                
+                data.push([schema.title, "", "", ""]);
+                
+                schema.items.forEach((item, idx) => {
+                    const itemData = sectionData[idx] || {};
+                    const status = statusTextMap[itemData.status] || "غير مسجل";
+                    const desc = itemData.desc || "";
+                    data.push(["", item, status, desc]);
+                });
+                
+                data.push([]);
             });
             
-            csvContent += headerRow1.join(',') + '\n';
-            csvContent += headerRow2.join(',') + '\n';
-            
-            // إضافة بيانات المحطات
-            stations.forEach(station => {
-                const inspectionData = station.inspectionData || {};
-                let rowData = [station.name];
+            // بيانات المضخات
+            if (inspectionData.pumps && stationData.pumps) {
+                data.push(["بيانات المضخات", "", "", ""]);
                 
-                Object.keys(inspectionSchema).forEach(sectionKey => {
-                    const section = inspectionSchema[sectionKey];
+                for (let i = 1; i <= stationData.pumps.length; i++) {
+                    const pumpData = inspectionData.pumps[i] || {};
+                    data.push([`مضخة رقم ${i}`, "", "", ""]);
                     
-                    if (sectionKey === 'pumps') {
-                        const pumpsData = inspectionData[sectionKey] || {};
-                        let maxPumps = 0;
-                        stations.forEach(s => {
-                            if (s.pumps && s.pumps.length > maxPumps) {
-                                maxPumps = s.pumps.length;
-                            }
-                        });
-                        
-                        for (let i = 1; i <= maxPumps; i++) {
-                            const pumpData = pumpsData[i] || {};
-                            
-                            section.items.forEach((item, idx) => {
-                                const itemData = pumpData[idx] || {};
-                                const status = itemData.status || 'efficient';
-                                const desc = itemData.desc || '';
-                                
-                                let statusText = '';
-                                
-                                switch(status) {
-                                    case 'efficient': statusText = 'يعمل بكفاءة'; break;
-                                    case 'fault': statusText = 'عطل / ملاحظة'; break;
-                                    case 'broken': statusText = 'لا يعمل'; break;
-                                    case 'none': statusText = 'لا يوجد'; break;
-                                    default: statusText = 'غير محدد';
-                                }
-                                
-                                rowData.push(statusText, desc);
-                            });
+                    // تحديد حالة المضخة بناءً على البيانات
+                    let pumpStatus = "✅ يعمل بكفاءة";
+                    const criticalIndices = [1, 5, 10, 11, 12];
+                    let hasCriticalFault = false;
+                    let hasFault = false;
+                    
+                    inspectionSchema.pumps.items.forEach((item, idx) => {
+                        const itemData = pumpData[idx] || {};
+                        if (itemData.status === 'broken' && criticalIndices.includes(idx)) {
+                            hasCriticalFault = true;
+                        } else if (itemData.status === 'fault') {
+                            hasFault = true;
                         }
-                    } else {
-                        const sectionData = inspectionData[sectionKey] || {};
-                        
-                        section.items.forEach((item, idx) => {
-                            const itemData = sectionData[idx] || {};
-                            const status = itemData.status || 'efficient';
-                            const desc = itemData.desc || '';
-                            
-                            let statusText = '';
-                            
-                            switch(status) {
-                                case 'efficient': statusText = 'يعمل بكفاءة'; break;
-                                case 'fault': statusText = 'عطل / ملاحظة'; break;
-                                case 'broken': statusText = 'لا يعمل'; break;
-                                case 'none': statusText = 'لا يوجد'; break;
-                                default: statusText = 'غير محدد';
-                            }
-                            
-                            rowData.push(statusText, desc);
-                        });
+                    });
+                    
+                    if (hasCriticalFault) {
+                        pumpStatus = "🛑 لا يعمل (عطل حرج)";
+                    } else if (hasFault) {
+                        pumpStatus = "⚠️ يحتاج صيانة";
+                    }
+                    
+                    data.push(["", "الحالة الإجمالية", pumpStatus, ""]);
+                    
+                    // إضافة بيانات كل مكون في المضخة
+                    inspectionSchema.pumps.items.forEach((item, idx) => {
+                        const itemData = pumpData[idx] || {};
+                        const status = statusTextMap[itemData.status] || "غير مسجل";
+                        const desc = itemData.desc || "";
+                        data.push(["", item, status, desc]);
+                    });
+                    
+                    data.push([]);
+                }
+            }
+            
+            // الأعطال المسجلة
+            if (stationData.currentFault || stationData.secondaryFault) {
+                data.push(["الأعطال المسجلة", "", "", ""]);
+                if (stationData.currentFault) {
+                    data.push(["", "العطل الرئيسي", stationData.currentFault, stationData.fault1Desc || ""]);
+                }
+                if (stationData.secondaryFault) {
+                    data.push(["", "العطل الثانوي", stationData.secondaryFault, stationData.fault2Desc || ""]);
+                }
+                data.push([]);
+            }
+            
+            // الملاحظات
+            if (stationData.comments) {
+                data.push(["ملاحظات التشغيل", "", "", ""]);
+                data.push(["", stationData.comments, "", ""]);
+            }
+            
+            // إنشاء ورقة العمل
+            const ws = XLSX.utils.aoa_to_sheet(data);
+            
+            // تحديد عرض الأعمدة
+            const wscols = [
+                { wch: 20 }, // العمود الأول
+                { wch: 25 }, // العمود الثاني
+                { wch: 20 }, // العمود الثالث
+                { wch: 40 }  // العمود الرابع
+            ];
+            ws['!cols'] = wscols;
+            
+            // إنشاء المصنف
+            const wb = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(wb, ws, "تقرير الفحص");
+            
+            // حفظ الملف
+            const fileName = `تقرير_فحص_${stationName}_${dateStr}.xlsx`;
+            XLSX.writeFile(wb, fileName);
+            
+            alert(`تم تصدير تقرير الفحص للمحطة ${stationName} بنجاح!`);
+        }
+        
+        // --- شاشة تصدير تقرير الفحص لجميع المحطات ---
+        function updateExportFilters() {
+            const zoneSelect = document.getElementById('export-filter-zone');
+            const stationSelect = document.getElementById('export-filter-station');
+            
+            // تحديث قائمة المناطق
+            if (zoneSelect.options.length <= 1) {
+                zoneSelect.innerHTML = '<option value="all">كل المناطق</option>';
+                appData.zones.forEach(z => zoneSelect.innerHTML += `<option value="${z}">${z}</option>`);
+            }
+            
+            // تحديث قائمة المحطات
+            stationSelect.innerHTML = '<option value="all">كل المحطات</option>';
+            const sortedStations = Object.values(appData.stations).sort((a, b) => a.name.localeCompare(b.name));
+            sortedStations.forEach(station => {
+                stationSelect.innerHTML += `<option value="${station.name}">${station.name}</option>`;
+            });
+            
+            // إضافة حدث تغيير للمنطقة لتحديث المحطات
+            zoneSelect.onchange = function() {
+                const selectedZone = this.value;
+                stationSelect.innerHTML = '<option value="all">كل المحطات</option>';
+                
+                let filteredStations = sortedStations;
+                if (selectedZone !== 'all') {
+                    filteredStations = sortedStations.filter(s => s.zone === selectedZone);
+                }
+                
+                filteredStations.forEach(station => {
+                    stationSelect.innerHTML += `<option value="${station.name}">${station.name}</option>`;
+                });
+            };
+        }
+        
+        document.getElementById('generate-inspection-report').addEventListener('click', function() {
+            const zoneFilter = document.getElementById('export-filter-zone').value;
+            const stationFilter = document.getElementById('export-filter-station').value;
+            const reportType = document.getElementById('export-report-type').value;
+            const fileFormat = document.getElementById('export-file-format').value;
+            
+            const exportStatus = document.getElementById('export-status');
+            exportStatus.style.display = 'block';
+            exportStatus.innerHTML = '<div style="color: var(--excel-color);">⏳ جاري توليد التقرير...</div>';
+            
+            // تصفية المحطات
+            let stationsToExport = Object.values(appData.stations);
+            
+            if (zoneFilter !== 'all') {
+                stationsToExport = stationsToExport.filter(s => s.zone === zoneFilter);
+            }
+            
+            if (stationFilter !== 'all') {
+                stationsToExport = stationsToExport.filter(s => s.name === stationFilter);
+            }
+            
+            // تصفية المحطات التي لديها بيانات فحص
+            stationsToExport = stationsToExport.filter(s => s.inspectionData);
+            
+            if (stationsToExport.length === 0) {
+                exportStatus.innerHTML = '<div style="color: var(--danger-color);">⚠️ لا توجد محطات ببيانات فحص مطابقة للفلتر</div>';
+                return;
+            }
+            
+            setTimeout(() => {
+                if (fileFormat === 'excel') {
+                    exportInspectionReportExcel(stationsToExport, reportType);
+                } else {
+                    exportInspectionReportCSV(stationsToExport, reportType);
+                }
+                
+                exportStatus.innerHTML = `<div style="color: var(--success-color);">✅ تم تصدير ${stationsToExport.length} محطة بنجاح!</div>`;
+            }, 1000);
+        });
+        
+        function exportInspectionReportExcel(stations, reportType) {
+            const now = new Date();
+            const dateStr = now.toISOString().split('T')[0];
+            const timeStr = now.toLocaleTimeString('ar-EG', { hour12: false });
+            
+            // إنشاء مصنف جديد
+            const wb = XLSX.utils.book_new();
+            
+            if (reportType === 'summary') {
+                // ورقة الملخص
+                let summaryData = [
+                    ["ملخص تقارير الفحص الشامل"],
+                    [`تاريخ التصدير: ${dateStr} ${timeStr}`],
+                    [`عدد المحطات: ${stations.length}`],
+                    [],
+                    ["المحطة", "المنطقة", "حالة المحطة", "المشغل", "آخر تحديث", "عدد المضخات", "حالة الفحص"]
+                ];
+                
+                stations.forEach(station => {
+                    const hasInspection = station.inspectionData ? "✅ موجود" : "❌ غير موجود";
+                    const pumpCount = station.pumps ? station.pumps.length : 0;
+                    summaryData.push([
+                        station.name,
+                        station.zone,
+                        station.status,
+                        station.operatorName,
+                        station.lastUpdate,
+                        pumpCount,
+                        hasInspection
+                    ]);
+                });
+                
+                const wsSummary = XLSX.utils.aoa_to_sheet(summaryData);
+                const summaryCols = [
+                    { wch: 15 }, { wch: 15 }, { wch: 15 }, 
+                    { wch: 20 }, { wch: 20 }, { wch: 15 }, { wch: 15 }
+                ];
+                wsSummary['!cols'] = summaryCols;
+                XLSX.utils.book_append_sheet(wb, wsSummary, "ملخص");
+                
+                // إضافة ورقة لكل محطة
+                stations.forEach((station, index) => {
+                    if (index < 10) { // حد أقصى 10 أوراق
+                        const stationData = generateStationInspectionData(station, reportType);
+                        const wsStation = XLSX.utils.aoa_to_sheet(stationData);
+                        const stationCols = [
+                            { wch: 20 }, { wch: 25 }, { wch: 20 }, { wch: 40 }
+                        ];
+                        wsStation['!cols'] = stationCols;
+                        // تقصير اسم الورقة إذا كان طويلاً
+                        const sheetName = station.name.length > 31 ? station.name.substring(0, 31) : station.name;
+                        XLSX.utils.book_append_sheet(wb, wsStation, sheetName);
                     }
                 });
                 
-                csvContent += rowData.join(',') + '\n';
-            });
+            } else if (reportType === 'faults') {
+                // تقرير الأعطال فقط
+                let faultsData = [
+                    ["تقرير أعطال المحطات"],
+                    [`تاريخ التصدير: ${dateStr} ${timeStr}`],
+                    [],
+                    ["المحطة", "المنطقة", "العطل الرئيسي", "وصف العطل", "العطل الثانوي", "وصف العطل", "وقت بدء العطل", "حالة المحطة"]
+                ];
+                
+                stations.forEach(station => {
+                    if (station.currentFault || station.secondaryFault) {
+                        faultsData.push([
+                            station.name,
+                            station.zone,
+                            station.currentFault || "",
+                            station.fault1Desc || "",
+                            station.secondaryFault || "",
+                            station.fault2Desc || "",
+                            station.faultStartTime || "",
+                            station.status
+                        ]);
+                    }
+                });
+                
+                const wsFaults = XLSX.utils.aoa_to_sheet(faultsData);
+                const faultsCols = [
+                    { wch: 15 }, { wch: 15 }, { wch: 25 }, 
+                    { wch: 30 }, { wch: 25 }, { wch: 30 }, 
+                    { wch: 20 }, { wch: 15 }
+                ];
+                wsFaults['!cols'] = faultsCols;
+                XLSX.utils.book_append_sheet(wb, wsFaults, "الأعطال");
+                
+            } else {
+                // تقرير كامل - ورقة واحدة لكل محطة
+                stations.forEach((station, index) => {
+                    if (index < 15) { // حد أقصى 15 محطة في التقرير الكامل
+                        const stationData = generateStationInspectionData(station, reportType);
+                        const wsStation = XLSX.utils.aoa_to_sheet(stationData);
+                        const stationCols = [
+                            { wch: 20 }, { wch: 25 }, { wch: 20 }, { wch: 40 }
+                        ];
+                        wsStation['!cols'] = stationCols;
+                        // تقصير اسم الورقة إذا كان طويلاً
+                        const sheetName = station.name.length > 31 ? station.name.substring(0, 31) : station.name;
+                        XLSX.utils.book_append_sheet(wb, wsStation, sheetName);
+                    }
+                });
+            }
+            
+            // حفظ الملف
+            const fileName = `تقرير_فحص_${reportType}_${dateStr}.xlsx`;
+            XLSX.writeFile(wb, fileName);
+        }
+        
+        function exportInspectionReportCSV(stations, reportType) {
+            const now = new Date();
+            const dateStr = now.toISOString().split('T')[0];
+            
+            let csvContent = "data:text/csv;charset=utf-8,\uFEFF";
+            
+            if (reportType === 'summary') {
+                csvContent += "المحطة,المنطقة,حالة المحطة,المشغل,آخر تحديث,عدد المضخات,حالة الفحص\n";
+                
+                stations.forEach(station => {
+                    const hasInspection = station.inspectionData ? "موجود" : "غير موجود";
+                    const pumpCount = station.pumps ? station.pumps.length : 0;
+                    csvContent += `"${station.name}","${station.zone}","${station.status}","${station.operatorName}","${station.lastUpdate}",${pumpCount},"${hasInspection}"\n`;
+                });
+                
+            } else if (reportType === 'faults') {
+                csvContent += "المحطة,المنطقة,العطل الرئيسي,وصف العطل,العطل الثانوي,وصف العطل,وقت بدء العطل,حالة المحطة\n";
+                
+                stations.forEach(station => {
+                    if (station.currentFault || station.secondaryFault) {
+                        csvContent += `"${station.name}","${station.zone}","${station.currentFault || ''}","${station.fault1Desc || ''}","${station.secondaryFault || ''}","${station.fault2Desc || ''}","${station.faultStartTime || ''}","${station.status}"\n`;
+                    }
+                });
+                
+            } else {
+                // تقرير كامل
+                csvContent += "المحطة,القسم,المكون,الحالة,ملاحظات\n";
+                
+                stations.forEach(station => {
+                    const inspectionData = station.inspectionData || {};
+                    
+                    Object.keys(inspectionSchema).forEach(key => {
+                        if (key === 'pumps') return;
+                        
+                        const schema = inspectionSchema[key];
+                        const sectionData = inspectionData[key] || {};
+                        
+                        schema.items.forEach((item, idx) => {
+                            const itemData = sectionData[idx] || {};
+                            const status = statusTextMap[itemData.status] || "غير مسجل";
+                            const desc = itemData.desc || "";
+                            csvContent += `"${station.name}","${schema.title}","${item}","${status}","${desc}"\n`;
+                        });
+                    });
+                    
+                    // بيانات المضخات
+                    if (inspectionData.pumps && station.pumps) {
+                        for (let i = 1; i <= station.pumps.length; i++) {
+                            const pumpData = inspectionData.pumps[i] || {};
+                            
+                            inspectionSchema.pumps.items.forEach((item, idx) => {
+                                const itemData = pumpData[idx] || {};
+                                const status = statusTextMap[itemData.status] || "غير مسجل";
+                                const desc = itemData.desc || "";
+                                csvContent += `"${station.name}","مضخة ${i}","${item}","${status}","${desc}"\n`;
+                            });
+                        }
+                    }
+                });
+            }
             
             const encodedUri = encodeURI(csvContent);
             const link = document.createElement("a");
             link.setAttribute("href", encodedUri);
-            
-            // إنشاء اسم الملف
-            let fileName = 'فحص_المحطات';
-            if (zoneFilter !== 'all') fileName += `_${zoneFilter}`;
-            if (stationFilter !== 'all') fileName += `_${stationFilter}`;
-            fileName += `_${new Date().toISOString().split('T')[0]}.csv`;
-            
-            link.setAttribute("download", fileName);
+            link.setAttribute("download", `تقرير_فحص_${reportType}_${dateStr}.csv`);
             document.body.appendChild(link);
             link.click();
             document.body.removeChild(link);
+        }
+        
+        function generateStationInspectionData(station, reportType) {
+            const inspectionData = station.inspectionData || {};
+            const now = new Date();
+            const dateStr = now.toISOString().split('T')[0];
+            const timeStr = now.toLocaleTimeString('ar-EG', { hour12: false });
             
-            alert(`تم تصدير ${stations.length} محطة بنجاح ✅`);
+            let data = [];
+            
+            // رأس التقرير
+            data.push(["تقرير الفحص الشامل للمحطة", station.name]);
+            data.push(["المنطقة", station.zone]);
+            data.push(["تاريخ التصدير", `${dateStr} ${timeStr}`]);
+            data.push(["آخر تحديث للمحطة", station.lastUpdate || "غير متوفر"]);
+            data.push(["حالة المحطة", station.status || "غير متوفر"]);
+            data.push(["المشغل", station.operatorName || "غير متوفر"]);
+            data.push([]);
+            
+            if (reportType === 'full') {
+                // البيانات العامة
+                data.push(["المعلومات العامة", "", "", ""]);
+                data.push(["الجهد الكهربي", `${station.voltage || 0} V`, "الضغط", `${station.pressure || 0} Bar`]);
+                data.push(["التدفق", `${station.waterFlow || 0} L/Sec`, "النظام", station.systemMode || "غير محدد"]);
+                data.push(["المضخات العاملة", station.activePumps || 0, "إجمالي المضخات", station.pumps ? station.pumps.length : 0]);
+                data.push([]);
+                
+                // بيانات الفحص
+                data.push(["تفاصيل الفحص الشامل", "", "", ""]);
+                data.push(["القسم", "المكون", "الحالة", "ملاحظات"]);
+                
+                // إضافة بيانات الفحص من كل قسم
+                Object.keys(inspectionSchema).forEach(key => {
+                    if (key === 'pumps') return;
+                    
+                    const schema = inspectionSchema[key];
+                    const sectionData = inspectionData[key] || {};
+                    
+                    data.push([schema.title, "", "", ""]);
+                    
+                    schema.items.forEach((item, idx) => {
+                        const itemData = sectionData[idx] || {};
+                        const status = statusTextMap[itemData.status] || "غير مسجل";
+                        const desc = itemData.desc || "";
+                        data.push(["", item, status, desc]);
+                    });
+                    
+                    data.push([]);
+                });
+                
+                // بيانات المضخات
+                if (inspectionData.pumps && station.pumps) {
+                    data.push(["بيانات المضخات", "", "", ""]);
+                    
+                    for (let i = 1; i <= station.pumps.length; i++) {
+                        const pumpData = inspectionData.pumps[i] || {};
+                        data.push([`مضخة رقم ${i}`, "", "", ""]);
+                        
+                        // تحديد حالة المضخة
+                        let pumpStatus = "✅ يعمل بكفاءة";
+                        const criticalIndices = [1, 5, 10, 11, 12];
+                        let hasCriticalFault = false;
+                        let hasFault = false;
+                        
+                        inspectionSchema.pumps.items.forEach((item, idx) => {
+                            const itemData = pumpData[idx] || {};
+                            if (itemData.status === 'broken' && criticalIndices.includes(idx)) {
+                                hasCriticalFault = true;
+                            } else if (itemData.status === 'fault') {
+                                hasFault = true;
+                            }
+                        });
+                        
+                        if (hasCriticalFault) {
+                            pumpStatus = "🛑 لا يعمل (عطل حرج)";
+                        } else if (hasFault) {
+                            pumpStatus = "⚠️ يحتاج صيانة";
+                        }
+                        
+                        data.push(["", "الحالة الإجمالية", pumpStatus, ""]);
+                        
+                        inspectionSchema.pumps.items.forEach((item, idx) => {
+                            const itemData = pumpData[idx] || {};
+                            const status = statusTextMap[itemData.status] || "غير مسجل";
+                            const desc = itemData.desc || "";
+                            data.push(["", item, status, desc]);
+                        });
+                        
+                        data.push([]);
+                    }
+                }
+                
+                // الأعطال المسجلة
+                if (station.currentFault || station.secondaryFault) {
+                    data.push(["الأعطال المسجلة", "", "", ""]);
+                    if (station.currentFault) {
+                        data.push(["", "العطل الرئيسي", station.currentFault, station.fault1Desc || ""]);
+                    }
+                    if (station.secondaryFault) {
+                        data.push(["", "العطل الثانوي", station.secondaryFault, station.fault2Desc || ""]);
+                    }
+                    data.push([]);
+                }
+                
+                // الملاحظات
+                if (station.comments) {
+                    data.push(["ملاحظات التشغيل", "", "", ""]);
+                    data.push(["", station.comments, "", ""]);
+                }
+            }
+            
+            return data;
         }
-        
-        function exportInspectionToCSV() {
-            // استدعاء نفس وظيفة Excel لكن مع تغيير الاسم فقط
-            exportInspectionToExcel();
-        }
-        
-        window.exportInspectionToExcel = exportInspectionToExcel;
-        window.exportInspectionToCSV = exportInspectionToCSV;
-        window.renderInspectionTable = renderInspectionTable;
 
         // --- USER PROFILE FUNCTIONS (ENHANCED FOR MOBILE) ---
         function renderUserProfileForm() {
@@ -3887,245 +4356,6 @@
         }
         window.exportConsumptionsToCSV = exportConsumptionsToCSV; 
 
-        function exportConsumptionsToExcel() {
-            const table = document.getElementById("consumptions-table-export");
-            const html = table.outerHTML;
-            const url = 'data:application/vnd.ms-excel,' + encodeURIComponent(html);
-            const downloadLink = document.createElement("a");
-            document.body.appendChild(downloadLink);
-            downloadLink.href = url;
-            downloadLink.download = 'تقرير_معدلات_الاستهلاك.xls';
-            downloadLink.click();
-            document.body.removeChild(downloadLink);
-        }
-
-        // --- MOBILE OPTIMIZED INSPECTION LOGIC ---
-        function renderInspection(mode = 'view') {
-            const container = document.getElementById('inspection-container');
-            container.innerHTML = '';
-            const sName = appData.currentStation;
-            const sData = appData.stations[sName];
-            if(!sData) return;
-            const insData = sData.inspectionData || {};
-            const isEdit = (mode === 'edit');
-            const saveBtn = document.getElementById('inspection-actions');
-            saveBtn.style.display = isEdit ? 'block' : 'none';
-            
-            Object.keys(inspectionSchema).forEach((key) => {
-                const schema = inspectionSchema[key];
-                const sectionDiv = document.createElement('div');
-                sectionDiv.className = 'section-accordion';
-                let title = schema.title;
-                if (key === 'pumps') { 
-                    const totalPumps = sData.pumps ? sData.pumps.length : 4; 
-                    title += ` (${totalPumps})`; 
-                }
-                const headerDiv = document.createElement('div');
-                if (isEdit) { 
-                    headerDiv.className = 'section-header-static'; 
-                    headerDiv.innerHTML = `<span>${title}</span>`; 
-                } 
-                else {
-                    headerDiv.className = 'section-accordion-header'; 
-                    headerDiv.innerHTML = `<span>${title}</span> <span class="arrow">▼</span>`;
-                    headerDiv.onclick = function() { 
-                        const body = this.nextElementSibling; 
-                        body.classList.toggle('open'); 
-                        this.classList.toggle('active'); 
-                    };
-                }
-                const bodyDiv = document.createElement('div');
-                if (isEdit) bodyDiv.className = 'section-body-static'; 
-                else { 
-                    bodyDiv.className = 'section-accordion-body'; 
-                    bodyDiv.id = `section-body-${key}`;
-                }
-                
-                if (key === 'pumps') {
-                    const totalPumps = sData.pumps ? sData.pumps.length : 4; 
-                    const pumpsInsData = insData.pumps || {};
-                    for (let i = 1; i <= totalPumps; i++) {
-                        const pData = pumpsInsData[i] || {};
-                        let headerClass = 'pump-header-green'; 
-                        let icon = '✅'; 
-                        const criticalIndices = [1, 5, 10, 11, 12];
-                        let isRed = false; 
-                        let isYellow = false;
-                        schema.items.forEach((item, idx) => { 
-                            const status = pData[idx] ? pData[idx].status : 'efficient'; 
-                            if (criticalIndices.includes(idx)) { 
-                                if (status === 'broken') isRed = true; 
-                            } 
-                            if (status === 'fault') isYellow = true; 
-                        });
-                        if (isRed) { 
-                            headerClass = 'pump-header-red'; 
-                            icon = '🛑'; 
-                        } else if (isYellow) { 
-                            headerClass = 'pump-header-yellow'; 
-                            icon = '⚠️';
-                        }
-                        const pumpItemDiv = document.createElement('div');
-                        pumpItemDiv.className = 'pump-accordion-item';
-                        const pumpHeaderDiv = document.createElement('div'); 
-                        pumpHeaderDiv.className = `pump-accordion-header ${headerClass}`; 
-                        pumpHeaderDiv.innerHTML = `<span>مضخة رقم ${i}</span> <span class="icon-state">${icon}</span>`;
-                        pumpHeaderDiv.onclick = (e) => { 
-                            e.stopPropagation(); 
-                            togglePumpAccordion(i); 
-                        };
-                        const pumpBodyDiv = document.createElement('div'); 
-                        pumpBodyDiv.className = 'pump-accordion-body'; 
-                        pumpBodyDiv.id = `pump-body-${i}`;
-                        schema.items.forEach((item, idx) => {
-                            if (idx === 0) { 
-                                const subHeader = document.createElement('div'); 
-                                subHeader.className = 'pump-section-divider'; 
-                                subHeader.textContent = '1- خط السحب'; 
-                                pumpBodyDiv.appendChild(subHeader); 
-                            } 
-                            else if (idx === 5) { 
-                                const subHeader = document.createElement('div'); 
-                                subHeader.className = 'pump-section-divider'; 
-                                subHeader.textContent = '2- المضخة'; 
-                                pumpBodyDiv.appendChild(subHeader); 
-                            } 
-                            else if (idx === 6) { 
-                                const subHeader = document.createElement('div'); 
-                                subHeader.className = 'pump-section-divider'; 
-                                subHeader.textContent = '3- خط الطرد'; 
-                                pumpBodyDiv.appendChild(subHeader); 
-                            }
-                            pumpBodyDiv.appendChild(createInspectionRow(idx, item, pData[idx] || {}, `pumps_${i}`, isEdit));
-                        });
-                        pumpItemDiv.appendChild(pumpHeaderDiv); 
-                        pumpItemDiv.appendChild(pumpBodyDiv); 
-                        bodyDiv.appendChild(pumpItemDiv);
-                    }
-                } else {
-                    const sectionData = insData[key] || {};
-                    schema.items.forEach((item, idx) => { 
-                        bodyDiv.appendChild(createInspectionRow(idx, item, sectionData[idx] || {}, key, isEdit)); 
-                    });
-                }
-                sectionDiv.appendChild(headerDiv); 
-                sectionDiv.appendChild(bodyDiv); 
-                container.appendChild(sectionDiv);
-            });
-        }
-
-        function createInspectionRow(itemKey, label, dataObj, prefix, isEdit) {
-            const row = document.createElement('div');
-            row.className = 'inspection-row';
-            const savedStatus = dataObj && dataObj.status ? dataObj.status : 'efficient'; 
-            const savedDesc = dataObj && dataObj.desc ? dataObj.desc : ''; 
-            const inputId = `${prefix}_${itemKey}`;
-            let optionsHtml = '';
-            statusOptions.forEach(opt => { 
-                const isSel = savedStatus === opt.val ? 'selected' : ''; 
-                optionsHtml += `<option value="${opt.val}" ${isSel}>${opt.text}</option>`; 
-            });
-            let selectHtml = `<select class="inspection-status-select ${savedStatus}" id="stat_${inputId}" ${isEdit ? '' : 'disabled'} onchange="updateInspectionColor(this)">${optionsHtml}</select>`;
-            let descHtml = `<input type="text" class="inspection-desc-input" id="desc_${inputId}" value="${savedDesc}" placeholder="ملاحظات..." ${isEdit ? '' : 'readonly'}>`;
-            row.innerHTML = `<div class="inspection-label">${label}</div><div>${selectHtml}</div><div>${descHtml}</div>`; 
-            return row;
-        }
-        
-        window.togglePumpAccordion = (id) => { 
-            const target = document.getElementById(`pump-body-${id}`);
-            const allPumpBodies = document.querySelectorAll('.pump-accordion-body'); 
-            allPumpBodies.forEach(b => { 
-                if(b !== target) b.classList.remove('open'); 
-            }); 
-            target.classList.toggle('open'); 
-        };
-        
-        window.updateInspectionColor = (selectElem) => { 
-            selectElem.classList.remove('efficient', 'fault', 'broken', 'none'); 
-            selectElem.classList.add(selectElem.value); 
-        };
-        
-        document.getElementById('save-inspection-btn').addEventListener('click', () => {
-            const sName = appData.currentStation; 
-            if(!sName) return;
-            const oldInsData = (appData.stations[sName].inspectionData) || {}; 
-            let newInsData = JSON.parse(JSON.stringify(oldInsData));
-            
-            Object.keys(inspectionSchema).forEach(key => {
-                if (key === 'pumps') return; 
-                if (!newInsData[key]) newInsData[key] = {};
-                inspectionSchema[key].items.forEach((item, idx) => { 
-                    const statEl = document.getElementById(`stat_${key}_${idx}`); 
-                    const descEl = document.getElementById(`desc_${key}_${idx}`); 
-                    if (statEl) { 
-                        newInsData[key][idx] = { 
-                            status: statEl.value, 
-                            desc: descEl.value 
-                        }; 
-                    } 
-                });
-            });
-            
-            if (!newInsData.pumps) newInsData.pumps = {}; 
-            const totalPumps = appData.stations[sName].pumps ? appData.stations[sName].pumps.length : 4;
-            for(let i=1; i<=totalPumps; i++) {
-                if (!newInsData.pumps[i]) newInsData.pumps[i] = {};
-                inspectionSchema.pumps.items.forEach((item, idx) => { 
-                    const prefix = `pumps_${i}`; 
-                    const statEl = document.getElementById(`stat_${prefix}_${idx}`); 
-                    const descEl = document.getElementById(`desc_${prefix}_${idx}`); 
-                    if (statEl) { 
-                        newInsData.pumps[i][idx] = { 
-                            status: statEl.value, 
-                            desc: descEl.value 
-                        }; 
-                    } 
-                });
-            }
-            
-            const nowStd = getStandardDateTime();
-            const log = { 
-                date: nowStd.date, 
-                time: nowStd.time, 
-                station: sName, 
-                operator: appData.currentUser ? (appData.currentUser.username || appData.currentUser.name || 'مستخدم النظام') : 'مستخدم النظام',
-                details: `تحديث سجل الفحص الشامل` 
-            };
-            
-            if (!appData.stations[sName].inspectionData) appData.stations[sName].inspectionData = {}; 
-            appData.stations[sName].inspectionData = newInsData; 
-            localStorage.setItem('toshka_stations_cache', JSON.stringify(appData.stations));
-            
-            if (navigator.onLine) { 
-                db.ref(`stations/${sName}/inspectionData`).update(newInsData).then(() => { 
-                    db.ref('history').push(log); 
-                    alert("تم حفظ بيانات الفحص بنجاح ✅"); 
-                    renderInspection('edit'); 
-                });
-            } 
-            else { 
-                addToOfflineQueue('update_inspection', { 
-                    stationId: sName, 
-                    inspectionData: newInsData, 
-                    log: log 
-                });
-                alert("تم حفظ الفحص في الجهاز (Offline) وسيتم رفعه عند الاتصال ⏳"); 
-                renderInspection('edit');
-            }
-        });
-        
-        document.getElementById('view-inspection-btn').addEventListener('click', () => { 
-            renderInspection('view'); 
-            document.getElementById('inspection-title').textContent = `نتائج الفحص: ${appData.stations[appData.currentStation].name}`; 
-            showScreen('inspection'); 
-        });
-        
-        document.getElementById('edit-inspection-btn').addEventListener('click', () => { 
-            renderInspection('edit'); 
-            document.getElementById('inspection-title').textContent = `تعديل الفحص: ${appData.stations[appData.currentStation].name}`; 
-            showScreen('inspection'); 
-        });
-
         // --- FAULTS & HISTORY LOGIC ---
         function renderHistoryTable(applyFilters = false) {
             const tbody = document.getElementById('history-table-body');
@@ -4293,4 +4523,4 @@
         loadSystemData();
     </script>
 </body>
-    </html>
+</html>
