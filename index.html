@@ -12,6 +12,7 @@
             --warning-color: #f39c12;
             --danger-color: #c0392b;
             --consumption-color: #2980b9;
+            --inspection-color: #8e44ad; /* لون جديد لزر الفحص */
             --light-bg: #f4f6f7;
             --card-bg: #ffffff;
             --header-bg: #eaf2f8;
@@ -70,6 +71,7 @@
         .btn-info { background-color: #17a2b8; color: white; }
         .btn-consumption { background-color: var(--consumption-color); color: white; }
         .btn-profile { background-color: var(--profile-color); color: white; }
+        .btn-inspection { background-color: var(--inspection-color); color: white; } /* زر الفحص الجديد */
         .btn:hover { opacity: 0.9; transform: translateY(-2px); }
 
         .screen { display: none; background: var(--card-bg); border-radius: 10px; box-shadow: 0 5px 15px rgba(0,0,0,0.05); padding: 15px; margin-top: 15px; min-height: 500px; }
@@ -706,6 +708,9 @@
                     </button>
                     <div class="user-badge" id="current-user">مرحباً</div>
                     
+                    <!-- زر التصدير الجديد -->
+                    <button id="export-inspection-btn" class="btn btn-inspection" style="display: none;">📊 تصدير الفحص</button>
+                    
                     <button id="users-management-btn" class="btn btn-warning" style="display: none;">المستخدمين</button>
                     <button id="consumptions-btn" class="btn btn-consumption" style="display: none;">⚡ الاستهلاكات</button>
                     <button id="history-management-btn" class="btn btn-info" style="display: none;">السجل العام</button>
@@ -954,6 +959,50 @@
             
             <div id="inspection-actions" style="margin-top:10px; display:none; position:sticky; bottom:10px; z-index:999;">
                 <button id="save-inspection-btn" class="btn btn-success">💾 حفظ الفحص بالكامل</button>
+            </div>
+        </div>
+
+        <!-- شاشة تصدير فحص المحطات الجديدة -->
+        <div id="export-inspection-screen" class="screen">
+            <h2 style="color: var(--inspection-color);">تصدير فحص المحطات</h2>
+            <button id="back-to-stations-from-export" class="btn btn-outline">عودة</button>
+            
+            <div class="filters-container" style="background: #f9f9f9; padding: 15px; border-radius: 8px; border: 1px solid #eee; margin-bottom: 20px; margin-top:10px; display: grid; gap: 10px; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));">
+                <div class="filter-item">
+                    <label>المنطقة</label>
+                    <select id="inspection-filter-zone">
+                        <option value="all">كل المناطق</option>
+                        <!-- سيتم ملؤها بالمناطق -->
+                    </select>
+                </div>
+                <div class="filter-item">
+                    <label>المحطة</label>
+                    <select id="inspection-filter-station">
+                        <option value="all">كل المحطات</option>
+                        <!-- سيتم ملؤها بالمحطات -->
+                    </select>
+                </div>
+                <div class="filter-item" style="display:flex; align-items:flex-end; gap:5px;">
+                    <button class="btn btn-primary" onclick="renderInspectionTable()" style="flex:1">عرض البيانات</button>
+                    <button class="btn btn-success" onclick="exportInspectionToExcel()" style="flex:1" title="تصدير Excel">Excel 📊</button>
+                    <button class="btn btn-warning" onclick="exportInspectionToCSV()" style="flex:1" title="تصدير CSV">CSV 📥</button>
+                </div>
+            </div>
+            
+            <div class="table-responsive">
+                <table class="inspection-table" id="inspection-export-table">
+                    <thead id="inspection-table-header">
+                        <!-- سيتم إنشاء رأس الجدول ديناميكياً -->
+                    </thead>
+                    <tbody id="inspection-table-body">
+                        <!-- سيتم ملؤها بالبيانات -->
+                    </tbody>
+                </table>
+            </div>
+            
+            <div style="margin-top: 20px; text-align: center; color: #666; font-size: 0.9rem;">
+                <p>ملاحظة: يتم تصدير البيانات بنفس تنسيق ملف "عرض الفحص.xlsx" المرفق</p>
+                <p>سيتم تضمين بيانات الفحص للمحطات المحددة فقط</p>
             </div>
         </div>
 
@@ -1312,6 +1361,7 @@
                     view_passwords: true,
                     view_profiles: true,
                     delete_profiles: true,
+                    view_inspection_export: true, // صلاحية تصدير الفحص
                     can_manage_types: ['admin', 'engineer', 'supervisor', 'operator'],
                     can_add_types: ['admin', 'engineer', 'supervisor', 'operator'],
                     can_delete_types: ['admin', 'engineer', 'supervisor', 'operator']
@@ -1329,6 +1379,7 @@
                     view_passwords: false,
                     view_profiles: true,
                     delete_profiles: false,
+                    view_inspection_export: true, // صلاحية تصدير الفحص
                     can_manage_types: ['supervisor', 'operator'],
                     can_add_types: ['supervisor', 'operator'],
                     can_delete_types: ['supervisor', 'operator']
@@ -1346,6 +1397,7 @@
                     view_passwords: false,
                     view_profiles: true,
                     delete_profiles: false,
+                    view_inspection_export: true, // صلاحية تصدير الفحص
                     can_manage_types: ['operator'],
                     can_add_types: ['operator'],
                     can_delete_types: ['operator']
@@ -1363,6 +1415,7 @@
                     view_passwords: false,
                     view_profiles: false,
                     delete_profiles: false,
+                    view_inspection_export: false, // لا يملك صلاحية تصدير الفحص
                     can_manage_types: [],
                     can_add_types: [],
                     can_delete_types: []
@@ -1795,6 +1848,9 @@
                 renderUserProfileForm();
                 renderUsersProfilesList();
             }
+            if(screenId === 'export-inspection') {
+                renderInspectionExportFilters();
+            }
         }
 
         // --- AUTHENTICATION ---
@@ -1857,6 +1913,9 @@
                 } else {
                     document.getElementById('consumptions-btn').style.display = 'none';
                 }
+                
+                // عرض زر تصدير الفحص للمستخدمين المصرح لهم
+                document.getElementById('export-inspection-btn').style.display = permissions.view_inspection_export ? 'inline-block' : 'none';
 
                 showScreen('stations');
                 renderZonesTabs();
@@ -1888,6 +1947,15 @@
         
         document.getElementById('history-management-btn').addEventListener('click', () => showScreen('history'));
         document.getElementById('alarm-btn').addEventListener('click', () => showScreen('faults-log'));
+        
+        // زر تصدير الفحص الجديد
+        document.getElementById('export-inspection-btn').addEventListener('click', () => {
+            if (appData.currentUser && appData.currentUser.permissions.view_inspection_export) {
+                showScreen('export-inspection');
+            } else {
+                alert('ليس لديك صلاحية لتصدير بيانات الفحص');
+            }
+        });
 
         document.getElementById('back-to-stations').addEventListener('click', () => showScreen('stations'));
         document.getElementById('back-to-station').addEventListener('click', () => showStationDetails(appData.currentStation));
@@ -1898,6 +1966,7 @@
         document.getElementById('back-from-inspection').addEventListener('click', () => { showStationDetails(appData.currentStation); });
         document.getElementById('back-to-stations-from-profile').addEventListener('click', () => showScreen('stations'));
         document.getElementById('back-to-stations-from-users-data').addEventListener('click', () => showScreen('stations'));
+        document.getElementById('back-to-stations-from-export').addEventListener('click', () => showScreen('stations'));
 
         // New button for user data management
         document.getElementById('profile-btn').addEventListener('dblclick', () => {
@@ -2525,6 +2594,338 @@
                 });
             }
         }
+
+        // --- تصدير فحص المحطات ---
+        function renderInspectionExportFilters() {
+            const zoneSelect = document.getElementById('inspection-filter-zone');
+            const stationSelect = document.getElementById('inspection-filter-station');
+            
+            // تعبئة مناطق
+            zoneSelect.innerHTML = '<option value="all">كل المناطق</option>';
+            appData.zones.forEach(z => {
+                zoneSelect.innerHTML += `<option value="${z}">${z}</option>`;
+            });
+            
+            // تعبئة المحطات
+            stationSelect.innerHTML = '<option value="all">كل المحطات</option>';
+            const stations = Object.values(appData.stations).sort((a, b) => a.name.localeCompare(b.name));
+            stations.forEach(st => {
+                stationSelect.innerHTML += `<option value="${st.name}">${st.name}</option>`;
+            });
+            
+            renderInspectionTable();
+        }
+        
+        function renderInspectionTable() {
+            const zoneFilter = document.getElementById('inspection-filter-zone').value;
+            const stationFilter = document.getElementById('inspection-filter-station').value;
+            
+            let stations = Object.values(appData.stations);
+            
+            // تطبيق التصفية حسب المنطقة
+            if (zoneFilter !== 'all') {
+                stations = stations.filter(s => s.zone === zoneFilter);
+            }
+            
+            // تطبيق التصفية حسب المحطة
+            if (stationFilter !== 'all') {
+                stations = stations.filter(s => s.name === stationFilter);
+            }
+            
+            // فرز المحطات
+            stations.sort((a, b) => a.name.localeCompare(b.name));
+            
+            const tableHeader = document.getElementById('inspection-table-header');
+            const tableBody = document.getElementById('inspection-table-body');
+            
+            // إنشاء رأس الجدول بنفس تنسيق ملف الاكسيل
+            let headerHTML = '<tr>';
+            headerHTML += '<th>المحطه</th>';
+            
+            // إضافة أقسام الفحص
+            Object.keys(inspectionSchema).forEach(sectionKey => {
+                const section = inspectionSchema[sectionKey];
+                if (sectionKey === 'pumps') {
+                    // الحصول على أقصى عدد للمضخات
+                    let maxPumps = 0;
+                    stations.forEach(station => {
+                        if (station.pumps && station.pumps.length > maxPumps) {
+                            maxPumps = station.pumps.length;
+                        }
+                    });
+                    
+                    // إضافة أعمدة لكل مضخة
+                    for (let i = 1; i <= maxPumps; i++) {
+                        headerHTML += `<th colspan="${section.items.length * 2}">مضخه رقم ${i}</th>`;
+                    }
+                } else {
+                    headerHTML += `<th colspan="${section.items.length * 2}">${section.title}</th>`;
+                }
+            });
+            
+            headerHTML += '</tr>';
+            
+            // سطر ثانوي للرأس (الحالة والملاحظات لكل عنصر)
+            headerHTML += '<tr>';
+            headerHTML += '<th></th>'; // عمود المحطة
+            
+            Object.keys(inspectionSchema).forEach(sectionKey => {
+                const section = inspectionSchema[sectionKey];
+                if (sectionKey === 'pumps') {
+                    let maxPumps = 0;
+                    stations.forEach(station => {
+                        if (station.pumps && station.pumps.length > maxPumps) {
+                            maxPumps = station.pumps.length;
+                        }
+                    });
+                    
+                    for (let i = 1; i <= maxPumps; i++) {
+                        section.items.forEach(item => {
+                            headerHTML += `<th>${item}</th>`;
+                            headerHTML += '<th>ملاحظات</th>';
+                        });
+                    }
+                } else {
+                    section.items.forEach(item => {
+                        headerHTML += `<th>${item}</th>`;
+                        headerHTML += '<th>ملاحظات</th>';
+                    });
+                }
+            });
+            
+            headerHTML += '</tr>';
+            
+            tableHeader.innerHTML = headerHTML;
+            
+            // ملء بيانات الجدول
+            tableBody.innerHTML = '';
+            
+            stations.forEach(station => {
+                const inspectionData = station.inspectionData || {};
+                let rowHTML = `<tr><td>${station.name}</td>`;
+                
+                Object.keys(inspectionSchema).forEach(sectionKey => {
+                    const section = inspectionSchema[sectionKey];
+                    
+                    if (sectionKey === 'pumps') {
+                        const pumpsData = inspectionData[sectionKey] || {};
+                        let maxPumps = 0;
+                        stations.forEach(s => {
+                            if (s.pumps && s.pumps.length > maxPumps) {
+                                maxPumps = s.pumps.length;
+                            }
+                        });
+                        
+                        for (let i = 1; i <= maxPumps; i++) {
+                            const pumpData = pumpsData[i] || {};
+                            
+                            section.items.forEach((item, idx) => {
+                                const itemData = pumpData[idx] || {};
+                                const status = itemData.status || 'efficient';
+                                const desc = itemData.desc || '';
+                                
+                                let statusText = '';
+                                let statusClass = '';
+                                
+                                switch(status) {
+                                    case 'efficient': statusText = '✅ يعمل بكفاءة'; break;
+                                    case 'fault': statusText = '⚠️ عطل / ملاحظة'; break;
+                                    case 'broken': statusText = '🛑 لا يعمل'; break;
+                                    case 'none': statusText = '⚪ لا يوجد'; break;
+                                    default: statusText = 'غير محدد';
+                                }
+                                
+                                rowHTML += `<td>${statusText}</td>`;
+                                rowHTML += `<td>${desc}</td>`;
+                            });
+                        }
+                    } else {
+                        const sectionData = inspectionData[sectionKey] || {};
+                        
+                        section.items.forEach((item, idx) => {
+                            const itemData = sectionData[idx] || {};
+                            const status = itemData.status || 'efficient';
+                            const desc = itemData.desc || '';
+                            
+                            let statusText = '';
+                            let statusClass = '';
+                            
+                            switch(status) {
+                                case 'efficient': statusText = '✅ يعمل بكفاءة'; break;
+                                case 'fault': statusText = '⚠️ عطل / ملاحظة'; break;
+                                case 'broken': statusText = '🛑 لا يعمل'; break;
+                                case 'none': statusText = '⚪ لا يوجد'; break;
+                                default: statusText = 'غير محدد';
+                            }
+                            
+                            rowHTML += `<td>${statusText}</td>`;
+                            rowHTML += `<td>${desc}</td>`;
+                        });
+                    }
+                });
+                
+                rowHTML += '</tr>';
+                tableBody.innerHTML += rowHTML;
+            });
+        }
+        
+        function exportInspectionToExcel() {
+            const zoneFilter = document.getElementById('inspection-filter-zone').value;
+            const stationFilter = document.getElementById('inspection-filter-station').value;
+            
+            let stations = Object.values(appData.stations);
+            
+            // تطبيق التصفية حسب المنطقة
+            if (zoneFilter !== 'all') {
+                stations = stations.filter(s => s.zone === zoneFilter);
+            }
+            
+            // تطبيق التصفية حسب المحطة
+            if (stationFilter !== 'all') {
+                stations = stations.filter(s => s.name === stationFilter);
+            }
+            
+            if (stations.length === 0) {
+                alert('لا توجد بيانات للتصدير');
+                return;
+            }
+            
+            // فرز المحطات
+            stations.sort((a, b) => a.name.localeCompare(b.name));
+            
+            // إنشاء بيانات Excel
+            let csvContent = "data:text/csv;charset=utf-8,\uFEFF";
+            
+            // إنشاء رأس الجدول
+            let headerRow1 = ['المحطه'];
+            let headerRow2 = [''];
+            
+            Object.keys(inspectionSchema).forEach(sectionKey => {
+                const section = inspectionSchema[sectionKey];
+                
+                if (sectionKey === 'pumps') {
+                    let maxPumps = 0;
+                    stations.forEach(station => {
+                        if (station.pumps && station.pumps.length > maxPumps) {
+                            maxPumps = station.pumps.length;
+                        }
+                    });
+                    
+                    for (let i = 1; i <= maxPumps; i++) {
+                        headerRow1.push(`مضخه رقم ${i}`);
+                        for (let j = 0; j < section.items.length * 2 - 1; j++) {
+                            headerRow1.push('');
+                        }
+                        
+                        section.items.forEach(item => {
+                            headerRow2.push(item, 'ملاحظات');
+                        });
+                    }
+                } else {
+                    headerRow1.push(section.title);
+                    for (let j = 0; j < section.items.length * 2 - 1; j++) {
+                        headerRow1.push('');
+                    }
+                    
+                    section.items.forEach(item => {
+                        headerRow2.push(item, 'ملاحظات');
+                    });
+                }
+            });
+            
+            csvContent += headerRow1.join(',') + '\n';
+            csvContent += headerRow2.join(',') + '\n';
+            
+            // إضافة بيانات المحطات
+            stations.forEach(station => {
+                const inspectionData = station.inspectionData || {};
+                let rowData = [station.name];
+                
+                Object.keys(inspectionSchema).forEach(sectionKey => {
+                    const section = inspectionSchema[sectionKey];
+                    
+                    if (sectionKey === 'pumps') {
+                        const pumpsData = inspectionData[sectionKey] || {};
+                        let maxPumps = 0;
+                        stations.forEach(s => {
+                            if (s.pumps && s.pumps.length > maxPumps) {
+                                maxPumps = s.pumps.length;
+                            }
+                        });
+                        
+                        for (let i = 1; i <= maxPumps; i++) {
+                            const pumpData = pumpsData[i] || {};
+                            
+                            section.items.forEach((item, idx) => {
+                                const itemData = pumpData[idx] || {};
+                                const status = itemData.status || 'efficient';
+                                const desc = itemData.desc || '';
+                                
+                                let statusText = '';
+                                
+                                switch(status) {
+                                    case 'efficient': statusText = 'يعمل بكفاءة'; break;
+                                    case 'fault': statusText = 'عطل / ملاحظة'; break;
+                                    case 'broken': statusText = 'لا يعمل'; break;
+                                    case 'none': statusText = 'لا يوجد'; break;
+                                    default: statusText = 'غير محدد';
+                                }
+                                
+                                rowData.push(statusText, desc);
+                            });
+                        }
+                    } else {
+                        const sectionData = inspectionData[sectionKey] || {};
+                        
+                        section.items.forEach((item, idx) => {
+                            const itemData = sectionData[idx] || {};
+                            const status = itemData.status || 'efficient';
+                            const desc = itemData.desc || '';
+                            
+                            let statusText = '';
+                            
+                            switch(status) {
+                                case 'efficient': statusText = 'يعمل بكفاءة'; break;
+                                case 'fault': statusText = 'عطل / ملاحظة'; break;
+                                case 'broken': statusText = 'لا يعمل'; break;
+                                case 'none': statusText = 'لا يوجد'; break;
+                                default: statusText = 'غير محدد';
+                            }
+                            
+                            rowData.push(statusText, desc);
+                        });
+                    }
+                });
+                
+                csvContent += rowData.join(',') + '\n';
+            });
+            
+            const encodedUri = encodeURI(csvContent);
+            const link = document.createElement("a");
+            link.setAttribute("href", encodedUri);
+            
+            // إنشاء اسم الملف
+            let fileName = 'فحص_المحطات';
+            if (zoneFilter !== 'all') fileName += `_${zoneFilter}`;
+            if (stationFilter !== 'all') fileName += `_${stationFilter}`;
+            fileName += `_${new Date().toISOString().split('T')[0]}.csv`;
+            
+            link.setAttribute("download", fileName);
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            
+            alert(`تم تصدير ${stations.length} محطة بنجاح ✅`);
+        }
+        
+        function exportInspectionToCSV() {
+            // استدعاء نفس وظيفة Excel لكن مع تغيير الاسم فقط
+            exportInspectionToExcel();
+        }
+        
+        window.exportInspectionToExcel = exportInspectionToExcel;
+        window.exportInspectionToCSV = exportInspectionToCSV;
+        window.renderInspectionTable = renderInspectionTable;
 
         // --- USER PROFILE FUNCTIONS (ENHANCED FOR MOBILE) ---
         function renderUserProfileForm() {
@@ -3892,4 +4293,4 @@
         loadSystemData();
     </script>
 </body>
-</html>
+    </html>
