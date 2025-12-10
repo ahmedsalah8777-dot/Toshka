@@ -1734,8 +1734,9 @@
                     <span id="net-icon">🟢</span> <span id="net-text">متصل</span>
                 </div>
                 <div class="user-info" id="header-user-info">
+                    <!-- التعديل: تغيير رمز زر بيانات المستخدمين من 👤 إلى 📚 -->
                     <button id="profile-btn" class="profile-btn" title="بيانات المستخدم">
-                        👤
+                        📚
                     </button>
                     <button id="alarm-btn" class="alarm-btn" title="سجل الأعطال">
                         🔔
@@ -3589,6 +3590,11 @@
 
                 if (oldData.operatorName !== newOperator) {
                     changesDetails.push(`المشغل: ${oldData.operatorName || 'غير معرّف'} -> ${newOperator}`);
+                }
+                
+                // التعديل: فقط عرض حالة المحطة (نشطة/متوقفة) وليس حالة المضخات
+                if (oldData.status !== currentStatus) {
+                    changesDetails.push(`حالة المحطة: ${oldData.status || 'متوقفة'} -> ${currentStatus}`);
                 }
                 
                 const changesString = changesDetails.length > 0 ? changesDetails.join(', ') : "تحديث دوري";
@@ -5475,17 +5481,18 @@
             
             const viewData = data.slice(0, appData.historyLimit);
             viewData.forEach(log => {
-                // التحقق إذا كان السجل يحتوي على تغيير حالة المحطة
+                // التحقق إذا كان السجل يحتوي على تغيير حالة المحطة فقط
                 let rowClass = '';
                 let statusChangeHtml = '';
                 
-                if (log.details && (log.details.includes('نشطة -> متوقفة') || log.details.includes('متوقفة -> نشطة'))) {
+                // التعديل: فقط عرض حالة المحطة (نشطة/متوقفة) وليس حالة المضخات
+                if (log.details && (log.details.includes('حالة المحطة: نشطة -> متوقفة') || log.details.includes('حالة المحطة: متوقفة -> نشطة'))) {
                     rowClass = 'status-change-row';
                     
-                    if (log.details.includes('نشطة -> متوقفة')) {
+                    if (log.details.includes('حالة المحطة: نشطة -> متوقفة')) {
                         rowClass += ' status-to-inactive';
                         statusChangeHtml = `<span class="status-change-badge status-change-inactive">🔴 توقف</span> `;
-                    } else if (log.details.includes('متوقفة -> نشطة')) {
+                    } else if (log.details.includes('حالة المحطة: متوقفة -> نشطة')) {
                         statusChangeHtml = `<span class="status-change-badge status-change-active">🟢 تشغيل</span> `;
                     }
                 }
@@ -5591,4 +5598,4 @@
         loadSystemData();
     </script>
 </body>
-                </html>
+    </html>
