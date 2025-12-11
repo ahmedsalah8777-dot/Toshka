@@ -245,7 +245,24 @@
             white-space: nowrap; 
         }
         
-        .alarm-btn, .profile-btn { 
+        /* تغيير أيقونة بيانات المستخدمين 📚 */
+        .profile-btn { 
+            background: transparent; 
+            border: none; 
+            color: white; 
+            font-size: 1.4rem; 
+            cursor: pointer; 
+            position: relative; 
+            margin-left: 10px; 
+            min-width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .alarm-btn { 
             background: transparent; 
             border: none; 
             color: white; 
@@ -1690,7 +1707,7 @@
             }
         }
         
-        /* تصميم خاص لصف تغيير الحالة في السجل */
+        /* تصميم خاص لصف تغيير الحالة في السجل - تحسين التنسيق */
         .status-change-row {
             background-color: #e8f5e9 !important;
             border-right: 4px solid #4caf50 !important;
@@ -1720,6 +1737,121 @@
             background-color: #f44336;
             color: white;
         }
+        
+        /* علامة توقف وتشغيل احترافية */
+        .station-status-change {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 4px 10px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: bold;
+            margin-left: 8px;
+        }
+        
+        .status-start {
+            background-color: #4caf50;
+            color: white;
+        }
+        
+        .status-stop {
+            background-color: #f44336;
+            color: white;
+        }
+        
+        .status-start-icon {
+            font-size: 1.2rem;
+        }
+        
+        .status-stop-icon {
+            font-size: 1.2rem;
+        }
+        
+        /* زر القائمة العائمة */
+        .menu-toggle-btn {
+            background: transparent;
+            border: none;
+            color: white;
+            font-size: 1.6rem;
+            cursor: pointer;
+            position: relative;
+            margin-left: 10px;
+            min-width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .menu-toggle-btn:hover {
+            background: rgba(255, 255, 255, 0.1);
+        }
+        
+        .floating-menu {
+            position: absolute;
+            top: 60px;
+            right: 10px;
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.15);
+            z-index: 1000;
+            min-width: 180px;
+            display: none;
+            overflow: hidden;
+            border: 1px solid #e0e0e0;
+        }
+        
+        .floating-menu.active {
+            display: block;
+            animation: fadeInDown 0.3s ease;
+        }
+        
+        @keyframes fadeInDown {
+            from {
+                opacity: 0;
+                transform: translateY(-10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        .floating-menu-item {
+            padding: 12px 15px;
+            border-bottom: 1px solid #eee;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            color: #333;
+            transition: background 0.2s;
+            font-size: 0.9rem;
+        }
+        
+        .floating-menu-item:hover {
+            background-color: #f5f5f5;
+        }
+        
+        .floating-menu-item:last-child {
+            border-bottom: none;
+        }
+        
+        @media (max-width: 768px) {
+            .menu-toggle-btn {
+                font-size: 1.4rem;
+                min-width: 36px;
+                height: 36px;
+            }
+            
+            .floating-menu {
+                top: 55px;
+                right: 5px;
+                min-width: 160px;
+            }
+        }
     </style>
 </head>
 <body>
@@ -1734,20 +1866,39 @@
                     <span id="net-icon">🟢</span> <span id="net-text">متصل</span>
                 </div>
                 <div class="user-info" id="header-user-info">
-                    <!-- التعديل: تغيير رمز زر بيانات المستخدمين من 👤 إلى 📚 -->
-                    <button id="profile-btn" class="profile-btn" title="بيانات المستخدم">
-                        📚
+                    <!-- زر القائمة العائمة -->
+                    <button id="menu-toggle-btn" class="menu-toggle-btn" title="القائمة">
+                        ☰
                     </button>
+                    
+                    <!-- القائمة العائمة -->
+                    <div id="floating-menu" class="floating-menu">
+                        <div class="floating-menu-item" id="floating-consumptions-btn">
+                            ⚡ الاستهلاكات
+                        </div>
+                        <div class="floating-menu-item" id="floating-users-management-btn">
+                            👥 المستخدمين
+                        </div>
+                        <div class="floating-menu-item" id="floating-history-management-btn">
+                            📋 السجل العام
+                        </div>
+                        <div class="floating-menu-item" id="floating-export-inspection-report-btn">
+                            📊 تصدير الفحص
+                        </div>
+                    </div>
+                    
+                    <!-- زر سجل الأعطال فقط يبقى ظاهراً -->
                     <button id="alarm-btn" class="alarm-btn" title="سجل الأعطال">
                         🔔
                         <span id="alarm-count" class="alarm-count" style="display:none">0</span>
                     </button>
-                    <div class="user-badge" id="current-user">مرحباً</div>
                     
-                    <button id="users-management-btn" class="btn btn-warning" style="display: none;">المستخدمين</button>
-                    <button id="consumptions-btn" class="btn btn-consumption" style="display: none;">⚡ الاستهلاكات</button>
-                    <button id="history-management-btn" class="btn btn-info" style="display: none;">السجل العام</button>
-                    <button id="export-inspection-report-btn" class="btn btn-excel" style="display: none;" title="تصدير تقرير الفحص">📊 تصدير الفحص</button>
+                    <!-- زر بيانات المستخدمين الجديد (📚) -->
+                    <button id="profile-btn" class="profile-btn" title="بيانات المستخدمين">
+                        📚
+                    </button>
+                    
+                    <div class="user-badge" id="current-user">مرحباً</div>
                     <button id="logout-btn" class="btn btn-danger">خروج</button>
                 </div>
             </div>
@@ -2978,21 +3129,80 @@
                 const userType = user.type;
                 const permissions = appData.userTypes[userType].permissions;
                 
-                document.getElementById('users-management-btn').style.display = permissions.manage_users ? 'inline-block' : 'none';
-                document.getElementById('history-management-btn').style.display = permissions.view_history ? 'inline-block' : 'none';
-                document.getElementById('export-inspection-report-btn').style.display = permissions.export_inspection ? 'inline-block' : 'none';
+                // إخفاء الأزرار القديمة في الشاشة الرئيسية
+                document.getElementById('consumptions-btn').style.display = 'none';
+                document.getElementById('users-management-btn').style.display = 'none';
+                document.getElementById('history-management-btn').style.display = 'none';
+                document.getElementById('export-inspection-report-btn').style.display = 'none';
                 
-                if (userType === 'admin' || userType === 'engineer') {
-                    document.getElementById('consumptions-btn').style.display = 'inline-block';
-                } else {
-                    document.getElementById('consumptions-btn').style.display = 'none';
-                }
-
+                // عرض زر سجل الأعطال فقط إذا كان لدى المستخدم الصلاحية
+                document.getElementById('alarm-btn').style.display = 'inline-block';
+                
+                // إظهار زر بيانات المستخدمين (📚)
+                document.getElementById('profile-btn').style.display = 'inline-block';
+                
+                // إظهار زر القائمة العائمة
+                document.getElementById('menu-toggle-btn').style.display = 'inline-block';
+                
                 showScreen('stations');
                 renderZonesTabs();
                 renderStations('all');
             } else { 
                 alert('بيانات خاطئة أو المستخدم غير مفعل'); 
+            }
+        });
+
+        // --- زر القائمة العائمة ---
+        document.getElementById('menu-toggle-btn').addEventListener('click', function(e) {
+            e.stopPropagation();
+            const menu = document.getElementById('floating-menu');
+            menu.classList.toggle('active');
+        });
+        
+        // إغلاق القائمة عند النقر خارجها
+        document.addEventListener('click', function(e) {
+            const menu = document.getElementById('floating-menu');
+            const menuBtn = document.getElementById('menu-toggle-btn');
+            
+            if (!menu.contains(e.target) && !menuBtn.contains(e.target)) {
+                menu.classList.remove('active');
+            }
+        });
+        
+        // تعريف عناصر القائمة العائمة
+        document.getElementById('floating-consumptions-btn').addEventListener('click', () => {
+            if (appData.currentUser && (appData.currentUser.type === 'admin' || appData.currentUser.type === 'engineer')) {
+                document.getElementById('floating-menu').classList.remove('active');
+                showScreen('consumptions-report');
+            } else {
+                alert('ليس لديك صلاحية للوصول إلى تقرير الاستهلاكات');
+            }
+        });
+        
+        document.getElementById('floating-users-management-btn').addEventListener('click', () => {
+            if (appData.currentUser && appData.currentUser.permissions.manage_users) {
+                document.getElementById('floating-menu').classList.remove('active');
+                showScreen('users');
+            } else {
+                alert('ليس لديك صلاحية للوصول إلى إدارة المستخدمين');
+            }
+        });
+        
+        document.getElementById('floating-history-management-btn').addEventListener('click', () => {
+            if (appData.currentUser && appData.currentUser.permissions.view_history) {
+                document.getElementById('floating-menu').classList.remove('active');
+                showScreen('history');
+            } else {
+                alert('ليس لديك صلاحية للوصول إلى السجل العام');
+            }
+        });
+        
+        document.getElementById('floating-export-inspection-report-btn').addEventListener('click', () => {
+            if (appData.currentUser && appData.currentUser.permissions.export_inspection) {
+                document.getElementById('floating-menu').classList.remove('active');
+                showScreen('inspection-export');
+            } else {
+                alert('ليس لديك صلاحية لتصدير تقارير الفحص');
             }
         });
 
@@ -3008,24 +3218,11 @@
             renderUsersProfilesList();
         });
         
-        document.getElementById('users-management-btn').addEventListener('click', () => {
-            if (appData.currentUser && appData.currentUser.permissions.manage_users) {
-                showScreen('users');
-            } else {
-                alert('ليس لديك صلاحية للوصول إلى إدارة المستخدمين');
-            }
+        document.getElementById('alarm-btn').addEventListener('click', () => {
+            document.getElementById('floating-menu').classList.remove('active');
+            showScreen('faults-log');
         });
         
-        document.getElementById('history-management-btn').addEventListener('click', () => showScreen('history'));
-        document.getElementById('alarm-btn').addEventListener('click', () => showScreen('faults-log'));
-        document.getElementById('export-inspection-report-btn').addEventListener('click', () => {
-            if (appData.currentUser && appData.currentUser.permissions.export_inspection) {
-                showScreen('inspection-export');
-            } else {
-                alert('ليس لديك صلاحية لتصدير تقارير الفحص');
-            }
-        });
-
         document.getElementById('back-to-stations').addEventListener('click', () => showScreen('stations'));
         document.getElementById('back-to-station').addEventListener('click', () => showStationDetails(appData.currentStation));
         document.getElementById('back-to-stations-from-users').addEventListener('click', () => showScreen('stations'));
@@ -3037,7 +3234,7 @@
         document.getElementById('back-to-stations-from-users-data').addEventListener('click', () => showScreen('stations'));
         document.getElementById('back-to-stations-from-export').addEventListener('click', () => showScreen('stations'));
 
-        // New button for user data management
+        // New button for user data management (double-click on profile button)
         document.getElementById('profile-btn').addEventListener('dblclick', () => {
             if (appData.currentUser && appData.currentUser.type === 'admin') {
                 showScreen('users-data');
@@ -3590,11 +3787,6 @@
 
                 if (oldData.operatorName !== newOperator) {
                     changesDetails.push(`المشغل: ${oldData.operatorName || 'غير معرّف'} -> ${newOperator}`);
-                }
-                
-                // التعديل: فقط عرض حالة المحطة (نشطة/متوقفة) وليس حالة المضخات
-                if (oldData.status !== currentStatus) {
-                    changesDetails.push(`حالة المحطة: ${oldData.status || 'متوقفة'} -> ${currentStatus}`);
                 }
                 
                 const changesString = changesDetails.length > 0 ? changesDetails.join(', ') : "تحديث دوري";
@@ -4375,7 +4567,7 @@
                 // إضافة بيانات الفحص من كل قسم
                 Object.keys(inspectionSchema).forEach(key => {
                     if (key === 'pumps') return;
-                    
+                        
                     const schema = inspectionSchema[key];
                     const sectionData = inspectionData[key] || {};
                     
@@ -5265,7 +5457,13 @@
         });
 
         // --- CONSUMPTION REPORT LOGIC ---
-        document.getElementById('consumptions-btn').addEventListener('click', () => {
+        document.getElementById('floating-consumptions-btn').addEventListener('click', () => {
+            const currentUser = appData.currentUser;
+            if (!currentUser || !(currentUser.type === 'admin' || currentUser.type === 'engineer')) {
+                alert('ليس لديك صلاحية للوصول إلى تقرير الاستهلاكات');
+                return;
+            }
+            
             const filterSelect = document.getElementById('cons-filter-station');
             if (filterSelect.options.length <= 1) {
                 const sorted = Object.values(appData.stations).sort((a,b) => a.name.localeCompare(b.name));
@@ -5290,8 +5488,17 @@
                 return; 
             }
 
-            const fromTime = new Date(fDateFrom).getTime();
-            const toTime = new Date(fDateTo).getTime();
+            const fromDate = new Date(fDateFrom);
+            const toDate = new Date(fDateTo);
+            
+            // تصحيح فلسفة البحث: نبحث عن أول تسجيل بعد التاريخ المحدد
+            const fromTime = fromDate.getTime();
+            const toTime = toDate.getTime();
+            
+            // إضافة يوم واحد إلى تاريخ "إلى" ليشمل اليوم المحدد بالكامل
+            const toDatePlusOne = new Date(toDate);
+            toDatePlusOne.setDate(toDatePlusOne.getDate() + 1);
+            const toTimePlusOne = toDatePlusOne.getTime();
 
             let allLogs = appData.consumptionLog || [];
             let targetStations = [];
@@ -5309,8 +5516,26 @@
 
                 logs.sort((a,b) => parseCustomDate(a.date+' '+a.time) - parseCustomDate(b.date+' '+b.time));
 
-                const startLog = logs.find(l => parseCustomDate(l.date + " 00:00:00").getTime() >= fromTime);
-                const endLog = logs.find(l => parseCustomDate(l.date + " 00:00:00").getTime() >= toTime);
+                // البحث عن أول تسجيل بعد تاريخ "من"
+                let startLog = null;
+                for (let log of logs) {
+                    const logDate = parseCustomDate(log.date + " 00:00:00");
+                    if (logDate && logDate.getTime() >= fromTime) {
+                        startLog = log;
+                        break;
+                    }
+                }
+                
+                // البحث عن آخر تسجيل قبل تاريخ "إلى" + يوم واحد
+                let endLog = null;
+                for (let log of logs) {
+                    const logDate = parseCustomDate(log.date + " 00:00:00");
+                    if (logDate && logDate.getTime() < toTimePlusOne) {
+                        endLog = log;
+                    } else {
+                        break;
+                    }
+                }
 
                 if (startLog && endLog) {
                     const diffT1 = (endLog.t1 && startLog.t1) ? (parseFloat(endLog.t1) - parseFloat(startLog.t1)) : 0;
@@ -5356,8 +5581,15 @@
             const fDateTo = document.getElementById('cons-filter-date-to').value;
             if (!fDateFrom || !fDateTo) { alert('يرجى تحديد فترة المقارنة أولاً.'); return; }
 
-            const fromTime = new Date(fDateFrom).getTime();
-            const toTime = new Date(fDateTo).getTime();
+            const fromDate = new Date(fDateFrom);
+            const toDate = new Date(fDateTo);
+            const fromTime = fromDate.getTime();
+            const toTime = toDate.getTime();
+            
+            // إضافة يوم واحد إلى تاريخ "إلى" ليشمل اليوم المحدد بالكامل
+            const toDatePlusOne = new Date(toDate);
+            toDatePlusOne.setDate(toDatePlusOne.getDate() + 1);
+            const toTimePlusOne = toDatePlusOne.getTime();
 
             let allLogs = appData.consumptionLog || [];
             let targetStations = fStation === 'all' ? Object.keys(appData.stations) : [fStation];
@@ -5371,8 +5603,26 @@
 
                 logs.sort((a, b) => parseCustomDate(a.date + ' ' + a.time) - parseCustomDate(b.date + ' ' + b.time));
 
-                const startLog = logs.find(l => parseCustomDate(l.date + " 00:00:00").getTime() >= fromTime);
-                const endLog = logs.find(l => parseCustomDate(l.date + " 00:00:00").getTime() >= toTime);
+                // البحث عن أول تسجيل بعد تاريخ "من"
+                let startLog = null;
+                for (let log of logs) {
+                    const logDate = parseCustomDate(log.date + " 00:00:00");
+                    if (logDate && logDate.getTime() >= fromTime) {
+                        startLog = log;
+                        break;
+                    }
+                }
+                
+                // البحث عن آخر تسجيل قبل تاريخ "إلى" + يوم واحد
+                let endLog = null;
+                for (let log of logs) {
+                    const logDate = parseCustomDate(log.date + " 00:00:00");
+                    if (logDate && logDate.getTime() < toTimePlusOne) {
+                        endLog = log;
+                    } else {
+                        break;
+                    }
+                }
 
                 if (startLog && endLog) {
                     const t1_start = parseFloat(startLog.t1 || 0);
@@ -5481,20 +5731,45 @@
             
             const viewData = data.slice(0, appData.historyLimit);
             viewData.forEach(log => {
-                // التحقق إذا كان السجل يحتوي على تغيير حالة المحطة فقط
+                // الكشف عن تغييرات حالة المحطة (تشغيل/إيقاف)
                 let rowClass = '';
                 let statusChangeHtml = '';
                 
-                // التعديل: فقط عرض حالة المحطة (نشطة/متوقفة) وليس حالة المضخات
-                if (log.details && (log.details.includes('حالة المحطة: نشطة -> متوقفة') || log.details.includes('حالة المحطة: متوقفة -> نشطة'))) {
-                    rowClass = 'status-change-row';
-                    
-                    if (log.details.includes('حالة المحطة: نشطة -> متوقفة')) {
-                        rowClass += ' status-to-inactive';
-                        statusChangeHtml = `<span class="status-change-badge status-change-inactive">🔴 توقف</span> `;
-                    } else if (log.details.includes('حالة المحطة: متوقفة -> نشطة')) {
-                        statusChangeHtml = `<span class="status-change-badge status-change-active">🟢 تشغيل</span> `;
+                // البحث عن أنماط تغيير الحالة
+                if (log.details && log.details.includes('->')) {
+                    const parts = log.details.split('->');
+                    if (parts.length === 2) {
+                        const fromStatus = parts[0].trim();
+                        const toStatus = parts[1].trim();
+                        
+                        if ((fromStatus.includes('نشطة') || fromStatus.includes('متوقفة')) && 
+                            (toStatus.includes('نشطة') || toStatus.includes('متوقفة'))) {
+                            
+                            // تشغيل المحطة
+                            if (fromStatus.includes('متوقفة') && toStatus.includes('نشطة')) {
+                                rowClass = 'status-change-row';
+                                statusChangeHtml = `<span class="station-status-change status-start">
+                                    <span class="status-start-icon">▶️</span> تشغيل المحطة
+                                </span>`;
+                            }
+                            // إيقاف المحطة
+                            else if (fromStatus.includes('نشطة') && toStatus.includes('متوقفة')) {
+                                rowClass = 'status-change-row status-to-inactive';
+                                statusChangeHtml = `<span class="station-status-change status-stop">
+                                    <span class="status-stop-icon">⏹️</span> إيقاف المحطة
+                                </span>`;
+                            }
+                        }
                     }
+                }
+                
+                // إزالة تفاصيل تغيير الحالة من النص الرئيسي لتجنب التكرار
+                let detailsText = log.details;
+                if (statusChangeHtml) {
+                    // إزالة جزء "نشطة -> متوقفة" أو "متوقفة -> نشطة" من النص
+                    detailsText = detailsText.replace(/(نشطة\s*->\s*متوقفة|متوقفة\s*->\s*نشطة)/g, '').trim();
+                    // تنظيف النص من فواصل زائدة
+                    detailsText = detailsText.replace(/^,\s*|\s*,$/g, '').trim();
                 }
                 
                 tbody.innerHTML += `<tr class="${rowClass}">
@@ -5504,7 +5779,10 @@
                     </td>
                     <td>${log.station}</td>
                     <td>${log.operator}</td>
-                    <td>${statusChangeHtml}${log.details}</td>
+                    <td>
+                        ${statusChangeHtml}
+                        ${detailsText ? `<div style="margin-top: ${statusChangeHtml ? '5px' : '0'}; color: #555;">${detailsText}</div>` : ''}
+                    </td>
                 </tr>`;
             });
             
