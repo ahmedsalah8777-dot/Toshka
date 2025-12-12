@@ -3555,13 +3555,80 @@
                         newFlow = 0; 
                     } 
                 }
-                if (currentStatus === 'نشطة') { 
-                    newStopTime = '';
-                    if (!newStartTime) newStartTime = sysTimeShort; 
-                } 
-                else { 
-                    if (isCriticalFault || !newStopTime) newStopTime = sysTimeShort;
-                }
+                // تحديد وقت التشغيل والإيقاف بناءً على حالة المحطة بشكل تلقائي
+const oldStatus = oldData.status;
+const oldStartTime = oldData.startTime || '';
+const oldStopTime = oldData.stopTime || '';
+
+// الحصول على الأوقات التي أدخلها المشغل
+const enteredStartTime = getVal('operator-start-time');
+const enteredStopTime = getVal('operator-stop-time');
+
+// إذا كانت المحطة كانت متوقفة وأصبحت نشطة
+if (oldStatus === 'متوقفة' && currentStatus === 'نشطة') {
+    // إذا لم يغير المشغل وقت التشغيل، استخدم وقت الحفظ الحالي
+    if (!enteredStartTime || enteredStartTime === oldStartTime) {
+        newStartTime = sysTimeShort;
+        changesDetails.push(`⏰ وقت التشغيل التلقائي: ${sysTimeShort}`);
+    } else {
+        newStartTime = enteredStartTime;
+    }
+    // محطة أصبحت نشطة، لا يوجد وقت إيقاف
+    newStopTime = '';
+}
+// إذا كانت المحطة كانت نشطة وأصبحت متوقفة
+else if (oldStatus === 'نشطة' && currentStatus === 'متوقفة') {
+    // إذا لم يغير المشغل وقت الإيقاف، استخدم وقت الحفظ الحالي
+    if (!enteredStopTime || enteredStopTime === oldStopTime) {
+        newStopTime = sysTimeShort;
+        changesDetails.push(`⏰ وقت الإيقاف التلقائي: ${sysTimeShort}`);
+    } else {
+        newStopTime = enteredStopTime;
+    }
+    // محطة أصبحت متوقفة، ابق على وقت التشغيل القديم ما لم يتم تغييره
+    if (!enteredStartTime || enteredStartTime === oldStartTime) {
+        newStartTime = oldStartTime;
+    } else {
+        newStartTime = enteredStartTime;
+    }
+}
+// إذا ظلت المحطة في نفس الحالة
+else {
+    // إذا بقيت نشطة
+    if (currentStatus === 'نشطة') {
+        newStopTime = '';
+        // إذا لم يتم تغيير وقت التشغيل، ابق على القديم
+        if (!enteredStartTime || enteredStartTime === oldStartTime) {
+            newStartTime = oldStartTime;
+        } else {
+            newStartTime = enteredStartTime;
+        }
+    }
+    // إذا بقيت متوقفة
+    else {
+        // إذا لم يتم تغيير وقت الإيقاف، ابق على القديم
+        if (!enteredStopTime || enteredStopTime === oldStopTime) {
+            newStopTime = oldStopTime;
+        } else {
+            newStopTime = enteredStopTime;
+        }
+        // إذا لم يتم تغيير وقت التشغيل، ابق على القديم
+        if (!enteredStartTime || enteredStartTime === oldStartTime) {
+            newStartTime = oldStartTime;
+        } else {
+            newStartTime = enteredStartTime;
+        }
+    }
+}
+
+// إذا كان هناك عطل حرج، اضبط الوقت المناسب
+if (isCriticalFault) {
+    // إذا كان هناك عطل حرج وتوقفت المحطة، ضع وقت الإيقاف الحالي
+    if (oldStatus === 'نشطة' && currentStatus === 'متوقفة') {
+        newStopTime = sysTimeShort;
+        changesDetails.push(`⏰ وقت الإيقاف بسبب العطل: ${sysTimeShort}`);
+    }
+}
 
                 if(oldData.pressure != newPressure) changesDetails.push(`الضغط: ${oldData.pressure} -> ${newPressure}`);
                 
@@ -6068,4 +6135,3 @@ function exportConsumptionsToCSV() {
     </script>
 </body>
 </html>
-
