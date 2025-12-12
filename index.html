@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+d<!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
     <meta charset="UTF-8">
@@ -5357,589 +5357,266 @@ if (isCriticalFault) {
             showScreen('consumptions-report');
         });
 
-        function renderConsumptionsTable() {
-    try {
-        const stationFilter = document.getElementById('cons-filter-station').value;
-        const dateFromInput = document.getElementById('cons-filter-date-from').value;
-        const dateToInput = document.getElementById('cons-filter-date-to').value;
-        const tbody = document.getElementById('consumptions-table-body');
-        
-        tbody.innerHTML = '<tr><td colspan="4" style="text-align:center; padding:20px;">جاري حساب الاستهلاكات...</td></tr>';
-        
-        if (!dateFromInput || !dateToInput) {
-            tbody.innerHTML = '<tr><td colspan="4" style="color: var(--danger-color); text-align:center; padding:20px;">⚠️ يجب تحديد تاريخ البداية والنهاية</td></tr>';
-            return;
-        }
-        
-        // تحويل التواريخ
-        const dateFrom = new Date(dateFromInput);
-        const dateTo = new Date(dateToInput);
-        
-        if (dateTo <= dateFrom) {
-            tbody.innerHTML = '<tr><td colspan="4" style="color: var(--danger-color); text-align:center; padding:20px;">⚠️ تاريخ النهاية يجب أن يكون بعد تاريخ البداية</td></tr>';
-            return;
-        }
-        
-        // تصفية السجلات حسب المحطة
-        let filteredConsumptions = appData.consumptionLog || [];
-        
-        if (stationFilter !== 'all') {
-            filteredConsumptions = filteredConsumptions.filter(c => c.station === stationFilter);
-        }
-        
-        // تصنيف السجلات حسب المحطة
-        const stationsMap = {};
-        
-        filteredConsumptions.forEach(record => {
-            if (!record.station) return;
-            
-            if (!stationsMap[record.station]) {
-                stationsMap[record.station] = [];
-            }
-            
-            stationsMap[record.station].push(record);
-        });
-        
-        // فرز السجلات لكل محطة حسب التاريخ
-        Object.keys(stationsMap).forEach(station => {
-            stationsMap[station].sort((a, b) => {
-                // تحويل التواريخ إلى كائنات Date للمقارنة
-                const dateA = parseDateString(a.date, a.time);
-                const dateB = parseDateString(b.date, b.time);
-                return dateA - dateB;
-            });
-        });
-        
-        // دالة مساعدة لتحويل التاريخ
-        function parseDateString(dateStr, timeStr) {
-            try {
-                if (!dateStr) return new Date(0);
-                
-                // تحويل التاريخ من صيغة dd/mm/yyyy إلى yyyy-mm-dd
-                const dateParts = dateStr.split('/');
-                if (dateParts.length !== 3) return new Date(dateStr);
-                
-                const day = parseInt(dateParts[0]);
-                const month = parseInt(dateParts[1]) - 1;
-                const year = parseInt(dateParts[2]);
-                
-                let hours = 0, minutes = 0, seconds = 0;
-                
-                if (timeStr) {
-                    const timeParts = timeStr.split(':');
-                    if (timeParts.length >= 2) {
-                        hours = parseInt(timeParts[0]) || 0;
-                        minutes = parseInt(timeParts[1]) || 0;
-                        seconds = parseInt(timeParts[2]) || 0;
-                    }
-                }
-                
-                return new Date(year, month, day, hours, minutes, seconds);
-            } catch (e) {
-                return new Date(0);
-            }
-        }
-        
-        // حساب الاستهلاكات
-        tbody.innerHTML = '';
-        let totalConsumption1 = 0;
-        let totalConsumption2 = 0;
-        let totalWaterConsumption = 0;
-        let stationsWithData = 0;
-        
-        Object.keys(stationsMap).forEach(station => {
-            const records = stationsMap[station];
-            
-            // البحث عن أول تسجيل في الفترة السابقة (من تاريخ البداية)
-            let previousRecord = null;
-            let searchDate = new Date(dateFrom);
-            
-            // نهاية البحث: يوم قبل تاريخ النهاية
-            const maxSearchDate = new Date(dateTo);
-            maxSearchDate.setDate(maxSearchDate.getDate() - 1);
-            
-            while (searchDate <= maxSearchDate && !previousRecord) {
-                const searchDateStr = formatDate(searchDate);
-                
-                for (let i = 0; i < records.length; i++) {
-                    const recordDate = parseDateString(records[i].date, records[i].time);
-                    const recordDateStr = formatDate(recordDate);
-                    
-                    if (recordDateStr === searchDateStr) {
-                        previousRecord = records[i];
-                        break;
-                    }
-                }
-                
-                if (!previousRecord) {
-                    searchDate.setDate(searchDate.getDate() + 1);
-                }
-            }
-            
-            // البحث عن تسجيل في تاريخ بداية الفترة الحالية
-            let currentRecord = null;
-            const searchCurrentDate = new Date(dateTo);
-            const searchCurrentDateStr = formatDate(searchCurrentDate);
-            
-            // البحث في تاريخ النهاية بالضبط
-            for (let i = 0; i < records.length; i++) {
-                const recordDate = parseDateString(records[i].date, records[i].time);
-                const recordDateStr = formatDate(recordDate);
-                
-                if (recordDateStr === searchCurrentDateStr) {
-                    currentRecord = records[i];
-                    break;
-                }
-            }
-            
-            // إذا لم نجد في تاريخ النهاية، نبحث في الأيام السابقة
-            if (!currentRecord) {
-                let searchBeforeDate = new Date(dateTo);
-                searchBeforeDate.setDate(searchBeforeDate.getDate() - 1);
-                
-                const minSearchDate = new Date(dateFrom);
-                
-                while (searchBeforeDate >= minSearchDate && !currentRecord) {
-                    const searchDateStr = formatDate(searchBeforeDate);
-                    
-                    for (let i = 0; i < records.length; i++) {
-                        const recordDate = parseDateString(records[i].date, records[i].time);
-                        const recordDateStr = formatDate(recordDate);
-                        
-                        if (recordDateStr === searchDateStr) {
-                            currentRecord = records[i];
-                            break;
-                        }
-                    }
-                    
-                    if (!currentRecord) {
-                        searchBeforeDate.setDate(searchBeforeDate.getDate() - 1);
-                    }
-                }
-            }
-            
-            // دالة مساعدة لتنسيق التاريخ
-            function formatDate(date) {
-                try {
-                    const day = String(date.getDate()).padStart(2, '0');
-                    const month = String(date.getMonth() + 1).padStart(2, '0');
-                    const year = date.getFullYear();
-                    return `${day}/${month}/${year}`;
-                } catch (e) {
-                    return '';
-                }
-            }
-            
-            // حساب الاستهلاك إذا وجدنا السجلين
-            if (previousRecord && currentRecord) {
-                const prevDate = parseDateString(previousRecord.date, previousRecord.time);
-                const currDate = parseDateString(currentRecord.date, currentRecord.time);
-                
-                // التحقق من أن التسجيل الحالي بعد التسجيل السابق
-                if (currDate > prevDate) {
-                    // تحويل القيم إلى أرقام
-                    const prevT1 = parseFloat(previousRecord.t1) || 0;
-                    const prevT2 = parseFloat(previousRecord.t2) || 0;
-                    const prevM3 = parseFloat(previousRecord.m3) || 0;
-                    
-                    const currT1 = parseFloat(currentRecord.t1) || 0;
-                    const currT2 = parseFloat(currentRecord.t2) || 0;
-                    const currM3 = parseFloat(currentRecord.m3) || 0;
-                    
-                    // حساب الفروق
-                    const cons1 = currT1 - prevT1;
-                    const cons2 = currT2 - prevT2;
-                    const waterCons = currM3 - prevM3;
-                    
-                    // نتأكد من أن الاستهلاك غير سالب (إذا كان سالباً نعتبره صفر)
-                    const finalCons1 = cons1 >= 0 ? cons1.toFixed(2) : '0.00';
-                    const finalCons2 = cons2 >= 0 ? cons2.toFixed(2) : '0.00';
-                    const finalWaterCons = waterCons >= 0 ? waterCons.toFixed(2) : '0.00';
-                    
-                    // إضافة الصف إلى الجدول
-                    const row = document.createElement('tr');
-                    row.innerHTML = `
-                        <td>${station}</td>
-                        <td class="cons-cell">
-                            <div class="cons-sub-item">
-                                <span class="cons-label">${finalCons1} KW</span>
-                                <span class="cons-val-wrapper">
-                                    <small class="cons-date-small">السابق: ${previousRecord.date}</small>
-                                    <small class="cons-date-small">الحالي: ${currentRecord.date}</small>
-                                </span>
-                            </div>
-                        </td>
-                        <td class="cons-cell">
-                            <div class="cons-sub-item">
-                                <span class="cons-label">${finalCons2} KW</span>
-                                <span class="cons-val-wrapper">
-                                    <small class="cons-date-small">السابق: ${previousRecord.date}</small>
-                                    <small class="cons-date-small">الحالي: ${currentRecord.date}</small>
-                                </span>
-                            </div>
-                        </td>
-                        <td class="cons-cell">
-                            <div class="cons-sub-item">
-                                <span class="cons-label">${finalWaterCons} M3</span>
-                                <span class="cons-val-wrapper">
-                                    <small class="cons-date-small">السابق: ${previousRecord.date}</small>
-                                    <small class="cons-date-small">الحالي: ${currentRecord.date}</small>
-                                </span>
-                            </div>
-                        </td>
-                    `;
-                    tbody.appendChild(row);
-                    
-                    // تحديث الإجماليات
-                    totalConsumption1 += parseFloat(finalCons1);
-                    totalConsumption2 += parseFloat(finalCons2);
-                    totalWaterConsumption += parseFloat(finalWaterCons);
-                    stationsWithData++;
-                    
-                } else {
-                    // إذا كان التسجيل الحالي قبل التسجيل السابق
-                    const row = document.createElement('tr');
-                    row.innerHTML = `
-                        <td>${station}</td>
-                        <td colspan="3" style="color: #e67e22; text-align:center;">
-                            خطأ في تسلسل التواريخ<br>
-                            <small>التسجيل الحالي (${currentRecord.date}) يجب أن يكون بعد التسجيل السابق (${previousRecord.date})</small>
-                        </td>
-                    `;
-                    tbody.appendChild(row);
-                }
-            } else {
-                // إذا لم توجد بيانات كافية
-                const row = document.createElement('tr');
-                let reason = '';
-                
-                if (!previousRecord && !currentRecord) {
-                    reason = 'لا توجد بيانات في الفترة المحددة';
-                } else if (!previousRecord) {
-                    reason = 'لا توجد بيانات في الفترة السابقة';
-                } else if (!currentRecord) {
-                    reason = 'لا توجد بيانات في تاريخ بداية الفترة الحالية';
-                }
-                
-                row.innerHTML = `
-                    <td>${station}</td>
-                    <td colspan="3" style="color: #e74c3c; text-align:center;">
-                        ${reason}
-                        ${previousRecord ? `<br><small>آخر سجل سابق: ${previousRecord.date}</small>` : ''}
-                        ${currentRecord ? `<br><small>آخر سجل حالي: ${currentRecord.date}</small>` : ''}
-                    </td>
-                `;
-                tbody.appendChild(row);
-            }
-        });
-        
-        // إضافة صف الإجمالي
-        if (stationsWithData > 0) {
-            const totalRow = document.createElement('tr');
-            totalRow.style.backgroundColor = '#e8f6f3';
-            totalRow.style.fontWeight = 'bold';
-            totalRow.innerHTML = `
-                <td>الإجمالي (${stationsWithData} محطة)</td>
-                <td style="text-align:center;">${totalConsumption1.toFixed(2)} KW</td>
-                <td style="text-align:center;">${totalConsumption2.toFixed(2)} KW</td>
-                <td style="text-align:center;">${totalWaterConsumption.toFixed(2)} M3</td>
-            `;
-            tbody.appendChild(totalRow);
-        }
-        
-        // إذا لم توجد أي محطات
-        if (Object.keys(stationsMap).length === 0) {
-            tbody.innerHTML = '<tr><td colspan="4" style="text-align:center; padding:20px; color:#666;">لا توجد بيانات استهلاك للمحطات المحددة</td></tr>';
-        }
-        
-    } catch (error) {
-        console.error('Error calculating consumptions:', error);
-        document.getElementById('consumptions-table-body').innerHTML = 
-            '<tr><td colspan="4" style="color: var(--danger-color); text-align:center; padding:20px;">⚠️ حدث خطأ في حساب الاستهلاكات: ' + error.message + '</td></tr>';
+window.renderConsumptionsTable = function() {
+    const stationFilter = document.getElementById('cons-filter-station').value;
+    const dateFrom = document.getElementById('cons-filter-date-from').value;
+    const dateTo = document.getElementById('cons-filter-date-to').value;
+    const tbody = document.getElementById('consumptions-table-body');
+    
+    if (!dateFrom || !dateTo) {
+        alert('يرجى اختيار تاريخ البداية والنهاية');
+        return;
     }
-}
+    
+    tbody.innerHTML = '';
+    
+    let filteredConsumptions = appData.consumptionLog || [];
+    
+    // تصفية حسب المحطة
+    if (stationFilter !== 'all') {
+        filteredConsumptions = filteredConsumptions.filter(c => c.station === stationFilter);
+    }
+    
+    // تصفية حسب التاريخ
+    filteredConsumptions = filteredConsumptions.filter(c => {
+        const logDate = c.date; // التنسيق: DD/MM/YYYY
+        const [d, m, y] = logDate.split('/');
+        const logDateISO = `${y}-${m.padStart(2, '0')}-${d.padStart(2, '0')}`;
+        return logDateISO >= dateFrom && logDateISO <= dateTo;
+    });
+    
+    if (filteredConsumptions.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="7" style="text-align:center; padding:20px;">لا توجد بيانات استهلاك في الفترة المحددة</td></tr>';
+        return;
+    }
+    
+    // تجميع البيانات حسب المحطة
+    const stationsData = {};
+    
+    filteredConsumptions.forEach(log => {
+        if (!stationsData[log.station]) {
+            stationsData[log.station] = [];
+        }
+        stationsData[log.station].push(log);
+    });
+    
+    // معالجة كل محطة
+    Object.keys(stationsData).forEach(stationName => {
+        const stationLogs = stationsData[stationName];
+        
+        // ترتيب البيانات حسب التاريخ تصاعدياً
+        stationLogs.sort((a, b) => {
+            const dateA = parseCustomDate(`${a.date} ${a.time}`);
+            const dateB = parseCustomDate(`${b.date} ${b.time}`);
+            return dateA - dateB;
+        });
+        
+        // البحث عن أول قراءة في فترة "من" وأول قراءة في فترة "إلى"
+        let fromReading = null;
+        let toReading = null;
+        
+        // تحويل تواريخ المدخلات إلى Date objects للمقارنة
+        const fromDate = new Date(dateFrom);
+        const toDate = new Date(dateTo);
+        
+        stationLogs.forEach(log => {
+            const logDateStr = log.date; // DD/MM/YYYY
+            const [d, m, y] = logDateStr.split('/');
+            const logDate = new Date(`${y}-${m}-${d}`);
+            
+            if (logDate.getTime() === fromDate.getTime() && !fromReading) {
+                fromReading = log;
+            }
+            if (logDate.getTime() === toDate.getTime() && !toReading) {
+                toReading = log;
+            }
+        });
+        
+        if (!fromReading || !toReading) {
+            // إذا لم توجد قراءات في التواريخ المحددة، نستخدم أول وآخر قراءة في الفترة
+            fromReading = stationLogs[0];
+            toReading = stationLogs[stationLogs.length - 1];
+        }
+        
+        // حساب الاستهلاك
+        const consumptionT1 = (parseFloat(toReading.t1) || 0) - (parseFloat(fromReading.t1) || 0);
+        const consumptionT2 = (parseFloat(toReading.t2) || 0) - (parseFloat(fromReading.t2) || 0);
+        const consumptionM3 = (parseFloat(toReading.m3) || 0) - (parseFloat(fromReading.m3) || 0);
+        
+        // تنسيق تواريخ القراءات
+        const fromDateFormatted = fromReading.date;
+        const fromTimeFormatted = fromReading.time.substring(0, 5);
+        const toDateFormatted = toReading.date;
+        const toTimeFormatted = toReading.time.substring(0, 5);
+        
+        // إنشاء صف جديد مع البيانات التفصيلية
+        const row = document.createElement('tr');
+        row.innerHTML = `
+            <td>${stationName}</td>
+            <td class="cons-cell">
+                <div class="cons-sub-item">
+                    <span class="cons-label">سابق:</span>
+                    <span>${parseFloat(fromReading.t1) || 0}</span>
+                </div>
+                <div class="cons-sub-item">
+                    <span class="cons-label">حالي:</span>
+                    <span>${parseFloat(toReading.t1) || 0}</span>
+                </div>
+                <div class="cons-result">${consumptionT1.toFixed(2)}</div>
+                <div class="cons-date-small">
+                    ${fromDateFormatted} ${fromTimeFormatted} → ${toDateFormatted} ${toTimeFormatted}
+                </div>
+            </td>
+            <td class="cons-cell">
+                <div class="cons-sub-item">
+                    <span class="cons-label">سابق:</span>
+                    <span>${parseFloat(fromReading.t2) || 0}</span>
+                </div>
+                <div class="cons-sub-item">
+                    <span class="cons-label">حالي:</span>
+                    <span>${parseFloat(toReading.t2) || 0}</span>
+                </div>
+                <div class="cons-result">${consumptionT2.toFixed(2)}</div>
+                <div class="cons-date-small">
+                    ${fromDateFormatted} ${fromTimeFormatted} → ${toDateFormatted} ${toTimeFormatted}
+                </div>
+            </td>
+            <td class="cons-cell">
+                <div class="cons-sub-item">
+                    <span class="cons-label">سابق:</span>
+                    <span>${parseFloat(fromReading.m3) || 0}</span>
+                </div>
+                <div class="cons-sub-item">
+                    <span class="cons-label">حالي:</span>
+                    <span>${parseFloat(toReading.m3) || 0}</span>
+                </div>
+                <div class="cons-result">${consumptionM3.toFixed(2)}</div>
+                <div class="cons-date-small">
+                    ${fromDateFormatted} ${fromTimeFormatted} → ${toDateFormatted} ${toTimeFormatted}
+                </div>
+            </td>
+        `;
+        
+        tbody.appendChild(row);
+    });
+};
 
-function exportConsumptionsToCSV() {
-    try {
-        // استخدام نفس معاملات البحث من الدالة الرئيسية
-        const stationFilter = document.getElementById('cons-filter-station').value;
-        const dateFromInput = document.getElementById('cons-filter-date-from').value;
-        const dateToInput = document.getElementById('cons-filter-date-to').value;
-        
-        if (!dateFromInput || !dateToInput) {
-            alert('⚠️ يجب تحديد تاريخ البداية والنهاية أولاً');
-            return;
-        }
-        
-        // تنفيذ حساب الاستهلاكات أولاً للحصول على البيانات
-        // نحتاج إلى محاكاة نفس منطق renderConsumptionsTable لكن لتصدير CSV
-        
-        const dateFrom = new Date(dateFromInput);
-        const dateTo = new Date(dateToInput);
-        
-        if (dateTo <= dateFrom) {
-            alert('⚠️ تاريخ النهاية يجب أن يكون بعد تاريخ البداية');
-            return;
-        }
-        
-        // تصفية السجلات حسب المحطة
-        let filteredConsumptions = appData.consumptionLog || [];
-        
-        if (stationFilter !== 'all') {
-            filteredConsumptions = filteredConsumptions.filter(c => c.station === stationFilter);
-        }
-        
-        // دالة لتحويل التاريخ
-        function parseDateString(dateStr, timeStr) {
-            try {
-                if (!dateStr) return new Date(0);
-                
-                const dateParts = dateStr.split('/');
-                if (dateParts.length !== 3) return new Date(dateStr);
-                
-                const day = parseInt(dateParts[0]);
-                const month = parseInt(dateParts[1]) - 1;
-                const year = parseInt(dateParts[2]);
-                
-                let hours = 0, minutes = 0, seconds = 0;
-                
-                if (timeStr) {
-                    const timeParts = timeStr.split(':');
-                    if (timeParts.length >= 2) {
-                        hours = parseInt(timeParts[0]) || 0;
-                        minutes = parseInt(timeParts[1]) || 0;
-                        seconds = parseInt(timeParts[2]) || 0;
-                    }
-                }
-                
-                return new Date(year, month, day, hours, minutes, seconds);
-            } catch (e) {
-                return new Date(0);
-            }
-        }
-        
-        // دالة لتنسيق التاريخ
-        function formatDate(date) {
-            try {
-                const day = String(date.getDate()).padStart(2, '0');
-                const month = String(date.getMonth() + 1).padStart(2, '0');
-                const year = date.getFullYear();
-                return `${day}/${month}/${year}`;
-            } catch (e) {
-                return '';
-            }
-        }
-        
-        // تصنيف السجلات حسب المحطة
-        const stationsMap = {};
-        
-        filteredConsumptions.forEach(record => {
-            if (!record.station) return;
-            
-            if (!stationsMap[record.station]) {
-                stationsMap[record.station] = [];
-            }
-            
-            stationsMap[record.station].push(record);
-        });
-        
-        // فرز السجلات لكل محطة حسب التاريخ
-        Object.keys(stationsMap).forEach(station => {
-            stationsMap[station].sort((a, b) => {
-                const dateA = parseDateString(a.date, a.time);
-                const dateB = parseDateString(b.date, b.time);
-                return dateA - dateB;
-            });
-        });
-        
-        // إنشاء بيانات CSV
-        let csvContent = "data:text/csv;charset=utf-8,\uFEFF"; // BOM لتصحيح العربية
-        
-        // رأس CSV
-        const headers = [
-            'المحطة',
-            'تاريخ البداية',
-            'تاريخ النهاية',
-            'استهلاك محول 1 (KW)',
-            'استهلاك محول 2 (KW)',
-            'استهلاك المياه (M3)',
-            'ملاحظات'
-        ];
-        
-        csvContent += headers.join(',') + '\n';
-        
-        // إضافة بيانات كل محطة
-        Object.keys(stationsMap).forEach(station => {
-            const records = stationsMap[station];
-            
-            // البحث عن أول تسجيل في الفترة السابقة
-            let previousRecord = null;
-            let searchDate = new Date(dateFrom);
-            const maxSearchDate = new Date(dateTo);
-            maxSearchDate.setDate(maxSearchDate.getDate() - 1);
-            
-            while (searchDate <= maxSearchDate && !previousRecord) {
-                const searchDateStr = formatDate(searchDate);
-                
-                for (let i = 0; i < records.length; i++) {
-                    const recordDate = parseDateString(records[i].date, records[i].time);
-                    const recordDateStr = formatDate(recordDate);
-                    
-                    if (recordDateStr === searchDateStr) {
-                        previousRecord = records[i];
-                        break;
-                    }
-                }
-                
-                if (!previousRecord) {
-                    searchDate.setDate(searchDate.getDate() + 1);
-                }
-            }
-            
-            // البحث عن تسجيل في تاريخ بداية الفترة الحالية
-            let currentRecord = null;
-            const searchCurrentDate = new Date(dateTo);
-            const searchCurrentDateStr = formatDate(searchCurrentDate);
-            
-            // البحث في تاريخ النهاية بالضبط
-            for (let i = 0; i < records.length; i++) {
-                const recordDate = parseDateString(records[i].date, records[i].time);
-                const recordDateStr = formatDate(recordDate);
-                
-                if (recordDateStr === searchCurrentDateStr) {
-                    currentRecord = records[i];
-                    break;
-                }
-            }
-            
-            // إذا لم نجد في تاريخ النهاية، نبحث في الأيام السابقة
-            if (!currentRecord) {
-                let searchBeforeDate = new Date(dateTo);
-                searchBeforeDate.setDate(searchBeforeDate.getDate() - 1);
-                
-                const minSearchDate = new Date(dateFrom);
-                
-                while (searchBeforeDate >= minSearchDate && !currentRecord) {
-                    const searchDateStr = formatDate(searchBeforeDate);
-                    
-                    for (let i = 0; i < records.length; i++) {
-                        const recordDate = parseDateString(records[i].date, records[i].time);
-                        const recordDateStr = formatDate(recordDate);
-                        
-                        if (recordDateStr === searchDateStr) {
-                            currentRecord = records[i];
-                            break;
-                        }
-                    }
-                    
-                    if (!currentRecord) {
-                        searchBeforeDate.setDate(searchBeforeDate.getDate() - 1);
-                    }
-                }
-            }
-            
-            // حساب الاستهلاك إذا وجدنا السجلين
-            if (previousRecord && currentRecord) {
-                const prevDate = parseDateString(previousRecord.date, previousRecord.time);
-                const currDate = parseDateString(currentRecord.date, currentRecord.time);
-                
-                if (currDate > prevDate) {
-                    // تحويل القيم إلى أرقام
-                    const prevT1 = parseFloat(previousRecord.t1) || 0;
-                    const prevT2 = parseFloat(previousRecord.t2) || 0;
-                    const prevM3 = parseFloat(previousRecord.m3) || 0;
-                    
-                    const currT1 = parseFloat(currentRecord.t1) || 0;
-                    const currT2 = parseFloat(currentRecord.t2) || 0;
-                    const currM3 = parseFloat(currentRecord.m3) || 0;
-                    
-                    // حساب الفروق
-                    const cons1 = currT1 - prevT1;
-                    const cons2 = currT2 - prevT2;
-                    const waterCons = currM3 - prevM3;
-                    
-                    // نتأكد من أن الاستهلاك غير سالب
-                    const finalCons1 = cons1 >= 0 ? cons1.toFixed(2) : '0.00';
-                    const finalCons2 = cons2 >= 0 ? cons2.toFixed(2) : '0.00';
-                    const finalWaterCons = waterCons >= 0 ? waterCons.toFixed(2) : '0.00';
-                    
-                    // إضافة صف إلى CSV
-                    const row = [
-                        `"${station}"`,
-                        `"${previousRecord.date}"`,
-                        `"${currentRecord.date}"`,
-                        finalCons1,
-                        finalCons2,
-                        finalWaterCons,
-                        '"تم الحساب بنجاح"'
-                    ];
-                    
-                    csvContent += row.join(',') + '\n';
-                } else {
-                    // إضافة صف خطأ
-                    const row = [
-                        `"${station}"`,
-                        `"${previousRecord.date}"`,
-                        `"${currentRecord.date}"`,
-                        '0.00',
-                        '0.00',
-                        '0.00',
-                        '"خطأ: التسجيل الحالي قبل التسجيل السابق"'
-                    ];
-                    
-                    csvContent += row.join(',') + '\n';
-                }
-            } else {
-                // إذا لم توجد بيانات كافية
-                let reason = '';
-                let prevDate = previousRecord ? previousRecord.date : '';
-                let currDate = currentRecord ? currentRecord.date : '';
-                
-                if (!previousRecord && !currentRecord) {
-                    reason = 'لا توجد بيانات في الفترة المحددة';
-                } else if (!previousRecord) {
-                    reason = 'لا توجد بيانات في الفترة السابقة';
-                } else if (!currentRecord) {
-                    reason = 'لا توجد بيانات في تاريخ بداية الفترة الحالية';
-                }
-                
-                const row = [
-                    `"${station}"`,
-                    `"${prevDate}"`,
-                    `"${currDate}"`,
-                    '0.00',
-                    '0.00',
-                    '0.00',
-                    `"${reason}"`
-                ];
-                
-                csvContent += row.join(',') + '\n';
-            }
-        });
-        
-        // إنشاء وتنزيل ملف CSV
-        const encodedUri = encodeURI(csvContent);
-        const link = document.createElement("a");
-        link.setAttribute("href", encodedUri);
-        
-        // اسم الملف يتضمن التاريخين
-        const fromDateStr = dateFromInput.replace(/-/g, '');
-        const toDateStr = dateToInput.replace(/-/g, '');
-        const fileName = `استهلاكات_${fromDateStr}_${toDateStr}.csv`;
-        
-        link.setAttribute("download", fileName);
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-        
-        alert(`✅ تم تصدير ملف CSV بنجاح: ${fileName}`);
-        
-    } catch (error) {
-        console.error('Error exporting CSV:', error);
-        alert('⚠️ حدث خطأ في تصدير ملف CSV: ' + error.message);
+window.exportConsumptionsToCSV = function() {
+    // استخدام نفس منطق renderConsumptionsTable لجمع البيانات
+    const stationFilter = document.getElementById('cons-filter-station').value;
+    const dateFrom = document.getElementById('cons-filter-date-from').value;
+    const dateTo = document.getElementById('cons-filter-date-to').value;
+    
+    if (!dateFrom || !dateTo) {
+        alert('يرجى اختيار تاريخ البداية والنهاية أولاً');
+        return;
     }
-}
-        window.exportConsumptionsToCSV = exportConsumptionsToCSV; 
+    
+    let filteredConsumptions = appData.consumptionLog || [];
+    
+    // تصفية حسب المحطة
+    if (stationFilter !== 'all') {
+        filteredConsumptions = filteredConsumptions.filter(c => c.station === stationFilter);
+    }
+    
+    // تصفية حسب التاريخ
+    filteredConsumptions = filteredConsumptions.filter(c => {
+        const logDate = c.date;
+        const [d, m, y] = logDate.split('/');
+        const logDateISO = `${y}-${m.padStart(2, '0')}-${d.padStart(2, '0')}`;
+        return logDateISO >= dateFrom && logDateISO <= dateTo;
+    });
+    
+    if (filteredConsumptions.length === 0) {
+        alert('لا توجد بيانات للتصدير');
+        return;
+    }
+    
+    // تجميع البيانات حسب المحطة
+    const stationsData = {};
+    filteredConsumptions.forEach(log => {
+        if (!stationsData[log.station]) {
+            stationsData[log.station] = [];
+        }
+        stationsData[log.station].push(log);
+    });
+    
+    // إنشاء محتوى CSV
+    let csvContent = "data:text/csv;charset=utf-8,\uFEFF"; // BOM للدعم العربي
+    
+    // رأس CSV
+    csvContent += "المحطة,نوع الاستهلاك,القراءة السابقة,تاريخ القراءة السابقة,القراءة الحالية,تاريخ القراءة الحالية,الاستهلاك,وحدة القياس\n";
+    
+    // إضافة البيانات لكل محطة
+    Object.keys(stationsData).forEach(stationName => {
+        const stationLogs = stationsData[stationName];
+        
+        // ترتيب البيانات
+        stationLogs.sort((a, b) => {
+            const dateA = parseCustomDate(`${a.date} ${a.time}`);
+            const dateB = parseCustomDate(`${b.date} ${b.time}`);
+            return dateA - dateB;
+        });
+        
+        // البحث عن القراءات
+        const fromDate = new Date(dateFrom);
+        const toDate = new Date(dateTo);
+        
+        let fromReading = null;
+        let toReading = null;
+        
+        stationLogs.forEach(log => {
+            const logDateStr = log.date;
+            const [d, m, y] = logDateStr.split('/');
+            const logDate = new Date(`${y}-${m}-${d}`);
+            
+            if (logDate.getTime() === fromDate.getTime() && !fromReading) {
+                fromReading = log;
+            }
+            if (logDate.getTime() === toDate.getTime() && !toReading) {
+                toReading = log;
+            }
+        });
+        
+        if (!fromReading || !toReading) {
+            fromReading = stationLogs[0];
+            toReading = stationLogs[stationLogs.length - 1];
+        }
+        
+        // حساب الاستهلاك
+        const consumptionT1 = (parseFloat(toReading.t1) || 0) - (parseFloat(fromReading.t1) || 0);
+        const consumptionT2 = (parseFloat(toReading.t2) || 0) - (parseFloat(fromReading.t2) || 0);
+        const consumptionM3 = (parseFloat(toReading.m3) || 0) - (parseFloat(fromReading.m3) || 0);
+        
+        // إضافة صفوف CSV
+        csvContent += `"${stationName}","محول 1 (KW)","${parseFloat(fromReading.t1) || 0}","${fromReading.date} ${fromReading.time.substring(0, 5)}","${parseFloat(toReading.t1) || 0}","${toReading.date} ${toReading.time.substring(0, 5)}","${consumptionT1.toFixed(2)}","KW"\n`;
+        csvContent += `"${stationName}","محول 2 (KW)","${parseFloat(fromReading.t2) || 0}","${fromReading.date} ${fromReading.time.substring(0, 5)}","${parseFloat(toReading.t2) || 0}","${toReading.date} ${toReading.time.substring(0, 5)}","${consumptionT2.toFixed(2)}","KW"\n`;
+        csvContent += `"${stationName}","المياه (M3)","${parseFloat(fromReading.m3) || 0}","${fromReading.date} ${fromReading.time.substring(0, 5)}","${parseFloat(toReading.m3) || 0}","${toReading.date} ${toReading.time.substring(0, 5)}","${consumptionM3.toFixed(2)}","M3"\n`;
+        
+        // إضافة سطر فارغ بين المحطات
+        csvContent += "\n";
+    });
+    
+    // إضافة ملخص
+    csvContent += "\n";
+    csvContent += "ملخص الفترة\n";
+    csvContent += `تاريخ البداية,${dateFrom}\n`;
+    csvContent += `تاريخ النهاية,${dateTo}\n`;
+    csvContent += `عدد المحطات,${Object.keys(stationsData).length}\n`;
+    csvContent += `تاريخ التصدير,${new Date().toLocaleDateString('ar-EG')}\n`;
+    csvContent += `وقت التصدير,${new Date().toLocaleTimeString('ar-EG')}\n`;
+    
+    // إنشاء رابط التحميل
+    const encodedUri = encodeURI(csvContent);
+    const link = document.createElement("a");
+    link.setAttribute("href", encodedUri);
+    link.setAttribute("download", `تقرير_الاستهلاك_${dateFrom}_إلى_${dateTo}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    
+    alert(`تم تصدير ${Object.keys(stationsData).length} محطة إلى ملف CSV`);
+};
 
         // --- FAULTS & HISTORY LOGIC ---
         function renderHistoryTable(applyFilters = false) {
