@@ -1720,38 +1720,73 @@ d<!DOCTYPE html>
             background-color: #f44336;
             color: white;
         }
+/* تنسيقات القائمة العائمة وزر القائمة - انسخ هذا الجزء */
+.menu-btn { 
+    background: transparent; border: none; color: white; 
+    font-size: 1.4rem; cursor: pointer; margin-left: 10px;
+    min-width: 40px; height: 40px; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+}
+.menu-btn:hover { background: rgba(255, 255, 255, 0.1); }
+
+.floating-menu {
+    position: fixed; top: 60px; right: 10px;
+    background: white; border-radius: 10px;
+    box-shadow: 0 5px 20px rgba(0,0,0,0.15);
+    z-index: 2000; display: none; flex-direction: column;
+    min-width: 200px; overflow: hidden;
+}
+.floating-menu.active { display: flex; animation: fadeInUp 0.3s ease; }
+
+@keyframes fadeInUp {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.menu-item {
+    padding: 12px 15px; border-bottom: 1px solid #eee;
+    display: flex; align-items: center; gap: 10px;
+    cursor: pointer; background: none; border: none;
+    width: 100%; text-align: right; font-size: 1rem; color: #333;
+    font-family: inherit;
+}
+.menu-item:hover { background: #f5f5f5; }
+.menu-item.logout { color: #c0392b; border-top: 2px solid #eee; }
     </style>
 </head>
 <body>
-    <header>
-        <div class="container">
-            <div class="header-content">
-                <div class="logo">
-                    <i>💧</i> <span>نظام المياه الذكي (Toshka)</span>
-                </div>
-             
-                <div id="network-status-indicator" class="network-status net-online">
-                    <span id="net-icon">🟢</span> <span id="net-text">متصل</span>
-                </div>
-                <div class="user-info" id="header-user-info">
-                    <button id="profile-btn" class="profile-btn" title="بيانات المستخدم">
-                        📋
-                    </button>
-                    <button id="alarm-btn" class="alarm-btn" title="سجل الأعطال">
-                        🔔
-                        <span id="alarm-count" class="alarm-count" style="display:none">0</span>
-                    </button>
-                    <div class="user-badge" id="current-user">مرحباً</div>
-                    
-                    <button id="users-management-btn" class="btn btn-warning" style="display: none;">المستخدمين</button>
-                    <button id="consumptions-btn" class="btn btn-consumption" style="display: none;">⚡ الاستهلاكات</button>
-                    <button id="history-management-btn" class="btn btn-info" style="display: none;">السجل العام</button>
-                    <button id="export-inspection-report-btn" class="btn btn-excel" style="display: none;" title="تصدير تقرير الفحص">📊 تصدير الفحص</button>
-                    <button id="logout-btn" class="btn btn-danger">خروج</button>
-                </div>
+<header>
+    <div class="container">
+        <div class="header-content">
+            <div class="logo">
+                <i>💧</i> <span>نظام المياه الذكي (Toshka)</span>
+            </div>
+            
+            <div id="network-status-indicator" class="network-status net-online">
+                <span id="net-icon">🟢</span> <span id="net-text">متصل</span>
+            </div>
+            
+            <div class="user-info" id="header-user-info">
+                <button id="menu-btn" class="menu-btn" title="القائمة">☰</button>
+                
+                <button id="alarm-btn" class="alarm-btn" title="سجل الأعطال">
+                    🔔 <span id="alarm-count" class="alarm-count" style="display:none">0</span>
+                </button>
+                
+                <div class="user-badge" id="current-user">مرحباً</div>
             </div>
         </div>
-    </header>
+    </div>
+</header>
+
+<div id="floating-menu" class="floating-menu">
+    <button id="users-management-btn" class="menu-item" style="display: none;">👥 المستخدمين</button>
+    <button id="consumptions-btn" class="menu-item" style="display: none;">⚡ الاستهلاكات</button>
+    <button id="history-management-btn" class="menu-item" style="display: none;">📜 السجل العام</button>
+    <button id="export-inspection-report-btn" class="menu-item" style="display: none;">📊 تصدير الفحص</button>
+    <button id="profile-btn" class="menu-item">📋 بياناتي الشخصية</button>
+    <button id="logout-btn" class="menu-item logout">👋 خروج</button>
+</div>
 
     <div class="container">
         <div id="offline-sync-banner">
@@ -2358,6 +2393,23 @@ d<!DOCTYPE html>
 
     <script>
         // --- CONFIG & INIT ---
+// --- منطق القائمة العائمة (أضفه في بداية السكربت أو بعد المتغيرات) ---
+document.getElementById('menu-btn').addEventListener('click', function(e) {
+    document.getElementById('floating-menu').classList.toggle('active');
+    e.stopPropagation();
+});
+
+document.addEventListener('click', function(e) {
+    const menu = document.getElementById('floating-menu');
+    const btn = document.getElementById('menu-btn');
+    if (menu.classList.contains('active') && !menu.contains(e.target) && !btn.contains(e.target)) {
+        menu.classList.remove('active');
+    }
+});
+
+document.querySelectorAll('.menu-item').forEach(item => {
+    item.addEventListener('click', () => document.getElementById('floating-menu').classList.remove('active'));
+});
         const firebaseConfig = {
             apiKey: "AIzaSyAJiiq8qdeRFZkaHnEew-6sisbCRaypJQ8",
             authDomain: "toshka-4db86.firebaseapp.com",
@@ -5809,6 +5861,61 @@ window.exportConsumptionsToCSV = function() {
         // Initial Load
         checkRememberedUser();
         loadSystemData();
+// --- دعم زر الرجوع في الموبايل (Mobile Back Button Logic) ---
+        
+        // 1. نحتفظ بنسخة من دالة العرض الأصلية
+        const _originalShowScreen = showScreen;
+
+        // 2. نقوم بتعديل دالة showScreen لإضافة "نقطة عودة" في ذاكرة المتصفح
+        showScreen = function(screenId) {
+            // تنفيذ الدالة الأصلية لتبديل الشاشة
+            _originalShowScreen(screenId);
+
+            // إذا كانت الشاشة الجديدة "شاشة فرعية" (ليست الدخول ولا الرئيسية)
+            // نقوم بإضافة حالة جديدة لتاريخ المتصفح حتى يشعر زر الرجوع بوجود خطوة سابقة
+            if (screenId !== 'login' && screenId !== 'stations') {
+                // التأكد من عدم تكرار الحالة الحالية لتجنب تراكم التاريخ
+                if (!history.state || history.state.screen !== screenId) {
+                    window.history.pushState({screen: screenId}, null, `#${screenId}`);
+                }
+            }
+        };
+
+        // 3. الاستماع لحدث الضغط على زر "Back" في الموبايل
+        window.addEventListener('popstate', function(event) {
+            
+            // أ) التعامل مع القائمة العائمة (إذا كانت مفتوحة، نغلقها أولاً)
+            const floatingMenu = document.getElementById('floating-menu');
+            if (floatingMenu && floatingMenu.classList.contains('active')) {
+                floatingMenu.classList.remove('active');
+                // نعيد دفع الحالة لأننا لم نغير الشاشة، فقط أغلقنا القائمة
+                window.history.pushState(null, null, window.location.href);
+                return;
+            }
+
+            // ب) التعامل مع الشاشات
+            // معرفة الشاشة النشطة حالياً
+            const activeScreen = document.querySelector('.screen.active');
+            
+            // إذا كنا في أي شاشة غير "تسجيل الدخول" وغير "الرئيسية"
+            if (activeScreen && activeScreen.id !== 'login-screen' && activeScreen.id !== 'stations-screen') {
+                // نعود للشاشة الرئيسية يدوياً
+                // نستخدم الدالة الأصلية هنا لكي لا نضيف خطوة جديدة في التاريخ (لأننا نرجع للخلف)
+                _originalShowScreen('stations'); 
+                
+                // تحديث التبويبات لتحديد "الكل" أو التبويب السابق (اختياري)
+                const allTab = document.querySelector('.nav-tab[data-zone="all"]');
+                if(allTab) handleTabClick('all', allTab);
+            }
+        });
+
+        // 4. إضافة نقطة بداية عند تحميل التطبيق لمنع الخروج الفوري
+        window.addEventListener('load', function() {
+            if (window.location.hash) {
+                // تنظيف الرابط عند التحميل
+                window.history.replaceState(null, null, ' ');
+            }
+        });
     </script>
 </body>
 </html>
