@@ -3447,17 +3447,17 @@ document.querySelectorAll('.menu-item').forEach(item => {
         document.getElementById('btn-resolve-f1').addEventListener('click', () => { if(confirm("هل تم إصلاح العطل الأول؟")) saveDataInternal({ resolveTarget: 'currentFault' }); });
         document.getElementById('btn-resolve-f2').addEventListener('click', () => { if(confirm("هل تم إصلاح العطل الثاني؟")) saveDataInternal({ resolveTarget: 'secondaryFault' }); });
         
-        function saveDataInternal(options = {}) {
+       function saveDataInternal(options = {}) {
             try {
                 const sName = appData.currentStation;
                 if (!sName || !appData.stations[sName]) { 
-                    alert("خطأ: لا توجد محطة محددة!"); 
+                    alert("خطأ: لا توجد محطة محددة!");
                     return; 
                 }
                 
                 const oldData = appData.stations[sName];
                 const getVal = (id) => { 
-                    const el = document.getElementById(id); 
+                    const el = document.getElementById(id);
                     return el ? el.value : ''; 
                 };
                 
@@ -3483,7 +3483,6 @@ document.querySelectorAll('.menu-item').forEach(item => {
                 let newVoltage = getVal('operator-voltage');
                 const newMode = getVal('operator-system-mode');
                 const newComments = getVal('operator-comments');
-                
                 // الحصول على قيمة اقصى ضغط
                 let newMaxPressure = parseFloat(getVal('operator-max-pressure')) || 8.0;
                 
@@ -3511,7 +3510,7 @@ document.querySelectorAll('.menu-item').forEach(item => {
                 const nonStoppingFaults = ['انقطاع الاتصال SCADA', 'عجز تحقيق الضغط', 'انسدادات', 'تسريب مياه'];
                 let newFaultEntries = [];
                 let resolvedFaultEntries = [];
-                
+
                 if (options.resolveTarget === 'currentFault') {
                     if (safeOldFault1) { 
                         changesDetails.push(`✅ إصلاح: ${safeOldFault1}`);
@@ -3538,7 +3537,7 @@ document.querySelectorAll('.menu-item').forEach(item => {
                     finalFaultDesc = finalFault ? selDesc1 : null; 
                     finalFaultSec = sel2 || null; 
                     finalFaultSecDesc = finalFaultSec ? selDesc2 : null;
-                    
+
                     if (finalFault !== safeOldFault1) {
                         if (finalFault) { 
                             changesDetails.push(`⚠️ تسجيل عطل 1: ${finalFault}`);
@@ -3548,7 +3547,7 @@ document.querySelectorAll('.menu-item').forEach(item => {
                         else { 
                             if (safeOldFault1) { 
                                 changesDetails.push(`✅ إصلاح: ${safeOldFault1}`);
-                                resolvedFaultEntries.push({ station: sName, type: safeOldFault1, startTime: faultStartTime, endTime: stationFullDateTime, active: false }); 
+                                resolvedFaultEntries.push({ station: sName, type: safeOldFault1, startTime: faultStartTime, endTime: stationFullDateTime, active: false });
                             } 
                             if (!finalFaultSec) faultStartTime = null;
                         }
@@ -3556,7 +3555,7 @@ document.querySelectorAll('.menu-item').forEach(item => {
                     if (finalFaultSec !== safeOldFault2) {
                         if (finalFaultSec) { 
                             changesDetails.push(`⚠️ تسجيل عطل 2: ${finalFaultSec}`);
-                            newFaultEntries.push({ station: sName, type: finalFaultSec, startTime: stationFullDateTime, endTime: null, active: true }); 
+                            newFaultEntries.push({ station: sName, type: finalFaultSec, startTime: stationFullDateTime, endTime: null, active: true });
                             if (!faultStartTime) faultStartTime = stationFullDateTime;
                         } 
                         else { 
@@ -3570,7 +3569,7 @@ document.querySelectorAll('.menu-item').forEach(item => {
 
                 const isCriticalFault = (finalFault && !nonStoppingFaults.includes(finalFault)) || (finalFaultSec && !nonStoppingFaults.includes(finalFaultSec));
                 if (isCriticalFault) { 
-                    currentStatus = 'متوقفة'; 
+                    currentStatus = 'متوقفة';
                     activeCount = 0; 
                     newPressure = 0; 
                     newFlow = 0;
@@ -3582,7 +3581,13 @@ document.querySelectorAll('.menu-item').forEach(item => {
                     const statElem = document.getElementById(`p_stat_${p.id}`);
                     let newStatus = statElem ? statElem.value : p.status;
                     if (isCriticalFault && newStatus === 'نشطة') newStatus = 'متوقفة';
-                    if(p.status != newStatus) changesDetails.push(`مضخة ${p.id}: ${p.status} -> ${newStatus}`);
+                    
+                    // --- التعديل الأول هنا: تغيير صيغة النص للمضخات لمنع تداخلها مع حالة المحطة ---
+                    if(p.status != newStatus) {
+                        changesDetails.push(`مضخة ${p.id} (من ${p.status} إلى ${newStatus})`);
+                    }
+                    // ----------------------------------------------------------------------
+                    
                     let pumpData = { 
                         id: p.id, 
                         status: newStatus, 
@@ -3590,101 +3595,79 @@ document.querySelectorAll('.menu-item').forEach(item => {
                         dischargePressure: null, 
                         frequency: null 
                     };
+                
                     if(newStatus === 'نشطة') { 
                         activeCount++; 
                         pumpData.suctionPressure = getVal(`p_suc_${p.id}`); 
                         pumpData.dischargePressure = getVal(`p_dis_${p.id}`); 
-                        pumpData.frequency = getVal(`p_freq_${p.id}`); 
+                        pumpData.frequency = getVal(`p_freq_${p.id}`);
                     }
                     return pumpData;
                 });
                 
                 if (!isCriticalFault) { 
-                    if (activeCount > 0) currentStatus = 'نشطة'; 
+                    if (activeCount > 0) currentStatus = 'نشطة';
                     else { 
-                        currentStatus = 'متوقفة'; 
+                        currentStatus = 'متوقفة';
                         newPressure = 0;
                         newFlow = 0; 
                     } 
                 }
-                // تحديد وقت التشغيل والإيقاف بناءً على حالة المحطة بشكل تلقائي
-const oldStatus = oldData.status;
-const oldStartTime = oldData.startTime || '';
-const oldStopTime = oldData.stopTime || '';
 
-// الحصول على الأوقات التي أدخلها المشغل
-const enteredStartTime = getVal('operator-start-time');
-const enteredStopTime = getVal('operator-stop-time');
+                // منطق تحديد الوقت التلقائي (كما هو)
+                const oldStatus = oldData.status;
+                const oldStartTime = oldData.startTime || '';
+                const oldStopTime = oldData.stopTime || '';
+                const enteredStartTime = getVal('operator-start-time');
+                const enteredStopTime = getVal('operator-stop-time');
 
-// إذا كانت المحطة كانت متوقفة وأصبحت نشطة
-if (oldStatus === 'متوقفة' && currentStatus === 'نشطة') {
-    // إذا لم يغير المشغل وقت التشغيل، استخدم وقت الحفظ الحالي
-    if (!enteredStartTime || enteredStartTime === oldStartTime) {
-        newStartTime = sysTimeShort;
-        changesDetails.push(`⏰ وقت التشغيل التلقائي: ${sysTimeShort}`);
-    } else {
-        newStartTime = enteredStartTime;
-    }
-    // محطة أصبحت نشطة، لا يوجد وقت إيقاف
-    newStopTime = '';
-}
-// إذا كانت المحطة كانت نشطة وأصبحت متوقفة
-else if (oldStatus === 'نشطة' && currentStatus === 'متوقفة') {
-    // إذا لم يغير المشغل وقت الإيقاف، استخدم وقت الحفظ الحالي
-    if (!enteredStopTime || enteredStopTime === oldStopTime) {
-        newStopTime = sysTimeShort;
-        changesDetails.push(`⏰ وقت الإيقاف التلقائي: ${sysTimeShort}`);
-    } else {
-        newStopTime = enteredStopTime;
-    }
-    // محطة أصبحت متوقفة، ابق على وقت التشغيل القديم ما لم يتم تغييره
-    if (!enteredStartTime || enteredStartTime === oldStartTime) {
-        newStartTime = oldStartTime;
-    } else {
-        newStartTime = enteredStartTime;
-    }
-}
-// إذا ظلت المحطة في نفس الحالة
-else {
-    // إذا بقيت نشطة
-    if (currentStatus === 'نشطة') {
-        newStopTime = '';
-        // إذا لم يتم تغيير وقت التشغيل، ابق على القديم
-        if (!enteredStartTime || enteredStartTime === oldStartTime) {
-            newStartTime = oldStartTime;
-        } else {
-            newStartTime = enteredStartTime;
-        }
-    }
-    // إذا بقيت متوقفة
-    else {
-        // إذا لم يتم تغيير وقت الإيقاف، ابق على القديم
-        if (!enteredStopTime || enteredStopTime === oldStopTime) {
-            newStopTime = oldStopTime;
-        } else {
-            newStopTime = enteredStopTime;
-        }
-        // إذا لم يتم تغيير وقت التشغيل، ابق على القديم
-        if (!enteredStartTime || enteredStartTime === oldStartTime) {
-            newStartTime = oldStartTime;
-        } else {
-            newStartTime = enteredStartTime;
-        }
-    }
-}
+                if (oldStatus === 'متوقفة' && currentStatus === 'نشطة') {
+                    if (!enteredStartTime || enteredStartTime === oldStartTime) {
+                        newStartTime = sysTimeShort;
+                        changesDetails.push(`⏰ وقت التشغيل التلقائي: ${sysTimeShort}`);
+                    } else { newStartTime = enteredStartTime; }
+                    newStopTime = '';
+                }
+                else if (oldStatus === 'نشطة' && currentStatus === 'متوقفة') {
+                    if (!enteredStopTime || enteredStopTime === oldStopTime) {
+                        newStopTime = sysTimeShort;
+                        changesDetails.push(`⏰ وقت الإيقاف التلقائي: ${sysTimeShort}`);
+                    } else { newStopTime = enteredStopTime; }
+                    if (!enteredStartTime || enteredStartTime === oldStartTime) {
+                        newStartTime = oldStartTime;
+                    } else { newStartTime = enteredStartTime; }
+                }
+                else {
+                    if (currentStatus === 'نشطة') {
+                        newStopTime = '';
+                        if (!enteredStartTime || enteredStartTime === oldStartTime) {
+                            newStartTime = oldStartTime;
+                        } else { newStartTime = enteredStartTime; }
+                    }
+                    else {
+                        if (!enteredStopTime || enteredStopTime === oldStopTime) {
+                            newStopTime = oldStopTime;
+                        } else { newStopTime = enteredStopTime; }
+                        if (!enteredStartTime || enteredStartTime === oldStartTime) {
+                            newStartTime = oldStartTime;
+                        } else { newStartTime = enteredStartTime; }
+                    }
+                }
 
-// إذا كان هناك عطل حرج، اضبط الوقت المناسب
-if (isCriticalFault) {
-    // إذا كان هناك عطل حرج وتوقفت المحطة، ضع وقت الإيقاف الحالي
-    if (oldStatus === 'نشطة' && currentStatus === 'متوقفة') {
-        newStopTime = sysTimeShort;
-        changesDetails.push(`⏰ وقت الإيقاف بسبب العطل: ${sysTimeShort}`);
-    }
-}
+                if (isCriticalFault) {
+                    if (oldStatus === 'نشطة' && currentStatus === 'متوقفة') {
+                        newStopTime = sysTimeShort;
+                        changesDetails.push(`⏰ وقت الإيقاف بسبب العطل: ${sysTimeShort}`);
+                    }
+                }
+                
+                // --- التعديل الثاني: تسجيل حالة المحطة بشكل صريح ليتمكن السجل من تمييزها وتلوينها ---
+                if (oldData.status !== currentStatus) {
+                    changesDetails.push(`حالة المحطة: ${oldData.status} -> ${currentStatus}`);
+                }
+                // ------------------------------------------------------------------------------
 
                 if(oldData.pressure != newPressure) changesDetails.push(`الضغط: ${oldData.pressure} -> ${newPressure}`);
-                
-                // التحقق من تغيير اقصى ضغط
                 if(oldData.maxPressure != newMaxPressure) {
                     changesDetails.push(`اقصى ضغط: ${oldData.maxPressure || '8.0'} -> ${newMaxPressure}`);
                 }
@@ -3712,7 +3695,6 @@ if (isCriticalFault) {
                 
                 const changesString = changesDetails.length > 0 ? changesDetails.join(', ') : "تحديث دوري";
                 
-                // إضافة توقيت التشغيل والإيقاف إلى السجل
                 const logDetails = [];
                 if (changesString !== "تحديث دوري") {
                     logDetails.push(changesString);
@@ -3754,7 +3736,7 @@ if (isCriticalFault) {
                     fault2Desc: finalFaultSecDesc,
                     faultStartTime: faultStartTime,
                     pumps: updatedPumps,
-                    maxPressure: newMaxPressure, // إضافة اقصى ضغط للتحديث
+                    maxPressure: newMaxPressure, 
                     consumption: { 
                         t1: consTrans1, 
                         t2: consTrans2, 
@@ -3762,7 +3744,7 @@ if (isCriticalFault) {
                         lastUpdate: stationFullDateTime 
                     }
                 };
-                
+
                 Object.assign(appData.stations[sName], updates);
                 localStorage.setItem('toshka_stations_cache', JSON.stringify(appData.stations));
                 
@@ -3780,7 +3762,7 @@ if (isCriticalFault) {
                                     else logs = Object.values(rawVal); 
                                 }
                                 newFaultEntries.forEach(newF => { 
-                                    const exists = logs.some(existingF => existingF.active === true && existingF.station === newF.station && existingF.type === newF.type); 
+                                    const exists = logs.some(existingF => existingF.active === true && existingF.station === newF.station && existingF.type === newF.type);
                                     if (!exists) logs.unshift(newF);
                                 });
                                 resolvedFaultEntries.forEach(rf => { 
