@@ -1,4 +1,4 @@
-d<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
     <meta charset="UTF-8">
@@ -2540,6 +2540,7 @@ document.querySelectorAll('.menu-item').forEach(item => {
         let appData = {
             currentUser: null, 
             currentStation: null, 
+            currentZone: 'all',
             stations: {}, 
             users: {},
             userProfiles: {},
@@ -2575,7 +2576,7 @@ document.querySelectorAll('.menu-item').forEach(item => {
             'O6-1-P1': 4, 'O6-2-P2': 3, 'O6-3-P3': 4, 'O6-3-P4': 5, 'O6-3-P5': 5, 'O6-3-P6': 6, 'O6-3-P7': 6,
             'O8-1-P1': 4, 'O8-2-P2': 6, 'O8-3-P3': 4, 'O8-4-P4': 5, 'O8-5-P5': 5, 'O8-6-P6': 6, 'O8-7-P7': 5, 'O8-8-P8': 4, 'O8-8-P9': 5, 'O8-8-P10': 6, 'O8-8-P11': 5, 'O8-8-P12': 5, 'O8-9-P13': 5, 'O8-10-P14': 4,
             'Lifting-1A': 10, 'Lifting-1B': 10, 'Lifting-2A': 10, 'Lifting-2B': 10,
-            'R01': 4, 'R02': 6, 'R03*': 6, 'R03-A': 7, 'R03-B': 5, 'R04': 7, 'R05-A': 7, 'R05-B': 8, 'R05-C': 8, 'R05-D': 6, 'R05-E': 7, 'R05-F': 6, 'R05-G': 7, 'R05-H': 7, 'R05-I': 7, 'R05-J1': 7, 'R05-J2': 7, 'R05-K': 7, 'R06': 7, 'R07': 8, 'R08-A': 7, 'R08-B': 7, 'R08-C': 5, 'R08-D': 6, 'R08-E': 7, 'R08-F1': 7, 'R08-F2': 7, 'R08-F3': 7, 'R08*': 7, // المحطة المضافة حديثاً لمنطقة Zone_R
+            'R01': 4, 'R02': 6, 'R03*': 6, 'R03-A': 7, 'R03-B': 5, 'R04': 7, 'R05-A': 7, 'R05-B': 8, 'R05-C': 8, 'R05-D': 6, 'R05-E': 7, 'R05-F': 6, 'R05-G': 7, 'R05-H': 7, 'R05-I': 7, 'R05-J1': 7, 'R05-J2': 7, 'R05-K': 7, 'R06': 7, 'R07': 8, 'R08-A': 7, 'R08-B': 7, 'R08-C': 5, 'R08-D': 6, 'R08-E': 7, 'R08-F1': 7, 'R08-F2': 7, 'R08-F3': 7, 'R08G': 7, 'R08*': 7, // المحطة المضافة حديثاً لمنطقة Zone_R
             'R09-A': 8, 'R09-B': 8, 'R09-C': 8, 'R10': 7, 'R11': 7, 'R12-A': 6, 'R12-B': 7,
             'Lifting-57S': 6, 'Lifting-8S': 12, 'Lifting-17S': 12,
             'S01-A': 7, 'S01-B': 7, 'S02-A': 6, 'S02-B': 7, 'S03': 6, 'S04': 6, 'S05-A': 6, 'S05-B': 6, 'S06': 6, 'S07-A': 7, 'S07-B': 7, 'S08': 6, 'S09-A': 7, 'S09-B': 7, 'S09-C': 8, 'S09-D': 8, 'S09-E': 6, 'S09-F': 6
@@ -3118,16 +3119,33 @@ document.querySelectorAll('.menu-item').forEach(item => {
 
         // --- DASHBOARD RENDERER ---
         function renderZonesTabs() {
-            const c = document.getElementById('zones-tabs');
-            c.innerHTML = `<button class="nav-tab active" data-zone="all" onclick="handleTabClick('all', this)">الكل</button>`;
-            appData.zones.forEach(z => c.innerHTML += `<button class="nav-tab" data-zone="${z}" onclick="handleTabClick('${z}', this)">${z}</button>`);
-        }
-        
-        window.handleTabClick = (zone, btn) => {
-            document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
-            btn.classList.add('active');
-            renderStations(zone);
-        };
+    const c = document.getElementById('zones-tabs');
+    c.innerHTML = '';
+    
+    // التأكد من وجود قيمة افتراضية
+    if (!appData.currentZone) appData.currentZone = 'all';
+
+    // رسم زر الكل
+    const allActive = appData.currentZone === 'all' ? 'active' : '';
+    c.innerHTML += `<button class="nav-tab ${allActive}" data-zone="all" onclick="handleTabClick('all', this)">الكل</button>`;
+    
+    // رسم باقي المناطق
+    appData.zones.forEach(z => {
+        const isActive = appData.currentZone === z ? 'active' : '';
+        c.innerHTML += `<button class="nav-tab ${isActive}" data-zone="${z}" onclick="handleTabClick('${z}', this)">${z}</button>`;
+    });
+}
+
+window.handleTabClick = (zone, btn) => {
+    // إزالة التنشيط من جميع الأزرار
+    document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
+    // تنشيط الزر المضغوط
+    btn.classList.add('active');
+    // حفظ المنطقة في الذاكرة
+    appData.currentZone = zone;
+    // عرض المحطات
+    renderStations(zone);
+};
         
         window.renderStations = (zoneFilter = 'all') => {
             const container = document.getElementById('stations-container');
@@ -5888,33 +5906,34 @@ window.exportConsumptionsToCSV = function() {
             }
         };
 
-        // 3. الاستماع لحدث الضغط على زر "Back" في الموبايل
-        window.addEventListener('popstate', function(event) {
-            
-            // أ) التعامل مع القائمة العائمة (إذا كانت مفتوحة، نغلقها أولاً)
-            const floatingMenu = document.getElementById('floating-menu');
-            if (floatingMenu && floatingMenu.classList.contains('active')) {
-                floatingMenu.classList.remove('active');
-                // نعيد دفع الحالة لأننا لم نغير الشاشة، فقط أغلقنا القائمة
-                window.history.pushState(null, null, window.location.href);
-                return;
-            }
 
-            // ب) التعامل مع الشاشات
-            // معرفة الشاشة النشطة حالياً
-            const activeScreen = document.querySelector('.screen.active');
-            
-            // إذا كنا في أي شاشة غير "تسجيل الدخول" وغير "الرئيسية"
-            if (activeScreen && activeScreen.id !== 'login-screen' && activeScreen.id !== 'stations-screen') {
-                // نعود للشاشة الرئيسية يدوياً
-                // نستخدم الدالة الأصلية هنا لكي لا نضيف خطوة جديدة في التاريخ (لأننا نرجع للخلف)
-                _originalShowScreen('stations'); 
-                
-                // تحديث التبويبات لتحديد "الكل" أو التبويب السابق (اختياري)
-                const allTab = document.querySelector('.nav-tab[data-zone="all"]');
-                if(allTab) handleTabClick('all', allTab);
-            }
-        });
+        // 3. الاستماع لحدث الضغط على زر "Back" في الموبايل
+window.addEventListener('popstate', function(event) {
+    
+    // أ) التعامل مع القائمة العائمة (إذا كانت مفتوحة، نغلقها أولاً)
+    const floatingMenu = document.getElementById('floating-menu');
+    if (floatingMenu && floatingMenu.classList.contains('active')) {
+        floatingMenu.classList.remove('active');
+        // نعيد دفع الحالة لأننا لم نغير الشاشة، فقط أغلقنا القائمة
+        window.history.pushState(null, null, window.location.href);
+        return;
+    }
+
+    // ب) التعامل مع الشاشات
+    // معرفة الشاشة النشطة حالياً
+    const activeScreen = document.querySelector('.screen.active');
+    // إذا كنا في أي شاشة غير "تسجيل الدخول" وغير "الرئيسية"
+    if (activeScreen && activeScreen.id !== 'login-screen' && activeScreen.id !== 'stations-screen') {
+        // نعود للشاشة الرئيسية يدوياً
+        _originalShowScreen('stations');
+        
+        // --- التعديل هنا: تم حذف الكود الذي كان يعيد التبويب إلى "الكل" ---
+        // وبدلاً من ذلك، نضمن أن المحطات المعروضة هي الخاصة بالمنطقة المحفوظة
+        if (appData.currentZone) {
+            renderStations(appData.currentZone);
+        }
+    }
+});
 
         // 4. إضافة نقطة بداية عند تحميل التطبيق لمنع الخروج الفوري
         window.addEventListener('load', function() {
