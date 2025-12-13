@@ -4213,37 +4213,62 @@ if (isCriticalFault) {
             alert(`تم تصدير تقرير الفحص للمحطة ${stationName} بنجاح!`);
         }
         
-        // --- شاشة تصدير تقرير الفحص لجميع المحطات ---
+       // --- شاشة تصدير تقرير الفحص لجميع المحطات (تم الإصلاح) ---
         function updateExportFilters() {
             const zoneSelect = document.getElementById('export-filter-zone');
             const stationSelect = document.getElementById('export-filter-station');
             
-            // تحديث قائمة المناطق
-            if (zoneSelect.options.length <= 1) {
-                zoneSelect.innerHTML = '<option value="all">كل المناطق</option>';
-                appData.zones.forEach(z => zoneSelect.innerHTML += `<option value="${z}">${z}</option>`);
+            // 1. حفظ الاختيار الحالي للمستخدم حتى لا يضيع عند التحديث التلقائي
+            const currentZone = zoneSelect.value;
+            const currentStation = stationSelect.value;
+            
+            // 2. تحديث قائمة المناطق
+            let zoneHtml = '<option value="all">كل المناطق</option>';
+            appData.zones.forEach(z => {
+                // إذا كانت المنطقة هي نفسها المختارة سابقاً، نضيف خاصية selected
+                const isSelected = (z === currentZone) ? 'selected' : '';
+                zoneHtml += `<option value="${z}" ${isSelected}>${z}</option>`;
+            });
+            zoneSelect.innerHTML = zoneHtml;
+            
+            // 3. تحديد المنطقة الفعالة حالياً لتصفية المحطات بناءً عليها
+            // (في حال تغيرت البيانات، نضمن أننا نفلتر بناءً على المنطقة المختارة حالياً)
+            const activeZone = zoneSelect.value;
+
+            // 4. تحديث قائمة المحطات
+            let stationHtml = '<option value="all">كل المحطات</option>';
+            const sortedStations = Object.values(appData.stations).sort((a, b) => a.name.localeCompare(b.name));
+            
+            let filteredStations = sortedStations;
+            if (activeZone !== 'all') {
+                filteredStations = sortedStations.filter(s => s.zone === activeZone);
             }
             
-            // تحديث قائمة المحطات
-            stationSelect.innerHTML = '<option value="all">كل المحطات</option>';
-            const sortedStations = Object.values(appData.stations).sort((a, b) => a.name.localeCompare(b.name));
-            sortedStations.forEach(station => {
-                stationSelect.innerHTML += `<option value="${station.name}">${station.name}</option>`;
+            filteredStations.forEach(station => {
+                // إذا كانت المحطة هي نفسها المختارة سابقاً، نضيف خاصية selected
+                const isSelected = (station.name === currentStation) ? 'selected' : '';
+                stationHtml += `<option value="${station.name}" ${isSelected}>${station.name}</option>`;
             });
             
-            // إضافة حدث تغيير للمنطقة لتحديث المحطات
+            stationSelect.innerHTML = stationHtml;
+
+            // 5. التعامل مع حدث تغيير المنطقة يدوياً
             zoneSelect.onchange = function() {
-                const selectedZone = this.value;
-                stationSelect.innerHTML = '<option value="all">كل المحطات</option>';
+                const newZone = this.value;
+                let newStationHtml = '<option value="all">كل المحطات</option>';
                 
-                let filteredStations = sortedStations;
-                if (selectedZone !== 'all') {
-                    filteredStations = sortedStations.filter(s => s.zone === selectedZone);
+                let newFiltered = sortedStations;
+                if (newZone !== 'all') {
+                    newFiltered = sortedStations.filter(s => s.zone === newZone);
                 }
                 
-                filteredStations.forEach(station => {
-                    stationSelect.innerHTML += `<option value="${station.name}">${station.name}</option>`;
+                newFiltered.forEach(station => {
+                    newStationHtml += `<option value="${station.name}">${station.name}</option>`;
                 });
+                
+                stationSelect.innerHTML = newStationHtml;
+                // عند تغيير المنطقة يدوياً، نعيد المحطة إلى "الكل"
+                stationSelect.value = 'all';
             };
         }
         
