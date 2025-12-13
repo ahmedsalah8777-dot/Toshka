@@ -3148,128 +3148,161 @@ window.handleTabClick = (zone, btn) => {
 };
         
         window.renderStations = (zoneFilter = 'all') => {
-            const container = document.getElementById('stations-container');
-            container.innerHTML = '';
-            let allStations = Object.values(appData.stations || {});
+    const container = document.getElementById('stations-container');
+    container.innerHTML = '';
+    
+    // 1. جلب كل المحطات كقائمة
+    const allStations = Object.values(appData.stations || {});
+    
+    if(allStations.length === 0) { 
+        container.innerHTML = '<div style="text-align:center; padding:20px;">جاري تحميل البيانات...</div>';
+        return; 
+    }
+
+    // 2. إنشاء قائمة مخصصة للإحصائيات (تتأثر بالفلتر)
+    let stationsForStats = allStations;
+    
+    if (zoneFilter !== 'all') {
+        // إذا لم يكن الفلتر "الكل"، نأخذ فقط محطات المنطقة المختارة
+        stationsForStats = allStations.filter(s => s.zone === zoneFilter);
+    }
+
+    // 3. حساب الإحصائيات بناءً على القائمة المفلترة (stationsForStats)
+    const totalCount = stationsForStats.length;
+    const activeCount = stationsForStats.filter(s => s.status === 'نشطة').length;
+    // حساب المتوقفة: هي الفرق بين الإجمالي والنشطة (لتشمل المعطلة والمتوقفة يدوياً)
+    const inactiveCount = totalCount - activeCount;
+
+    // 4. تحديث الأرقام في الشاشة
+    document.getElementById('total-stations').textContent = totalCount;
+    document.getElementById('active-stations').textContent = activeCount;
+    document.getElementById('inactive-stations').textContent = inactiveCount;
+
+    // --- منطق شريط الأخبار (Ticker) ---
+    // ملاحظة: يُفضل أن يعرض الشريط الأعطال في كل النظام (allStations) للتنبيه،
+    // لكن إذا أردته مفلتراً أيضاً، استبدل allStations بـ stationsForStats في السطر التالي.
+    const faultedStations = allStations.filter(s => s.currentFault || s.secondaryFault);
+
+    const tickerContainer = document.getElementById('ticker-container');
+    const tickerContent = document.getElementById('ticker-content');
+    const alarmBtn = document.getElementById('alarm-btn');
+    const alarmCount = document.getElementById('alarm-count');
+
+    if (faultedStations.length > 0) {
+        tickerContainer.classList.add('active');
+        let tickerHtml = '';
+        faultedStations.forEach((s, index) => {
+            if (s.currentFault) {
+                const icon = faultIcons[s.currentFault] || '⚠️';
+                tickerHtml += `<span class="ticker-item">${icon} ${s.name}: ${s.currentFault}</span>`;
+            }
+            if (s.secondaryFault) {
+                const icon = faultIcons[s.secondaryFault] || '⚠️';
+                tickerHtml += `<span class="ticker-item">${icon} ${s.name}: ${s.secondaryFault}</span>`;
+            }
+            if (index < faultedStations.length - 1) { tickerHtml += `<span class="ticker-separator">•</span>`; }
+        });
+        tickerContent.innerHTML = tickerHtml;
+        
+        // إعادة تشغيل الأنيميشن
+        setTimeout(() => {
+            const contentWidth = tickerContent.scrollWidth;
+            const containerWidth = tickerContainer.offsetWidth;
+            const speed = 100; // بكسل في الثانية
+            const duration = (contentWidth + containerWidth) / speed;
+            const finalDuration = Math.max(duration, 5); 
+            tickerContent.style.animationDuration = `${finalDuration}s`;
+        }, 100);
+
+        alarmBtn.classList.add('flashing');
+        alarmCount.style.display = 'flex';
+        alarmCount.textContent = faultedStations.length;
+    } else {
+        tickerContainer.classList.remove('active');
+        alarmBtn.classList.remove('flashing');
+        alarmCount.style.display = 'none';
+    }
+
+    // --- رسم بطاقات المحطات ---
+    // نستخدم stationsForStats مباشرة لأنها مفلترة بالفعل وجاهزة للعرض
+    
+    // تجميع المحطات حسب المنطقة للعرض (في حال كان الفلتر "الكل"، سيتم تجميعها)
+    // إذا كان الفلتر منطقة محددة، ستكون هناك مجموعة واحدة فقط
+    const groupedByZone = {};
+    
+    // إذا كان الفلتر "الكل"، نستخدم appData.zones لترتيب العرض
+    // إذا كان منطقة محددة، نستخدم تلك المنطقة فقط
+    const zonesToIterate = (zoneFilter === 'all') ? appData.zones : [zoneFilter];
+
+    zonesToIterate.forEach(zoneName => {
+        // نفلتر من القائمة المجهزة للإحصائيات
+        // (ملاحظة: إذا كان الفلتر منطقة محددة، stationsForStats ستحتوي فقط على تلك المنطقة)
+        const zoneStations = stationsForStats.filter(s => s.zone === zoneName);
+        
+        if (zoneStations.length > 0) {
+            const separator = document.createElement('div');
+            separator.className = 'zone-separator';
+            separator.innerHTML = `<span>${zoneName}</span> <span style="font-size:0.9rem; opacity:0.8;">(${zoneStations.length})</span>`;
+            container.appendChild(separator);
             
-            if(allStations.length === 0) { 
-                container.innerHTML = '<div style="text-align:center; padding:20px;">جاري تحميل البيانات...</div>';
-                return; 
-            }
-
-            const activeCount = allStations.filter(s => s.status === 'نشطة').length;
-            const inactiveCount = allStations.filter(s => s.status === 'متوقفة' && !s.currentFault).length;
-            const faultedStations = allStations.filter(s => s.currentFault || s.secondaryFault);
-            document.getElementById('total-stations').textContent = allStations.length;
-            document.getElementById('active-stations').textContent = activeCount;
-            document.getElementById('inactive-stations').textContent = inactiveCount;
-
-            const tickerContainer = document.getElementById('ticker-container');
-            const tickerContent = document.getElementById('ticker-content');
-            const alarmBtn = document.getElementById('alarm-btn');
-            const alarmCount = document.getElementById('alarm-count');
-
-            if (faultedStations.length > 0) {
-                tickerContainer.classList.add('active');
-                let tickerHtml = '';
-                faultedStations.forEach((s, index) => {
-                    if (s.currentFault) {
-                        const icon = faultIcons[s.currentFault] || '⚠️';
-                        tickerHtml += `<span class="ticker-item">${icon} ${s.name}: ${s.currentFault}</span>`;
-                    }
-                    if (s.secondaryFault) {
-                        const icon = faultIcons[s.secondaryFault] || '⚠️';
-                        tickerHtml += `<span class="ticker-item">${icon} ${s.name}: ${s.secondaryFault}</span>`;
-                    }
-                    if (index < faultedStations.length - 1) { tickerHtml += `<span class="ticker-separator">•</span>`; }
-                });
-                tickerContent.innerHTML = tickerHtml;
-                
-                setTimeout(() => {
-                    const contentWidth = tickerContent.scrollWidth;
-                    const containerWidth = tickerContainer.offsetWidth;
-                    const speed = 100;
-                    const duration = (contentWidth + containerWidth) / speed;
-                    const finalDuration = Math.max(duration, 5); 
-                    tickerContent.style.animationDuration = `${finalDuration}s`;
-                }, 100);
-                alarmBtn.classList.add('flashing');
-                alarmCount.style.display = 'flex';
-                alarmCount.textContent = faultedStations.length;
-            } else {
-                tickerContainer.classList.remove('active');
-                alarmBtn.classList.remove('flashing');
-                alarmCount.style.display = 'none';
-            }
-
-            let zonesToRender = zoneFilter === 'all' ? appData.zones : [zoneFilter];
-            zonesToRender.forEach(zoneName => {
-                const zoneStations = allStations.filter(s => s.zone === zoneName);
-                if (zoneStations.length > 0) {
-                    const separator = document.createElement('div');
-                    separator.className = 'zone-separator';
-                    separator.innerHTML = `<span>${zoneName}</span> <span style="font-size:0.9rem; opacity:0.8;">(${zoneStations.length})</span>`;
-                    container.appendChild(separator);
-                    
-                    const grid = document.createElement('div');
-                    grid.className = 'stations-grid';
-                    
-                    zoneStations.forEach(s => {
-                        const isFault = (s.currentFault || s.secondaryFault) ? true : false;
-                        let cardClass = 'station-card';
-                        if (isFault) {
-                            cardClass += ' fault-active';
-                            if (s.currentFault === 'انقطاع الاتصال SCADA' || s.secondaryFault === 'انقطاع الاتصال SCADA') cardClass += ' scada-fault';
-                        }
-                        const card = document.createElement('div');
-                        card.className = cardClass;
-                        let faultHtml = '';
-                        if(isFault) {
-                            if(s.currentFault) {
-                                const icon = faultIcons[s.currentFault] || '⚠️';
-                                let badgeClass = 'fault-badge';
-                                if (s.currentFault === 'انقطاع الاتصال SCADA') badgeClass += ' scada-badge';
-                                faultHtml += `<div class="${badgeClass}">${icon} ${s.currentFault}</div>`;
-                            }
-                            if(s.secondaryFault) {
-                                const icon = faultIcons[s.secondaryFault] || '⚠️';
-                                let badgeClass = 'fault-badge';
-                                if (s.secondaryFault === 'انقطاع الاتصال SCADA') badgeClass += ' scada-badge';
-                                faultHtml += `<div class="${badgeClass}" style="margin-top:2px;">${icon} ${s.secondaryFault}</div>`;
-                            }
-                        }
-
-                        let missedUpdateHtml = '';
-                        if (checkShiftAdherence(s.lastUpdate)) { 
-                            missedUpdateHtml = `<span class="missed-update-icon" title="لم يتم التحديث في الموعد">!</span>`;
-                        }
-
-                        // التحقق من الضغط العالي وإضافة علامة تنبيه
-                        let pressureWarningHtml = '';
-                        const currentPressure = parseFloat(s.pressure) || 0;
-                        const maxPressure = parseFloat(s.maxPressure) || 8.0;
-                        
-                        if (currentPressure > maxPressure) {
-                            pressureWarningHtml = `<span class="pressure-warning" title="الضغط أعلى من المسموح به (${maxPressure} Bar)">!</span>`;
-                        }
-
-                        card.innerHTML = `
-                            <div style="font-weight:bold; color:var(--primary-color)">${missedUpdateHtml}${s.name}</div>
-                            <span class="station-status ${s.status === 'نشطة' ? 'status-active' : 'status-inactive'}">${s.status}</span>
-                            ${faultHtml}
-                            <div style="margin-top:10px; font-size:13px;">
-                                <div>الضغط: ${pressureWarningHtml}${s.pressure} Bar</div>
-                                <div>الجهد: ${s.voltage} V</div>
-                                <div style="color:var(--secondary-color);">التدفق: ${s.waterFlow} L/Sec</div>
-                                <div>المضخات: ${s.activePumps}</div>
-                            </div>`;
-                        card.onclick = () => showStationDetails(s.name);
-                        grid.appendChild(card);
-                    });
-                    container.appendChild(grid);
+            const grid = document.createElement('div');
+            grid.className = 'stations-grid';
+            
+            zoneStations.forEach(s => {
+                // ... (نفس منطق رسم البطاقة السابق) ...
+                const isFault = (s.currentFault || s.secondaryFault) ? true : false;
+                let cardClass = 'station-card';
+                if (isFault) {
+                    cardClass += ' fault-active';
+                    if (s.currentFault === 'انقطاع الاتصال SCADA' || s.secondaryFault === 'انقطاع الاتصال SCADA') cardClass += ' scada-fault';
                 }
+                const card = document.createElement('div');
+                card.className = cardClass;
+                let faultHtml = '';
+                if(isFault) {
+                    if(s.currentFault) {
+                        const icon = faultIcons[s.currentFault] || '⚠️';
+                        let badgeClass = 'fault-badge';
+                        if (s.currentFault === 'انقطاع الاتصال SCADA') badgeClass += ' scada-badge';
+                        faultHtml += `<div class="${badgeClass}">${icon} ${s.currentFault}</div>`;
+                    }
+                    if(s.secondaryFault) {
+                        const icon = faultIcons[s.secondaryFault] || '⚠️';
+                        let badgeClass = 'fault-badge';
+                        if (s.secondaryFault === 'انقطاع الاتصال SCADA') badgeClass += ' scada-badge';
+                        faultHtml += `<div class="${badgeClass}" style="margin-top:2px;">${icon} ${s.secondaryFault}</div>`;
+                    }
+                }
+
+                let missedUpdateHtml = '';
+                if (checkShiftAdherence(s.lastUpdate)) { 
+                    missedUpdateHtml = `<span class="missed-update-icon" title="لم يتم التحديث في الموعد">!</span>`;
+                }
+
+                let pressureWarningHtml = '';
+                const currentPressure = parseFloat(s.pressure) || 0;
+                const maxPressure = parseFloat(s.maxPressure) || 8.0;
+                if (currentPressure > maxPressure) {
+                    pressureWarningHtml = `<span class="pressure-warning" title="الضغط أعلى من المسموح به (${maxPressure} Bar)">!</span>`;
+                }
+
+                card.innerHTML = `
+                    <div style="font-weight:bold; color:var(--primary-color)">${missedUpdateHtml}${s.name}</div>
+                    <span class="station-status ${s.status === 'نشطة' ? 'status-active' : 'status-inactive'}">${s.status}</span>
+                    ${faultHtml}
+                    <div style="margin-top:10px; font-size:13px;">
+                        <div>الضغط: ${pressureWarningHtml}${s.pressure} Bar</div>
+                        <div>الجهد: ${s.voltage} V</div>
+                        <div style="color:var(--secondary-color);">التدفق: ${s.waterFlow} L/Sec</div>
+                        <div>المضخات: ${s.activePumps}</div>
+                    </div>`;
+                card.onclick = () => showStationDetails(s.name);
+                grid.appendChild(card);
             });
-        };
+            container.appendChild(grid);
+        }
+    });
+};
 
         // --- STATION DETAILS ---
         function showStationDetails(stationId) {
