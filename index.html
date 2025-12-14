@@ -6189,8 +6189,18 @@ function addMachineCalc() {
     const container = document.getElementById('machinesList');
     const div = document.createElement('div');
     div.className = 'machine-card';
+    
+    // تم تصميم أيقونة خاصة (SVG) عبارة عن دائرة خضراء بداخلها خط نصف قطر
+    const pivotIcon = `
+    <svg width="24" height="24" viewBox="0 0 24 24" style="vertical-align: middle;">
+        <circle cx="12" cy="12" r="10" fill="#27ae60" /> <line x1="12" y1="12" x2="21" y2="4" stroke="white" stroke-width="2.5" stroke-linecap="round" /> <circle cx="12" cy="12" r="3" fill="white" /> </svg>
+    `;
+
     div.innerHTML = `
-        <div class="machine-title" style="font-weight:bold; width:80px;">📡 <span class="device-name">جهاز</span></div>
+        <div class="machine-title" style="font-weight:bold; display:flex; align-items:center; gap:5px; width:110px;">
+            ${pivotIcon}
+            <span class="device-name">جهاز</span>
+        </div>
         <div class="input-group">
             <input type="number" class="tower-input" placeholder="عدد الأبراج" min="1" style="padding:8px; border:1px solid #ccc; border-radius:4px;">
         </div>
