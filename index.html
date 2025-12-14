@@ -6069,9 +6069,21 @@ function renderFaultsLog() {
             // -----------------------------------------------------------------------------------------
             
             // الجزء الخاص بالأرشيف (السجل التاريخي) يبقى كما هو يعتمد على faultsLog
-            let histFaults = appData.faultsLog.filter(f => !f.active); // فقط الأعطال التي تم إصلاحها
+           let histFaults = appData.faultsLog.filter(f => !f.active);
+
+            // 2. تطبيق فلتر المحطة إذا تم اختياره
             if (fStation !== 'all') histFaults = histFaults.filter(f => f.station === fStation);
-            
+
+            // 3. الترتيب التنازلي حسب وقت الإصلاح (endTime)
+            histFaults.sort((a, b) => {
+                // نستخدم دالة parseCustomDate الموجودة مسبقاً في الكود لتحويل النص إلى تاريخ
+                const dateA = parseCustomDate(a.endTime);
+                const dateB = parseCustomDate(b.endTime);
+                
+                // الترتيب من الأحدث للأقدم
+                return dateB - dateA;
+            });
+
             const totalFaults = histFaults.length;
             const displayedFaults = histFaults.slice(0, appData.faultsLimit);
             
@@ -6081,11 +6093,11 @@ function renderFaultsLog() {
                     <td>${f.station}</td>
                     <td>${icon} ${f.type}</td>
                     <td>${f.startTime || '-'}</td>
-                    <td>${f.endTime || '-'}</td>
+                    <td style="direction: ltr;">${f.endTime || '-'}</td>
                     <td style="color:green; font-weight:bold;">تم الإصلاح</td>
                 </tr>`;
             });
-            
+
             document.getElementById('faults-status-text').textContent = `عرض ${displayedFaults.length} من أصل ${totalFaults} عطل سابق`;
             
             if (displayedFaults.length < totalFaults) {
@@ -6101,6 +6113,10 @@ function renderFaultsLog() {
                 sorted.forEach(s => filterSel.innerHTML += `<option value="${s.name}">${s.name}</option>`);
             }
         }
+document.getElementById('load-more-faults-btn').addEventListener('click', function() {
+    appData.faultsLimit += 100;
+    renderFaultsLog();
+});
         function updateStationFilter() {
             const z = document.getElementById('filter-zone').value;
             const s = document.getElementById('filter-station');
