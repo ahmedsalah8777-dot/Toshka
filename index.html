@@ -3181,16 +3181,27 @@ window.handleTabClick = (zone, btn) => {
     // --- منطق شريط الأخبار (Ticker) ---
     // ملاحظة: يُفضل أن يعرض الشريط الأعطال في كل النظام (allStations) للتنبيه،
     // لكن إذا أردته مفلتراً أيضاً، استبدل allStations بـ stationsForStats في السطر التالي.
+// 1. تحديد المحطات التي بها أعطال (من أجل شريط الأخبار)
     const faultedStations = allStations.filter(s => s.currentFault || s.secondaryFault);
+
+    // 2. حساب إجمالي عدد الأعطال الفعلي (الرئيسي + الثانوي) لتصحيح العداد
+    let totalActiveFaults = 0;
+    allStations.forEach(s => {
+        if (s.currentFault) totalActiveFaults++;
+        if (s.secondaryFault) totalActiveFaults++;
+    });
 
     const tickerContainer = document.getElementById('ticker-container');
     const tickerContent = document.getElementById('ticker-content');
     const alarmBtn = document.getElementById('alarm-btn');
     const alarmCount = document.getElementById('alarm-count');
 
-    if (faultedStations.length > 0) {
+    // نستخدم إجمالي الأعطال (totalActiveFaults) للتحقق بدلاً من عدد المحطات
+    if (totalActiveFaults > 0) {
         tickerContainer.classList.add('active');
         let tickerHtml = '';
+        
+        // حلقة التكرار لشريط الأخبار تبقى كما هي تعتمد على المحطات
         faultedStations.forEach((s, index) => {
             if (s.currentFault) {
                 const icon = faultIcons[s.currentFault] || '⚠️';
@@ -3198,17 +3209,19 @@ window.handleTabClick = (zone, btn) => {
             }
             if (s.secondaryFault) {
                 const icon = faultIcons[s.secondaryFault] || '⚠️';
+                // فاصل صغير إذا كان هناك عطلين في نفس المحطة
+                if(s.currentFault) tickerHtml += `<span class="ticker-separator">|</span>`;
                 tickerHtml += `<span class="ticker-item">${icon} ${s.name}: ${s.secondaryFault}</span>`;
             }
             if (index < faultedStations.length - 1) { tickerHtml += `<span class="ticker-separator">•</span>`; }
         });
         tickerContent.innerHTML = tickerHtml;
         
-        // إعادة تشغيل الأنيميشن
+        // ضبط سرعة الأنيميشن
         setTimeout(() => {
             const contentWidth = tickerContent.scrollWidth;
             const containerWidth = tickerContainer.offsetWidth;
-            const speed = 100; // بكسل في الثانية
+            const speed = 100; 
             const duration = (contentWidth + containerWidth) / speed;
             const finalDuration = Math.max(duration, 5); 
             tickerContent.style.animationDuration = `${finalDuration}s`;
@@ -3216,11 +3229,15 @@ window.handleTabClick = (zone, btn) => {
 
         alarmBtn.classList.add('flashing');
         alarmCount.style.display = 'flex';
-        alarmCount.textContent = faultedStations.length;
+        
+        // ✅ التصحيح الجوهري: وضع الرقم الإجمالي للأعطال بدلاً من عدد المحطات
+        alarmCount.textContent = totalActiveFaults; 
+
     } else {
         tickerContainer.classList.remove('active');
         alarmBtn.classList.remove('flashing');
         alarmCount.style.display = 'none';
+        alarmCount.textContent = '0';
     }
 
     // --- رسم بطاقات المحطات ---
