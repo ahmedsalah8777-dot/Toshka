@@ -5847,7 +5847,7 @@ window.exportConsumptionsToCSV = function() {
             renderHistoryTable(true);
         });
         
-        function renderFaultsLog() {
+function renderFaultsLog() {
             const activeBody = document.getElementById('active-faults-body');
             const historyBody = document.getElementById('history-faults-body');
             const fStation = document.getElementById('fault-archive-station-filter').value;
@@ -5855,21 +5855,54 @@ window.exportConsumptionsToCSV = function() {
             
             activeBody.innerHTML = '';
             historyBody.innerHTML = '';
-            
-            const activeFaults = appData.faultsLog.filter(f => f.active);
-            activeFaults.forEach(f => {
-                const icon = faultIcons[f.type] || '⚠️'; 
-                activeBody.innerHTML += `<tr>
-                    <td>${f.station}</td>
-                    <td style="color:var(--danger-color); font-weight:bold">${icon} ${f.type}</td>
-                    <td>${f.startTime}</td>
-                    <td>مستمر</td>
-                </tr>`;
+
+            // --- تصحيح: جلب الأعطال النشطة من بيانات المحطات الحالية (لضمان التطابق مع العداد والكروت) ---
+            const stationsList = Object.values(appData.stations);
+            let hasActiveFaults = false;
+
+            stationsList.forEach(s => {
+                // التحقق من العطل الأول
+                if (s.currentFault) {
+                    hasActiveFaults = true;
+                    const icon = faultIcons[s.currentFault] || '⚠️';
+                    const desc = s.fault1Desc ? ` <div style="font-size:0.8rem; color:#666; margin-top:2px;">(${s.fault1Desc})</div>` : '';
+                    
+                    activeBody.innerHTML += `<tr>
+                        <td style="font-weight:bold;">${s.name}</td>
+                        <td style="color:var(--danger-color); font-weight:bold">
+                            ${icon} ${s.currentFault}
+                            ${desc}
+                        </td>
+                        <td>${s.faultStartTime || s.lastUpdate}</td>
+                        <td><span class="status-inactive" style="font-size:0.8rem;">مستمر</span></td>
+                    </tr>`;
+                }
+
+                // التحقق من العطل الثانوي (إن وجد)
+                if (s.secondaryFault) {
+                    hasActiveFaults = true;
+                    const icon = faultIcons[s.secondaryFault] || '⚠️';
+                    const desc = s.fault2Desc ? ` <div style="font-size:0.8rem; color:#666; margin-top:2px;">(${s.fault2Desc})</div>` : '';
+
+                    activeBody.innerHTML += `<tr>
+                        <td style="font-weight:bold;">${s.name}</td>
+                        <td style="color:var(--scada-fault-color); font-weight:bold">
+                            ${icon} ${s.secondaryFault}
+                            ${desc}
+                        </td>
+                        <td>${s.faultStartTime || s.lastUpdate}</td>
+                        <td><span class="status-inactive" style="font-size:0.8rem;">مستمر</span></td>
+                    </tr>`;
+                }
             });
+
+            if (!hasActiveFaults) {
+                activeBody.innerHTML = `<tr><td colspan="4" style="text-align:center; color:green; padding: 20px;">✅ لا توجد أعطال نشطة حالياً</td></tr>`;
+            }
+            // -----------------------------------------------------------------------------------------
             
-            if(activeFaults.length === 0) activeBody.innerHTML = `<tr><td colspan="4" style="text-align:center; color:green">لا توجد أعطال نشطة حالياً</td></tr>`;
-            
-            let histFaults = appData.faultsLog.filter(f => !f.active);
+            // الجزء الخاص بالأرشيف (السجل التاريخي) يبقى كما هو يعتمد على faultsLog
+            let histFaults = appData.faultsLog.filter(f => !f.active); // فقط الأعطال التي تم إصلاحها
             if (fStation !== 'all') histFaults = histFaults.filter(f => f.station === fStation);
             
             const totalFaults = histFaults.length;
@@ -5882,11 +5915,11 @@ window.exportConsumptionsToCSV = function() {
                     <td>${icon} ${f.type}</td>
                     <td>${f.startTime || '-'}</td>
                     <td>${f.endTime || '-'}</td>
-                    <td style="color:green">تم الإصلاح</td>
+                    <td style="color:green; font-weight:bold;">تم الإصلاح</td>
                 </tr>`;
             });
             
-            document.getElementById('faults-status-text').textContent = `عرض ${displayedFaults.length} من أصل ${totalFaults} عطل`;
+            document.getElementById('faults-status-text').textContent = `عرض ${displayedFaults.length} من أصل ${totalFaults} عطل سابق`;
             
             if (displayedFaults.length < totalFaults) {
                 loadMoreBtn.style.display = 'block';
@@ -5901,13 +5934,6 @@ window.exportConsumptionsToCSV = function() {
                 sorted.forEach(s => filterSel.innerHTML += `<option value="${s.name}">${s.name}</option>`);
             }
         }
-
-        // Load more faults button handler
-        document.getElementById('load-more-faults-btn').addEventListener('click', function() {
-            appData.faultsLimit += 100;
-            renderFaultsLog();
-        });
-
         function updateStationFilter() {
             const z = document.getElementById('filter-zone').value;
             const s = document.getElementById('filter-station');
