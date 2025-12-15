@@ -2427,15 +2427,25 @@
             <h2>سجل العمليات العام</h2>
             <button id="back-to-stations-from-history" class="btn btn-outline">عودة</button>
             <div class="filters-container" style="background: #f9f9f9; padding: 15px; border-radius: 8px; border: 1px solid #eee; margin-bottom: 20px; display: grid; gap: 10px; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));">
-                <div class="filter-item"><label>المنطقة</label><select id="filter-zone" onchange="updateStationFilter()"><option value="all">كل المناطق</option></select></div>
-                <div class="filter-item"><label>المحطة</label><select id="filter-station"><option value="all">كل المحطات</option></select></div>
-                <div class="filter-item"><label>من تاريخ</label><input type="date" id="filter-date-from"></div>
-                <div class="filter-item"><label>إلى تاريخ</label><input type="date" id="filter-date-to"></div>
-                
-                <div class="filter-item" style="display:flex; align-items:flex-end;">
-                    <button class="btn btn-primary" onclick="renderHistoryTable(true)" style="width:100%">بحث وتصفية</button>
-                </div>
-            </div>
+    <div class="filter-item"><label>المنطقة</label><select id="filter-zone" onchange="updateStationFilter()"><option value="all">كل المناطق</option></select></div>
+    <div class="filter-item"><label>المحطة</label><select id="filter-station"><option value="all">كل المحطات</option></select></div>
+    <div class="filter-item"><label>من تاريخ</label><input type="date" id="filter-date-from"></div>
+    <div class="filter-item"><label>إلى تاريخ</label><input type="date" id="filter-date-to"></div>
+    
+    <div class="filter-item" style="display:flex; align-items:flex-end;">
+        <button class="btn btn-primary" onclick="renderHistoryTable(true)" style="width:100%">بحث وتصفية 🔍</button>
+    </div>
+
+    <div class="filter-item" style="display:flex; align-items:flex-end; gap: 5px;">
+        <select id="history-export-format" style="height: 38px; border: 1px solid var(--excel-color);">
+            <option value="xlsx">Excel (.xlsx)</option>
+            <option value="csv">CSV (.csv)</option>
+        </select>
+        <button id="btn-export-history" class="btn btn-success" style="background-color: var(--excel-color); color: white; height: 38px; display: flex; align-items: center; justify-content: center;">
+            تصدير 📥
+        </button>
+    </div>
+</div>
             
             <div class="table-responsive">
                 <table class="history-table">
@@ -3665,11 +3675,26 @@ window.handleTabClick = (zone, btn) => {
         document.getElementById('btn-resolve-f1').addEventListener('click', () => { if(confirm("هل تم إصلاح العطل الأول؟")) saveDataInternal({ resolveTarget: 'currentFault' }); });
         document.getElementById('btn-resolve-f2').addEventListener('click', () => { if(confirm("هل تم إصلاح العطل الثاني؟")) saveDataInternal({ resolveTarget: 'secondaryFault' }); });
         
-       function saveDataInternal(options = {}) {
+function saveDataInternal(options = {}) {
+            // --- 1. تعريف الزر وتعطيله فوراً لمنع التكرار ---
+            const saveBtn = document.getElementById('save-operator-data');
+            const originalBtnText = saveBtn.innerHTML; // حفظ النص الأصلي
+
+            // إذا كان الزر معطلاً بالفعل، لا تقم بشيء (حماية إضافية)
+            if (saveBtn.disabled) return;
+
+            // تغيير حالة الزر
+            saveBtn.disabled = true;
+            saveBtn.innerHTML = '<span class="syncing">⏳</span> جاري الحفظ...';
+            // ------------------------------------------------
+
             try {
                 const sName = appData.currentStation;
                 if (!sName || !appData.stations[sName]) { 
                     alert("خطأ: لا توجد محطة محددة!");
+                    // إعادة تفعيل الزر في حالة الخطأ المبكر
+                    saveBtn.disabled = false;
+                    saveBtn.innerHTML = originalBtnText;
                     return; 
                 }
                 
@@ -3684,7 +3709,7 @@ window.handleTabClick = (zone, btn) => {
 
                 let newOperator = '';
                 if (appData.currentUser) {
-                    newOperator = appData.currentUser.username || 
+                    newOperator = appData.currentUser.username ||
                                      appData.currentUser.id || 
                                      appData.currentUser.name || 
                                      'غير معرّف';
@@ -3701,7 +3726,6 @@ window.handleTabClick = (zone, btn) => {
                 let newVoltage = getVal('operator-voltage');
                 const newMode = getVal('operator-system-mode');
                 const newComments = getVal('operator-comments');
-                // الحصول على قيمة اقصى ضغط
                 let newMaxPressure = parseFloat(getVal('operator-max-pressure')) || 8.0;
                 
                 let consTrans1 = getVal('cons-trans-1');
@@ -3799,12 +3823,10 @@ window.handleTabClick = (zone, btn) => {
                     const statElem = document.getElementById(`p_stat_${p.id}`);
                     let newStatus = statElem ? statElem.value : p.status;
                     if (isCriticalFault && newStatus === 'نشطة') newStatus = 'متوقفة';
-                    
-                    // --- التعديل الأول هنا: تغيير صيغة النص للمضخات لمنع تداخلها مع حالة المحطة ---
+                 
                     if(p.status != newStatus) {
                         changesDetails.push(`مضخة ${p.id} (من ${p.status} إلى ${newStatus})`);
                     }
-                    // ----------------------------------------------------------------------
                     
                     let pumpData = { 
                         id: p.id, 
@@ -3815,7 +3837,7 @@ window.handleTabClick = (zone, btn) => {
                     };
                 
                     if(newStatus === 'نشطة') { 
-                        activeCount++; 
+                        activeCount++;
                         pumpData.suctionPressure = getVal(`p_suc_${p.id}`); 
                         pumpData.dischargePressure = getVal(`p_dis_${p.id}`); 
                         pumpData.frequency = getVal(`p_freq_${p.id}`);
@@ -3832,7 +3854,6 @@ window.handleTabClick = (zone, btn) => {
                     } 
                 }
 
-                // منطق تحديد الوقت التلقائي (كما هو)
                 const oldStatus = oldData.status;
                 const oldStartTime = oldData.startTime || '';
                 const oldStopTime = oldData.stopTime || '';
@@ -3864,7 +3885,7 @@ window.handleTabClick = (zone, btn) => {
                     }
                     else {
                         if (!enteredStopTime || enteredStopTime === oldStopTime) {
-                            newStopTime = oldStopTime;
+                             newStopTime = oldStopTime;
                         } else { newStopTime = enteredStopTime; }
                         if (!enteredStartTime || enteredStartTime === oldStartTime) {
                             newStartTime = oldStartTime;
@@ -3879,11 +3900,9 @@ window.handleTabClick = (zone, btn) => {
                     }
                 }
                 
-                // --- التعديل الثاني: تسجيل حالة المحطة بشكل صريح ليتمكن السجل من تمييزها وتلوينها ---
                 if (oldData.status !== currentStatus) {
                     changesDetails.push(`حالة المحطة: ${oldData.status} -> ${currentStatus}`);
                 }
-                // ------------------------------------------------------------------------------
 
                 if(oldData.pressure != newPressure) changesDetails.push(`الضغط: ${oldData.pressure} -> ${newPressure}`);
                 if(oldData.maxPressure != newMaxPressure) {
@@ -3976,7 +3995,7 @@ window.handleTabClick = (zone, btn) => {
                                 let rawVal = snap.val(); 
                                 let logs = []; 
                                 if (rawVal) { 
-                                    if (Array.isArray(rawVal)) logs = rawVal; 
+                                     if (Array.isArray(rawVal)) logs = rawVal; 
                                     else logs = Object.values(rawVal); 
                                 }
                                 newFaultEntries.forEach(newF => { 
@@ -3997,7 +4016,17 @@ window.handleTabClick = (zone, btn) => {
                             });
                         }
                         showSuccessFeedback(sName);
-                    }).catch(err => { alert("خطأ قاعدة البيانات: " + err.message); });
+                        
+                        // --- إعادة تفعيل الزر بعد النجاح ---
+                        saveBtn.disabled = false;
+                        saveBtn.innerHTML = originalBtnText;
+
+                    }).catch(err => { 
+                        alert("خطأ قاعدة البيانات: " + err.message); 
+                        // --- إعادة تفعيل الزر عند الخطأ ---
+                        saveBtn.disabled = false;
+                        saveBtn.innerHTML = originalBtnText;
+                    });
                 } else {
                     addToOfflineQueue('update_station', { 
                         stationId: sName, 
@@ -4008,10 +4037,17 @@ window.handleTabClick = (zone, btn) => {
                         resolvedFaults: resolvedFaultEntries 
                     });
                     showSuccessFeedback(sName, true);
+                    
+                    // --- إعادة تفعيل الزر في حالة Offline ---
+                    saveBtn.disabled = false;
+                    saveBtn.innerHTML = originalBtnText;
                 }
             } catch (e) { 
                 console.error(e);
                 alert("حدث خطأ برمجي: " + e.message); 
+                // --- إعادة تفعيل الزر عند الخطأ العام ---
+                saveBtn.disabled = false;
+                saveBtn.innerHTML = originalBtnText;
             }
         }
 
@@ -6348,7 +6384,138 @@ window.calculateAllCalc = calculateAllCalc;
 window.switchToolCalc = switchToolCalc;
 window.convertFlowCalc = convertFlowCalc;
 window.convertPowerCalc = convertPowerCalc;
+// ==========================================
+// كود تصدير السجل العام (History Log Export)
+// ==========================================
+
+document.getElementById('btn-export-history').addEventListener('click', function() {
+    exportHistoryLog();
+});
+
+function exportHistoryLog() {
+    // 1. تحديد نوع الملف
+    const format = document.getElementById('history-export-format').value;
+    
+    // 2. تطبيق الفلاتر للحصول على البيانات المعروضة فقط (أو المطلوبة)
+    let data = [...appData.operationHistory]; // نسخة من البيانات الأصلية
+    
+    const fZone = document.getElementById('filter-zone').value;
+    const fStation = document.getElementById('filter-station').value;
+    const fDateFrom = document.getElementById('filter-date-from').value;
+    const fDateTo = document.getElementById('filter-date-to').value;
+
+    // فلترة المنطقة
+    if (fZone !== 'all') {
+        const zoneStations = Object.values(appData.stations).filter(s => s.zone === fZone).map(s => s.name);
+        data = data.filter(d => zoneStations.includes(d.station));
+    }
+
+    // فلترة المحطة
+    if (fStation !== 'all') {
+        data = data.filter(d => d.station === fStation);
+    }
+
+    // فلترة التاريخ (من)
+    if (fDateFrom) {
+        data = data.filter(d => {
+            const logDate = parseCustomDate(d.date + ' ' + d.time);
+            return logDate && logDate >= new Date(fDateFrom);
+        });
+    }
+
+    // فلترة التاريخ (إلى)
+    if (fDateTo) {
+        const toDate = new Date(fDateTo);
+        toDate.setHours(23, 59, 59);
+        data = data.filter(d => {
+            const logDate = parseCustomDate(d.date + ' ' + d.time);
+            return logDate && logDate <= toDate;
+        });
+    }
+
+    if (data.length === 0) {
+        alert('⚠️ لا توجد بيانات في السجل مطابقة لخيارات البحث للتصدير.');
+        return;
+    }
+
+    // 3. تجهيز البيانات وتنسيقها (إزالة HTML من التفاصيل)
+    const formattedData = data.map(log => {
+        // تنظيف حقل التفاصيل من أي كود HTML (مثل الألوان والبادجات)
+        let cleanDetails = log.details || "";
+        // استبدال وسوم HTML بنص فارغ للحصول على النص فقط
+        cleanDetails = cleanDetails.replace(/<[^>]*>?/gm, ''); 
+        // استبدال رموز الأسهم لتظهر بشكل صحيح
+        cleanDetails = cleanDetails.replace(/&nbsp;/g, ' ');
+
+        return {
+            "التاريخ": log.date,
+            "الوقت": log.time,
+            "المحطة": log.station,
+            "المشغل": log.operator || "مستخدم النظام",
+            "وقت التشغيل": log.startTime || "-",
+            "وقت الإيقاف": log.stopTime || "-",
+            "تفاصيل العملية": cleanDetails
+        };
+    });
+
+    const now = new Date();
+    const dateStr = now.toISOString().split('T')[0];
+
+    // 4. التصدير بناءً على النوع المختار
+    if (format === 'xlsx') {
+        // --- تصدير Excel ---
+        const wb = XLSX.utils.book_new();
+        const ws = XLSX.utils.json_to_sheet(formattedData);
+
+        // تنسيق عرض الأعمدة
+        const wscols = [
+            {wch: 12}, // التاريخ
+            {wch: 10}, // الوقت
+            {wch: 20}, // المحطة
+            {wch: 20}, // المشغل
+            {wch: 15}, // وقت التشغيل
+            {wch: 15}, // وقت الإيقاف
+            {wch: 80}  // التفاصيل (عريض ليظهر النص كاملاً)
+        ];
+        ws['!cols'] = wscols;
+
+        XLSX.utils.book_append_sheet(wb, ws, "سجل العمليات");
+        XLSX.writeFile(wb, `سجل_العمليات_${dateStr}.xlsx`);
+
+    } else {
+        // --- تصدير CSV ---
+        // تحويل البيانات إلى صيغة CSV يدوياً للتحكم الأفضل
+        let csvContent = "data:text/csv;charset=utf-8,\uFEFF"; // BOM لدعم العربية
+        
+        // العناوين
+        csvContent += "التاريخ,الوقت,المحطة,المشغل,وقت التشغيل,وقت الإيقاف,تفاصيل العملية\n";
+
+        formattedData.forEach(row => {
+            // معالجة النصوص التي تحتوي على فواصل بوضعها بين علامات تنصيص
+            const details = row["تفاصيل العملية"].replace(/"/g, '""'); // الهروب من علامات التنصيص
+            
+            const csvRow = [
+                `"${row["التاريخ"]}"`,
+                `"${row["الوقت"]}"`,
+                `"${row["المحطة"]}"`,
+                `"${row["المشغل"]}"`,
+                `"${row["وقت التشغيل"]}"`,
+                `"${row["وقت الإيقاف"]}"`,
+                `"${details}"`
+            ].join(",");
+            
+            csvContent += csvRow + "\n";
+        });
+
+        const encodedUri = encodeURI(csvContent);
+        const link = document.createElement("a");
+        link.setAttribute("href", encodedUri);
+        link.setAttribute("download", `سجل_العمليات_${dateStr}.csv`);
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+    }
+}
     </script>
 </body>
 </html>
-
