@@ -78,14 +78,13 @@
             z-index: 1000; 
         }
         
-.header-content { 
-    display: flex;
-    justify-content: flex-start; /* التعديل هنا: تجميع العناصر جهة اليمين */
-    align-items: center; 
-    flex-wrap: nowrap;
-    gap: 8px; /* مسافة صغيرة ثابتة بين اللوجو وعلامة الاتصال */
-    padding: 0 5px;
-}
+        .header-content { 
+            display: flex; 
+            justify-content: space-between; 
+            align-items: center; 
+            flex-wrap: wrap; 
+            gap: 10px; 
+        }
         
         .logo { 
             display: flex; 
@@ -206,14 +205,13 @@
         }
 
         /* تحسينات أيقونة المستخدم للموبايل */
-.user-info { 
-    display: none; /* (اتركها كما هي، الجافاسكربت يتحكم في ظهورها) */
-    align-items: center; 
-    gap: 8px; 
-    flex-wrap: wrap; 
-    justify-content: flex-end; 
-    margin-right: auto; /* الإضافة هنا: هذا السطر يدفع الأيقونات لأقصى اليسار */
-}
+        .user-info { 
+            display: none; 
+            align-items: center; 
+            gap: 8px; 
+            flex-wrap: wrap; 
+            justify-content: flex-end; 
+        }
         
         @media (max-width: 768px) {
             .user-info {
