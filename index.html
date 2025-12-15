@@ -2781,149 +2781,189 @@ document.querySelectorAll('.menu-item').forEach(item => {
             if (isNaN(year) || isNaN(month) || isNaN(day)) return null;
             return new Date(year, month, day, hour, min, sec);
         }
+// --- تعديل: متغير لتخزين حالة الاتصال الحقيقي بالسيرفر ---
+let isFirebaseConnected = false;
 
-        // --- NETWORK & OFFLINE LOGIC ---
-        function updateNetworkStatus() {
-            const indicator = document.getElementById('network-status-indicator');
-            const icon = document.getElementById('net-icon');
-            const text = document.getElementById('net-text');
-            const loginBtn = document.getElementById('login-btn');
-            if (navigator.onLine) {
-                indicator.className = 'network-status net-online';
-                icon.textContent = '🟢';
-                text.textContent = 'متصل';
-                processOfflineQueue(); 
-                if(loginBtn && appData.users && Object.keys(appData.users).length > 0) {
-                    loginBtn.disabled = false;
-                    loginBtn.textContent = "دخول";
-                    loginBtn.style.backgroundColor = '';
-                    loginBtn.style.color = '';
-                    loginBtn.style.cursor = 'pointer';
-                    loginBtn.classList.add('btn-primary');
-                }
+// مراقبة حالة الاتصال الفعلية مع سيرفرات جوجل
+db.ref(".info/connected").on("value", (snap) => {
+    if (snap.val() === true) {
+        isFirebaseConnected = true;
+        updateNetworkStatus(); // تحديث الواجهة فوراً
+    } else {
+        isFirebaseConnected = false;
+        updateNetworkStatus(); // تحديث الواجهة فوراً
+    }
+});
+
+function updateNetworkStatus() {
+    const indicator = document.getElementById('network-status-indicator');
+    const icon = document.getElementById('net-icon');
+    const text = document.getElementById('net-text');
+    const loginBtn = document.getElementById('login-btn');
+    
+    // أولاً: تحديد حالة الاتصال للعرض في الشريط العلوي فقط
+    let connectionState = 'offline'; 
+    
+    if (navigator.onLine && isFirebaseConnected) {
+        // حالة 1: اتصال كامل وقوي
+        connectionState = 'online';
+        indicator.className = 'network-status net-online';
+        icon.textContent = '🟢';
+        text.textContent = 'متصل';
+        
+        // محاولة رفع البيانات المعلقة
+        processOfflineQueue(); 
+
+    } else if (navigator.onLine && !isFirebaseConnected) {
+        // حالة 2: اتصال وهمي (واي فاي بدون انترنت حقيقي)
+        connectionState = 'weak';
+        indicator.className = 'network-status net-offline';
+        icon.textContent = '🟠'; // علامة برتقالية
+        text.textContent = 'شبكة ضعيفة'; // تنبيه المستخدم
+
+    } else {
+        // حالة 3: مفصول تماماً
+        connectionState = 'offline';
+        indicator.className = 'network-status net-offline';
+        icon.textContent = '🔴';
+        text.textContent = 'غير متصل';
+    }
+
+    // ثانياً: منطق تفعيل زر الدخول (الأهم)
+    // الشرط الوحيد لتفعيل الزر هو: هل لدينا بيانات مستخدمين مخزنة في appData؟
+    if(loginBtn) {
+        const hasUsers = appData.users && Object.keys(appData.users).length > 0;
+        
+        if (hasUsers) {
+            // تفعيل الزر فوراً لأن البيانات موجودة
+            loginBtn.disabled = false;
+            loginBtn.style.cursor = 'pointer';
+            loginBtn.classList.add('btn-primary');
+            
+            // تغيير نص الزر فقط لتوضيح الحالة للمستخدم
+            if (connectionState === 'online') {
+                loginBtn.textContent = "دخول";
+                loginBtn.style.backgroundColor = ''; // اللون الأزرق الطبيعي
             } else {
-                indicator.className = 'network-status net-offline';
-                icon.textContent = '🔴';
-                text.textContent = 'غير متصل';
-                if(loginBtn && appData.users && Object.keys(appData.users).length > 0) {
-                    loginBtn.disabled = false;
-                    loginBtn.textContent = 'دخول (Offline)';
-                    loginBtn.style.backgroundColor = '';
-                    loginBtn.style.color = '';
-                    loginBtn.style.cursor = 'pointer';
-                    loginBtn.classList.add('btn-primary');
-                }
+                loginBtn.textContent = "دخول (Offline)";
+                loginBtn.style.backgroundColor = '#7f8c8d'; // لون رمادي ليعرف المستخدم أنه اوفلاين
+            }
+        } else {
+            // حالة نادرة: أول تشغيل للتطبيق في التاريخ ولا يوجد انترنت لتحميل المستخدمين
+            loginBtn.disabled = true;
+            if (connectionState === 'online') {
+                loginBtn.textContent = "جاري تحميل البيانات...";
+            } else {
+                loginBtn.textContent = "تنبيه: يلزم إنترنت لأول تشغيل";
+                loginBtn.style.backgroundColor = '#c0392b';
             }
         }
-        window.addEventListener('online', updateNetworkStatus);
-        window.addEventListener('offline', updateNetworkStatus);
+    }
+}
+       function processOfflineQueue() {
+    // التحقق من وجود اتصال حقيقي بالإنترنت وبالسيرفر
+    if (!navigator.onLine || !isFirebaseConnected) return;
 
-        function addToOfflineQueue(actionType, data) {
-            let queue = JSON.parse(localStorage.getItem('toshka_offline_queue') || '[]');
-            queue.push({ type: actionType, data: data, timestamp: Date.now() });
+    // قراءة طابور العمليات المعلقة
+    let queue = JSON.parse(localStorage.getItem('toshka_offline_queue') || '[]');
+    
+    // إذا لم تكن هناك عمليات معلقة، نخرج من الدالة
+    if (queue.length === 0) return;
+
+    const indicator = document.getElementById('network-status-indicator');
+    const icon = document.getElementById('net-icon');
+    const text = document.getElementById('net-text');
+    
+    // تحديث الأيقونة لتوضيح أن المزامنة جارية
+    if(icon && text) {
+        icon.textContent = '🔄';
+        icon.classList.add('syncing');
+        text.textContent = 'جاري المزامنة...';
+    }
+
+    // سحب أول عملية من الطابور
+    const item = queue.shift();
+    
+    let promise;
+
+    // تنفيذ العملية حسب نوعها
+    if (item.type === 'update_station') {
+        promise = db.ref('stations/' + item.data.stationId).update(item.data.updates)
+            .then(() => {
+                if(item.data.log) db.ref('history').push(item.data.log);
+                if(item.data.consLog) db.ref('consumption_logs').push(item.data.consLog);
+                if(item.data.newFaults) {
+                    db.ref('faults_log').once('value').then(snap => {
+                        let rawVal = snap.val();
+                        let logs = Array.isArray(rawVal) ? rawVal : (rawVal ? Object.values(rawVal) : []);
+                        item.data.newFaults.forEach(f => logs.unshift(f));
+                        item.data.resolvedFaults.forEach(rf => {
+                            const idx = logs.findIndex(x => x.station === item.data.stationId && x.type === rf.type && x.active);
+                            if(idx !== -1) { 
+                                logs[idx].active = false;
+                                logs[idx].endTime = rf.endTime; 
+                            }
+                        });
+                        db.ref('faults_log').set(logs);
+                    });
+                }
+            });
+    } else if (item.type === 'update_inspection') {
+        promise = db.ref(`stations/${item.data.stationId}/inspectionData`).update(item.data.inspectionData)
+            .then(() => {
+                if(item.data.log) db.ref('history').push(item.data.log);
+            });
+    } else if (item.type === 'update_profile') {
+        promise = db.ref('userProfiles/' + item.data.username).set(item.data.profileData)
+            .then(() => {
+                const nowStd = getStandardDateTime();
+                const log = {
+                    date: nowStd.date,
+                    time: nowStd.time,
+                    station: item.data.profileData.station || 'غير محدد',
+                    operator: item.data.username,
+                    details: `تحديث البيانات الشخصية (مزامنة): ${item.data.profileData.fullname}`
+                };
+                db.ref('history').push(log);
+            });
+    } else if (item.type === 'delete_profile') {
+        promise = db.ref('userProfiles/' + item.data.username).remove()
+            .then(() => {
+                const nowStd = getStandardDateTime();
+                const log = {
+                    date: nowStd.date,
+                    time: nowStd.time,
+                    station: 'النظام',
+                    operator: item.data.deletedBy,
+                    details: `حذف البيانات الشخصية للمستخدم: ${item.data.username}`
+                };
+                db.ref('history').push(log);
+            });
+    }
+
+    // معالجة النتيجة
+    if (promise) {
+        promise.then(() => {
+            // تحديث الطابور في التخزين المحلي بعد نجاح العملية
             localStorage.setItem('toshka_offline_queue', JSON.stringify(queue));
-            updateOfflineBanner();
-        }
-
-        function updateOfflineBanner() {
-            const queue = JSON.parse(localStorage.getItem('toshka_offline_queue') || '[]');
-            const banner = document.getElementById('offline-sync-banner');
-            const countSpan = document.getElementById('offline-count');
+            updateOfflineBanner(); // تحديث البانر الأصفر
             
+            // إذا بقي عناصر في الطابور، نكرر العملية
             if (queue.length > 0) {
-                banner.style.display = 'block';
-                countSpan.textContent = queue.length;
+                setTimeout(processOfflineQueue, 500); 
             } else {
-                banner.style.display = 'none';
+                // انتهت كل العمليات
+                if(icon) icon.classList.remove('syncing');
+                updateNetworkStatus();
+                // إشعار بسيط بانتهاء المزامنة
+                // alert("تمت مزامنة البيانات المخزنة بنجاح! ✅"); // يمكن تفعيلها أو تركها صامتة
             }
-        }
-
-        function processOfflineQueue() {
-            if (!navigator.onLine) return;
-            let queue = JSON.parse(localStorage.getItem('toshka_offline_queue') || '[]');
-            if (queue.length === 0) return;
-
-            const indicator = document.getElementById('network-status-indicator');
-            const icon = document.getElementById('net-icon');
-            const text = document.getElementById('net-text');
-            
-            icon.textContent = '🔄';
-            icon.classList.add('syncing');
-            text.textContent = 'جاري المزامنة...';
-            const item = queue.shift();
-            
-            let promise;
-            if (item.type === 'update_station') {
-                promise = db.ref('stations/' + item.data.stationId).update(item.data.updates)
-                    .then(() => {
-                        if(item.data.log) db.ref('history').push(item.data.log);
-                        if(item.data.consLog) db.ref('consumption_logs').push(item.data.consLog);
-                        if(item.data.newFaults) {
-                            db.ref('faults_log').once('value').then(snap => {
-                                let rawVal = snap.val();
-                                let logs = Array.isArray(rawVal) ? rawVal : (rawVal ? Object.values(rawVal) : []);
-                                item.data.newFaults.forEach(f => logs.unshift(f));
-                                item.data.resolvedFaults.forEach(rf => {
-                                    const idx = logs.findIndex(x => x.station === item.data.stationId && x.type === rf.type && x.active);
-                                    if(idx !== -1) { 
-                                        logs[idx].active = false;
-                                        logs[idx].endTime = rf.endTime; 
-                                    }
-                                });
-                                db.ref('faults_log').set(logs);
-                            });
-                        }
-                    });
-            } else if (item.type === 'update_inspection') {
-                promise = db.ref(`stations/${item.data.stationId}/inspectionData`).update(item.data.inspectionData)
-                    .then(() => {
-                        if(item.data.log) db.ref('history').push(item.data.log);
-                    });
-            } else if (item.type === 'update_profile') {
-                promise = db.ref('userProfiles/' + item.data.username).set(item.data.profileData)
-                    .then(() => {
-                        const nowStd = getStandardDateTime();
-                        const log = {
-                            date: nowStd.date,
-                            time: nowStd.time,
-                            station: item.data.profileData.station || 'غير محدد',
-                            operator: item.data.username,
-                            details: `تحديث البيانات الشخصية (مزامنة): ${item.data.profileData.fullname}`
-                        };
-                        db.ref('history').push(log);
-                    });
-            } else if (item.type === 'delete_profile') {
-                promise = db.ref('userProfiles/' + item.data.username).remove()
-                    .then(() => {
-                        const nowStd = getStandardDateTime();
-                        const log = {
-                            date: nowStd.date,
-                            time: nowStd.time,
-                            station: 'النظام',
-                            operator: item.data.deletedBy,
-                            details: `حذف البيانات الشخصية للمستخدم: ${item.data.username}`
-                        };
-                        db.ref('history').push(log);
-                    });
-            }
-
-            if (promise) {
-                promise.then(() => {
-                    localStorage.setItem('toshka_offline_queue', JSON.stringify(queue));
-                    updateOfflineBanner();
-                    if (queue.length > 0) {
-                        setTimeout(processOfflineQueue, 500); 
-                    } else {
-                        icon.classList.remove('syncing');
-                        updateNetworkStatus();
-                        alert("تمت مزامنة البيانات المخزنة بنجاح! ✅");
-                    }
-                }).catch(err => {
-                    console.error("Sync Error", err);
-                    updateNetworkStatus();
-                });
-            }
-        }
+        }).catch(err => {
+            console.error("Sync Error", err);
+            updateNetworkStatus();
+        });
+    }
+}
 
         // --- CORE FUNCTIONS ---
         function loadSystemData() {
@@ -3985,7 +4025,7 @@ function saveDataInternal(options = {}) {
                 Object.assign(appData.stations[sName], updates);
                 localStorage.setItem('toshka_stations_cache', JSON.stringify(appData.stations));
                 
-                if (navigator.onLine) {
+                if (navigator.onLine && isFirebaseConnected) {
                     db.ref('stations/' + sName).update(updates).then(() => {
                         if (appData.operationHistory.length >= 20000) db.ref('history').orderByKey().limitToFirst(1).once('child_added', (snapshot) => { snapshot.ref.remove(); });
                         db.ref('history').push(log);
@@ -4274,7 +4314,7 @@ function saveDataInternal(options = {}) {
             appData.stations[sName].inspectionData = newInsData; 
             localStorage.setItem('toshka_stations_cache', JSON.stringify(appData.stations));
             
-            if (navigator.onLine) { 
+            if (navigator.onLine && isFirebaseConnected) { 
                 db.ref(`stations/${sName}/inspectionData`).update(newInsData).then(() => { 
                     db.ref('history').push(log); 
                     alert("تم حفظ بيانات الفحص بنجاح ✅"); 
@@ -5105,7 +5145,7 @@ function saveDataInternal(options = {}) {
                 userType: currentUser.type
             };
             
-            if (navigator.onLine) {
+            if (navigator.onLine && isFirebaseConnected) {
                 db.ref('userProfiles/' + username).set(profileData)
                     .then(() => {
                         showProfileAlert('تم حفظ البيانات الشخصية بنجاح ✅', 'success');
@@ -5156,7 +5196,7 @@ function saveDataInternal(options = {}) {
             }
             
             if (confirm(`هل أنت متأكد من حذف البيانات الشخصية للمستخدم "${username}"؟\n\nهذا الإجراء لا يمكن التراجع عنه.`)) {
-                if (navigator.onLine) {
+                if (navigator.onLine && isFirebaseConnected) {
                     db.ref('userProfiles/' + username).remove()
                         .then(() => {
                             showProfileAlert('تم حذف البيانات الشخصية بنجاح ✅', 'success');
