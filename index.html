@@ -1821,6 +1821,31 @@
     background: #e9ecef; padding: 10px; border-radius: 6px;
     text-align: center; font-size: 1.2em; font-weight: bold;
 }
+/* --- تنسيقات شاشة البلاغات وأوامر الشغل (جديد) --- */
+.fault-reporting-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 15px; margin-bottom: 20px; }
+.work-order-badge { padding: 4px 8px; border-radius: 4px; font-size: 0.8rem; font-weight: bold; color: white; display: inline-block; margin: 1px; }
+.dept-mech { background-color: #e67e22; } /* ميكانيكا */
+.dept-elec { background-color: #f1c40f; color: #333; } /* كهرباء */
+.dept-ic { background-color: #9b59b6; } /* I&C */
+.dept-net { background-color: #3498db; } /* شبكات */
+.dept-hvac { background-color: #1abc9c; } /* تكييف */
+.dept-civil { background-color: #7f8c8d; } /* تجهيزات */
+
+/* تنسيق النوافذ المنبثقة (Modals) */
+.custom-modal { display: none; position: fixed; z-index: 2000; left: 0; top: 0; width: 100%; height: 100%; overflow: auto; background-color: rgba(0,0,0,0.5); align-items: center; justify-content: center; }
+.custom-modal.show { display: flex; animation: fadeIn 0.3s; }
+.modal-content { background-color: #fff; padding: 20px; border-radius: 10px; width: 90%; max-width: 500px; box-shadow: 0 5px 15px rgba(0,0,0,0.3); position: relative; }
+.modal-header { font-size: 1.2rem; font-weight: bold; margin-bottom: 15px; border-bottom: 1px solid #eee; padding-bottom: 10px; display: flex; justify-content: space-between; }
+.close-modal { cursor: pointer; font-size: 1.5rem; color: #aaa; }
+.close-modal:hover { color: #000; }
+.dept-checkbox-group { display: flex; flex-wrap: wrap; gap: 10px; margin: 15px 0; }
+.dept-option { display: flex; align-items: center; gap: 5px; background: #f9f9f9; padding: 8px; border-radius: 6px; border: 1px solid #ddd; cursor: pointer; }
+.dept-option:hover { background: #eaf2f8; }
+
+/* تنسيق الجداول الجديدة */
+.reports-table th { background-color: #2c3e50; font-size: 0.9rem; }
+.reports-table td { font-size: 0.9rem; vertical-align: middle; }
+.action-btn-group { display: flex; gap: 5px; justify-content: center; flex-wrap: wrap; }
     </style>
 </head>
 <body>
@@ -1853,6 +1878,8 @@
     <button id="consumptions-btn" class="menu-item" style="display: none;">⚡ الاستهلاكات</button>
     <button id="history-management-btn" class="menu-item" style="display: none;">📜 السجل العام</button>
     <button id="export-inspection-report-btn" class="menu-item" style="display: none;">📊 تصدير الفحص</button>
+<button id="fault-reporting-btn" class="menu-item">📢 بلاغات الأعطال</button>
+<button id="work-orders-btn" class="menu-item" style="display: none;">🛠️ أوامر الشغل</button>
 <button id="calculator-btn" class="menu-item">🧮 الحاسبة</button>
     <button id="profile-btn" class="menu-item">📋 بياناتي الشخصية</button>
     <button id="logout-btn" class="menu-item logout">👋 خروج</button>
@@ -2550,6 +2577,140 @@
     </div>
 </div>
     </div>
+<div id="fault-reporting-screen" class="screen">
+    <h2 style="color: #c0392b;">📢 تسجيل ومتابعة البلاغات</h2>
+    <button id="back-to-stations-from-reports" class="btn btn-outline">عودة للرئيسية</button>
+    
+    <div class="user-data-card" style="border-top: 4px solid #c0392b;">
+        <h3 style="margin-bottom: 15px; color: #333;">تسجيل بلاغ جديد</h3>
+        <div class="fault-reporting-grid">
+            <div class="form-group"><label>مقدم البلاغ</label><input type="text" id="report-reporter" readonly style="background:#eee;"></div>
+            <div class="form-group"><label>المنطقة</label><select id="report-zone" onchange="updateReportStations()"><option value="">اختر المنطقة</option></select></div>
+            <div class="form-group"><label>المحطة</label><select id="report-station" onchange="updateReportComponents()"><option value="">اختر المحطة</option></select></div>
+            <div class="form-group"><label>تحديد المكون/العطل</label><select id="report-component"><option value="">حدد مكان العطل</option></select></div>
+        </div>
+        <div class="form-group">
+            <label>وصف العطل بالتفصيل</label>
+            <textarea id="report-desc" rows="3" placeholder="اكتب وصفاً دقيقاً للمشكلة..."></textarea>
+        </div>
+        <button id="btn-send-report" class="btn btn-danger" style="width: 100%;">🚀 إرسال البلاغ</button>
+    </div>
+
+    <div style="margin-top: 30px;">
+        <h3>📋 جدول متابعة البلاغات</h3>
+        <div class="filters-container" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px; margin-bottom: 10px;">
+            <select id="filter-report-zone" onchange="renderFaultReportsTable()"><option value="all">كل المناطق</option></select>
+            <select id="filter-report-status" onchange="renderFaultReportsTable()">
+                <option value="all">كل الحالات</option>
+                <option value="pending">انتظار التأكيد</option>
+                <option value="confirmed">تم تأكيد المشرف</option>
+            </select>
+            <button class="btn btn-excel" onclick="exportReportsTable()">تصدير Excel 📥</button>
+        </div>
+
+        <div class="table-responsive">
+            <table class="reports-table">
+                <thead>
+                    <tr>
+                        <th>التاريخ</th><th>الموقع</th><th>المبلغ</th><th>العطل</th><th>الوصف</th><th>الحالة</th><th>إجراءات المشرف</th><th>إجراءات الإدارة</th>
+                    </tr>
+                </thead>
+                <tbody id="fault-reports-body"></tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<div id="work-orders-screen" class="screen">
+    <h2 style="color: #2980b9;">🛠️ إدارة أوامر الشغل</h2>
+    <button id="back-to-stations-from-orders" class="btn btn-outline">عودة للرئيسية</button>
+
+    <div style="margin-top: 20px;">
+        <h3 style="color: #e67e22;">⚡ أوامر شغل جارية (تحت الإصلاح)</h3>
+        
+        <div class="filters-container" style="background: #fff; padding: 15px; border-radius: 8px; border: 1px solid #ddd; margin-bottom: 15px; display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 10px;">
+            <select id="wo-filter-zone" class="form-control">
+                <option value="">كل المناطق</option>
+                </select>
+            <input type="text" id="wo-filter-fault" placeholder="بحث في العطل/الوصف">
+            <select id="wo-filter-dept" class="form-control">
+                <option value="">كل الأقسام</option>
+                <option value="ميكانيكا">ميكانيكا</option>
+                <option value="كهرباء">كهرباء</option>
+                <option value="I&C">تحكم (I&C)</option>
+                <option value="شبكات">شبكات</option>
+                <option value="تكييف">تكييف</option>
+                <option value="تجهيزات">تجهيزات</option>
+            </select>
+            <input type="number" id="wo-filter-duration" placeholder="الحد الأدنى للمدة (يوم)">
+            
+            <button class="btn btn-primary" onclick="resetActiveLimit(); renderWorkOrdersTables()" style="grid-column: span 1;">بحث 🔍</button>
+            <button class="btn btn-excel" onclick="exportActiveWorkOrders()" style="grid-column: span 1;">Excel 📥</button>
+        </div>
+
+        <div class="table-responsive">
+            <table class="reports-table">
+                <thead>
+                    <tr>
+                        <th>تاريخ الاستلام</th><th>الموقع</th><th>الأقسام المختصة</th><th>العطل</th><th>الوصف</th><th>المدة</th><th>الإجراء</th>
+                    </tr>
+                </thead>
+                <tbody id="active-work-orders-body"></tbody>
+            </table>
+        </div>
+        <button id="load-more-active-wo" class="btn btn-outline btn-sm" style="width: 100%; margin-top: 10px; display: none;" onclick="loadMoreActiveOrders()">⬇️ عرض 100 صف إضافي</button>
+    </div>
+
+    <div style="margin-top: 40px; border-top: 2px dashed #ccc; padding-top: 20px;">
+        <h3 style="color: #27ae60;">✅ أرشيف الإصلاحات (تم الإغلاق)</h3>
+        <div class="filters-container" style="margin-bottom: 10px;">
+            <input type="text" id="archive-search" placeholder="بحث في الأرشيف..." onkeyup="resetArchiveLimit(); renderWorkOrdersTables()" style="width: 200px; display:inline-block;">
+            <button class="btn btn-excel" onclick="exportWorkOrdersArchive()">تصدير الأرشيف Excel 📥</button>
+        </div>
+        <div class="table-responsive">
+            <table class="reports-table">
+                <thead>
+                    <tr>
+                        <th>تواريخ</th><th>المدة</th><th>الموقع</th><th>القسم</th><th>العطل</th><th>الإصلاح وقطع الغيار</th><th>القائم بالإصلاح</th>
+                    </tr>
+                </thead>
+                <tbody id="archive-work-orders-body"></tbody>
+            </table>
+        </div>
+        <button id="load-more-archive-wo" class="btn btn-outline btn-sm" style="width: 100%; margin-top: 10px; display: none;" onclick="loadMoreArchiveOrders()">⬇️ عرض 100 صف إضافي</button>
+    </div>
+</div>
+
+<div id="modal-dept-select" class="custom-modal">
+    <div class="modal-content">
+        <div class="modal-header"><span>تحويل لأمر شغل</span><span class="close-modal" onclick="closeModal('modal-dept-select')">&times;</span></div>
+        <p>يرجى تحديد الأقسام المختصة بهذا العطل:</p>
+        <div class="dept-checkbox-group">
+            <label class="dept-option"><input type="checkbox" value="ميكانيكا"> ميكانيكا ⚙️</label>
+            <label class="dept-option"><input type="checkbox" value="كهرباء"> كهرباء ⚡</label>
+            <label class="dept-option"><input type="checkbox" value="I&C"> تحكم (I&C) 🖥️</label>
+            <label class="dept-option"><input type="checkbox" value="شبكات"> شبكات 💧</label>
+            <label class="dept-option"><input type="checkbox" value="تكييف"> تكييف ❄️</label>
+            <label class="dept-option"><input type="checkbox" value="تجهيزات"> تجهيزات 🏗️</label>
+        </div>
+        <button id="btn-confirm-work-order" class="btn btn-primary" style="width: 100%;">إصدار أمر الشغل</button>
+    </div>
+</div>
+
+<div id="modal-fix-details" class="custom-modal">
+    <div class="modal-content">
+        <div class="modal-header"><span>إتمام الإصلاح</span><span class="close-modal" onclick="closeModal('modal-fix-details')">&times;</span></div>
+        <div class="form-group">
+            <label>وصف عملية الإصلاح <span style="color:red">*</span></label>
+            <textarea id="fix-desc" rows="3" class="input-field"></textarea>
+        </div>
+        <div class="form-group">
+            <label>قطع الغيار المستخدمة (إن وجد)</label>
+            <textarea id="fix-parts" rows="2" class="input-field" placeholder="اذكر قطع الغيار والكميات..."></textarea>
+        </div>
+        <button id="btn-confirm-fix" class="btn btn-success" style="width: 100%;">تأكيد وإغلاق الأمر ✅</button>
+    </div>
+</div>
 
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
@@ -3158,8 +3319,10 @@ function updateNetworkStatus() {
                 
                 if (userType === 'admin' || userType === 'engineer') {
                     document.getElementById('consumptions-btn').style.display = 'inline-block';
+document.getElementById('work-orders-btn').style.display = 'flex';
                 } else {
                     document.getElementById('consumptions-btn').style.display = 'none';
+document.getElementById('work-orders-btn').style.display = 'none';
                 }
 
                 showScreen('stations');
@@ -6495,6 +6658,642 @@ function processOfflineQueue() {
     // ملاحظة: في التطبيقات المعقدة ننتظر التأكيد (Promises)، 
     // لكن للتبسيط هنا نرسل ونفترض النجاح طالما الاتصال "connected"
 }
+/* ==========================================================
+   كود نظام البلاغات وأوامر الشغل (جديد V1.6)
+   ========================================================== */
+
+// 1. التهيئة والمتغيرات
+let currentReportId = null; // لتخزين ID البلاغ الجاري العمل عليه في الـ Modals
+
+// الاستماع لأزرار القائمة الجديدة
+document.getElementById('fault-reporting-btn').addEventListener('click', () => {
+    showScreen('fault-reporting');
+    initFaultReportingScreen();
+});
+document.getElementById('work-orders-btn').addEventListener('click', () => {
+    showScreen('work-orders');
+    renderWorkOrdersTables();
+});
+document.getElementById('back-to-stations-from-reports').addEventListener('click', () => showScreen('stations'));
+document.getElementById('back-to-stations-from-orders').addEventListener('click', () => showScreen('stations'));
+
+// 2. دوال شاشة تسجيل البلاغات
+function initFaultReportingScreen() {
+    // تعيين مقدم البلاغ
+    const reporter = appData.currentUser ? (appData.currentUser.name || appData.currentUser.username) : 'مستخدم';
+    document.getElementById('report-reporter').value = reporter;
+
+    // تعبئة المناطق
+    const zoneSelect = document.getElementById('report-zone');
+    zoneSelect.innerHTML = '<option value="">اختر المنطقة</option>';
+    appData.zones.forEach(z => {
+        zoneSelect.innerHTML += `<option value="${z}">${z}</option>`;
+    });
+    
+    // تعبئة فلتر الجدول
+    const filterZone = document.getElementById('filter-report-zone');
+    if(filterZone.options.length <= 1) {
+        appData.zones.forEach(z => { filterZone.innerHTML += `<option value="${z}">${z}</option>`; });
+    }
+
+    renderFaultReportsTable();
+}
+
+function updateReportStations() {
+    const zone = document.getElementById('report-zone').value;
+    const stationSelect = document.getElementById('report-station');
+    stationSelect.innerHTML = '<option value="">اختر المحطة</option>';
+    
+    if (!zone) return;
+
+    const filteredStations = Object.values(appData.stations).filter(s => s.zone === zone);
+    filteredStations.sort((a,b) => a.name.localeCompare(b.name));
+    filteredStations.forEach(s => {
+        stationSelect.innerHTML += `<option value="${s.name}" data-pumps="${s.pumps ? s.pumps.length : 4}">${s.name}</option>`;
+    });
+}
+
+function updateReportComponents() {
+    const stationSelect = document.getElementById('report-station');
+    const compSelect = document.getElementById('report-component');
+    compSelect.innerHTML = '<option value="">حدد مكان العطل</option>';
+    
+    if (!stationSelect.value) return;
+
+    // الحصول على عدد المضخات من البيانات المخزنة في الـ Option
+    const selectedOption = stationSelect.options[stationSelect.selectedIndex];
+    const pumpCount = parseInt(selectedOption.getAttribute('data-pumps')) || 4;
+
+    // القائمة الثابتة
+    const components = [
+        "منظومة التحضير", "خط الطرد الرئيسي", "منظومة الطرق المائي", 
+        "أنظمة التحكم (PLC/SCADA)", "الونش", "لوحات الكهرباء", 
+        "التهوية", "التكييفات", "الغواطس", "المحولات", "الإنارة", "تجهيزات ومباني"
+    ];
+
+    // إضافة المضخات ديناميكياً
+    for(let i=1; i<=pumpCount; i++) {
+        compSelect.innerHTML += `<option value="مضخة ${i}">مضخة ${i}</option>`;
+    }
+
+    // إضافة باقي المكونات
+    components.forEach(c => {
+        compSelect.innerHTML += `<option value="${c}">${c}</option>`;
+    });
+}
+
+// 3. إرسال البلاغ
+document.getElementById('btn-send-report').addEventListener('click', () => {
+    const reporter = document.getElementById('report-reporter').value;
+    const zone = document.getElementById('report-zone').value;
+    const station = document.getElementById('report-station').value;
+    const component = document.getElementById('report-component').value;
+    const desc = document.getElementById('report-desc').value;
+
+    if(!zone || !station || !component || !desc) {
+        alert("يرجى ملء جميع الحقول المطلوبة");
+        return;
+    }
+
+    const nowStd = getStandardDateTime();
+    const newReport = {
+        date: nowStd.date,
+        time: nowStd.time,
+        timestamp: firebase.database.ServerValue.TIMESTAMP,
+        reporter: reporter,
+        zone: zone,
+        station: station,
+        component: component,
+        description: desc,
+        status: 'pending', // pending -> confirmed -> work_order -> archived
+        supervisorStatus: 'pending' // pending -> confirmed -> cancelled
+    };
+
+    db.ref('fault_reports').push(newReport).then(() => {
+        alert("تم إرسال البلاغ بنجاح ✅");
+        document.getElementById('report-desc').value = '';
+        document.getElementById('report-component').value = '';
+    });
+});
+
+// 4. عرض جدول البلاغات (Real-time)
+db.ref('fault_reports').on('value', (snapshot) => {
+    if(document.getElementById('fault-reporting-screen').classList.contains('active')) {
+        renderFaultReportsTable();
+    }
+});
+
+// --- دالة عرض جدول البلاغات (المعدلة) ---
+function renderFaultReportsTable() {
+    const tbody = document.getElementById('fault-reports-body');
+    tbody.innerHTML = '';
+
+    db.ref('fault_reports').orderByChild('timestamp').limitToLast(100).once('value', (snap) => {
+        const data = [];
+        snap.forEach(child => {
+            data.unshift({key: child.key, ...child.val()});
+        });
+
+        // الأحدث أولاً
+        const filterZone = document.getElementById('filter-report-zone').value;
+        const filterStatus = document.getElementById('filter-report-status').value;
+        const userType = appData.currentUser ? appData.currentUser.type : 'guest';
+
+        // --- الصلاحيات ---
+        // تأكيد المشرف: مشرف، مهندس، مدير
+        const canConfirm = ['supervisor', 'engineer', 'admin'].includes(userType);
+        // إجراءات الإدارة (أمر شغل/حذف): مهندس، مدير
+        const canAdminAction = ['engineer', 'admin'].includes(userType); 
+        // تعديل وصف العطل: مدير، مهندس، مشرف (حسب طلبك)
+        const canEditDesc = ['admin', 'engineer', 'supervisor'].includes(userType);
+
+        data.forEach(item => {
+            // تجاهل ما تم تحويله لأمر شغل (يختفي من هذا الجدول)
+            if (item.status === 'work_order' || item.status === 'archived') return;
+
+            // الفلاتر
+            if (filterZone !== 'all' && item.zone !== filterZone) return;
+            if (filterStatus === 'pending' && item.supervisorStatus !== 'pending') return;
+            if (filterStatus === 'confirmed' && item.supervisorStatus !== 'confirmed') return;
+
+            // تحديد حالة الصف
+            let statusBadge = '<span class="status-inactive">انتظار</span>';
+            if(item.supervisorStatus === 'confirmed') statusBadge = '<span class="status-active">مؤكد</span>';
+            if(item.supervisorStatus === 'cancelled') statusBadge = '<span style="color:red">ملغي</span>';
+
+            // --- 1. تعديل وصف العطل ---
+            let descHtml = item.description;
+            if (canEditDesc) {
+                // إضافة زر التعديل
+                descHtml += ` <span style="cursor:pointer; color:#2980b9; font-size:1.2em;" title="تعديل الوصف" onclick="editReportDescription('${item.key}', '${item.description.replace(/'/g, "\\'") || ''}')">✎</span>`;
+            }
+
+            // أزرار المشرف
+            let supBtns = '-';
+            if (canConfirm && item.supervisorStatus === 'pending') {
+                supBtns = `
+                    <button class="btn btn-success btn-sm" onclick="confirmReport('${item.key}', true)">✅ تأكيد</button>
+                    <button class="btn btn-danger btn-sm" onclick="confirmReport('${item.key}', false)">❌ إلغاء</button>
+                `;
+            } else if (item.supervisorStatus !== 'pending') {
+                supBtns = item.supervisorStatus === 'confirmed' ? 
+                    '<span style="color:green; font-weight:bold;">تم التأكيد</span>' : 
+                    '<span style="color:red; font-weight:bold;">تم الإلغاء</span>';
+            }
+
+            // --- 2. أزرار الإدارة (تعديل الأزرار) ---
+            let adminBtns = '-';
+            if (canAdminAction) {
+                if (item.supervisorStatus === 'confirmed') {
+                    // حالة: مؤكد -> زر (أمر شغل) وزر (حذف)
+                    adminBtns = `
+                        <button class="btn btn-primary btn-sm" onclick="openWorkOrderModal('${item.key}')">🛠️ أمر شغل</button>
+                        <button class="btn btn-danger btn-sm" onclick="deleteReport('${item.key}')">🗑️ حذف</button>
+                    `;
+                } else if (item.supervisorStatus === 'cancelled') {
+                    // حالة: ملغي من المشرف -> زر (حذف) فقط
+                    adminBtns = `
+                        <button class="btn btn-danger btn-sm" onclick="deleteReport('${item.key}')">🗑️ حذف</button>
+                    `;
+                }
+            }
+
+            tbody.innerHTML += `
+                <tr>
+                    <td>${item.date}<br>${item.time}</td>
+                    <td>${item.zone}<br><b>${item.station}</b></td>
+                    <td>${item.reporter}</td>
+                    <td>${item.component}</td>
+                    <td>${descHtml}</td>
+                    <td>${statusBadge}</td>
+                    <td>${supBtns}</td>
+                    <td>${adminBtns}</td>
+                </tr>
+            `;
+        });
+    });
+}
+
+// --- دوال جديدة تضاف للكود (خارج الدالة السابقة) ---
+
+// دالة حذف البلاغ نهائياً
+window.deleteReport = function(key) {
+    if(!confirm("هل أنت متأكد من حذف هذا البلاغ نهائياً من السجل؟")) return;
+    db.ref(`fault_reports/${key}`).remove()
+      .then(() => { renderFaultReportsTable(); })
+      .catch(err => alert("حدث خطأ: " + err.message));
+};
+
+// دالة تعديل وصف العطل
+window.editReportDescription = function(key, currentDesc) {
+    const newDesc = prompt("تعديل وصف العطل:", currentDesc);
+    if(newDesc !== null && newDesc.trim() !== "" && newDesc !== currentDesc) {
+        db.ref(`fault_reports/${key}`).update({ description: newDesc })
+          .then(() => { 
+              renderFaultReportsTable(); // تحديث الجدول لإظهار التعديل
+          })
+          .catch(err => alert("حدث خطأ أثناء التعديل: " + err.message));
+    }
+};
+
+// 5. إجراءات الجدول (تأكيد / تحويل)
+window.confirmReport = function(key, isConfirmed) {
+    if(!confirm(isConfirmed ? "تأكيد صحة البلاغ؟" : "هل أنت متأكد من إلغاء البلاغ؟")) return;
+    db.ref(`fault_reports/${key}`).update({
+        supervisorStatus: isConfirmed ? 'confirmed' : 'cancelled',
+        confirmedBy: appData.currentUser.username
+    });
+};
+
+window.cancelReportFinal = function(key) {
+    if(!confirm("إغلاق البلاغ نهائياً بدون أمر شغل؟")) return;
+    db.ref(`fault_reports/${key}`).update({ status: 'archived_cancelled' });
+};
+
+// Modal Handling
+window.openWorkOrderModal = function(key) {
+    currentReportId = key;
+    document.getElementById('modal-dept-select').classList.add('show');
+    // تصفير الاختيارات
+    document.querySelectorAll('.dept-checkbox-group input').forEach(c => c.checked = false);
+};
+
+window.closeModal = function(id) {
+    document.getElementById(id).classList.remove('show');
+    currentReportId = null;
+};
+
+// إنشاء أمر الشغل
+document.getElementById('btn-confirm-work-order').addEventListener('click', () => {
+    if(!currentReportId) return;
+    
+    // جمع الأقسام المختارة
+    const selectedDepts = [];
+    document.querySelectorAll('.dept-checkbox-group input:checked').forEach(cb => {
+        selectedDepts.push(cb.value);
+    });
+
+    if(selectedDepts.length === 0) {
+        alert("يجب اختيار قسم واحد على الأقل");
+        return;
+    }
+
+    // جلب بيانات البلاغ الأصلي
+    db.ref(`fault_reports/${currentReportId}`).once('value', (snap) => {
+        const report = snap.val();
+        const nowStd = getStandardDateTime();
+
+        const workOrder = {
+            reportId: currentReportId,
+            startTimestamp: firebase.database.ServerValue.TIMESTAMP, // لحساب المدة
+            startDate: nowStd.date,
+            startTime: nowStd.time,
+            zone: report.zone,
+            station: report.station,
+            component: report.component,
+            description: report.description,
+            departments: selectedDepts,
+            status: 'active', // active -> fixed
+            issuedBy: appData.currentUser.username
+        };
+
+        // حفظ أمر الشغل وتحديث حالة البلاغ
+        db.ref('work_orders').push(workOrder).then(() => {
+            db.ref(`fault_reports/${currentReportId}`).update({ status: 'work_order' });
+            closeModal('modal-dept-select');
+            alert("تم إصدار أمر الشغل بنجاح وتحويله للقسم المختص 🛠️");
+            // الانتقال لشاشة أوامر الشغل
+            showScreen('work-orders');
+            renderWorkOrdersTables();
+        });
+    });
+});
+
+// 6. شاشة أوامر الشغل (Tables)
+db.ref('work_orders').on('value', (snapshot) => {
+    if(document.getElementById('work-orders-screen').classList.contains('active')) {
+        renderWorkOrdersTables();
+    }
+});
+
+
+// 7. إتمام الإصلاح
+window.openFixModal = function(key) {
+    currentReportId = key; // نستخدم نفس المتغير global
+    document.getElementById('fix-desc').value = '';
+    document.getElementById('fix-parts').value = '';
+    document.getElementById('modal-fix-details').classList.add('show');
+};
+
+document.getElementById('btn-confirm-fix').addEventListener('click', () => {
+    if(!currentReportId) return;
+    const fixDesc = document.getElementById('fix-desc').value;
+    const fixParts = document.getElementById('fix-parts').value;
+
+    if(!fixDesc) { alert("يجب كتابة وصف للإصلاح"); return; }
+
+    // جلب الأمر لحساب المدة
+    db.ref(`work_orders/${currentReportId}`).once('value', (snap) => {
+        const order = snap.val();
+        const nowStd = getStandardDateTime();
+        const nowTs = Date.now();
+        
+        const diffTime = Math.abs(nowTs - (order.startTimestamp || nowTs));
+        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+
+        const updateData = {
+            status: 'fixed',
+            fixDate: nowStd.date,
+            fixTime: nowStd.time,
+            fixDescription: fixDesc,
+            spareParts: fixParts,
+            fixedBy: appData.currentUser.username,
+            durationDays: diffDays
+        };
+
+        db.ref(`work_orders/${currentReportId}`).update(updateData).then(() => {
+            closeModal('modal-fix-details');
+            alert("تم تسجيل الإصلاح وإغلاق أمر الشغل ✅");
+            renderWorkOrdersTables();
+        });
+    });
+});
+
+// 8. التصدير (Reports & Archive)
+window.exportReportsTable = function() {
+    // تجميع البيانات من الجدول المعروض
+    const table = document.querySelector('.reports-table'); // الجدول الأول
+    // استخدام مكتبة XLSX الموجودة لديك
+    const wb = XLSX.utils.table_to_book(table, {sheet: "بلاغات الأعطال"});
+    XLSX.writeFile(wb, `بلاغات_الأعطال_${getStandardDateTime().date.replace(/\//g,'-')}.xlsx`);
+};
+
+window.exportWorkOrdersArchive = function() {
+    // تصدير الأرشيف الكامل من الداتابيز
+    db.ref('work_orders').orderByChild('status').equalTo('fixed').once('value', (snap) => {
+        const data = [];
+        data.push(["تاريخ البدء", "تاريخ الإصلاح", "المدة (يوم)", "المنطقة", "المحطة", "الأقسام", "العطل", "الوصف", "وصف الإصلاح", "قطع الغيار", "القائم بالإصلاح"]);
+        
+        snap.forEach(child => {
+            const o = child.val();
+            data.push([
+                o.startDate, o.fixDate, o.durationDays, o.zone, o.station, 
+                (o.departments || []).join(', '), o.component, o.description,
+                o.fixDescription, o.spareParts, o.fixedBy
+            ]);
+        });
+
+        const ws = XLSX.utils.aoa_to_sheet(data);
+        const wb = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(wb, ws, "أرشيف الإصلاحات");
+        XLSX.writeFile(wb, `سجل_الاصلاحات_${getStandardDateTime().date.replace(/\//g,'-')}.xlsx`);
+    });
+};
+
+// --- تحديث الصلاحيات لعرض الأزرار في القائمة ---
+// أضف هذا الجزء داخل دالة login-btn event listener أو دالة تحديث المستخدم
+function updateMenuPermissions() {
+    if(!appData.currentUser) return;
+    const type = appData.currentUser.type;
+    const woBtn = document.getElementById('work-orders-btn');
+    
+    // أوامر الشغل متاحة للمهندس والمدير فقط
+    if(type === 'admin' || type === 'engineer') {
+        woBtn.style.display = 'block';
+    } else {
+        woBtn.style.display = 'none';
+    }
+}
+// --- تهيئة المتغيرات الجديدة للحدود (Pagination) ---
+appData.activeOrdersLimit = 100;
+appData.archiveOrdersLimit = 100;
+
+// دوال التحكم في عدد الصفوف المعروضة
+function resetActiveLimit() { appData.activeOrdersLimit = 100; }
+function resetArchiveLimit() { appData.archiveOrdersLimit = 100; }
+
+function loadMoreActiveOrders() {
+    appData.activeOrdersLimit += 100;
+    renderWorkOrdersTables();
+}
+
+function loadMoreArchiveOrders() {
+    appData.archiveOrdersLimit += 100;
+    renderWorkOrdersTables();
+}
+
+// تحديث قائمة المناطق في الفلتر عند فتح الشاشة
+document.getElementById('work-orders-btn').addEventListener('click', () => {
+    showScreen('work-orders');
+    
+    // تعبئة فلتر المناطق
+    const zoneSelect = document.getElementById('wo-filter-zone');
+    if (zoneSelect.options.length <= 1) {
+        appData.zones.forEach(z => {
+            zoneSelect.innerHTML += `<option value="${z}">${z}</option>`;
+        });
+    }
+    
+    resetActiveLimit();
+    resetArchiveLimit();
+    renderWorkOrdersTables();
+});
+
+// --- الدالة الرئيسية لعرض الجداول (معدلة) ---
+function renderWorkOrdersTables() {
+    const activeBody = document.getElementById('active-work-orders-body');
+    const archiveBody = document.getElementById('archive-work-orders-body');
+    
+    // قراءة قيم الفلاتر الجارية
+    const fZone = document.getElementById('wo-filter-zone').value;
+    const fFault = document.getElementById('wo-filter-fault').value.toLowerCase();
+    const fDept = document.getElementById('wo-filter-dept').value;
+    const fDuration = parseInt(document.getElementById('wo-filter-duration').value) || 0;
+    
+    // قراءة بحث الأرشيف
+    const searchArchive = document.getElementById('archive-search').value.toLowerCase();
+
+    activeBody.innerHTML = '';
+    archiveBody.innerHTML = '';
+    const now = Date.now();
+
+    db.ref('work_orders').once('value', (snap) => {
+        let allOrders = [];
+        snap.forEach(c => { allOrders.push({key: c.key, ...c.val()}); });
+
+        // ترتيب: الأحدث أولاً
+        allOrders.sort((a, b) => (b.startTimestamp || 0) - (a.startTimestamp || 0));
+
+        // فصل البيانات وتطبيق الفلاتر
+        let activeOrders = [];
+        let archiveOrders = [];
+
+        allOrders.forEach(order => {
+            // حساب المدة
+            const startTs = order.startTimestamp || now;
+            const diffTime = Math.abs(now - startTs);
+            const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)); 
+
+            // منطق التصفية للأوامر الجارية
+            if (order.status === 'active') {
+                let match = true;
+                if (fZone && order.zone !== fZone) match = false;
+                if (fDept && order.departments && !order.departments.includes(fDept)) match = false;
+                if (fFault && !((order.component || '').toLowerCase().includes(fFault) || (order.description || '').toLowerCase().includes(fFault))) match = false;
+                if (fDuration > 0 && diffDays < fDuration) match = false;
+
+                if (match) activeOrders.push({...order, diffDays});
+            } 
+            // منطق التصفية للأرشيف
+            else if (order.status === 'fixed') {
+                const text = `${order.station} ${order.component} ${order.description} ${order.fixDescription}`.toLowerCase();
+                if (!searchArchive || text.includes(searchArchive)) {
+                    archiveOrders.push(order);
+                }
+            }
+        });
+
+        // --- عرض الأوامر الجارية (Active) مع Pagination ---
+        if (activeOrders.length === 0) {
+            activeBody.innerHTML = '<tr><td colspan="7" style="text-align:center; padding:15px;">لا توجد أوامر شغل مطابقة للفلاتر</td></tr>';
+            document.getElementById('load-more-active-wo').style.display = 'none';
+        } else {
+            // تطبيق الحد الأقصى (Limit)
+            const displayedActive = activeOrders.slice(0, appData.activeOrdersLimit);
+            
+            displayedActive.forEach(order => {
+                let deptsHtml = '';
+                if (order.departments && Array.isArray(order.departments)) {
+                    order.departments.forEach(d => {
+                        let cls = 'dept-civil';
+                        if(d==='ميكانيكا') cls='dept-mech';
+                        if(d==='كهرباء') cls='dept-elec';
+                        if(d==='I&C') cls='dept-ic';
+                        if(d==='شبكات') cls='dept-net';
+                        if(d==='تكييف') cls='dept-hvac';
+                        deptsHtml += `<span class="work-order-badge ${cls}">${d}</span>`;
+                    });
+                } else { deptsHtml = '<span style="color:#999; font-size:0.8rem;">عام</span>'; }
+
+                activeBody.innerHTML += `
+                    <tr>
+                        <td>${order.startDate || '-'}</td>
+                        <td>${order.zone || ''}<br><b>${order.station || ''}</b></td>
+                        <td>${deptsHtml}</td>
+                        <td>${order.component || ''}</td>
+                        <td>${order.description || ''}</td>
+                        <td style="color:red; font-weight:bold">${order.diffDays} يوم</td>
+                        <td>
+                            <button class="btn btn-success btn-sm" onclick="openFixModal('${order.key}')">✅ تم الإصلاح</button>
+                        </td>
+                    </tr>
+                `;
+            });
+
+            // إظهار زر المزيد إذا كان هناك بيانات متبقية
+            const btnLoadMore = document.getElementById('load-more-active-wo');
+            if (activeOrders.length > appData.activeOrdersLimit) {
+                btnLoadMore.style.display = 'block';
+                btnLoadMore.textContent = `⬇️ عرض المزيد (${activeOrders.length - appData.activeOrdersLimit} متبقي)`;
+            } else {
+                btnLoadMore.style.display = 'none';
+            }
+        }
+
+        // --- عرض الأرشيف (Archive) مع Pagination ---
+        if (archiveOrders.length === 0) {
+            archiveBody.innerHTML = '<tr><td colspan="7" style="text-align:center; padding:15px;">لا توجد نتائج في الأرشيف</td></tr>';
+            document.getElementById('load-more-archive-wo').style.display = 'none';
+        } else {
+            // تطبيق الحد الأقصى (Limit)
+            const displayedArchive = archiveOrders.slice(0, appData.archiveOrdersLimit);
+
+            displayedArchive.forEach(order => {
+                let deptsHtml = '';
+                if (order.departments && Array.isArray(order.departments)) {
+                    order.departments.forEach(d => {
+                        deptsHtml += `<span class="work-order-badge dept-civil" style="background:#777">${d}</span>`;
+                    });
+                }
+
+                archiveBody.innerHTML += `
+                    <tr>
+                        <td>
+                            <div style="font-size:0.8rem">البدء: ${order.startDate || '-'}</div>
+                            <div style="font-size:0.8rem; color:green">الإصلاح: ${order.fixDate || '-'}</div>
+                        </td>
+                        <td>${order.durationDays || 0} يوم</td>
+                        <td>${order.station || ''}</td>
+                        <td>${deptsHtml}</td>
+                        <td>${order.component || ''}<br><span style="color:#666;font-size:0.8rem">${order.description || ''}</span></td>
+                        <td>
+                            <div>${order.fixDescription || ''}</div>
+                            ${order.spareParts ? `<div style="color:#e67e22;font-size:0.8rem">🛒 ${order.spareParts}</div>` : ''}
+                        </td>
+                        <td>${order.fixedBy || '-'}</td>
+                    </tr>
+                `;
+            });
+
+            // إظهار زر المزيد للأرشيف
+            const btnLoadMoreArch = document.getElementById('load-more-archive-wo');
+            if (archiveOrders.length > appData.archiveOrdersLimit) {
+                btnLoadMoreArch.style.display = 'block';
+                btnLoadMoreArch.textContent = `⬇️ عرض المزيد (${archiveOrders.length - appData.archiveOrdersLimit} متبقي)`;
+            } else {
+                btnLoadMoreArch.style.display = 'none';
+            }
+        }
+    });
+}
+
+// --- دالة تصدير أوامر الشغل الجارية (المفلترة) ---
+function exportActiveWorkOrders() {
+    // نستخدم نفس منطق الفلترة للحصول على البيانات
+    const fZone = document.getElementById('wo-filter-zone').value;
+    const fFault = document.getElementById('wo-filter-fault').value.toLowerCase();
+    const fDept = document.getElementById('wo-filter-dept').value;
+    const fDuration = parseInt(document.getElementById('wo-filter-duration').value) || 0;
+    const now = Date.now();
+
+    db.ref('work_orders').orderByChild('status').equalTo('active').once('value', (snap) => {
+        let data = [];
+        // العناوين
+        data.push(["تاريخ البدء", "المنطقة", "المحطة", "الأقسام", "العطل", "الوصف", "المدة الحالية (يوم)"]);
+
+        snap.forEach(child => {
+            const o = child.val();
+            const startTs = o.startTimestamp || now;
+            const diffTime = Math.abs(now - startTs);
+            const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)); 
+
+            let match = true;
+            if (fZone && o.zone !== fZone) match = false;
+            if (fDept && o.departments && !o.departments.includes(fDept)) match = false;
+            if (fFault && !((o.component || '').toLowerCase().includes(fFault) || (o.description || '').toLowerCase().includes(fFault))) match = false;
+            if (fDuration > 0 && diffDays < fDuration) match = false;
+
+            if (match) {
+                data.push([
+                    o.startDate, o.zone, o.station, 
+                    (o.departments || []).join(', '), o.component, o.description, diffDays
+                ]);
+            }
+        });
+
+        if (data.length <= 1) {
+            alert("لا توجد بيانات مطابقة للتصدير");
+            return;
+        }
+
+        const ws = XLSX.utils.aoa_to_sheet(data);
+        const wb = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(wb, ws, "أوامر الشغل الجارية");
+        XLSX.writeFile(wb, `اوامر_شغل_جارية_${getStandardDateTime().date.replace(/\//g,'-')}.xlsx`);
+    });
+}
+// استدعاء هذه الدالة عند الدخول
+// (ابحث عن document.getElementById('login-btn').addEventListener... وأضف updateMenuPermissions() بعد نجاح الدخول)
     </script>
 </body>
 </html>
