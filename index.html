@@ -2670,7 +2670,7 @@
             <table class="reports-table">
                 <thead>
                     <tr>
-                        <th>تاريخ الاستلام</th><th>الموقع</th><th>الأقسام المختصة</th><th>العطل</th><th>الوصف</th><th>المدة</th><th>الإجراء</th>
+                        <th>تاريخ الاستلام</th><th>الموقع</th><th>الأقسام المختصة</th><th>العطل</th><th>الوصف</th><th>الصادر عنه</th><th>المدة</th><th>الإجراء</th>
                     </tr>
                 </thead>
                 <tbody id="active-work-orders-body"></tbody>
@@ -7183,18 +7183,18 @@ function renderWorkOrdersTables() {
                 } else { deptsHtml = '<span style="color:#999; font-size:0.8rem;">عام</span>'; }
 
                 activeBody.innerHTML += `
-                    <tr>
-                        <td>${order.startDate || '-'}</td>
-                        <td>${order.zone || ''}<br><b>${order.station || ''}</b></td>
-                        <td>${deptsHtml}</td>
-                        <td>${order.component || ''}</td>
-                        <td>${order.description || ''}</td>
-                        <td style="color:red; font-weight:bold">${order.diffDays} يوم</td>
-                        <td>
-                            <button class="btn btn-success btn-sm" onclick="openFixModal('${order.key}')">✅ تم الإصلاح</button>
-                        </td>
-                    </tr>
-                `;
+    <tr>
+        <td>${order.startDate || '-'}</td>
+        <td>${order.zone || ''}<br><b>${order.station || ''}</b></td>
+        <td>${deptsHtml}</td>
+        <td>${order.component || ''}</td>
+        <td>${order.description || ''}</td>
+        <td>${order.issuedBy || '-'}</td> <td style="color:red; font-weight:bold">${order.diffDays} يوم</td>
+        <td>
+            <button class="btn btn-success btn-sm" onclick="openFixModal('${order.key}')">✅ تم الإصلاح</button>
+        </td>
+    </tr>
+`;
             });
 
             // إظهار زر المزيد إذا كان هناك بيانات متبقية
@@ -7266,7 +7266,7 @@ function exportActiveWorkOrders() {
     db.ref('work_orders').orderByChild('status').equalTo('active').once('value', (snap) => {
         let data = [];
         // العناوين
-        data.push(["تاريخ البدء", "المنطقة", "المحطة", "الأقسام", "العطل", "الوصف", "المدة الحالية (يوم)"]);
+        data.push(["تاريخ البدء", "المنطقة", "المحطة", "الأقسام", "العطل", "الوصف", "الصادر عنه", "المدة الحالية (يوم)"]);
 
         snap.forEach(child => {
             const o = child.val();
@@ -7282,9 +7282,9 @@ function exportActiveWorkOrders() {
 
             if (match) {
                 data.push([
-                    o.startDate, o.zone, o.station, 
-                    (o.departments || []).join(', '), o.component, o.description, diffDays
-                ]);
+    o.startDate, o.zone, o.station, 
+    (o.departments || []).join(', '), o.component, o.description, o.issuedBy || '-', diffDays
+]);
             }
         });
 
