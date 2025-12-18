@@ -3787,6 +3787,7 @@ window.handleTabClick = (zone, btn) => {
                         <input type="number" placeholder="سحب" id="p_suc_${p.id}" value="${p.suctionPressure||''}" class="p_inp_${p.id}">
                         <input type="number" placeholder="طرد" id="p_dis_${p.id}" value="${p.dischargePressure||''}" class="p_inp_${p.id}" style="margin-top:5px">
                         <input type="number" placeholder="تردد" id="p_freq_${p.id}" value="${p.frequency||''}" class="p_inp_${p.id}" style="margin-top:5px">
+                        <input type="number" placeholder="ساعات التشغيل" id="p_hours_${p.id}" value="${p.operatingHours||''}" class="p_hours_inp_${p.id}" style="margin-top:5px">
                     </div>`;
             });
             c.innerHTML = pumpsHtml;
@@ -3961,15 +3962,30 @@ function saveDataInternal(options = {}) {
             let newStatus = statElem ? statElem.value : p.status;
             if (isCriticalFault && newStatus === 'نشطة') newStatus = 'متوقفة';
             if(p.status != newStatus) changesDetails.push(`مضخة ${p.id} (من ${p.status} إلى ${newStatus})`);
-            let pumpData = { id: p.id, status: newStatus, suctionPressure: null, dischargePressure: null, frequency: null };
-            if(newStatus === 'نشطة') { 
-                activeCount++;
-                pumpData.suctionPressure = getVal(`p_suc_${p.id}`); 
-                pumpData.dischargePressure = getVal(`p_dis_${p.id}`);
-                pumpData.frequency = getVal(`p_freq_${p.id}`);
-            }
-            return pumpData;
-        });
+// 1. قراءة قيمة ساعات التشغيل الحالية من الخانة (سواء كانت نشطة أو متوقفة)
+    const hoursInput = document.getElementById(`p_hours_${p.id}`);
+    // نأخذ القيمة من الخانة، وإذا لم توجد نأخذ القيمة القديمة المحفوظة
+    const currentHours = hoursInput ? hoursInput.value : (p.operatingHours || 0);
+
+    // 2. إنشاء كائن البيانات مع الحفاظ على الساعات
+    let pumpData = { 
+        id: p.id, 
+        status: newStatus, 
+        operatingHours: currentHours, // ✅ تم ربط الساعات هنا لتثبيتها
+        suctionPressure: null, 
+        dischargePressure: null, 
+        frequency: null 
+    };
+
+    // 3. إذا كانت نشطة فقط، نقوم بتسجيل باقي القراءات اللحظية
+    if(newStatus === 'نشطة') { 
+        activeCount++;
+        pumpData.suctionPressure = getVal(`p_suc_${p.id}`); 
+        pumpData.dischargePressure = getVal(`p_dis_${p.id}`);
+        pumpData.frequency = getVal(`p_freq_${p.id}`);
+    }
+    return pumpData;
+});
         
         if (!isCriticalFault) { 
             if (activeCount > 0) currentStatus = 'نشطة';
@@ -4263,6 +4279,18 @@ function saveDataInternal(options = {}) {
                                 pumpBodyDiv.appendChild(subHeader); 
                             }
                             pumpBodyDiv.appendChild(createInspectionRow(idx, item, pData[idx] || {}, `pumps_${i}`, isEdit));
+if (idx === 5) { // الرقم 5 يمثل "المضخه" في مصفوفة العناصر
+        // جلب ساعات التشغيل من بيانات المحطة الحالية
+        const currentPump = (sData.pumps && sData.pumps[i-1]) ? sData.pumps[i-1] : {};
+        const hoursVal = currentPump.operatingHours || 0;
+        
+        // إنشاء عنصر لعرض الساعات
+        const hoursDiv = document.createElement('div');
+        hoursDiv.style.cssText = "padding: 0 10px 10px 10px; color: var(--secondary-color); font-weight: bold; font-size: 0.9rem; margin-top: -5px;";
+        hoursDiv.innerHTML = `⏱️ إجمالي ساعات التشغيل: <span style="color: #333;">${hoursVal}</span> ساعة`;
+        
+        pumpBodyDiv.appendChild(hoursDiv);
+    }
                         });
                         pumpItemDiv.appendChild(pumpHeaderDiv); 
                         pumpItemDiv.appendChild(pumpBodyDiv); 
@@ -5790,6 +5818,8 @@ window.updateConsStationFilter = function() {
 };
 
 window.renderConsumptionsTable = function() {
+    // 1. جلب قيم الفلاتر
+    const zoneFilter = document.getElementById('cons-filter-zone').value; // تم إضافة هذا السطر
     const stationFilter = document.getElementById('cons-filter-station').value;
     const dateFrom = document.getElementById('cons-filter-date-from').value;
     const dateTo = document.getElementById('cons-filter-date-to').value;
@@ -5804,84 +5834,69 @@ window.renderConsumptionsTable = function() {
     
     let filteredConsumptions = appData.consumptionLog || [];
     
-    // تصفية حسب المحطة
-    if (stationFilter !== 'all') {
-        filteredConsumptions = filteredConsumptions.filter(c => c.station === stationFilter);
-    }
-    
-    // تصفية حسب التاريخ
+    // 2. تصفية حسب التاريخ (موجود مسبقاً)
     filteredConsumptions = filteredConsumptions.filter(c => {
         const logDate = c.date; // التنسيق: DD/MM/YYYY
         const [d, m, y] = logDate.split('/');
         const logDateISO = `${y}-${m.padStart(2, '0')}-${d.padStart(2, '0')}`;
         return logDateISO >= dateFrom && logDateISO <= dateTo;
     });
+
+    // 3. (تصحيح هام) تصفية حسب المنطقة - كان مفقوداً
+    if (zoneFilter !== 'all') {
+        filteredConsumptions = filteredConsumptions.filter(c => {
+            const sData = appData.stations[c.station];
+            // التأكد من أن المحطة موجودة وتنتمي للمنطقة المختارة
+            return sData && sData.zone === zoneFilter;
+        });
+    }
+
+    // 4. تصفية حسب المحطة (موجود مسبقاً)
+    if (stationFilter !== 'all') {
+        filteredConsumptions = filteredConsumptions.filter(c => c.station === stationFilter);
+    }
     
     if (filteredConsumptions.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="7" style="text-align:center; padding:20px;">لا توجد بيانات استهلاك في الفترة المحددة</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="7" style="text-align:center; padding:20px;">لا توجد بيانات استهلاك مطابقة للفلاتر المحددة</td></tr>';
         return;
     }
     
-    // تجميع البيانات حسب المحطة
+    // 5. تجميع البيانات حسب المحطة
     const stationsData = {};
-    
     filteredConsumptions.forEach(log => {
         if (!stationsData[log.station]) {
             stationsData[log.station] = [];
         }
         stationsData[log.station].push(log);
     });
-    
-    // معالجة كل محطة
+
+    // 6. معالجة كل محطة وعرضها
     Object.keys(stationsData).forEach(stationName => {
         const stationLogs = stationsData[stationName];
         
-        // ترتيب البيانات حسب التاريخ تصاعدياً
+        // ترتيب البيانات حسب التاريخ والوقت تصاعدياً
         stationLogs.sort((a, b) => {
             const dateA = parseCustomDate(`${a.date} ${a.time}`);
             const dateB = parseCustomDate(`${b.date} ${b.time}`);
             return dateA - dateB;
         });
         
-        // البحث عن أول قراءة في فترة "من" وأول قراءة في فترة "إلى"
-        let fromReading = null;
-        let toReading = null;
+        // مطابقة منطق الإكسيل: أول قراءة في الفترة وآخر قراءة في الفترة
+        const fromReading = stationLogs[0];
+        const toReading = stationLogs[stationLogs.length - 1];
         
-        // تحويل تواريخ المدخلات إلى Date objects للمقارنة
-        const fromDate = new Date(dateFrom);
-        const toDate = new Date(dateTo);
-        
-        stationLogs.forEach(log => {
-            const logDateStr = log.date; // DD/MM/YYYY
-            const [d, m, y] = logDateStr.split('/');
-            const logDate = new Date(`${y}-${m}-${d}`);
-            
-            if (logDate.getTime() === fromDate.getTime() && !fromReading) {
-                fromReading = log;
-            }
-            if (logDate.getTime() === toDate.getTime() && !toReading) {
-                toReading = log;
-            }
-        });
-        
-        if (!fromReading || !toReading) {
-            // إذا لم توجد قراءات في التواريخ المحددة، نستخدم أول وآخر قراءة في الفترة
-            fromReading = stationLogs[0];
-            toReading = stationLogs[stationLogs.length - 1];
-        }
-        
-        // حساب الاستهلاك
+        // حساب الاستهلاك (الأخير - الأول)
         const consumptionT1 = (parseFloat(toReading.t1) || 0) - (parseFloat(fromReading.t1) || 0);
         const consumptionT2 = (parseFloat(toReading.t2) || 0) - (parseFloat(fromReading.t2) || 0);
         const consumptionM3 = (parseFloat(toReading.m3) || 0) - (parseFloat(fromReading.m3) || 0);
-        
-        // تنسيق تواريخ القراءات
+
+        // تنسيق تواريخ القراءات للعرض
         const fromDateFormatted = fromReading.date;
-        const fromTimeFormatted = fromReading.time.substring(0, 5);
+        const fromTimeFormatted = fromReading.time ? fromReading.time.substring(0, 5) : '-';
         const toDateFormatted = toReading.date;
-        const toTimeFormatted = toReading.time.substring(0, 5);
+        const toTimeFormatted = toReading.time ? toReading.time.substring(0, 5) : '-';
         
-        // إنشاء صف جديد مع البيانات التفصيلية
+        // إنشاء صف جديد
         const row = document.createElement('tr');
         row.innerHTML = `
             <td>${stationName}</td>
