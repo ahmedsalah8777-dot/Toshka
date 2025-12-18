@@ -2196,14 +2196,28 @@
             <button id="back-to-stations-from-cons" class="btn btn-outline">عودة</button>
             <div style="font-size:0.9rem; color:#666; margin-top:5px;">يقوم التقرير بحساب الاستهلاك بطرح (أول قراءة في فترة "إلى" - أول قراءة في فترة "من").</div>
             <div class="filters-container" style="background: #f9f9f9; padding: 15px; border-radius: 8px; border: 1px solid #eee; margin-bottom: 20px; margin-top:10px; display: grid; gap: 10px; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));">
-                <div class="filter-item"><label>المحطة</label><select id="cons-filter-station"><option value="all">كل المحطات</option></select></div>
-                <div class="filter-item"><label>من تاريخ (بداية الفترة السابقة)</label><input type="date" id="cons-filter-date-from"></div>
-                <div class="filter-item"><label>إلى تاريخ (بداية الفترة الحالية)</label><input type="date" id="cons-filter-date-to"></div>
-                <div class="filter-item" style="display:flex; align-items:flex-end; gap:5px;">
-                    <button class="btn btn-primary" onclick="renderConsumptionsTable()" style="flex:1">حساب</button>
-                    <button class="btn btn-success" onclick="exportConsumptionsToCSV()" style="flex:1" title="تصدير CSV">CSV 📥</button>
-                </div>
-            </div>
+    <div class="filter-item">
+        <label>المنطقة</label>
+        <select id="cons-filter-zone" onchange="updateConsStationFilter()">
+            <option value="all">كل المناطق</option>
+        </select>
+    </div>
+    
+    <div class="filter-item">
+        <label>المحطة</label>
+        <select id="cons-filter-station">
+            <option value="all">كل المحطات</option>
+        </select>
+    </div>
+
+    <div class="filter-item"><label>من تاريخ</label><input type="date" id="cons-filter-date-from"></div>
+    <div class="filter-item"><label>إلى تاريخ</label><input type="date" id="cons-filter-date-to"></div>
+    
+    <div class="filter-item" style="display:flex; align-items:flex-end; gap:5px;">
+        <button class="btn btn-primary" onclick="renderConsumptionsTable()" style="flex:1">حساب</button>
+        <button class="btn btn-excel" onclick="exportConsumptionsToExcel()" style="flex:1" title="تصدير Excel">Excel 📥</button>
+    </div>
+</div>
             
             <div class="table-responsive">
                 <table class="history-table" id="consumptions-table-export">
@@ -5727,22 +5741,53 @@ function saveDataInternal(options = {}) {
             appData.currentUsersPage = 0;
             renderUsersManagement();
         });
-
-        // --- CONSUMPTION REPORT LOGIC ---
-        document.getElementById('consumptions-btn').addEventListener('click', () => {
-            const filterSelect = document.getElementById('cons-filter-station');
-            if (filterSelect.options.length <= 1) {
-                const sorted = Object.values(appData.stations).sort((a,b) => a.name.localeCompare(b.name));
-                sorted.forEach(s => filterSelect.innerHTML += `<option value="${s.name}">${s.name}</option>`);
-            }
-            const today = new Date();
-            const firstDayThisMonth = new Date(today.getFullYear(), today.getMonth(), 1);
-            const firstDayLastMonth = new Date(today.getFullYear(), today.getMonth() - 1, 1);
-            document.getElementById('cons-filter-date-to').valueAsDate = firstDayThisMonth;
-            document.getElementById('cons-filter-date-from').valueAsDate = firstDayLastMonth;
-            renderConsumptionsTable();
-            showScreen('consumptions-report');
+document.getElementById('consumptions-btn').addEventListener('click', () => {
+    // أ) تعبئة قائمة المناطق
+    const zoneSelect = document.getElementById('cons-filter-zone');
+    if (zoneSelect && zoneSelect.options.length <= 1) {
+        zoneSelect.innerHTML = '<option value="all">كل المناطق</option>';
+        appData.zones.forEach(z => {
+            zoneSelect.innerHTML += `<option value="${z}">${z}</option>`;
         });
+    }
+
+    // ب) استدعاء دالة تحديث المحطات بناءً على المنطقة
+    if (typeof updateConsStationFilter === 'function') {
+        updateConsStationFilter();
+    }
+
+    // ج) ضبط التواريخ الافتراضية
+    const today = new Date();
+    const firstDayThisMonth = new Date(today.getFullYear(), today.getMonth(), 1);
+    const firstDayLastMonth = new Date(today.getFullYear(), today.getMonth() - 1, 1);
+    
+    const dateToElem = document.getElementById('cons-filter-date-to');
+    const dateFromElem = document.getElementById('cons-filter-date-from');
+    
+    if(dateToElem) dateToElem.valueAsDate = firstDayThisMonth;
+    if(dateFromElem) dateFromElem.valueAsDate = firstDayLastMonth;
+
+    renderConsumptionsTable();
+    showScreen('consumptions-report');
+});
+
+// دالة مساعدة جديدة: تحديث قائمة المحطات عند تغيير المنطقة
+window.updateConsStationFilter = function() {
+    const zone = document.getElementById('cons-filter-zone').value;
+    const stationSelect = document.getElementById('cons-filter-station');
+    
+    if(!stationSelect) return;
+
+    stationSelect.innerHTML = '<option value="all">كل المحطات</option>';
+    
+    const sortedStations = Object.values(appData.stations).sort((a,b) => a.name.localeCompare(b.name));
+    
+    sortedStations.forEach(s => {
+        if (zone === 'all' || s.zone === zone) {
+            stationSelect.innerHTML += `<option value="${s.name}">${s.name}</option>`;
+        }
+    });
+};
 
 window.renderConsumptionsTable = function() {
     const stationFilter = document.getElementById('cons-filter-station').value;
@@ -5887,124 +5932,68 @@ window.renderConsumptionsTable = function() {
         tbody.appendChild(row);
     });
 };
-
-window.exportConsumptionsToCSV = function() {
-    // استخدام نفس منطق renderConsumptionsTable لجمع البيانات
+window.exportConsumptionsToExcel = function() {
+    const zoneFilter = document.getElementById('cons-filter-zone').value;
     const stationFilter = document.getElementById('cons-filter-station').value;
     const dateFrom = document.getElementById('cons-filter-date-from').value;
     const dateTo = document.getElementById('cons-filter-date-to').value;
     
-    if (!dateFrom || !dateTo) {
-        alert('يرجى اختيار تاريخ البداية والنهاية أولاً');
-        return;
-    }
-    
-    let filteredConsumptions = appData.consumptionLog || [];
-    
-    // تصفية حسب المحطة
-    if (stationFilter !== 'all') {
-        filteredConsumptions = filteredConsumptions.filter(c => c.station === stationFilter);
-    }
-    
-    // تصفية حسب التاريخ
-    filteredConsumptions = filteredConsumptions.filter(c => {
-        const logDate = c.date;
-        const [d, m, y] = logDate.split('/');
-        const logDateISO = `${y}-${m.padStart(2, '0')}-${d.padStart(2, '0')}`;
-        return logDateISO >= dateFrom && logDateISO <= dateTo;
+    if (!dateFrom || !dateTo) { alert('يرجى اختيار التواريخ'); return; }
+
+    let filtered = appData.consumptionLog || [];
+
+    filtered = filtered.filter(c => {
+        const [d, m, y] = c.date.split('/');
+        const iso = `${y}-${m.padStart(2, '0')}-${d.padStart(2, '0')}`;
+        return iso >= dateFrom && iso <= dateTo;
     });
-    
-    if (filteredConsumptions.length === 0) {
-        alert('لا توجد بيانات للتصدير');
-        return;
-    }
-    
-    // تجميع البيانات حسب المحطة
+
+    filtered = filtered.filter(c => {
+        const sData = appData.stations[c.station];
+        const sZone = sData ? sData.zone : '';
+        if (zoneFilter !== 'all' && sZone !== zoneFilter) return false;
+        if (stationFilter !== 'all' && c.station !== stationFilter) return false;
+        return true;
+    });
+
+    if (filtered.length === 0) { alert('لا توجد بيانات للتصدير'); return; }
+
+    const dataRows = [];
+    dataRows.push(["المنطقة", "المحطة", "نوع البيان", "القراءة السابقة", "تاريخ السابق", "القراءة الحالية", "تاريخ الحالي", "قيمة الاستهلاك", "الوحدة"]);
+
     const stationsData = {};
-    filteredConsumptions.forEach(log => {
-        if (!stationsData[log.station]) {
-            stationsData[log.station] = [];
-        }
+    filtered.forEach(log => {
+        if (!stationsData[log.station]) stationsData[log.station] = [];
         stationsData[log.station].push(log);
     });
-    
-    // إنشاء محتوى CSV
-    let csvContent = "data:text/csv;charset=utf-8,\uFEFF"; // BOM للدعم العربي
-    
-    // رأس CSV
-    csvContent += "المحطة,نوع الاستهلاك,القراءة السابقة,تاريخ القراءة السابقة,القراءة الحالية,تاريخ القراءة الحالية,الاستهلاك,وحدة القياس\n";
-    
-    // إضافة البيانات لكل محطة
-    Object.keys(stationsData).forEach(stationName => {
-        const stationLogs = stationsData[stationName];
-        
-        // ترتيب البيانات
-        stationLogs.sort((a, b) => {
-            const dateA = parseCustomDate(`${a.date} ${a.time}`);
-            const dateB = parseCustomDate(`${b.date} ${b.time}`);
-            return dateA - dateB;
-        });
-        
-        // البحث عن القراءات
-        const fromDate = new Date(dateFrom);
-        const toDate = new Date(dateTo);
-        
-        let fromReading = null;
-        let toReading = null;
-        
-        stationLogs.forEach(log => {
-            const logDateStr = log.date;
-            const [d, m, y] = logDateStr.split('/');
-            const logDate = new Date(`${y}-${m}-${d}`);
-            
-            if (logDate.getTime() === fromDate.getTime() && !fromReading) {
-                fromReading = log;
-            }
-            if (logDate.getTime() === toDate.getTime() && !toReading) {
-                toReading = log;
-            }
-        });
-        
-        if (!fromReading || !toReading) {
-            fromReading = stationLogs[0];
-            toReading = stationLogs[stationLogs.length - 1];
-        }
-        
-        // حساب الاستهلاك
-        const consumptionT1 = (parseFloat(toReading.t1) || 0) - (parseFloat(fromReading.t1) || 0);
-        const consumptionT2 = (parseFloat(toReading.t2) || 0) - (parseFloat(fromReading.t2) || 0);
-        const consumptionM3 = (parseFloat(toReading.m3) || 0) - (parseFloat(fromReading.m3) || 0);
-        
-        // إضافة صفوف CSV
-        csvContent += `"${stationName}","محول 1 (KW)","${parseFloat(fromReading.t1) || 0}","${fromReading.date} ${fromReading.time.substring(0, 5)}","${parseFloat(toReading.t1) || 0}","${toReading.date} ${toReading.time.substring(0, 5)}","${consumptionT1.toFixed(2)}","KW"\n`;
-        csvContent += `"${stationName}","محول 2 (KW)","${parseFloat(fromReading.t2) || 0}","${fromReading.date} ${fromReading.time.substring(0, 5)}","${parseFloat(toReading.t2) || 0}","${toReading.date} ${toReading.time.substring(0, 5)}","${consumptionT2.toFixed(2)}","KW"\n`;
-        csvContent += `"${stationName}","المياه (M3)","${parseFloat(fromReading.m3) || 0}","${fromReading.date} ${fromReading.time.substring(0, 5)}","${parseFloat(toReading.m3) || 0}","${toReading.date} ${toReading.time.substring(0, 5)}","${consumptionM3.toFixed(2)}","M3"\n`;
-        
-        // إضافة سطر فارغ بين المحطات
-        csvContent += "\n";
-    });
-    
-    // إضافة ملخص
-    csvContent += "\n";
-    csvContent += "ملخص الفترة\n";
-    csvContent += `تاريخ البداية,${dateFrom}\n`;
-    csvContent += `تاريخ النهاية,${dateTo}\n`;
-    csvContent += `عدد المحطات,${Object.keys(stationsData).length}\n`;
-    csvContent += `تاريخ التصدير,${new Date().toLocaleDateString('ar-EG')}\n`;
-    csvContent += `وقت التصدير,${new Date().toLocaleTimeString('ar-EG')}\n`;
-    
-    // إنشاء رابط التحميل
-    const encodedUri = encodeURI(csvContent);
-    const link = document.createElement("a");
-    link.setAttribute("href", encodedUri);
-    link.setAttribute("download", `تقرير_الاستهلاك_${dateFrom}_إلى_${dateTo}.csv`);
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    
-    alert(`تم تصدير ${Object.keys(stationsData).length} محطة إلى ملف CSV`);
-};
 
+    Object.keys(stationsData).forEach(stName => {
+        const logs = stationsData[stName];
+        logs.sort((a, b) => parseCustomDate(`${a.date} ${a.time}`) - parseCustomDate(`${b.date} ${b.time}`));
+        
+        const first = logs[0];
+        const last = logs[logs.length - 1];
+        const zone = appData.stations[stName]?.zone || 'غير محدد';
+
+        const t1 = (parseFloat(last.t1)||0) - (parseFloat(first.t1)||0);
+        const t2 = (parseFloat(last.t2)||0) - (parseFloat(first.t2)||0);
+        const m3 = (parseFloat(last.m3)||0) - (parseFloat(first.m3)||0);
+
+        dataRows.push([zone, stName, "محول 1", parseFloat(first.t1), first.date, parseFloat(last.t1), last.date, t1, "KW"]);
+        dataRows.push([zone, stName, "محول 2", parseFloat(first.t2), first.date, parseFloat(last.t2), last.date, t2, "KW"]);
+        dataRows.push([zone, stName, "مياه (M3)", parseFloat(first.m3), first.date, parseFloat(last.m3), last.date, m3, "M3"]);
+        dataRows.push([]); 
+    });
+
+    const ws = XLSX.utils.aoa_to_sheet(dataRows);
+    ws['!cols'] = [
+        { wch: 15 }, { wch: 20 }, { wch: 15 }, { wch: 12 }, { wch: 12 }, { wch: 12 }, { wch: 12 }, { wch: 15 }, { wch: 10 }
+    ];
+
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, "تقرير الاستهلاكات");
+    XLSX.writeFile(wb, `Consumptions_${dateFrom}_${dateTo}.xlsx`);
+};
         // --- FAULTS & HISTORY LOGIC ---
         function renderHistoryTable(applyFilters = false) {
             const tbody = document.getElementById('history-table-body');
@@ -6738,7 +6727,7 @@ function updateReportComponents() {
     const components = [
         "منظومة التحضير", "خط الطرد الرئيسي", "منظومة الطرق المائي", 
         "أنظمة التحكم (PLC/SCADA)", "الونش", "لوحات الكهرباء", 
-        "التهوية", "التكييفات", "الشبكات", "الغواطس", "المحولات", "الإنارة", "تجهيزات ومباني"
+        "التهوية"  ,"شبكات المياه"  , "التكييفات", "الغواطس", "المحولات", "الإنارة", "تجهيزات ومباني"
     ];
 
     // إضافة المضخات ديناميكياً
@@ -6826,17 +6815,15 @@ function renderFaultReportsTable() {
             let statusBadge = '<span class="status-inactive">انتظار</span>';
             if(item.supervisorStatus === 'confirmed') statusBadge = '<span class="status-active">مؤكد</span>';
             if(item.supervisorStatus === 'cancelled') statusBadge = '<span style="color:red">ملغي</span>';
-            
-            // معالجة الوصف وزر التعديل بشكل آمن
-            let descHtml = item.description || '';
-            const safeDescForEdit = (item.description || '').replace(/'/g, "\\'"); // حماية ضد الأخطاء
-            
-            if (canEditDesc) {
-                descHtml += ` <span style="cursor:pointer; color:#2980b9; font-size:1.2em;" 
-                title="تعديل الوصف" onclick="editReportDescription('${item.key}', '${safeDescForEdit}')">✎</span>`;
-            }
-            
-            // أزرار المشرف
+let descHtml = item.description || '';
+
+// استخدام encodeURIComponent لحماية النص من أي رموز تكسر الكود (مثل " أو ' أو سطر جديد)
+const safeDescForEdit = encodeURIComponent(item.description || '');
+
+if (canEditDesc) {
+    // نفك التشفير decodeURIComponent عند الضغط
+    descHtml += ` <span style="cursor:pointer; color:#2980b9; font-size:1.2em; margin-right:5px;" title="تعديل الوصف" onclick="editReportDescription('${item.key}', decodeURIComponent('${safeDescForEdit}'))">✎</span>`;
+}
             let supBtns = '-';
             if (canConfirm && item.supervisorStatus === 'pending') {
                 supBtns = `
@@ -6901,6 +6888,21 @@ window.deleteReport = function(key) {
     db.ref(`fault_reports/${key}`).remove()
     // تم إزالة renderFaultReportsTable() لأن التحديث سيحدث تلقائياً
     .catch(err => alert("حدث خطأ: " + err.message));
+};
+// دالة تعديل وصف البلاغ
+window.editReportDescription = function(key, currentDesc) {
+    // طلب الوصف الجديد من المستخدم
+    const newDesc = prompt("الرجاء إدخال الوصف الجديد:", currentDesc);
+    
+    // التحقق من أن المستخدم لم يضغط "إلغاء" وأن النص قد تغير
+    if (newDesc !== null && newDesc.trim() !== "" && newDesc !== currentDesc) {
+        db.ref('fault_reports/' + key).update({ description: newDesc })
+            .then(() => {
+                // التحديث سيظهر تلقائياً لأن الجدول يستمع للتغييرات
+                alert("✅ تم تعديل الوصف بنجاح");
+            })
+            .catch(err => alert("حدث خطأ: " + err.message));
+    }
 };
 // Modal Handling
 window.openWorkOrderModal = function(key) {
@@ -7296,5 +7298,4 @@ document.getElementById('back-from-archive').addEventListener('click', () => {
     </script>
 </body>
 </html>
-
 
