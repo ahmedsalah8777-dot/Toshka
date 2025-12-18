@@ -2623,7 +2623,11 @@
 
 <div id="work-orders-screen" class="screen">
     <h2 style="color: #2980b9;">🛠️ إدارة أوامر الشغل</h2>
-    <button id="back-to-stations-from-orders" class="btn btn-outline">عودة للرئيسية</button>
+    
+    <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+        <button id="back-to-stations-from-orders" class="btn btn-outline">عودة للرئيسية</button>
+        <button id="btn-go-to-archive" class="btn btn-success">📂 أرشيف الإصلاحات</button>
+    </div>
 
     <div style="margin-top: 20px;">
         <h3 style="color: #e67e22;">⚡ أوامر شغل جارية (تحت الإصلاح)</h3>
@@ -2631,7 +2635,7 @@
         <div class="filters-container" style="background: #fff; padding: 15px; border-radius: 8px; border: 1px solid #ddd; margin-bottom: 15px; display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 10px;">
             <select id="wo-filter-zone" class="form-control">
                 <option value="">كل المناطق</option>
-                </select>
+            </select>
             <input type="text" id="wo-filter-fault" placeholder="بحث في العطل/الوصف">
             <select id="wo-filter-dept" class="form-control">
                 <option value="">كل الأقسام</option>
@@ -2660,13 +2664,20 @@
         </div>
         <button id="load-more-active-wo" class="btn btn-outline btn-sm" style="width: 100%; margin-top: 10px; display: none;" onclick="loadMoreActiveOrders()">⬇️ عرض 100 صف إضافي</button>
     </div>
+</div>
+<div id="archive-work-orders-screen" class="screen">
+    <h2 style="color: #27ae60;">✅ أرشيف الإصلاحات (تم الإغلاق)</h2>
+    <button id="back-from-archive" class="btn btn-outline">عودة لإدارة الأوامر</button>
 
-    <div style="margin-top: 40px; border-top: 2px dashed #ccc; padding-top: 20px;">
-        <h3 style="color: #27ae60;">✅ أرشيف الإصلاحات (تم الإغلاق)</h3>
-        <div class="filters-container" style="margin-bottom: 10px;">
-            <input type="text" id="archive-search" placeholder="بحث في الأرشيف..." onkeyup="resetArchiveLimit(); renderWorkOrdersTables()" style="width: 200px; display:inline-block;">
-            <button class="btn btn-excel" onclick="exportWorkOrdersArchive()">تصدير الأرشيف Excel 📥</button>
+    <div style="margin-top: 20px;">
+        <div class="filters-container" style="margin-bottom: 10px; background: #f9f9f9; padding: 15px; border-radius: 8px;">
+            <label>بحث وتصفية الأرشيف:</label>
+            <div style="display: flex; gap: 10px; flex-wrap: wrap; margin-top: 5px;">
+                <input type="text" id="archive-search" placeholder="بحث (المحطة، العطل، القائم بالإصلاح)..." onkeyup="resetArchiveLimit(); renderWorkOrdersTables()" style="flex: 1; min-width: 200px; padding: 8px;">
+                <button class="btn btn-excel" onclick="exportWorkOrdersArchive()">تصدير الأرشيف Excel 📥</button>
+            </div>
         </div>
+        
         <div class="table-responsive">
             <table class="reports-table">
                 <thead>
@@ -2680,7 +2691,6 @@
         <button id="load-more-archive-wo" class="btn btn-outline btn-sm" style="width: 100%; margin-top: 10px; display: none;" onclick="loadMoreArchiveOrders()">⬇️ عرض 100 صف إضافي</button>
     </div>
 </div>
-
 <div id="modal-dept-select" class="custom-modal">
     <div class="modal-content">
         <div class="modal-header"><span>تحويل لأمر شغل</span><span class="close-modal" onclick="closeModal('modal-dept-select')">&times;</span></div>
@@ -6728,7 +6738,7 @@ function updateReportComponents() {
     const components = [
         "منظومة التحضير", "خط الطرد الرئيسي", "منظومة الطرق المائي", 
         "أنظمة التحكم (PLC/SCADA)", "الونش", "لوحات الكهرباء", 
-        "التهوية","شبكات المياه", "التكييفات", "الغواطس", "المحولات", "الإنارة", "تجهيزات ومباني"
+        "التهوية", "التكييفات", "الغواطس", "المحولات", "الإنارة", "تجهيزات ومباني"
     ];
 
     // إضافة المضخات ديناميكياً
@@ -6783,51 +6793,49 @@ db.ref('fault_reports').on('value', (snapshot) => {
     }
 });
 
-// --- دالة عرض جدول البلاغات (المعدلة) ---
+// --- دالة عرض جدول البلاغات (المصححة) ---
 function renderFaultReportsTable() {
     const tbody = document.getElementById('fault-reports-body');
-    tbody.innerHTML = '';
-
+    // لا تقم بمسح الجدول هنا فوراً لتجنب الوميض، انتظر البيانات
+    
     db.ref('fault_reports').orderByChild('timestamp').limitToLast(100).once('value', (snap) => {
         const data = [];
-        snap.forEach(child => {
-            data.unshift({key: child.key, ...child.val()});
-        });
-
-        // الأحدث أولاً
+        snap.forEach(child => { data.unshift({key: child.key, ...child.val()}); }); // الأحدث أولاً
+        
         const filterZone = document.getElementById('filter-report-zone').value;
         const filterStatus = document.getElementById('filter-report-status').value;
         const userType = appData.currentUser ? appData.currentUser.type : 'guest';
-
+        
         // --- الصلاحيات ---
-        // تأكيد المشرف: مشرف، مهندس، مدير
         const canConfirm = ['supervisor', 'engineer', 'admin'].includes(userType);
-        // إجراءات الإدارة (أمر شغل/حذف): مهندس، مدير
-        const canAdminAction = ['engineer', 'admin'].includes(userType); 
-        // تعديل وصف العطل: مدير، مهندس، مشرف (حسب طلبك)
+        const canAdminAction = ['engineer', 'admin'].includes(userType);
         const canEditDesc = ['admin', 'engineer', 'supervisor'].includes(userType);
+        
+        let rowsHtml = ''; // متغير لتجميع كود HTML
 
         data.forEach(item => {
-            // تجاهل ما تم تحويله لأمر شغل (يختفي من هذا الجدول)
+            // تجاهل ما تم تحويله لأمر شغل
             if (item.status === 'work_order' || item.status === 'archived') return;
-
+            
             // الفلاتر
             if (filterZone !== 'all' && item.zone !== filterZone) return;
             if (filterStatus === 'pending' && item.supervisorStatus !== 'pending') return;
             if (filterStatus === 'confirmed' && item.supervisorStatus !== 'confirmed') return;
-
+            
             // تحديد حالة الصف
             let statusBadge = '<span class="status-inactive">انتظار</span>';
             if(item.supervisorStatus === 'confirmed') statusBadge = '<span class="status-active">مؤكد</span>';
             if(item.supervisorStatus === 'cancelled') statusBadge = '<span style="color:red">ملغي</span>';
-
-            // --- 1. تعديل وصف العطل ---
-            let descHtml = item.description;
+            
+            // معالجة الوصف وزر التعديل بشكل آمن
+            let descHtml = item.description || '';
+            const safeDescForEdit = (item.description || '').replace(/'/g, "\\'"); // حماية ضد الأخطاء
+            
             if (canEditDesc) {
-                // إضافة زر التعديل
-                descHtml += ` <span style="cursor:pointer; color:#2980b9; font-size:1.2em;" title="تعديل الوصف" onclick="editReportDescription('${item.key}', '${item.description.replace(/'/g, "\\'") || ''}')">✎</span>`;
+                descHtml += ` <span style="cursor:pointer; color:#2980b9; font-size:1.2em;" 
+                title="تعديل الوصف" onclick="editReportDescription('${item.key}', '${safeDescForEdit}')">✎</span>`;
             }
-
+            
             // أزرار المشرف
             let supBtns = '-';
             if (canConfirm && item.supervisorStatus === 'pending') {
@@ -6836,29 +6844,33 @@ function renderFaultReportsTable() {
                     <button class="btn btn-danger btn-sm" onclick="confirmReport('${item.key}', false)">❌ إلغاء</button>
                 `;
             } else if (item.supervisorStatus !== 'pending') {
-                supBtns = item.supervisorStatus === 'confirmed' ? 
+                const badge = item.supervisorStatus === 'confirmed' ? 
                     '<span style="color:green; font-weight:bold;">تم التأكيد</span>' : 
                     '<span style="color:red; font-weight:bold;">تم الإلغاء</span>';
+                const supervisorName = item.confirmedBy || 'غير مسجل';
+                supBtns = `
+                    <div>${badge}</div>
+                    <div style="font-size: 0.85rem; color: #555; margin-top: 4px;"> 👤 ${supervisorName} </div>
+                `;
             }
-
-            // --- 2. أزرار الإدارة (تعديل الأزرار) ---
+            
+            // أزرار الإدارة
             let adminBtns = '-';
             if (canAdminAction) {
                 if (item.supervisorStatus === 'confirmed') {
-                    // حالة: مؤكد -> زر (أمر شغل) وزر (حذف)
                     adminBtns = `
                         <button class="btn btn-primary btn-sm" onclick="openWorkOrderModal('${item.key}')">🛠️ أمر شغل</button>
                         <button class="btn btn-danger btn-sm" onclick="deleteReport('${item.key}')">🗑️ حذف</button>
                     `;
                 } else if (item.supervisorStatus === 'cancelled') {
-                    // حالة: ملغي من المشرف -> زر (حذف) فقط
                     adminBtns = `
                         <button class="btn btn-danger btn-sm" onclick="deleteReport('${item.key}')">🗑️ حذف</button>
                     `;
                 }
             }
-
-            tbody.innerHTML += `
+            
+            // تجميع الصف
+            rowsHtml += `
                 <tr>
                     <td>${item.date}<br>${item.time}</td>
                     <td>${item.zone}<br><b>${item.station}</b></td>
@@ -6871,31 +6883,11 @@ function renderFaultReportsTable() {
                 </tr>
             `;
         });
+        
+        // تحديث الجدول مرة واحدة فقط في النهاية
+        tbody.innerHTML = rowsHtml;
     });
 }
-
-// --- دوال جديدة تضاف للكود (خارج الدالة السابقة) ---
-
-// دالة حذف البلاغ نهائياً
-window.deleteReport = function(key) {
-    if(!confirm("هل أنت متأكد من حذف هذا البلاغ نهائياً من السجل؟")) return;
-    db.ref(`fault_reports/${key}`).remove()
-      .then(() => { renderFaultReportsTable(); })
-      .catch(err => alert("حدث خطأ: " + err.message));
-};
-
-// دالة تعديل وصف العطل
-window.editReportDescription = function(key, currentDesc) {
-    const newDesc = prompt("تعديل وصف العطل:", currentDesc);
-    if(newDesc !== null && newDesc.trim() !== "" && newDesc !== currentDesc) {
-        db.ref(`fault_reports/${key}`).update({ description: newDesc })
-          .then(() => { 
-              renderFaultReportsTable(); // تحديث الجدول لإظهار التعديل
-          })
-          .catch(err => alert("حدث خطأ أثناء التعديل: " + err.message));
-    }
-};
-
 // 5. إجراءات الجدول (تأكيد / تحويل)
 window.confirmReport = function(key, isConfirmed) {
     if(!confirm(isConfirmed ? "تأكيد صحة البلاغ؟" : "هل أنت متأكد من إلغاء البلاغ؟")) return;
@@ -6904,12 +6896,12 @@ window.confirmReport = function(key, isConfirmed) {
         confirmedBy: appData.currentUser.username
     });
 };
-
-window.cancelReportFinal = function(key) {
-    if(!confirm("إغلاق البلاغ نهائياً بدون أمر شغل؟")) return;
-    db.ref(`fault_reports/${key}`).update({ status: 'archived_cancelled' });
+window.deleteReport = function(key) {
+    if(!confirm("هل أنت متأكد من حذف هذا البلاغ نهائياً من السجل؟")) return;
+    db.ref(`fault_reports/${key}`).remove()
+    // تم إزالة renderFaultReportsTable() لأن التحديث سيحدث تلقائياً
+    .catch(err => alert("حدث خطأ: " + err.message));
 };
-
 // Modal Handling
 window.openWorkOrderModal = function(key) {
     currentReportId = key;
@@ -6962,8 +6954,6 @@ document.getElementById('btn-confirm-work-order').addEventListener('click', () =
             db.ref(`fault_reports/${currentReportId}`).update({ status: 'work_order' });
             closeModal('modal-dept-select');
             alert("تم إصدار أمر الشغل بنجاح وتحويله للقسم المختص 🛠️");
-            // الانتقال لشاشة أوامر الشغل
-            showScreen('work-orders');
             renderWorkOrdersTables();
         });
     });
@@ -7292,10 +7282,18 @@ function exportActiveWorkOrders() {
         XLSX.writeFile(wb, `اوامر_شغل_جارية_${getStandardDateTime().date.replace(/\//g,'-')}.xlsx`);
     });
 }
-// استدعاء هذه الدالة عند الدخول
-// (ابحث عن document.getElementById('login-btn').addEventListener... وأضف updateMenuPermissions() بعد نجاح الدخول)
+document.getElementById('btn-go-to-archive').addEventListener('click', () => {
+    showScreen('archive-work-orders');
+    // إعادة تعيين الحد وعرض البيانات عند الدخول للشاشة
+    resetArchiveLimit(); 
+    renderWorkOrdersTables(); 
+});
+
+// 2. تفعيل زر العودة من الأرشيف إلى شاشة الأوامر
+document.getElementById('back-from-archive').addEventListener('click', () => {
+    showScreen('work-orders');
+});
     </script>
 </body>
 </html>
-
 
