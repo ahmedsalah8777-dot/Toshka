@@ -2479,7 +2479,7 @@
     <div class="filter-item"><label>إلى تاريخ</label><input type="date" id="filter-date-to"></div>
     
     <div class="filter-item" style="display:flex; align-items:flex-end;">
-        <button class="btn btn-primary" onclick="fetchDeepHistory()" style="width:100%">جلب بيانات قديمة وبحث 🔍</button>
+        <button class="btn btn-primary" onclick="renderHistoryTable(true)" style="width:100%">بحث وتصفية 🔍</button>
     </div>
 
     <div class="filter-item" style="display:flex; align-items:flex-end; gap: 5px;">
@@ -3087,29 +3087,34 @@ function updateNetworkStatus() {
             if(cachedProfiles) {
                 appData.userProfiles = JSON.parse(cachedProfiles);
             }
-const stationsRef = db.ref('stations');
-stationsRef.on('child_added', (snapshot) => {
-    const sData = snapshot.val();
-    appData.stations[snapshot.key] = sData;
-    localStorage.setItem('toshka_stations_cache', JSON.stringify(appData.stations));
-    if (document.getElementById('stations-screen').classList.contains('active')) {
-        const activeTab = document.querySelector('.nav-tab.active');
-        renderStations(activeTab ? activeTab.dataset.zone : 'all');
-    }
-});
-stationsRef.on('child_changed', (snapshot) => {
-    const sData = snapshot.val();
-    appData.stations[snapshot.key] = sData; // تحديث المحطة المتغيرة فقط في الذاكرة
-    localStorage.setItem('toshka_stations_cache', JSON.stringify(appData.stations));
-    if (document.getElementById('stations-screen').classList.contains('active')) {
-        const activeTab = document.querySelector('.nav-tab.active');
-        renderStations(activeTab ? activeTab.dataset.zone : 'all');
-    }
-    if (document.getElementById('station-screen').classList.contains('active') && 
-        appData.currentStation === snapshot.key) {
-        showStationDetails(snapshot.key);
-    }
-});
+
+            db.ref('stations').on('value', (snapshot) => {
+                let data = snapshot.val();
+                if (!data) { forceRepairStations(); } 
+                else { 
+                    appData.stations = data; 
+                    localStorage.setItem('toshka_stations_cache', JSON.stringify(data)); 
+                    forceRepairStations(); 
+                }
+                
+                if (document.getElementById('stations-screen').classList.contains('active')) {
+                    const activeTab = document.querySelector('.nav-tab.active');
+                    renderStations(activeTab ? activeTab.dataset.zone : 'all');
+                }
+                if (document.getElementById('station-screen').classList.contains('active') && appData.currentStation) {
+                    showStationDetails(appData.currentStation);
+                }
+                if (document.getElementById('user-profile-screen').classList.contains('active')) {
+                    renderUserProfileForm();
+                    renderUsersProfilesList();
+                }
+                if (document.getElementById('users-data-screen').classList.contains('active')) {
+                    renderUsersDataManagement();
+                }
+                if (document.getElementById('inspection-export-screen').classList.contains('active')) {
+                    updateExportFilters();
+                }
+            });
             
             db.ref('users').on('value', (snapshot) => {
                 const loginBtn = document.getElementById('login-btn');
@@ -3167,31 +3172,24 @@ stationsRef.on('child_changed', (snapshot) => {
                     renderUsersDataManagement();
                 }
             });
-db.ref('history').limitToLast(50).on('value', (snapshot) => {
-    const val = snapshot.val();
-    if(val) {
-        appData.operationHistory = Object.values(val).reverse();
-        cleanHistoricalData();
-    } else {
-        appData.operationHistory = [];
-    }
-    if (document.getElementById('history-screen').classList.contains('active')) {
-        renderHistoryTable(false); // false تعني عدم تطبيق فلاتر البحث المعقدة حالياً
-    }
-});
-db.ref('faults_log').orderByChild('active').equalTo(true).on('value', (snapActive) => {
-    const activeFaults = [];
-    snapActive.forEach(c => activeFaults.push(c.val()));
-});
-db.ref('faults_log').limitToLast(100).on('value', (snapshot) => {
-    const val = snapshot.val();
-    if (val) appData.faultsLog = Array.isArray(val) ? val : Object.values(val);
-    else appData.faultsLog = [];
-    
-    if (document.getElementById('faults-log-screen').classList.contains('active')) {
-        renderFaultsLog();
-    }
-});
+            
+            db.ref('history').limitToLast(20000).on('value', (snapshot) => {
+                const val = snapshot.val();
+                if(val) {
+                    appData.operationHistory = Object.values(val).reverse();
+                    cleanHistoricalData();
+                }
+                else appData.operationHistory = [];
+                if (document.getElementById('history-screen').classList.contains('active')) renderHistoryTable(true);
+            });
+            
+            db.ref('faults_log').on('value', (snapshot) => {
+                const val = snapshot.val();
+                if (val) appData.faultsLog = Array.isArray(val) ? val : Object.values(val);
+                else appData.faultsLog = [];
+                if (document.getElementById('faults-log-screen').classList.contains('active')) renderFaultsLog();
+            });
+            
             db.ref('consumption_logs').on('value', (snapshot) => {
                 const val = snapshot.val();
                 if(val) appData.consumptionLog = Object.values(val);
@@ -7303,38 +7301,15 @@ function exportActiveWorkOrders() {
 }
 document.getElementById('btn-go-to-archive').addEventListener('click', () => {
     showScreen('archive-work-orders');
+    // إعادة تعيين الحد وعرض البيانات عند الدخول للشاشة
     resetArchiveLimit(); 
     renderWorkOrdersTables(); 
 });
+
+// 2. تفعيل زر العودة من الأرشيف إلى شاشة الأوامر
 document.getElementById('back-from-archive').addEventListener('click', () => {
     showScreen('work-orders');
 });
-function fetchDeepHistory() {
-    const btn = document.querySelector('#history-screen .btn-primary');
-    const originalText = "جلب بيانات قديمة وبحث 🔍";
-    btn.disabled = true;
-    btn.textContent = "جاري الاتصال بالسيرفر... ⏳";
-    db.ref('history').orderByKey().limitToLast(2000).once('value')
-        .then((snapshot) => {
-            const val = snapshot.val();
-            if(val) {
-                appData.operationHistory = Object.values(val).reverse();
-                renderHistoryTable(true);
-
-                alert(`تم جلب أحدث ${appData.operationHistory.length} سجل بنجاح ✅`);
-            } else {
-                alert("لا توجد بيانات في السجل.");
-            }
-            btn.disabled = false;
-            btn.textContent = originalText;
-        })
-        .catch((error) => {
-            console.error("Error fetching history:", error);
-            alert("حدث خطأ أثناء جلب البيانات: " + error.message);
-            btn.disabled = false;
-            btn.textContent = originalText;
-        });
-}
     </script>
 </body>
 </html>
