@@ -1,7 +1,7 @@
 export default {
   async fetch(request) {
-    return new Response("Hello Toshka! The Worker is running.", {
-      headers: { "content-type": "text/plain" },
+    return new Response("مرحباً! تطبيق توشكى يعمل بنجاح.", {
+      headers: { "content-type": "text/plain; charset=utf-8" },
     });
   },
 };
