@@ -1,3 +1,7 @@
-name = "toshka"
-main = "index.js"
-compatibility_date = "2024-12-20"
+export default {
+  async fetch(request) {
+    return new Response("Hello Toshka! The Worker is running.", {
+      headers: { "content-type": "text/plain" },
+    });
+  },
+};
