@@ -2735,6 +2735,29 @@
         <button id="btn-confirm-fix" class="btn btn-success" style="width: 100%;">تأكيد وإغلاق الأمر ✅</button>
     </div>
 </div>
+<div id="modal-freeze" class="custom-modal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <span id="freeze-modal-title">❄️ تجميد أمر الشغل</span>
+            <span class="close-modal" onclick="closeModal('modal-freeze')">&times;</span>
+        </div>
+        
+        <div class="form-group">
+            <label>سبب تجميد عملية الإصلاح <span style="color:red">*</span></label>
+            <textarea id="freeze-reason-input" rows="3" class="input-field" placeholder="اكتب سبب توقف/تجميد العمل..."></textarea>
+        </div>
+        
+        <div class="form-group">
+            <label>قام بالتجميد</label>
+            <input type="text" id="freeze-user-input" readonly style="background: #eee; font-weight: bold;">
+        </div>
+
+        <div style="display: flex; gap: 10px; margin-top: 15px;">
+            <button id="btn-save-freeze" class="btn btn-warning" style="flex: 1;">💾 حفظ التجميد</button>
+            <button id="btn-resolve-from-freeze" class="btn btn-success" style="flex: 1; display: none;">✅ تم الإصلاح</button>
+        </div>
+    </div>
+</div>
 
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
@@ -7109,27 +7132,54 @@ document.getElementById('work-orders-btn').addEventListener('click', () => {
     renderWorkOrdersTables();
 });
 
-// --- الدالة الرئيسية لعرض الجداول (معدلة) ---
+// --- الدالة الرئيسية لعرض الجداول (معدلة بالكامل) ---
+// --- الدالة الرئيسية لعرض الجداول (المصححة) ---
 function renderWorkOrdersTables() {
     const activeBody = document.getElementById('active-work-orders-body');
     const archiveBody = document.getElementById('archive-work-orders-body');
     
+    // التأكد من وجود العناصر قبل البدء لتجنب الأخطاء
+    if (!activeBody || !archiveBody) return;
+
     // قراءة قيم الفلاتر الجارية
-    const fZone = document.getElementById('wo-filter-zone').value;
-    const fFault = document.getElementById('wo-filter-fault').value.toLowerCase();
-    const fDept = document.getElementById('wo-filter-dept').value;
-    const fDuration = parseInt(document.getElementById('wo-filter-duration').value) || 0;
+    const fZoneElement = document.getElementById('wo-filter-zone');
+    const fZone = fZoneElement ? fZoneElement.value : '';
     
-    // قراءة بحث الأرشيف
-    const searchArchive = document.getElementById('archive-search').value.toLowerCase();
+    const fFaultElement = document.getElementById('wo-filter-fault');
+    const fFault = fFaultElement ? fFaultElement.value.toLowerCase() : '';
+    
+    const fDeptElement = document.getElementById('wo-filter-dept');
+    const fDept = fDeptElement ? fDeptElement.value : '';
+    
+    const fDurationElement = document.getElementById('wo-filter-duration');
+    const fDuration = fDurationElement ? (parseInt(fDurationElement.value) || 0) : 0;
+    
+    const searchArchiveElement = document.getElementById('archive-search');
+    const searchArchive = searchArchiveElement ? searchArchiveElement.value.toLowerCase() : '';
 
     activeBody.innerHTML = '';
     archiveBody.innerHTML = '';
     const now = Date.now();
 
+    // التأكد من وجود حدود للصفحات، إذا لم تكن موجودة نضع قيمة افتراضية
+    if (typeof appData.activeOrdersLimit === 'undefined') appData.activeOrdersLimit = 100;
+    if (typeof appData.archiveOrdersLimit === 'undefined') appData.archiveOrdersLimit = 100;
+
+    // تهيئة مخزن البيانات للأوامر (هام جداً لعمل النافذة العائمة)
+    appData.workOrders = {};
+
+    // جلب البيانات من Firebase مباشرة
     db.ref('work_orders').once('value', (snap) => {
         let allOrders = [];
-        snap.forEach(c => { allOrders.push({key: c.key, ...c.val()}); });
+        
+        snap.forEach(c => { 
+            const val = c.val();
+            const key = c.key;
+            // تخزين البيانات في appData لكي تستخدمها نوافذ التجميد والإصلاح
+            appData.workOrders[key] = val; 
+            // إضافتها للمصفوفة للمعالجة
+            allOrders.push({key: key, ...val}); 
+        });
 
         // ترتيب: الأحدث أولاً
         allOrders.sort((a, b) => (b.startTimestamp || 0) - (a.startTimestamp || 0));
@@ -7144,17 +7194,18 @@ function renderWorkOrdersTables() {
             const diffTime = Math.abs(now - startTs);
             const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)); 
 
-            // منطق التصفية للأوامر الجارية
+            // 1. منطق التصفية للأوامر الجارية (Active)
             if (order.status === 'active') {
                 let match = true;
-                if (fZone && order.zone !== fZone) match = false;
+                if (fZone && fZone !== 'all' && order.zone !== fZone) match = false;
                 if (fDept && order.departments && !order.departments.includes(fDept)) match = false;
-                if (fFault && !((order.component || '').toLowerCase().includes(fFault) || (order.description || '').toLowerCase().includes(fFault))) match = false;
+                if (fFault && !((order.component || '').toLowerCase().includes(fFault) ||
+                    (order.description || '').toLowerCase().includes(fFault))) match = false;
                 if (fDuration > 0 && diffDays < fDuration) match = false;
 
                 if (match) activeOrders.push({...order, diffDays});
             } 
-            // منطق التصفية للأرشيف
+            // 2. منطق التصفية للأرشيف (Fixed)
             else if (order.status === 'fixed') {
                 const text = `${order.station} ${order.component} ${order.description} ${order.fixDescription}`.toLowerCase();
                 if (!searchArchive || text.includes(searchArchive)) {
@@ -7163,15 +7214,17 @@ function renderWorkOrdersTables() {
             }
         });
 
-        // --- عرض الأوامر الجارية (Active) مع Pagination ---
+        // --- عرض الأوامر الجارية (Active) ---
         if (activeOrders.length === 0) {
-            activeBody.innerHTML = '<tr><td colspan="7" style="text-align:center; padding:15px;">لا توجد أوامر شغل مطابقة للفلاتر</td></tr>';
-            document.getElementById('load-more-active-wo').style.display = 'none';
+            activeBody.innerHTML = '<tr><td colspan="8" style="text-align:center; padding:15px; color:#777;">لا توجد أوامر شغل مطابقة للفلاتر</td></tr>';
+            const btnLoadMore = document.getElementById('load-more-active-wo');
+            if(btnLoadMore) btnLoadMore.style.display = 'none';
         } else {
-            // تطبيق الحد الأقصى (Limit)
+            // تطبيق الحد الأقصى للعرض
             const displayedActive = activeOrders.slice(0, appData.activeOrdersLimit);
             
             displayedActive.forEach(order => {
+                // تنسيق الأقسام
                 let deptsHtml = '';
                 if (order.departments && Array.isArray(order.departments)) {
                     order.departments.forEach(d => {
@@ -7185,39 +7238,61 @@ function renderWorkOrdersTables() {
                     });
                 } else { deptsHtml = '<span style="color:#999; font-size:0.8rem;">عام</span>'; }
 
+                // --- منطق الأزرار وحالة التجميد ---
+                let actionButtons = '';
+                let rowStyle = '';
+
+                if (order.isFrozen) {
+                    // حالة التجميد
+                    rowStyle = 'background-color: #fff8e1; border-right: 4px solid #f39c12;'; 
+                    actionButtons = `
+                        <button class="btn btn-warning btn-sm" onclick="openFreezeModal('${order.key}')" title="عرض سبب التجميد / تعديل" style="width:100%">
+                            ❄️ مجمد (عرض السبب)
+                        </button>
+                    `;
+                } else {
+                    // الحالة العادية
+                    actionButtons = `
+                        <div style="display:flex; gap:5px;">
+                            <button class="btn btn-warning btn-sm" onclick="openFreezeModal('${order.key}')" title="تجميد العمل" style="flex:1">❄️ تجميد</button>
+                            <button class="btn btn-success btn-sm" onclick="openFixModal('${order.key}')" title="تم الإصلاح" style="flex:1">✅ تم</button>
+                        </div>
+                    `;
+                }
+
                 activeBody.innerHTML += `
-    <tr>
-        <td>${order.startDate || '-'}</td>
-        <td>${order.zone || ''}<br><b>${order.station || ''}</b></td>
-        <td>${deptsHtml}</td>
-        <td>${order.component || ''}</td>
-        <td>${order.description || ''}</td>
-        <td>${order.issuedBy || '-'}</td> <td style="color:red; font-weight:bold">${order.diffDays} يوم</td>
-        <td>
-            <button class="btn btn-success btn-sm" onclick="openFixModal('${order.key}')">✅ تم الإصلاح</button>
-        </td>
-    </tr>
-`;
+                    <tr style="${rowStyle}">
+                        <td>${order.startDate || '-'}</td>
+                        <td>${order.zone || ''}<br><b>${order.station || ''}</b></td>
+                        <td>${deptsHtml}</td>
+                        <td>${order.component || ''}</td>
+                        <td>${order.description || ''}</td>
+                        <td>${order.issuedBy || '-'}</td>
+                        <td style="color:${order.isFrozen ? '#e67e22' : 'red'}; font-weight:bold">${order.diffDays} يوم</td>
+                        <td>${actionButtons}</td>
+                    </tr>
+                `;
             });
 
-            // إظهار زر المزيد إذا كان هناك بيانات متبقية
+            // زر المزيد
             const btnLoadMore = document.getElementById('load-more-active-wo');
-            if (activeOrders.length > appData.activeOrdersLimit) {
-                btnLoadMore.style.display = 'block';
-                btnLoadMore.textContent = `⬇️ عرض المزيد (${activeOrders.length - appData.activeOrdersLimit} متبقي)`;
-            } else {
-                btnLoadMore.style.display = 'none';
+            if (btnLoadMore) {
+                if (activeOrders.length > appData.activeOrdersLimit) {
+                    btnLoadMore.style.display = 'block';
+                    btnLoadMore.textContent = `⬇️ عرض المزيد (${activeOrders.length - appData.activeOrdersLimit} متبقي)`;
+                } else {
+                    btnLoadMore.style.display = 'none';
+                }
             }
         }
 
-        // --- عرض الأرشيف (Archive) مع Pagination ---
+        // --- عرض الأرشيف (Archive) ---
         if (archiveOrders.length === 0) {
-            archiveBody.innerHTML = '<tr><td colspan="7" style="text-align:center; padding:15px;">لا توجد نتائج في الأرشيف</td></tr>';
-            document.getElementById('load-more-archive-wo').style.display = 'none';
+            archiveBody.innerHTML = '<tr><td colspan="7" style="text-align:center; padding:15px; color:#777;">لا توجد نتائج في الأرشيف</td></tr>';
+            const btnLoadMoreArch = document.getElementById('load-more-archive-wo');
+            if(btnLoadMoreArch) btnLoadMoreArch.style.display = 'none';
         } else {
-            // تطبيق الحد الأقصى (Limit)
             const displayedArchive = archiveOrders.slice(0, appData.archiveOrdersLimit);
-
             displayedArchive.forEach(order => {
                 let deptsHtml = '';
                 if (order.departments && Array.isArray(order.departments)) {
@@ -7245,18 +7320,18 @@ function renderWorkOrdersTables() {
                 `;
             });
 
-            // إظهار زر المزيد للأرشيف
             const btnLoadMoreArch = document.getElementById('load-more-archive-wo');
-            if (archiveOrders.length > appData.archiveOrdersLimit) {
-                btnLoadMoreArch.style.display = 'block';
-                btnLoadMoreArch.textContent = `⬇️ عرض المزيد (${archiveOrders.length - appData.archiveOrdersLimit} متبقي)`;
-            } else {
-                btnLoadMoreArch.style.display = 'none';
+            if(btnLoadMoreArch) {
+                if (archiveOrders.length > appData.archiveOrdersLimit) {
+                    btnLoadMoreArch.style.display = 'block';
+                    btnLoadMoreArch.textContent = `⬇️ عرض المزيد (${archiveOrders.length - appData.archiveOrdersLimit} متبقي)`;
+                } else {
+                    btnLoadMoreArch.style.display = 'none';
+                }
             }
         }
     });
 }
-
 // --- دالة تصدير أوامر الشغل الجارية (المفلترة) ---
 function exportActiveWorkOrders() {
     // نستخدم نفس منطق الفلترة للحصول على البيانات
@@ -7313,8 +7388,67 @@ document.getElementById('btn-go-to-archive').addEventListener('click', () => {
 document.getElementById('back-from-archive').addEventListener('click', () => {
     showScreen('work-orders');
 });
+// متغير لتخزين معرف الأمر الحالي
+let currentFreezeOrderId = null;
+
+function openFreezeModal(orderId) {
+    currentFreezeOrderId = orderId;
+    
+    // جلب بيانات الأمر من الذاكرة
+    const order = appData.workOrders[orderId];
+    if (!order) {
+        alert("حدث خطأ: لم يتم العثور على بيانات الأمر");
+        return;
+    }
+
+    const modal = document.getElementById('modal-freeze');
+    const title = document.getElementById('freeze-modal-title');
+    const reasonInput = document.getElementById('freeze-reason-input');
+    const userInput = document.getElementById('freeze-user-input');
+    const saveBtn = document.getElementById('btn-save-freeze');
+    const resolveBtn = document.getElementById('btn-resolve-from-freeze');
+    
+    // تحديد المستخدم الحالي
+    const currentUser = appData.currentUser ? (appData.currentUser.username || appData.currentUser.name) : 'مستخدم النظام';
+
+    if (order.isFrozen) {
+        // --- حالة الأمر مجمد بالفعل (تعديل أو إصلاح) ---
+        title.textContent = "❄️ تفاصيل التجميد (تعديل)";
+        reasonInput.value = order.freezeReason || '';
+        userInput.value = order.frozenBy || currentUser;
+        
+        saveBtn.innerHTML = "💾 تعديل السبب";
+        resolveBtn.style.display = "inline-block"; // إظهار زر الإصلاح
+        
+        // ** التعديل الهام هنا: ربط الزر بدالة openFixModal **
+        resolveBtn.onclick = function() {
+            closeModal('modal-freeze'); // إغلاق نافذة التجميد أولاً
+            
+            // تأخير بسيط جداً لضمان عدم تداخل النوافذ (اختياري لكن مفضل)
+            setTimeout(() => {
+                if (typeof openFixModal === 'function') {
+                    openFixModal(orderId); // استدعاء نافذة الإصلاح الأصلية
+                } else {
+                    console.error("دالة openFixModal غير موجودة");
+                    alert("عفواً، دالة إنهاء الإصلاح غير معرفة بشكل صحيح.");
+                }
+            }, 100);
+        };
+
+    } else {
+        // --- حالة الأمر جديد (تجميد لأول مرة) ---
+        title.textContent = "❄️ تجميد أمر الشغل";
+        reasonInput.value = '';
+        userInput.value = currentUser;
+        
+        saveBtn.innerHTML = "❄️ حفظ وتجميد";
+        resolveBtn.style.display = "none"; // إخفاء زر الإصلاح في هذه الحالة
+    }
+
+    // عرض النافذة
+    modal.classList.add('show');
+}
     </script>
 </body>
 </html>
-
 
