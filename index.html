@@ -7392,15 +7392,16 @@ document.getElementById('back-from-archive').addEventListener('click', () => {
 let currentFreezeOrderId = null;
 
 function openFreezeModal(orderId) {
-    currentFreezeOrderId = orderId;
+    currentFreezeOrderId = orderId; // تخزين المعرف لاستخدامه عند الحفظ
     
-    // جلب بيانات الأمر من الذاكرة
-    const order = appData.workOrders[orderId];
+    // جلب بيانات الأمر من الذاكرة المحلية للتطبيق
+    const order = appData.workOrders[orderId]; 
     if (!order) {
-        alert("حدث خطأ: لم يتم العثور على بيانات الأمر");
+        alert("عفواً، لم يتم العثور على بيانات هذا الأمر.");
         return;
     }
 
+    // تعريف عناصر النافذة المنبثقة (Modal Elements)
     const modal = document.getElementById('modal-freeze');
     const title = document.getElementById('freeze-modal-title');
     const reasonInput = document.getElementById('freeze-reason-input');
@@ -7408,47 +7409,82 @@ function openFreezeModal(orderId) {
     const saveBtn = document.getElementById('btn-save-freeze');
     const resolveBtn = document.getElementById('btn-resolve-from-freeze');
     
-    // تحديد المستخدم الحالي
-    const currentUser = appData.currentUser ? (appData.currentUser.username || appData.currentUser.name) : 'مستخدم النظام';
-
-    if (order.isFrozen) {
-        // --- حالة الأمر مجمد بالفعل (تعديل أو إصلاح) ---
-        title.textContent = "❄️ تفاصيل التجميد (تعديل)";
-        reasonInput.value = order.freezeReason || '';
-        userInput.value = order.frozenBy || currentUser;
-        
-        saveBtn.innerHTML = "💾 تعديل السبب";
-        resolveBtn.style.display = "inline-block"; // إظهار زر الإصلاح
-        
-        // ** التعديل الهام هنا: ربط الزر بدالة openFixModal **
-        resolveBtn.onclick = function() {
-            closeModal('modal-freeze'); // إغلاق نافذة التجميد أولاً
-            
-            // تأخير بسيط جداً لضمان عدم تداخل النوافذ (اختياري لكن مفضل)
-            setTimeout(() => {
-                if (typeof openFixModal === 'function') {
-                    openFixModal(orderId); // استدعاء نافذة الإصلاح الأصلية
-                } else {
-                    console.error("دالة openFixModal غير موجودة");
-                    alert("عفواً، دالة إنهاء الإصلاح غير معرفة بشكل صحيح.");
-                }
-            }, 100);
-        };
-
-    } else {
-        // --- حالة الأمر جديد (تجميد لأول مرة) ---
-        title.textContent = "❄️ تجميد أمر الشغل";
-        reasonInput.value = '';
-        userInput.value = currentUser;
-        
-        saveBtn.innerHTML = "❄️ حفظ وتجميد";
-        resolveBtn.style.display = "none"; // إخفاء زر الإصلاح في هذه الحالة
-    }
+    // تحديد المستخدم الحالي (من قام بالإجراء)
+    const currentUser = appData.currentUser ? 
+        (appData.currentUser.username || appData.currentUser.name) : 'مستخدم النظام';
 
     // عرض النافذة
     modal.classList.add('show');
+
+    // === التحقق من حالة الأمر (هل هو مجمد حالياً أم جديد؟) ===
+    if (order.isFrozen) {
+        // --- السيناريو 1: الأمر مجمد بالفعل (عرض/تعديل السبب + زر إصلاح) ---
+        title.textContent = "❄️ تفاصيل التجميد (تعديل)";
+        reasonInput.value = order.freezeReason || ''; // عرض السبب القديم
+        userInput.value = order.frozenBy || currentUser;
+        
+        saveBtn.textContent = "💾 تعديل السبب";
+        saveBtn.className = "btn btn-warning"; // لون أصفر للتعديل
+        
+        // إظهار زر "تم الإصلاح"
+        resolveBtn.style.display = "inline-block";
+        
+        // ** برمجة زر "تم الإصلاح" داخل نافذة التجميد **
+        resolveBtn.onclick = function() {
+            closeModal('modal-freeze'); // إغلاق نافذة التجميد
+            // فتح نافذة الإصلاح الأصلية (بنفس منطق الزر المباشر)
+            setTimeout(() => {
+                openFixModal(orderId); 
+            }, 200); // تأخير بسيط لضمان إغلاق النافذة الأولى
+        };
+
+    } else {
+        // --- السيناريو 2: تجميد لأول مرة ---
+        title.textContent = "❄️ تجميد أمر الشغل";
+        reasonInput.value = ''; // تفريغ الحقل للكتابة الجديدة
+        userInput.value = currentUser;
+        
+        saveBtn.textContent = "❄️ حفظ وتجميد";
+        saveBtn.className = "btn btn-warning";
+        
+        // إخفاء زر "تم الإصلاح" (لأنه يجب تجميده أولاً)
+        resolveBtn.style.display = "none";
+    }
+
+    // === برمجة زر الحفظ (Save Button Logic) - الجزء المفقود ===
+    saveBtn.onclick = function() {
+        const reason = reasonInput.value.trim();
+        
+        if (!reason) {
+            alert("⚠️ يجب كتابة سبب تجميد العمل!");
+            reasonInput.focus();
+            return;
+        }
+
+        // تجهيز البيانات للتحديث في Firebase
+        const updates = {
+            isFrozen: true,            // علامة أن الأمر مجمد
+            freezeReason: reason,      // سبب التجميد
+            frozenBy: userInput.value, // من قام بالتجميد
+            frozenAt: getStandardDateTime().full // توقيت التجميد
+        };
+
+        // الحفظ في قاعدة البيانات
+        db.ref('work_orders/' + orderId).update(updates)
+            .then(() => {
+                alert("✅ تم حفظ حالة التجميد بنجاح");
+                closeModal('modal-freeze');
+                renderWorkOrdersTables(); // تحديث الجدول فوراً لتغيير الأزرار
+            })
+            .catch(error => {
+                alert("حدث خطأ أثناء الحفظ: " + error.message);
+            });
+    };
+}
+
+ function closeModal(modalId) {
+    document.getElementById(modalId).classList.remove('show');
 }
     </script>
 </body>
 </html>
-
