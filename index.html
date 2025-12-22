@@ -3611,11 +3611,14 @@ window.handleTabClick = (zone, btn) => {
                 if (currentPressure > maxPressure) {
                     pressureWarningHtml = `<span class="pressure-warning" title="الضغط أعلى من المسموح به (${maxPressure} Bar)">!</span>`;
                 }
-
-                card.innerHTML = `
+card.innerHTML = `
                     <div style="font-weight:bold; color:var(--primary-color)">${missedUpdateHtml}${s.name}</div>
-                    <span class="station-status ${s.status === 'نشطة' ? 'status-active' : 'status-inactive'}">${s.status}</span>
+                    <div style="display:flex; gap:5px; margin-bottom:5px;">
+                        <span class="station-status ${s.status === 'نشطة' ? 'status-active' : 'status-inactive'}">${s.status}</span>
+                        <span class="station-status" style="background-color:#e3f2fd; color:#0d47a1; border:1px solid #bbdefb;">${s.systemMode || '-'}</span>
+                    </div>
                     ${faultHtml}
+            
                     <div style="margin-top:10px; font-size:13px;">
                         <div>الضغط: ${pressureWarningHtml}${s.pressure} Bar</div>
                         <div>الجهد: ${s.voltage} V</div>
