@@ -2061,6 +2061,25 @@
     color: #856404;
     border: 1px solid #ffeeba;
 }
+/* تنسيق زر الإضافة الجديد */
+#add-new-member-template button {
+    transition: all 0.3s ease;
+}
+
+#add-new-member-template button:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(52, 152, 219, 0.3);
+}
+
+#add-new-member-template {
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+#add-new-member-template:hover {
+    border-color: #2980b9;
+    background: #eaf2f8;
+}
     </style>
 </head>
 <body>
@@ -3583,6 +3602,7 @@ function renderPublicServices() {
 }
 
 // --- عرض فريق الطوارئ ---
+// --- عرض فريق الطوارئ (محدثة) ---
 function renderEmergencyTeam() {
     const container = document.querySelector('#emergency-team-view .emergency-grid');
     if (!container) return;
@@ -3595,8 +3615,22 @@ function renderEmergencyTeam() {
         item.innerHTML = `
             <div class="emergency-icon">${member.icon}</div>
             <div class="emergency-title">${member.name}</div>
-            <div style="color: #666; font-size: 0.9rem; margin-bottom: 8px;">${member.role}</div>
-            <div class="emergency-number">${member.number}</div>
+            <div style="color: #666; font-size: 0.9rem; margin-bottom: 8px;">
+                <span style="background: #e8f5e9; padding: 2px 8px; border-radius: 12px; font-size: 0.8rem;">
+                    ${member.role}
+                </span>
+            </div>
+            <div class="emergency-number">${formatPhoneNumber(member.number)}</div>
+            <div style="margin-top: 10px;">
+                <a href="tel:${member.number}" class="btn btn-sm" 
+                   style="background: #27ae60; color: white; text-decoration: none; padding: 5px 10px; border-radius: 4px; display: inline-block; margin-right: 5px;">
+                   📞 اتصال
+                </a>
+                <a href="https://wa.me/${member.number.replace(/^0/, '+20')}" target="_blank" class="btn btn-sm"
+                   style="background: #25D366; color: white; text-decoration: none; padding: 5px 10px; border-radius: 4px; display: inline-block;">
+                   💬 واتساب
+                </a>
+            </div>
         `;
         container.appendChild(item);
     });
@@ -3609,26 +3643,78 @@ function renderEmergencyTeam() {
             const formItem = document.createElement('div');
             formItem.className = 'emergency-form-item';
             formItem.innerHTML = `
-                <h5>${member.icon} ${member.name}</h5>
-                <div class="form-group">
-                    <label>اسم العضو</label>
-                    <input type="text" class="team-name" value="${member.name}" placeholder="اسم العضو">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                    <h5 style="margin: 0;">${member.icon} العضو #${member.id}</h5>
+                    <button onclick="deleteEmergencyTeamMember(${member.id})" 
+                            class="emergency-delete-btn" style="margin: 0; padding: 4px 8px;">
+                        🗑️ حذف
+                    </button>
                 </div>
                 <div class="form-group">
-                    <label>رقم الهاتف</label>
-                    <input type="text" class="team-number" value="${member.number}" placeholder="رقم الهاتف">
+                    <label>اسم العضو <span style="color: red;">*</span></label>
+                    <input type="text" class="team-name" value="${member.name}" placeholder="اسم العضو" required>
+                </div>
+                <div class="form-group">
+                    <label>رقم الهاتف <span style="color: red;">*</span></label>
+                    <input type="tel" class="team-number" value="${member.number}" placeholder="رقم الهاتف" required>
                 </div>
                 <div class="form-group">
                     <label>الدور/الوظيفة</label>
                     <input type="text" class="team-role" value="${member.role}" placeholder="الدور أو الوظيفة">
                 </div>
-                <button class="emergency-delete-btn" onclick="deleteEmergencyTeamMember(${member.id})">
-                    🗑️ حذف هذا العضو
-                </button>
             `;
             formContainer.appendChild(formItem);
         });
+        
+        // إضافة عنصر فارغ في النهاية لإضافة أعضاء جدد
+        const addNewTemplate = document.createElement('div');
+        addNewTemplate.id = 'add-new-member-template';
+        addNewTemplate.style.textAlign = 'center';
+        addNewTemplate.style.marginTop = '20px';
+        addNewTemplate.style.padding = '15px';
+        addNewTemplate.style.border = '2px dashed #3498db';
+        addNewTemplate.style.borderRadius = '8px';
+        addNewTemplate.style.background = '#f8f9fa';
+        addNewTemplate.innerHTML = `
+            <div style="color: #3498db; font-size: 2rem; margin-bottom: 10px;">👤</div>
+            <div style="color: #2c3e50; font-weight: bold; margin-bottom: 10px;">إضافة عضو جديد لفريق الطوارئ</div>
+            <button onclick="addEmergencyTeamMember()" 
+                    class="btn btn-primary" 
+                    style="background: linear-gradient(135deg, #3498db, #2980b9); color: white; padding: 10px 20px;">
+                ➕ إضافة عضو جديد
+            </button>
+            <p style="color: #666; font-size: 0.85rem; margin-top: 10px;">انقر لإضافة عضو جديد للفريق</p>
+        `;
+        formContainer.appendChild(addNewTemplate);
     }
+}
+
+// --- دالة مساعدة لتنسيق رقم الهاتف ---
+function formatPhoneNumber(phone) {
+    if (!phone) return '';
+    
+    // إزالة جميع الأحرف غير الرقمية
+    let cleanNumber = phone.replace(/\D/g, '');
+    
+    // إذا بدأ بـ 0 نضيف +20
+    if (cleanNumber.startsWith('0')) {
+        cleanNumber = '+20' + cleanNumber.substring(1);
+    }
+    // إذا بدأ بـ 20 نضيف +
+    else if (cleanNumber.startsWith('20')) {
+        cleanNumber = '+' + cleanNumber;
+    }
+    // إذا كان طوله 10 أرقام (بدون مفتاح الدولة)
+    else if (cleanNumber.length === 10) {
+        cleanNumber = '+20' + cleanNumber;
+    }
+    
+    // تنسيق الرقم: +20 XXX XXX XXXX
+    if (cleanNumber.length === 13 && cleanNumber.startsWith('+20')) {
+        return cleanNumber.replace(/(\+20)(\d{3})(\d{3})(\d{4})/, '$1 $2 $3 $4');
+    }
+    
+    return cleanNumber;
 }
 
 // --- عرض معلومات العيادة ---
@@ -3756,7 +3842,18 @@ function setupEventListeners() {
         document.getElementById('emergency-team-edit').style.display = 'block';
     });
     
-    document.getElementById('add-emergency-team-btn').addEventListener('click', addEmergencyTeamMember);
+   document.getElementById('add-emergency-team-btn').addEventListener('click', function() {
+    // الانتقال لوضع التعديل أولاً إذا لم يكن فعالاً
+    if (document.getElementById('emergency-team-edit').style.display !== 'block') {
+        document.getElementById('emergency-team-view').style.display = 'none';
+        document.getElementById('emergency-team-edit').style.display = 'block';
+    }
+    
+    // إضافة عضو جديد بعد الانتقال لوضع التعديل
+    setTimeout(() => {
+        addEmergencyTeamMember();
+    }, 100);
+});
     document.getElementById('save-emergency-team-btn').addEventListener('click', saveEmergencyTeam);
     document.getElementById('cancel-emergency-team-btn').addEventListener('click', () => {
         document.getElementById('emergency-team-edit').style.display = 'none';
@@ -3939,33 +4036,73 @@ window.deletePublicService = function(id) {
     showEmergencyAlert('تم حذف الخدمة', 'warning');
 };
 
-// --- حفظ فريق الطوارئ ---
+// --- حفظ فريق الطوارئ (محدثة) ---
 function saveEmergencyTeam() {
     const formItems = document.querySelectorAll('#emergency-team-form-container .emergency-form-item');
-    const updatedTeam = [];
+    if (formItems.length === 0) {
+        showEmergencyAlert('لا توجد بيانات لحفظها', 'warning');
+        return;
+    }
+    
+    // التحقق من صحة البيانات
+    let isValid = true;
+    const validationErrors = [];
     
     formItems.forEach((item, index) => {
-        const name = item.querySelector('.team-name').value.trim();
-        const number = item.querySelector('.team-number').value.trim();
-        const role = item.querySelector('.team-role').value.trim();
+        const name = item.querySelector('.team-name')?.value.trim() || '';
+        const number = item.querySelector('.team-number')?.value.trim() || '';
+        const role = item.querySelector('.team-role')?.value.trim() || 'عضو فريق طوارئ';
+        
+        // التحقق من البيانات المطلوبة
+        if (!name) {
+            validationErrors.push(`الاسم مطلوب للعضو #${index + 1}`);
+            isValid = false;
+        }
+        if (!number) {
+            validationErrors.push(`رقم الهاتف مطلوب للعضو #${index + 1}`);
+            isValid = false;
+        }
+        
+        // التحقق من تنسيق رقم الهاتف (اختياري)
+        if (number && !/^[0-9+]{10,15}$/.test(number.replace(/\s/g, ''))) {
+            validationErrors.push(`تنسيق رقم الهاتف غير صحيح للعضو #${index + 1}`);
+            isValid = false;
+        }
+    });
+    
+    if (!isValid) {
+        const errorMsg = validationErrors.join('\n');
+        showEmergencyAlert(`الرجاء تصحيح الأخطاء:\n${errorMsg}`, 'error');
+        return;
+    }
+    
+    // تجميع البيانات الصحيحة
+    const updatedTeam = [];
+    let nextId = 1;
+    
+    formItems.forEach((item) => {
+        const name = item.querySelector('.team-name')?.value.trim() || '';
+        const number = item.querySelector('.team-number')?.value.trim() || '';
+        const role = item.querySelector('.team-role')?.value.trim() || 'عضو فريق طوارئ';
         
         if (name && number) {
             updatedTeam.push({
-                id: index + 1,
+                id: nextId++,
                 name: name,
                 number: number,
-                icon: emergencyData.emergencyTeam[index]?.icon || '👨‍💼',
-                role: role || 'عضو فريق طوارئ'
+                icon: '👨‍💼', // أيقونة افتراضية
+                role: role
             });
         }
     });
     
-    // التحقق من وجود أعضاء
+    // التحقق من وجود أعضاء على الأقل
     if (updatedTeam.length === 0) {
-        showEmergencyAlert('يجب إدخال بيانات أعضاء الفريق', 'warning');
+        showEmergencyAlert('يجب إدخال بيانات صحيحة لعضو واحد على الأقل', 'warning');
         return;
     }
     
+    // حفظ البيانات
     const saveBtn = document.getElementById('save-emergency-team-btn');
     const originalText = saveBtn.innerHTML;
     saveBtn.innerHTML = '<span class="loading-spinner"></span> جاري الحفظ...';
@@ -3974,66 +4111,136 @@ function saveEmergencyTeam() {
     db.ref('emergencyData/emergencyTeam').set(updatedTeam)
         .then(() => {
             emergencyData.emergencyTeam = updatedTeam;
+            
+            // العودة لوضع العرض
             document.getElementById('emergency-team-edit').style.display = 'none';
             document.getElementById('emergency-team-view').style.display = 'block';
+            
+            // إعادة عرض البيانات
             renderEmergencyTeam();
-            showEmergencyAlert('تم حفظ بيانات الفريق بنجاح', 'success');
+            
+            // إظهار رسالة نجاح
+            showEmergencyAlert(`تم حفظ بيانات الفريق بنجاح (${updatedTeam.length} عضو)`, 'success');
+            
+            // إعادة تعيين الزر
             saveBtn.innerHTML = originalText;
             saveBtn.disabled = false;
         })
         .catch(error => {
             console.error('Error saving emergency team:', error);
-            showEmergencyAlert('فشل حفظ البيانات', 'error');
+            showEmergencyAlert('فشل حفظ البيانات: ' + error.message, 'error');
+            
+            // إعادة تعيين الزر
             saveBtn.innerHTML = originalText;
             saveBtn.disabled = false;
         });
 }
 
-// --- إضافة عضو جديد لفريق الطوارئ ---
+// --- إضافة عضو جديد لفريق الطوارئ (مصحح) ---
 function addEmergencyTeamMember() {
-    const formContainer = document.getElementById('emergency-team-form-container');
-    const newId = emergencyData.emergencyTeam.length + 1;
+    // الانتقال لوضع التعديل أولاً إذا لم يكن فعالاً
+    if (document.getElementById('emergency-team-edit').style.display !== 'block') {
+        document.getElementById('emergency-team-view').style.display = 'none';
+        document.getElementById('emergency-team-edit').style.display = 'block';
+    }
     
+    const formContainer = document.getElementById('emergency-team-form-container');
+    if (!formContainer) return;
+    
+    // حساب معرف جديد
+    const currentItems = formContainer.querySelectorAll('.emergency-form-item');
+    const newId = currentItems.length + 1;
+    
+    // إنشاء عنصر النموذج الجديد
     const newItem = document.createElement('div');
     newItem.className = 'emergency-form-item';
+    newItem.dataset.tempId = `temp_${Date.now()}`; // معرف مؤقت فريد
     newItem.innerHTML = `
-        <h5>👤 عضو جديد</h5>
-        <div class="form-group">
-            <label>اسم العضو</label>
-            <input type="text" class="team-name" placeholder="اسم العضو">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+            <h5 style="margin: 0;">👤 عضو جديد #${newId}</h5>
+            <button onclick="removeTempTeamMember('${newItem.dataset.tempId}')" 
+                    class="emergency-delete-btn" style="margin: 0; padding: 4px 8px;">
+                حذف
+            </button>
         </div>
         <div class="form-group">
-            <label>رقم الهاتف</label>
-            <input type="text" class="team-number" placeholder="رقم الهاتف">
+            <label>اسم العضو <span style="color: red;">*</span></label>
+            <input type="text" class="team-name" placeholder="مثال: أحمد محمد" required>
+        </div>
+        <div class="form-group">
+            <label>رقم الهاتف <span style="color: red;">*</span></label>
+            <input type="tel" class="team-number" placeholder="مثال: 01012345678" required>
         </div>
         <div class="form-group">
             <label>الدور/الوظيفة</label>
-            <input type="text" class="team-role" placeholder="الدور أو الوظيفة">
+            <input type="text" class="team-role" placeholder="مثال: مهندس أو مشرف">
         </div>
-        <button class="emergency-delete-btn" onclick="deleteEmergencyTeamMember(${newId})">
-            🗑️ حذف هذا العضو
-        </button>
     `;
     
     formContainer.appendChild(newItem);
-    showEmergencyAlert('تمت إضافة خانة جديدة، قم بتعبئتها ثم اضغط حفظ', 'warning');
+    
+    // تمرير للمحتوى الجديد
+    setTimeout(() => {
+        newItem.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        newItem.querySelector('.team-name').focus();
+    }, 100);
+    
+    showEmergencyAlert('تمت إضافة خانة جديدة للعضو، قم بتعبئتها ثم اضغط حفظ', 'warning');
 }
 
-// --- حذف عضو من فريق الطوارئ ---
+// --- دالة مساعدة لحذف العضو المؤقت ---
+window.removeTempTeamMember = function(tempId) {
+    const element = document.querySelector(`.emergency-form-item[data-temp-id="${tempId}"]`);
+    if (element) {
+        element.remove();
+        showEmergencyAlert('تم إزالة العضو الجديد', 'warning');
+    }
+};
+// --- حذف عضو من فريق الطوارئ (محدثة) ---
 window.deleteEmergencyTeamMember = function(id) {
-    if (!confirm('هل أنت متأكد من حذف هذا العضو؟')) return;
+    if (!confirm('هل أنت متأكد من حذف هذا العضو من فريق الطوارئ؟')) return;
     
-    const filteredTeam = emergencyData.emergencyTeam.filter(member => member.id !== id);
-    
-    // تحديث المعرفات
-    const updatedTeam = filteredTeam.map((member, index) => ({
-        ...member,
-        id: index + 1
-    }));
-    
-    emergencyData.emergencyTeam = updatedTeam;
-    renderEmergencyTeam();
-    showEmergencyAlert('تم حذف العضو', 'warning');
+    // إذا كان في وضع التعديل، احذف من القائمة مباشرة
+    if (document.getElementById('emergency-team-edit').style.display === 'block') {
+        const formItems = document.querySelectorAll('#emergency-team-form-container .emergency-form-item');
+        
+        // البحث عن العنصر بحسب المحتوى
+        formItems.forEach(item => {
+            const nameInput = item.querySelector('.team-name');
+            if (nameInput && nameInput.value.includes(id.toString())) {
+                item.remove();
+                showEmergencyAlert('تم حذف العضو من القائمة', 'warning');
+                return;
+            }
+        });
+        
+        // إذا لم نجد بالاسم، نجرب بالرقم التسلسلي
+        if (formItems.length >= id) {
+            formItems[id - 1]?.remove();
+            showEmergencyAlert('تم حذف العضو من القائمة', 'warning');
+        }
+    } else {
+        // إذا كان في وضع العرض، احذف من البيانات المخزنة
+        const filteredTeam = emergencyData.emergencyTeam.filter(member => member.id !== id);
+        
+        // تحديث المعرفات
+        const updatedTeam = filteredTeam.map((member, index) => ({
+            ...member,
+            id: index + 1
+        }));
+        
+        // تحديث Firebase
+        db.ref('emergencyData/emergencyTeam').set(updatedTeam)
+            .then(() => {
+                emergencyData.emergencyTeam = updatedTeam;
+                renderEmergencyTeam();
+                showEmergencyAlert('تم حذف العضو من قاعدة البيانات', 'success');
+            })
+            .catch(error => {
+                console.error('Error deleting team member:', error);
+                showEmergencyAlert('فشل حذف العضو', 'error');
+            });
+    }
 };
 
 // --- حفظ معلومات العيادة ---
