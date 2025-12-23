@@ -3133,6 +3133,7 @@
         </div>
     </div>
 </div>
+
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
     <!-- إضافة مكتبة SheetJS لتصدير Excel -->
@@ -3470,6 +3471,699 @@ function updateNetworkStatus() {
         }
     }
 }
+// --- بيانات الطوارئ الافتراضية ---
+const defaultEmergencyData = {
+    publicServices: [
+        { id: 1, name: "الاسعاف", number: "123", icon: "🚑", description: "خدمة الإسعاف والطوارئ الطبية" },
+        { id: 2, name: "ادارة الدفاع المدني و الحريق", number: "180", icon: "🚒", description: "إدارة الدفاع المدني والإطفاء" },
+        { id: 3, name: "الشرطه", number: "122", icon: "👮", description: "الشرطة والأمن العام" }
+    ],
+    emergencyTeam: [
+        { id: 1, name: "م.محمد القباني", number: "01011896040", icon: "👨‍💼", role: "مهندس" },
+        { id: 2, name: "أ. اسلام زكريا علام", number: "01029272924", icon: "👨‍💼", role: "أستاذ" },
+        { id: 3, name: "محمد عبد الحميد مدثر", number: "01143045043", icon: "👨‍💼", role: "فريق طوارئ" },
+        { id: 4, name: "محمد شريف السيد", number: "01101595082", icon: "👨‍💼", role: "فريق طوارئ" }
+    ],
+    clinicInfo: [
+        { id: 1, name: "ممرض العيادة", number: "011471110254", icon: "👨‍⚕️", role: "ممرض" },
+        { id: 2, name: "العيادة", number: "01508205785", icon: "🏥", role: "رقم العيادة الرئيسي" }
+    ],
+    emergencyImage: null
+};
+
+let emergencyData = { ...defaultEmergencyData };
+
+// --- إضافة زر القائمة ---
+document.getElementById('emergency-info-btn').addEventListener('click', () => {
+    if (!appData.currentUser) {
+        alert('يجب تسجيل الدخول أولاً');
+        return;
+    }
+    showScreen('emergency-info');
+    loadEmergencyData();
+});
+
+// --- دالة تحميل بيانات الطوارئ ---
+function loadEmergencyData() {
+    // محاولة تحميل البيانات من Firebase
+    db.ref('emergencyData').once('value').then(snapshot => {
+        if (snapshot.exists()) {
+            const data = snapshot.val();
+            emergencyData = {
+                publicServices: data.publicServices || defaultEmergencyData.publicServices,
+                emergencyTeam: data.emergencyTeam || defaultEmergencyData.emergencyTeam,
+                clinicInfo: data.clinicInfo || defaultEmergencyData.clinicInfo,
+                emergencyImage: data.emergencyImage || null
+            };
+        }
+        renderEmergencyData();
+    }).catch(error => {
+        console.error('Error loading emergency data:', error);
+        emergencyData = { ...defaultEmergencyData };
+        renderEmergencyData();
+    });
+}
+
+// --- دالة عرض بيانات الطوارئ ---
+function renderEmergencyData() {
+    renderPublicServices();
+    renderEmergencyTeam();
+    renderClinicInfo();
+    renderEmergencyImage();
+    setupAdminControls();
+}
+
+// --- عرض الخدمات العامة ---
+function renderPublicServices() {
+    const container = document.querySelector('#public-services-view .emergency-grid');
+    if (!container) return;
+    
+    container.innerHTML = '';
+    
+    emergencyData.publicServices.forEach(service => {
+        const item = document.createElement('div');
+        item.className = 'emergency-item';
+        item.innerHTML = `
+            <div class="emergency-icon">${service.icon}</div>
+            <div class="emergency-title">${service.name}</div>
+            <div class="emergency-number">${service.number}</div>
+            <div class="emergency-desc">${service.description}</div>
+        `;
+        container.appendChild(item);
+    });
+    
+    // تعبئة نموذج التعديل
+    const formContainer = document.getElementById('public-services-form-container');
+    if (formContainer) {
+        formContainer.innerHTML = '';
+        emergencyData.publicServices.forEach(service => {
+            const formItem = document.createElement('div');
+            formItem.className = 'emergency-form-item';
+            formItem.innerHTML = `
+                <h5>${service.icon} ${service.name}</h5>
+                <div class="form-group">
+                    <label>اسم الخدمة</label>
+                    <input type="text" class="service-name" value="${service.name}" placeholder="اسم الخدمة">
+                </div>
+                <div class="form-group">
+                    <label>رقم الهاتف</label>
+                    <input type="text" class="service-number" value="${service.number}" placeholder="رقم الهاتف">
+                </div>
+                <div class="form-group">
+                    <label>الوصف</label>
+                    <input type="text" class="service-desc" value="${service.description}" placeholder="وصف الخدمة">
+                </div>
+                <button class="emergency-delete-btn" onclick="deletePublicService(${service.id})">
+                    🗑️ حذف هذه الخدمة
+                </button>
+            `;
+            formContainer.appendChild(formItem);
+        });
+    }
+}
+
+// --- عرض فريق الطوارئ ---
+function renderEmergencyTeam() {
+    const container = document.querySelector('#emergency-team-view .emergency-grid');
+    if (!container) return;
+    
+    container.innerHTML = '';
+    
+    emergencyData.emergencyTeam.forEach(member => {
+        const item = document.createElement('div');
+        item.className = 'emergency-item';
+        item.innerHTML = `
+            <div class="emergency-icon">${member.icon}</div>
+            <div class="emergency-title">${member.name}</div>
+            <div style="color: #666; font-size: 0.9rem; margin-bottom: 8px;">${member.role}</div>
+            <div class="emergency-number">${member.number}</div>
+        `;
+        container.appendChild(item);
+    });
+    
+    // تعبئة نموذج التعديل
+    const formContainer = document.getElementById('emergency-team-form-container');
+    if (formContainer) {
+        formContainer.innerHTML = '';
+        emergencyData.emergencyTeam.forEach(member => {
+            const formItem = document.createElement('div');
+            formItem.className = 'emergency-form-item';
+            formItem.innerHTML = `
+                <h5>${member.icon} ${member.name}</h5>
+                <div class="form-group">
+                    <label>اسم العضو</label>
+                    <input type="text" class="team-name" value="${member.name}" placeholder="اسم العضو">
+                </div>
+                <div class="form-group">
+                    <label>رقم الهاتف</label>
+                    <input type="text" class="team-number" value="${member.number}" placeholder="رقم الهاتف">
+                </div>
+                <div class="form-group">
+                    <label>الدور/الوظيفة</label>
+                    <input type="text" class="team-role" value="${member.role}" placeholder="الدور أو الوظيفة">
+                </div>
+                <button class="emergency-delete-btn" onclick="deleteEmergencyTeamMember(${member.id})">
+                    🗑️ حذف هذا العضو
+                </button>
+            `;
+            formContainer.appendChild(formItem);
+        });
+    }
+}
+
+// --- عرض معلومات العيادة ---
+function renderClinicInfo() {
+    const container = document.querySelector('#clinic-info-view .emergency-grid');
+    if (!container) return;
+    
+    container.innerHTML = '';
+    
+    emergencyData.clinicInfo.forEach(item => {
+        const element = document.createElement('div');
+        element.className = 'emergency-item';
+        element.innerHTML = `
+            <div class="emergency-icon">${item.icon}</div>
+            <div class="emergency-title">${item.name}</div>
+            <div style="color: #666; font-size: 0.9rem; margin-bottom: 8px;">${item.role}</div>
+            <div class="emergency-number">${item.number}</div>
+        `;
+        container.appendChild(element);
+    });
+    
+    // تعبئة نموذج التعديل
+    const formContainer = document.getElementById('clinic-info-form-container');
+    if (formContainer) {
+        formContainer.innerHTML = '';
+        emergencyData.clinicInfo.forEach(item => {
+            const formItem = document.createElement('div');
+            formItem.className = 'emergency-form-item';
+            formItem.innerHTML = `
+                <h5>${item.icon} ${item.name}</h5>
+                <div class="form-group">
+                    <label>الاسم</label>
+                    <input type="text" class="clinic-name" value="${item.name}" placeholder="الاسم">
+                </div>
+                <div class="form-group">
+                    <label>رقم الهاتف</label>
+                    <input type="text" class="clinic-number" value="${item.number}" placeholder="رقم الهاتف">
+                </div>
+                <div class="form-group">
+                    <label>الدور/الوظيفة</label>
+                    <input type="text" class="clinic-role" value="${item.role}" placeholder="الدور أو الوظيفة">
+                </div>
+                <button class="emergency-delete-btn" onclick="deleteClinicInfo(${item.id})">
+                    🗑️ حذف هذا العنصر
+                </button>
+            `;
+            formContainer.appendChild(formItem);
+        });
+    }
+}
+
+// --- عرض صورة الطوارئ ---
+function renderEmergencyImage() {
+    const imageWrapper = document.getElementById('emergency-image-wrapper');
+    const noImageMsg = document.getElementById('no-emergency-image');
+    const imageDisplay = document.getElementById('emergency-image-display');
+    const fullscreenImage = document.getElementById('emergency-image-fullscreen');
+    
+    if (emergencyData.emergencyImage) {
+        imageWrapper.style.display = 'block';
+        noImageMsg.style.display = 'none';
+        imageDisplay.src = emergencyData.emergencyImage;
+        fullscreenImage.src = emergencyData.emergencyImage;
+    } else {
+        imageWrapper.style.display = 'none';
+        noImageMsg.style.display = 'block';
+    }
+}
+
+// --- إعداد عناصر التحكم للمدير ---
+function setupAdminControls() {
+    const isAdmin = appData.currentUser && appData.currentUser.type === 'admin';
+    
+    // إظهار/إخفاء أزرار التحكم
+    const adminControls = [
+        'emergency-image-controls',
+        'edit-public-services-btn',
+        'add-emergency-team-btn',
+        'edit-emergency-team-btn',
+        'edit-clinic-info-btn'
+    ];
+    
+    adminControls.forEach(controlId => {
+        const element = document.getElementById(controlId);
+        if (element) {
+            element.style.display = isAdmin ? 'flex' : 'none';
+        }
+    });
+    
+    // إضافة مستمعي الأحداث
+    setupEventListeners();
+}
+
+// --- إعداد مستمعي الأحداث ---
+function setupEventListeners() {
+    // رجوع للرئيسية
+    document.getElementById('back-to-stations-from-emergency').addEventListener('click', () => showScreen('stations'));
+    
+    // تحميل الصورة
+    document.getElementById('upload-emergency-image-btn').addEventListener('click', () => {
+        document.getElementById('emergency-image-input').click();
+    });
+    
+    document.getElementById('emergency-image-input').addEventListener('change', uploadEmergencyImage);
+    
+    // حذف الصورة
+    document.getElementById('delete-emergency-image-btn').addEventListener('click', deleteEmergencyImage);
+    
+    // الخدمات العامة
+    document.getElementById('edit-public-services-btn').addEventListener('click', () => {
+        document.getElementById('public-services-view').style.display = 'none';
+        document.getElementById('public-services-edit').style.display = 'block';
+    });
+    
+    document.getElementById('save-public-services-btn').addEventListener('click', savePublicServices);
+    document.getElementById('cancel-public-services-btn').addEventListener('click', () => {
+        document.getElementById('public-services-edit').style.display = 'none';
+        document.getElementById('public-services-view').style.display = 'block';
+        renderPublicServices();
+    });
+    
+    // فريق الطوارئ
+    document.getElementById('edit-emergency-team-btn').addEventListener('click', () => {
+        document.getElementById('emergency-team-view').style.display = 'none';
+        document.getElementById('emergency-team-edit').style.display = 'block';
+    });
+    
+    document.getElementById('add-emergency-team-btn').addEventListener('click', addEmergencyTeamMember);
+    document.getElementById('save-emergency-team-btn').addEventListener('click', saveEmergencyTeam);
+    document.getElementById('cancel-emergency-team-btn').addEventListener('click', () => {
+        document.getElementById('emergency-team-edit').style.display = 'none';
+        document.getElementById('emergency-team-view').style.display = 'block';
+        renderEmergencyTeam();
+    });
+    
+    // العيادة
+    document.getElementById('edit-clinic-info-btn').addEventListener('click', () => {
+        document.getElementById('clinic-info-view').style.display = 'none';
+        document.getElementById('clinic-info-edit').style.display = 'block';
+    });
+    
+    document.getElementById('save-clinic-info-btn').addEventListener('click', saveClinicInfo);
+    document.getElementById('cancel-clinic-info-btn').addEventListener('click', () => {
+        document.getElementById('clinic-info-edit').style.display = 'none';
+        document.getElementById('clinic-info-view').style.display = 'block';
+        renderClinicInfo();
+    });
+}
+
+// --- رفع صورة الطوارئ ---
+function uploadEmergencyImage(event) {
+    const file = event.target.files[0];
+    if (!file) return;
+    
+    // التحقق من نوع الملف
+    if (!file.type.startsWith('image/')) {
+        showEmergencyAlert('يرجى اختيار ملف صورة فقط', 'error');
+        return;
+    }
+    
+    // التحقق من حجم الملف (5MB كحد أقصى)
+    if (file.size > 5 * 1024 * 1024) {
+        showEmergencyAlert('حجم الصورة يجب أن يكون أقل من 5 ميجابايت', 'error');
+        return;
+    }
+    
+    const uploadBtn = document.getElementById('upload-emergency-image-btn');
+    const originalText = uploadBtn.innerHTML;
+    uploadBtn.innerHTML = '<span class="loading-spinner"></span> جاري الرفع...';
+    uploadBtn.disabled = true;
+    
+    // قراءة الصورة وتحويلها إلى base64
+    const reader = new FileReader();
+    reader.onload = function(e) {
+        const imageData = e.target.result;
+        
+        // حفظ الصورة في Firebase
+        db.ref('emergencyData/emergencyImage').set(imageData)
+            .then(() => {
+                emergencyData.emergencyImage = imageData;
+                renderEmergencyImage();
+                showEmergencyAlert('تم رفع الصورة بنجاح!', 'success');
+                uploadBtn.innerHTML = originalText;
+                uploadBtn.disabled = false;
+            })
+            .catch(error => {
+                console.error('Error uploading image:', error);
+                showEmergencyAlert('فشل رفع الصورة. حاول مرة أخرى.', 'error');
+                uploadBtn.innerHTML = originalText;
+                uploadBtn.disabled = false;
+            });
+    };
+    
+    reader.onerror = function() {
+        showEmergencyAlert('حدث خطأ أثناء قراءة الملف', 'error');
+        uploadBtn.innerHTML = originalText;
+        uploadBtn.disabled = false;
+    };
+    
+    reader.readAsDataURL(file);
+    
+    // مسح قيمة input الملف
+    event.target.value = '';
+}
+
+// --- حذف صورة الطوارئ ---
+function deleteEmergencyImage() {
+    if (!confirm('هل أنت متأكد من حذف صورة المعلومات؟')) return;
+    
+    const deleteBtn = document.getElementById('delete-emergency-image-btn');
+    const originalText = deleteBtn.innerHTML;
+    deleteBtn.innerHTML = '<span class="loading-spinner"></span> جاري الحذف...';
+    deleteBtn.disabled = true;
+    
+    db.ref('emergencyData/emergencyImage').remove()
+        .then(() => {
+            emergencyData.emergencyImage = null;
+            renderEmergencyImage();
+            showEmergencyAlert('تم حذف الصورة بنجاح', 'success');
+            deleteBtn.innerHTML = originalText;
+            deleteBtn.disabled = false;
+        })
+        .catch(error => {
+            console.error('Error deleting image:', error);
+            showEmergencyAlert('فشل حذف الصورة', 'error');
+            deleteBtn.innerHTML = originalText;
+            deleteBtn.disabled = false;
+        });
+}
+
+// --- عرض/إخفاء الصورة كاملة الشاشة ---
+window.toggleEmergencyImageFullscreen = function() {
+    const modal = document.getElementById('emergency-image-modal');
+    modal.classList.add('show');
+    document.body.style.overflow = 'hidden';
+};
+
+window.closeEmergencyImageModal = function() {
+    const modal = document.getElementById('emergency-image-modal');
+    modal.classList.remove('show');
+    document.body.style.overflow = 'auto';
+};
+
+// --- حفظ الخدمات العامة ---
+function savePublicServices() {
+    const formItems = document.querySelectorAll('#public-services-form-container .emergency-form-item');
+    const updatedServices = [];
+    
+    formItems.forEach((item, index) => {
+        const name = item.querySelector('.service-name').value.trim();
+        const number = item.querySelector('.service-number').value.trim();
+        const desc = item.querySelector('.service-desc').value.trim();
+        
+        if (name && number) {
+            updatedServices.push({
+                id: index + 1,
+                name: name,
+                number: number,
+                icon: emergencyData.publicServices[index]?.icon || '📞',
+                description: desc || 'خدمة عامة'
+            });
+        }
+    });
+    
+    // التحقق من وجود خدمات
+    if (updatedServices.length === 0) {
+        showEmergencyAlert('يجب إدخال بيانات الخدمات العامة', 'warning');
+        return;
+    }
+    
+    const saveBtn = document.getElementById('save-public-services-btn');
+    const originalText = saveBtn.innerHTML;
+    saveBtn.innerHTML = '<span class="loading-spinner"></span> جاري الحفظ...';
+    saveBtn.disabled = true;
+    
+    db.ref('emergencyData/publicServices').set(updatedServices)
+        .then(() => {
+            emergencyData.publicServices = updatedServices;
+            document.getElementById('public-services-edit').style.display = 'none';
+            document.getElementById('public-services-view').style.display = 'block';
+            renderPublicServices();
+            showEmergencyAlert('تم حفظ الخدمات العامة بنجاح', 'success');
+            saveBtn.innerHTML = originalText;
+            saveBtn.disabled = false;
+        })
+        .catch(error => {
+            console.error('Error saving public services:', error);
+            showEmergencyAlert('فشل حفظ البيانات', 'error');
+            saveBtn.innerHTML = originalText;
+            saveBtn.disabled = false;
+        });
+}
+
+// --- حذف خدمة عامة ---
+window.deletePublicService = function(id) {
+    if (!confirm('هل أنت متأكد من حذف هذه الخدمة؟')) return;
+    
+    const filteredServices = emergencyData.publicServices.filter(service => service.id !== id);
+    
+    // تحديث المعرفات
+    const updatedServices = filteredServices.map((service, index) => ({
+        ...service,
+        id: index + 1
+    }));
+    
+    emergencyData.publicServices = updatedServices;
+    renderPublicServices();
+    showEmergencyAlert('تم حذف الخدمة', 'warning');
+};
+
+// --- حفظ فريق الطوارئ ---
+function saveEmergencyTeam() {
+    const formItems = document.querySelectorAll('#emergency-team-form-container .emergency-form-item');
+    const updatedTeam = [];
+    
+    formItems.forEach((item, index) => {
+        const name = item.querySelector('.team-name').value.trim();
+        const number = item.querySelector('.team-number').value.trim();
+        const role = item.querySelector('.team-role').value.trim();
+        
+        if (name && number) {
+            updatedTeam.push({
+                id: index + 1,
+                name: name,
+                number: number,
+                icon: emergencyData.emergencyTeam[index]?.icon || '👨‍💼',
+                role: role || 'عضو فريق طوارئ'
+            });
+        }
+    });
+    
+    // التحقق من وجود أعضاء
+    if (updatedTeam.length === 0) {
+        showEmergencyAlert('يجب إدخال بيانات أعضاء الفريق', 'warning');
+        return;
+    }
+    
+    const saveBtn = document.getElementById('save-emergency-team-btn');
+    const originalText = saveBtn.innerHTML;
+    saveBtn.innerHTML = '<span class="loading-spinner"></span> جاري الحفظ...';
+    saveBtn.disabled = true;
+    
+    db.ref('emergencyData/emergencyTeam').set(updatedTeam)
+        .then(() => {
+            emergencyData.emergencyTeam = updatedTeam;
+            document.getElementById('emergency-team-edit').style.display = 'none';
+            document.getElementById('emergency-team-view').style.display = 'block';
+            renderEmergencyTeam();
+            showEmergencyAlert('تم حفظ بيانات الفريق بنجاح', 'success');
+            saveBtn.innerHTML = originalText;
+            saveBtn.disabled = false;
+        })
+        .catch(error => {
+            console.error('Error saving emergency team:', error);
+            showEmergencyAlert('فشل حفظ البيانات', 'error');
+            saveBtn.innerHTML = originalText;
+            saveBtn.disabled = false;
+        });
+}
+
+// --- إضافة عضو جديد لفريق الطوارئ ---
+function addEmergencyTeamMember() {
+    const formContainer = document.getElementById('emergency-team-form-container');
+    const newId = emergencyData.emergencyTeam.length + 1;
+    
+    const newItem = document.createElement('div');
+    newItem.className = 'emergency-form-item';
+    newItem.innerHTML = `
+        <h5>👤 عضو جديد</h5>
+        <div class="form-group">
+            <label>اسم العضو</label>
+            <input type="text" class="team-name" placeholder="اسم العضو">
+        </div>
+        <div class="form-group">
+            <label>رقم الهاتف</label>
+            <input type="text" class="team-number" placeholder="رقم الهاتف">
+        </div>
+        <div class="form-group">
+            <label>الدور/الوظيفة</label>
+            <input type="text" class="team-role" placeholder="الدور أو الوظيفة">
+        </div>
+        <button class="emergency-delete-btn" onclick="deleteEmergencyTeamMember(${newId})">
+            🗑️ حذف هذا العضو
+        </button>
+    `;
+    
+    formContainer.appendChild(newItem);
+    showEmergencyAlert('تمت إضافة خانة جديدة، قم بتعبئتها ثم اضغط حفظ', 'warning');
+}
+
+// --- حذف عضو من فريق الطوارئ ---
+window.deleteEmergencyTeamMember = function(id) {
+    if (!confirm('هل أنت متأكد من حذف هذا العضو؟')) return;
+    
+    const filteredTeam = emergencyData.emergencyTeam.filter(member => member.id !== id);
+    
+    // تحديث المعرفات
+    const updatedTeam = filteredTeam.map((member, index) => ({
+        ...member,
+        id: index + 1
+    }));
+    
+    emergencyData.emergencyTeam = updatedTeam;
+    renderEmergencyTeam();
+    showEmergencyAlert('تم حذف العضو', 'warning');
+};
+
+// --- حفظ معلومات العيادة ---
+function saveClinicInfo() {
+    const formItems = document.querySelectorAll('#clinic-info-form-container .emergency-form-item');
+    const updatedClinicInfo = [];
+    
+    formItems.forEach((item, index) => {
+        const name = item.querySelector('.clinic-name').value.trim();
+        const number = item.querySelector('.clinic-number').value.trim();
+        const role = item.querySelector('.clinic-role').value.trim();
+        
+        if (name && number) {
+            updatedClinicInfo.push({
+                id: index + 1,
+                name: name,
+                number: number,
+                icon: emergencyData.clinicInfo[index]?.icon || '🏥',
+                role: role || 'معلومات العيادة'
+            });
+        }
+    });
+    
+    // التحقق من وجود معلومات
+    if (updatedClinicInfo.length === 0) {
+        showEmergencyAlert('يجب إدخال بيانات العيادة', 'warning');
+        return;
+    }
+    
+    const saveBtn = document.getElementById('save-clinic-info-btn');
+    const originalText = saveBtn.innerHTML;
+    saveBtn.innerHTML = '<span class="loading-spinner"></span> جاري الحفظ...';
+    saveBtn.disabled = true;
+    
+    db.ref('emergencyData/clinicInfo').set(updatedClinicInfo)
+        .then(() => {
+            emergencyData.clinicInfo = updatedClinicInfo;
+            document.getElementById('clinic-info-edit').style.display = 'none';
+            document.getElementById('clinic-info-view').style.display = 'block';
+            renderClinicInfo();
+            showEmergencyAlert('تم حفظ معلومات العيادة بنجاح', 'success');
+            saveBtn.innerHTML = originalText;
+            saveBtn.disabled = false;
+        })
+        .catch(error => {
+            console.error('Error saving clinic info:', error);
+            showEmergencyAlert('فشل حفظ البيانات', 'error');
+            saveBtn.innerHTML = originalText;
+            saveBtn.disabled = false;
+        });
+}
+
+// --- حذف معلومات العيادة ---
+window.deleteClinicInfo = function(id) {
+    if (!confirm('هل أنت متأكد من حذف هذا العنصر؟')) return;
+    
+    const filteredClinic = emergencyData.clinicInfo.filter(item => item.id !== id);
+    
+    // تحديث المعرفات
+    const updatedClinic = filteredClinic.map((item, index) => ({
+        ...item,
+        id: index + 1
+    }));
+    
+    emergencyData.clinicInfo = updatedClinic;
+    renderClinicInfo();
+    showEmergencyAlert('تم حذف العنصر', 'warning');
+};
+
+// --- عرض رسائل الحالة ---
+function showEmergencyAlert(message, type = 'info') {
+    // إزالة أي رسائل سابقة
+    const existingAlerts = document.querySelectorAll('.emergency-alert');
+    existingAlerts.forEach(alert => alert.remove());
+    
+    const alertDiv = document.createElement('div');
+    alertDiv.className = `emergency-alert emergency-alert-${type}`;
+    alertDiv.textContent = message;
+    alertDiv.style.display = 'block';
+    
+    // إضافة الرسالة في أعلى الصفحة
+    const screen = document.getElementById('emergency-info-screen');
+    const firstChild = screen.querySelector('.user-data-card');
+    if (firstChild) {
+        screen.insertBefore(alertDiv, firstChild);
+    }
+    
+    // إزالة الرسالة تلقائياً بعد 5 ثواني
+    setTimeout(() => {
+        if (alertDiv.parentNode) {
+            alertDiv.style.opacity = '0';
+            alertDiv.style.transition = 'opacity 0.5s';
+            setTimeout(() => {
+                if (alertDiv.parentNode) {
+                    alertDiv.parentNode.removeChild(alertDiv);
+                }
+            }, 500);
+        }
+    }, 5000);
+}
+
+// --- إضافة مستمع حدث للخروج من الصورة الكاملة بالضغط على ESC ---
+document.addEventListener('keydown', function(event) {
+    if (event.key === 'Escape') {
+        closeEmergencyImageModal();
+    }
+});
+
+// --- إضافة مستمع حدث للنافذة المنبثقة للصورة ---
+document.getElementById('emergency-image-modal').addEventListener('click', function(event) {
+    if (event.target === this) {
+        closeEmergencyImageModal();
+    }
+});
+
+// --- تحديث دالة showScreen لدعم شاشة الطوارئ ---
+function showScreen(screenId) {
+    document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+    document.getElementById(`${screenId}-screen`).classList.add('active');
+    window.scrollTo(0, 0);
+    
+    const userInfoDiv = document.getElementById('header-user-info');
+    userInfoDiv.style.display = (screenId === 'login') ? 'none' : 'flex';
+    
+    // التعامل مع شاشة الطوارئ
+    if(screenId === 'emergency-info') {
+        loadEmergencyData();
+    }
+    // ... باقي الشاشات الموجودة سابقاً
+}
         function loadSystemData() {
             const cachedStations = localStorage.getItem('toshka_stations_cache');
             if (cachedStations) {
@@ -3592,11 +4286,6 @@ function updateNetworkStatus() {
                 if(val) appData.consumptionLog = Object.values(val);
                 else appData.consumptionLog = [];
             });
-            
-            updateNetworkStatus();
-            updateOfflineBanner();
-        }
-// داخل دالة loadSystemData()، بعد db.ref('consumption_logs').on('value', ...)
 db.ref('emergencyData').on('value', (snapshot) => {
     if (snapshot.exists()) {
         const data = snapshot.val();
@@ -3613,6 +4302,11 @@ db.ref('emergencyData').on('value', (snapshot) => {
         }
     }
 });
+            
+            updateNetworkStatus();
+            updateOfflineBanner();
+        }
+
         function forceRepairStations() {
             let updates = {};
             let repairCount = 0;
@@ -7874,716 +8568,6 @@ function openFreezeModal(orderId) {
 
  function closeModal(modalId) {
     document.getElementById(modalId).classList.remove('show');
-}
-// داخل دالة loadSystemData()، بعد db.ref('consumption_logs').on('value', ...)
-db.ref('emergencyData').on('value', (snapshot) => {
-    if (snapshot.exists()) {
-        const data = snapshot.val();
-        emergencyData = {
-            publicServices: data.publicServices || defaultEmergencyData.publicServices,
-            emergencyTeam: data.emergencyTeam || defaultEmergencyData.emergencyTeam,
-            clinicInfo: data.clinicInfo || defaultEmergencyData.clinicInfo,
-            emergencyImage: data.emergencyImage || null
-        };
-        
-        // تحديث الواجهة إذا كانت شاشة الطوارئ مفتوحة
-        if (document.getElementById('emergency-info-screen').classList.contains('active')) {
-            renderEmergencyData();
-        }
-    }
-});
-// --- بيانات الطوارئ الافتراضية ---
-const defaultEmergencyData = {
-    publicServices: [
-        { id: 1, name: "الاسعاف", number: "123", icon: "🚑", description: "خدمة الإسعاف والطوارئ الطبية" },
-        { id: 2, name: "ادارة الدفاع المدني و الحريق", number: "180", icon: "🚒", description: "إدارة الدفاع المدني والإطفاء" },
-        { id: 3, name: "الشرطه", number: "122", icon: "👮", description: "الشرطة والأمن العام" }
-    ],
-    emergencyTeam: [
-        { id: 1, name: "م.محمد القباني", number: "01011896040", icon: "👨‍💼", role: "مهندس" },
-        { id: 2, name: "أ. اسلام زكريا علام", number: "01029272924", icon: "👨‍💼", role: "أستاذ" },
-        { id: 3, name: "محمد عبد الحميد مدثر", number: "01143045043", icon: "👨‍💼", role: "فريق طوارئ" },
-        { id: 4, name: "محمد شريف السيد", number: "01101595082", icon: "👨‍💼", role: "فريق طوارئ" }
-    ],
-    clinicInfo: [
-        { id: 1, name: "ممرض العيادة", number: "011471110254", icon: "👨‍⚕️", role: "ممرض" },
-        { id: 2, name: "العيادة", number: "01508205785", icon: "🏥", role: "رقم العيادة الرئيسي" }
-    ],
-    emergencyImage: null
-};
-
-let emergencyData = { ...defaultEmergencyData };
-
-// --- إضافة زر القائمة ---
-document.getElementById('emergency-info-btn').addEventListener('click', () => {
-    if (!appData.currentUser) {
-        alert('يجب تسجيل الدخول أولاً');
-        return;
-    }
-    showScreen('emergency-info');
-    loadEmergencyData();
-});
-
-// --- دالة تحميل بيانات الطوارئ ---
-function loadEmergencyData() {
-    // محاولة تحميل البيانات من Firebase
-    db.ref('emergencyData').once('value').then(snapshot => {
-        if (snapshot.exists()) {
-            const data = snapshot.val();
-            emergencyData = {
-                publicServices: data.publicServices || defaultEmergencyData.publicServices,
-                emergencyTeam: data.emergencyTeam || defaultEmergencyData.emergencyTeam,
-                clinicInfo: data.clinicInfo || defaultEmergencyData.clinicInfo,
-                emergencyImage: data.emergencyImage || null
-            };
-        }
-        renderEmergencyData();
-    }).catch(error => {
-        console.error('Error loading emergency data:', error);
-        emergencyData = { ...defaultEmergencyData };
-        renderEmergencyData();
-    });
-}
-
-// --- دالة عرض بيانات الطوارئ ---
-function renderEmergencyData() {
-    renderPublicServices();
-    renderEmergencyTeam();
-    renderClinicInfo();
-    renderEmergencyImage();
-    setupAdminControls();
-}
-
-// --- عرض الخدمات العامة ---
-function renderPublicServices() {
-    const container = document.querySelector('#public-services-view .emergency-grid');
-    if (!container) return;
-    
-    container.innerHTML = '';
-    
-    emergencyData.publicServices.forEach(service => {
-        const item = document.createElement('div');
-        item.className = 'emergency-item';
-        item.innerHTML = `
-            <div class="emergency-icon">${service.icon}</div>
-            <div class="emergency-title">${service.name}</div>
-            <div class="emergency-number">${service.number}</div>
-            <div class="emergency-desc">${service.description}</div>
-        `;
-        container.appendChild(item);
-    });
-    
-    // تعبئة نموذج التعديل
-    const formContainer = document.getElementById('public-services-form-container');
-    if (formContainer) {
-        formContainer.innerHTML = '';
-        emergencyData.publicServices.forEach(service => {
-            const formItem = document.createElement('div');
-            formItem.className = 'emergency-form-item';
-            formItem.innerHTML = `
-                <h5>${service.icon} ${service.name}</h5>
-                <div class="form-group">
-                    <label>اسم الخدمة</label>
-                    <input type="text" class="service-name" value="${service.name}" placeholder="اسم الخدمة">
-                </div>
-                <div class="form-group">
-                    <label>رقم الهاتف</label>
-                    <input type="text" class="service-number" value="${service.number}" placeholder="رقم الهاتف">
-                </div>
-                <div class="form-group">
-                    <label>الوصف</label>
-                    <input type="text" class="service-desc" value="${service.description}" placeholder="وصف الخدمة">
-                </div>
-                <button class="emergency-delete-btn" onclick="deletePublicService(${service.id})">
-                    🗑️ حذف هذه الخدمة
-                </button>
-            `;
-            formContainer.appendChild(formItem);
-        });
-    }
-}
-
-// --- عرض فريق الطوارئ ---
-function renderEmergencyTeam() {
-    const container = document.querySelector('#emergency-team-view .emergency-grid');
-    if (!container) return;
-    
-    container.innerHTML = '';
-    
-    emergencyData.emergencyTeam.forEach(member => {
-        const item = document.createElement('div');
-        item.className = 'emergency-item';
-        item.innerHTML = `
-            <div class="emergency-icon">${member.icon}</div>
-            <div class="emergency-title">${member.name}</div>
-            <div style="color: #666; font-size: 0.9rem; margin-bottom: 8px;">${member.role}</div>
-            <div class="emergency-number">${member.number}</div>
-        `;
-        container.appendChild(item);
-    });
-    
-    // تعبئة نموذج التعديل
-    const formContainer = document.getElementById('emergency-team-form-container');
-    if (formContainer) {
-        formContainer.innerHTML = '';
-        emergencyData.emergencyTeam.forEach(member => {
-            const formItem = document.createElement('div');
-            formItem.className = 'emergency-form-item';
-            formItem.innerHTML = `
-                <h5>${member.icon} ${member.name}</h5>
-                <div class="form-group">
-                    <label>اسم العضو</label>
-                    <input type="text" class="team-name" value="${member.name}" placeholder="اسم العضو">
-                </div>
-                <div class="form-group">
-                    <label>رقم الهاتف</label>
-                    <input type="text" class="team-number" value="${member.number}" placeholder="رقم الهاتف">
-                </div>
-                <div class="form-group">
-                    <label>الدور/الوظيفة</label>
-                    <input type="text" class="team-role" value="${member.role}" placeholder="الدور أو الوظيفة">
-                </div>
-                <button class="emergency-delete-btn" onclick="deleteEmergencyTeamMember(${member.id})">
-                    🗑️ حذف هذا العضو
-                </button>
-            `;
-            formContainer.appendChild(formItem);
-        });
-    }
-}
-
-// --- عرض معلومات العيادة ---
-function renderClinicInfo() {
-    const container = document.querySelector('#clinic-info-view .emergency-grid');
-    if (!container) return;
-    
-    container.innerHTML = '';
-    
-    emergencyData.clinicInfo.forEach(item => {
-        const element = document.createElement('div');
-        element.className = 'emergency-item';
-        element.innerHTML = `
-            <div class="emergency-icon">${item.icon}</div>
-            <div class="emergency-title">${item.name}</div>
-            <div style="color: #666; font-size: 0.9rem; margin-bottom: 8px;">${item.role}</div>
-            <div class="emergency-number">${item.number}</div>
-        `;
-        container.appendChild(element);
-    });
-    
-    // تعبئة نموذج التعديل
-    const formContainer = document.getElementById('clinic-info-form-container');
-    if (formContainer) {
-        formContainer.innerHTML = '';
-        emergencyData.clinicInfo.forEach(item => {
-            const formItem = document.createElement('div');
-            formItem.className = 'emergency-form-item';
-            formItem.innerHTML = `
-                <h5>${item.icon} ${item.name}</h5>
-                <div class="form-group">
-                    <label>الاسم</label>
-                    <input type="text" class="clinic-name" value="${item.name}" placeholder="الاسم">
-                </div>
-                <div class="form-group">
-                    <label>رقم الهاتف</label>
-                    <input type="text" class="clinic-number" value="${item.number}" placeholder="رقم الهاتف">
-                </div>
-                <div class="form-group">
-                    <label>الدور/الوظيفة</label>
-                    <input type="text" class="clinic-role" value="${item.role}" placeholder="الدور أو الوظيفة">
-                </div>
-                <button class="emergency-delete-btn" onclick="deleteClinicInfo(${item.id})">
-                    🗑️ حذف هذا العنصر
-                </button>
-            `;
-            formContainer.appendChild(formItem);
-        });
-    }
-}
-
-// --- عرض صورة الطوارئ ---
-function renderEmergencyImage() {
-    const imageWrapper = document.getElementById('emergency-image-wrapper');
-    const noImageMsg = document.getElementById('no-emergency-image');
-    const imageDisplay = document.getElementById('emergency-image-display');
-    const fullscreenImage = document.getElementById('emergency-image-fullscreen');
-    
-    if (emergencyData.emergencyImage) {
-        imageWrapper.style.display = 'block';
-        noImageMsg.style.display = 'none';
-        imageDisplay.src = emergencyData.emergencyImage;
-        fullscreenImage.src = emergencyData.emergencyImage;
-    } else {
-        imageWrapper.style.display = 'none';
-        noImageMsg.style.display = 'block';
-    }
-}
-
-// --- إعداد عناصر التحكم للمدير ---
-function setupAdminControls() {
-    const isAdmin = appData.currentUser && appData.currentUser.type === 'admin';
-    
-    // إظهار/إخفاء أزرار التحكم
-    const adminControls = [
-        'emergency-image-controls',
-        'edit-public-services-btn',
-        'add-emergency-team-btn',
-        'edit-emergency-team-btn',
-        'edit-clinic-info-btn'
-    ];
-    
-    adminControls.forEach(controlId => {
-        const element = document.getElementById(controlId);
-        if (element) {
-            element.style.display = isAdmin ? 'flex' : 'none';
-        }
-    });
-    
-    // إضافة مستمعي الأحداث
-    setupEventListeners();
-}
-
-// --- إعداد مستمعي الأحداث ---
-function setupEventListeners() {
-    // رجوع للرئيسية
-    document.getElementById('back-to-stations-from-emergency').addEventListener('click', () => showScreen('stations'));
-    
-    // تحميل الصورة
-    document.getElementById('upload-emergency-image-btn').addEventListener('click', () => {
-        document.getElementById('emergency-image-input').click();
-    });
-    
-    document.getElementById('emergency-image-input').addEventListener('change', uploadEmergencyImage);
-    
-    // حذف الصورة
-    document.getElementById('delete-emergency-image-btn').addEventListener('click', deleteEmergencyImage);
-    
-    // الخدمات العامة
-    document.getElementById('edit-public-services-btn').addEventListener('click', () => {
-        document.getElementById('public-services-view').style.display = 'none';
-        document.getElementById('public-services-edit').style.display = 'block';
-    });
-    
-    document.getElementById('save-public-services-btn').addEventListener('click', savePublicServices);
-    document.getElementById('cancel-public-services-btn').addEventListener('click', () => {
-        document.getElementById('public-services-edit').style.display = 'none';
-        document.getElementById('public-services-view').style.display = 'block';
-        renderPublicServices();
-    });
-    
-    // فريق الطوارئ
-    document.getElementById('edit-emergency-team-btn').addEventListener('click', () => {
-        document.getElementById('emergency-team-view').style.display = 'none';
-        document.getElementById('emergency-team-edit').style.display = 'block';
-    });
-    
-    document.getElementById('add-emergency-team-btn').addEventListener('click', addEmergencyTeamMember);
-    document.getElementById('save-emergency-team-btn').addEventListener('click', saveEmergencyTeam);
-    document.getElementById('cancel-emergency-team-btn').addEventListener('click', () => {
-        document.getElementById('emergency-team-edit').style.display = 'none';
-        document.getElementById('emergency-team-view').style.display = 'block';
-        renderEmergencyTeam();
-    });
-    
-    // العيادة
-    document.getElementById('edit-clinic-info-btn').addEventListener('click', () => {
-        document.getElementById('clinic-info-view').style.display = 'none';
-        document.getElementById('clinic-info-edit').style.display = 'block';
-    });
-    
-    document.getElementById('save-clinic-info-btn').addEventListener('click', saveClinicInfo);
-    document.getElementById('cancel-clinic-info-btn').addEventListener('click', () => {
-        document.getElementById('clinic-info-edit').style.display = 'none';
-        document.getElementById('clinic-info-view').style.display = 'block';
-        renderClinicInfo();
-    });
-}
-
-// --- رفع صورة الطوارئ ---
-function uploadEmergencyImage(event) {
-    const file = event.target.files[0];
-    if (!file) return;
-    
-    // التحقق من نوع الملف
-    if (!file.type.startsWith('image/')) {
-        showEmergencyAlert('يرجى اختيار ملف صورة فقط', 'error');
-        return;
-    }
-    
-    // التحقق من حجم الملف (5MB كحد أقصى)
-    if (file.size > 5 * 1024 * 1024) {
-        showEmergencyAlert('حجم الصورة يجب أن يكون أقل من 5 ميجابايت', 'error');
-        return;
-    }
-    
-    const uploadBtn = document.getElementById('upload-emergency-image-btn');
-    const originalText = uploadBtn.innerHTML;
-    uploadBtn.innerHTML = '<span class="loading-spinner"></span> جاري الرفع...';
-    uploadBtn.disabled = true;
-    
-    // قراءة الصورة وتحويلها إلى base64
-    const reader = new FileReader();
-    reader.onload = function(e) {
-        const imageData = e.target.result;
-        
-        // حفظ الصورة في Firebase
-        db.ref('emergencyData/emergencyImage').set(imageData)
-            .then(() => {
-                emergencyData.emergencyImage = imageData;
-                renderEmergencyImage();
-                showEmergencyAlert('تم رفع الصورة بنجاح!', 'success');
-                uploadBtn.innerHTML = originalText;
-                uploadBtn.disabled = false;
-            })
-            .catch(error => {
-                console.error('Error uploading image:', error);
-                showEmergencyAlert('فشل رفع الصورة. حاول مرة أخرى.', 'error');
-                uploadBtn.innerHTML = originalText;
-                uploadBtn.disabled = false;
-            });
-    };
-    
-    reader.onerror = function() {
-        showEmergencyAlert('حدث خطأ أثناء قراءة الملف', 'error');
-        uploadBtn.innerHTML = originalText;
-        uploadBtn.disabled = false;
-    };
-    
-    reader.readAsDataURL(file);
-    
-    // مسح قيمة input الملف
-    event.target.value = '';
-}
-
-// --- حذف صورة الطوارئ ---
-function deleteEmergencyImage() {
-    if (!confirm('هل أنت متأكد من حذف صورة المعلومات؟')) return;
-    
-    const deleteBtn = document.getElementById('delete-emergency-image-btn');
-    const originalText = deleteBtn.innerHTML;
-    deleteBtn.innerHTML = '<span class="loading-spinner"></span> جاري الحذف...';
-    deleteBtn.disabled = true;
-    
-    db.ref('emergencyData/emergencyImage').remove()
-        .then(() => {
-            emergencyData.emergencyImage = null;
-            renderEmergencyImage();
-            showEmergencyAlert('تم حذف الصورة بنجاح', 'success');
-            deleteBtn.innerHTML = originalText;
-            deleteBtn.disabled = false;
-        })
-        .catch(error => {
-            console.error('Error deleting image:', error);
-            showEmergencyAlert('فشل حذف الصورة', 'error');
-            deleteBtn.innerHTML = originalText;
-            deleteBtn.disabled = false;
-        });
-}
-
-// --- عرض/إخفاء الصورة كاملة الشاشة ---
-window.toggleEmergencyImageFullscreen = function() {
-    const modal = document.getElementById('emergency-image-modal');
-    modal.classList.add('show');
-    document.body.style.overflow = 'hidden';
-};
-
-window.closeEmergencyImageModal = function() {
-    const modal = document.getElementById('emergency-image-modal');
-    modal.classList.remove('show');
-    document.body.style.overflow = 'auto';
-};
-
-// --- حفظ الخدمات العامة ---
-function savePublicServices() {
-    const formItems = document.querySelectorAll('#public-services-form-container .emergency-form-item');
-    const updatedServices = [];
-    
-    formItems.forEach((item, index) => {
-        const name = item.querySelector('.service-name').value.trim();
-        const number = item.querySelector('.service-number').value.trim();
-        const desc = item.querySelector('.service-desc').value.trim();
-        
-        if (name && number) {
-            updatedServices.push({
-                id: index + 1,
-                name: name,
-                number: number,
-                icon: emergencyData.publicServices[index]?.icon || '📞',
-                description: desc || 'خدمة عامة'
-            });
-        }
-    });
-    
-    // التحقق من وجود خدمات
-    if (updatedServices.length === 0) {
-        showEmergencyAlert('يجب إدخال بيانات الخدمات العامة', 'warning');
-        return;
-    }
-    
-    const saveBtn = document.getElementById('save-public-services-btn');
-    const originalText = saveBtn.innerHTML;
-    saveBtn.innerHTML = '<span class="loading-spinner"></span> جاري الحفظ...';
-    saveBtn.disabled = true;
-    
-    db.ref('emergencyData/publicServices').set(updatedServices)
-        .then(() => {
-            emergencyData.publicServices = updatedServices;
-            document.getElementById('public-services-edit').style.display = 'none';
-            document.getElementById('public-services-view').style.display = 'block';
-            renderPublicServices();
-            showEmergencyAlert('تم حفظ الخدمات العامة بنجاح', 'success');
-            saveBtn.innerHTML = originalText;
-            saveBtn.disabled = false;
-        })
-        .catch(error => {
-            console.error('Error saving public services:', error);
-            showEmergencyAlert('فشل حفظ البيانات', 'error');
-            saveBtn.innerHTML = originalText;
-            saveBtn.disabled = false;
-        });
-}
-
-// --- حذف خدمة عامة ---
-window.deletePublicService = function(id) {
-    if (!confirm('هل أنت متأكد من حذف هذه الخدمة؟')) return;
-    
-    const filteredServices = emergencyData.publicServices.filter(service => service.id !== id);
-    
-    // تحديث المعرفات
-    const updatedServices = filteredServices.map((service, index) => ({
-        ...service,
-        id: index + 1
-    }));
-    
-    emergencyData.publicServices = updatedServices;
-    renderPublicServices();
-    showEmergencyAlert('تم حذف الخدمة', 'warning');
-};
-
-// --- حفظ فريق الطوارئ ---
-function saveEmergencyTeam() {
-    const formItems = document.querySelectorAll('#emergency-team-form-container .emergency-form-item');
-    const updatedTeam = [];
-    
-    formItems.forEach((item, index) => {
-        const name = item.querySelector('.team-name').value.trim();
-        const number = item.querySelector('.team-number').value.trim();
-        const role = item.querySelector('.team-role').value.trim();
-        
-        if (name && number) {
-            updatedTeam.push({
-                id: index + 1,
-                name: name,
-                number: number,
-                icon: emergencyData.emergencyTeam[index]?.icon || '👨‍💼',
-                role: role || 'عضو فريق طوارئ'
-            });
-        }
-    });
-    
-    // التحقق من وجود أعضاء
-    if (updatedTeam.length === 0) {
-        showEmergencyAlert('يجب إدخال بيانات أعضاء الفريق', 'warning');
-        return;
-    }
-    
-    const saveBtn = document.getElementById('save-emergency-team-btn');
-    const originalText = saveBtn.innerHTML;
-    saveBtn.innerHTML = '<span class="loading-spinner"></span> جاري الحفظ...';
-    saveBtn.disabled = true;
-    
-    db.ref('emergencyData/emergencyTeam').set(updatedTeam)
-        .then(() => {
-            emergencyData.emergencyTeam = updatedTeam;
-            document.getElementById('emergency-team-edit').style.display = 'none';
-            document.getElementById('emergency-team-view').style.display = 'block';
-            renderEmergencyTeam();
-            showEmergencyAlert('تم حفظ بيانات الفريق بنجاح', 'success');
-            saveBtn.innerHTML = originalText;
-            saveBtn.disabled = false;
-        })
-        .catch(error => {
-            console.error('Error saving emergency team:', error);
-            showEmergencyAlert('فشل حفظ البيانات', 'error');
-            saveBtn.innerHTML = originalText;
-            saveBtn.disabled = false;
-        });
-}
-
-// --- إضافة عضو جديد لفريق الطوارئ ---
-function addEmergencyTeamMember() {
-    const formContainer = document.getElementById('emergency-team-form-container');
-    const newId = emergencyData.emergencyTeam.length + 1;
-    
-    const newItem = document.createElement('div');
-    newItem.className = 'emergency-form-item';
-    newItem.innerHTML = `
-        <h5>👤 عضو جديد</h5>
-        <div class="form-group">
-            <label>اسم العضو</label>
-            <input type="text" class="team-name" placeholder="اسم العضو">
-        </div>
-        <div class="form-group">
-            <label>رقم الهاتف</label>
-            <input type="text" class="team-number" placeholder="رقم الهاتف">
-        </div>
-        <div class="form-group">
-            <label>الدور/الوظيفة</label>
-            <input type="text" class="team-role" placeholder="الدور أو الوظيفة">
-        </div>
-        <button class="emergency-delete-btn" onclick="deleteEmergencyTeamMember(${newId})">
-            🗑️ حذف هذا العضو
-        </button>
-    `;
-    
-    formContainer.appendChild(newItem);
-    showEmergencyAlert('تمت إضافة خانة جديدة، قم بتعبئتها ثم اضغط حفظ', 'warning');
-}
-
-// --- حذف عضو من فريق الطوارئ ---
-window.deleteEmergencyTeamMember = function(id) {
-    if (!confirm('هل أنت متأكد من حذف هذا العضو؟')) return;
-    
-    const filteredTeam = emergencyData.emergencyTeam.filter(member => member.id !== id);
-    
-    // تحديث المعرفات
-    const updatedTeam = filteredTeam.map((member, index) => ({
-        ...member,
-        id: index + 1
-    }));
-    
-    emergencyData.emergencyTeam = updatedTeam;
-    renderEmergencyTeam();
-    showEmergencyAlert('تم حذف العضو', 'warning');
-};
-
-// --- حفظ معلومات العيادة ---
-function saveClinicInfo() {
-    const formItems = document.querySelectorAll('#clinic-info-form-container .emergency-form-item');
-    const updatedClinicInfo = [];
-    
-    formItems.forEach((item, index) => {
-        const name = item.querySelector('.clinic-name').value.trim();
-        const number = item.querySelector('.clinic-number').value.trim();
-        const role = item.querySelector('.clinic-role').value.trim();
-        
-        if (name && number) {
-            updatedClinicInfo.push({
-                id: index + 1,
-                name: name,
-                number: number,
-                icon: emergencyData.clinicInfo[index]?.icon || '🏥',
-                role: role || 'معلومات العيادة'
-            });
-        }
-    });
-    
-    // التحقق من وجود معلومات
-    if (updatedClinicInfo.length === 0) {
-        showEmergencyAlert('يجب إدخال بيانات العيادة', 'warning');
-        return;
-    }
-    
-    const saveBtn = document.getElementById('save-clinic-info-btn');
-    const originalText = saveBtn.innerHTML;
-    saveBtn.innerHTML = '<span class="loading-spinner"></span> جاري الحفظ...';
-    saveBtn.disabled = true;
-    
-    db.ref('emergencyData/clinicInfo').set(updatedClinicInfo)
-        .then(() => {
-            emergencyData.clinicInfo = updatedClinicInfo;
-            document.getElementById('clinic-info-edit').style.display = 'none';
-            document.getElementById('clinic-info-view').style.display = 'block';
-            renderClinicInfo();
-            showEmergencyAlert('تم حفظ معلومات العيادة بنجاح', 'success');
-            saveBtn.innerHTML = originalText;
-            saveBtn.disabled = false;
-        })
-        .catch(error => {
-            console.error('Error saving clinic info:', error);
-            showEmergencyAlert('فشل حفظ البيانات', 'error');
-            saveBtn.innerHTML = originalText;
-            saveBtn.disabled = false;
-        });
-}
-
-// --- حذف معلومات العيادة ---
-window.deleteClinicInfo = function(id) {
-    if (!confirm('هل أنت متأكد من حذف هذا العنصر؟')) return;
-    
-    const filteredClinic = emergencyData.clinicInfo.filter(item => item.id !== id);
-    
-    // تحديث المعرفات
-    const updatedClinic = filteredClinic.map((item, index) => ({
-        ...item,
-        id: index + 1
-    }));
-    
-    emergencyData.clinicInfo = updatedClinic;
-    renderClinicInfo();
-    showEmergencyAlert('تم حذف العنصر', 'warning');
-};
-
-// --- عرض رسائل الحالة ---
-function showEmergencyAlert(message, type = 'info') {
-    // إزالة أي رسائل سابقة
-    const existingAlerts = document.querySelectorAll('.emergency-alert');
-    existingAlerts.forEach(alert => alert.remove());
-    
-    const alertDiv = document.createElement('div');
-    alertDiv.className = `emergency-alert emergency-alert-${type}`;
-    alertDiv.textContent = message;
-    alertDiv.style.display = 'block';
-    
-    // إضافة الرسالة في أعلى الصفحة
-    const screen = document.getElementById('emergency-info-screen');
-    const firstChild = screen.querySelector('.user-data-card');
-    if (firstChild) {
-        screen.insertBefore(alertDiv, firstChild);
-    }
-    
-    // إزالة الرسالة تلقائياً بعد 5 ثواني
-    setTimeout(() => {
-        if (alertDiv.parentNode) {
-            alertDiv.style.opacity = '0';
-            alertDiv.style.transition = 'opacity 0.5s';
-            setTimeout(() => {
-                if (alertDiv.parentNode) {
-                    alertDiv.parentNode.removeChild(alertDiv);
-                }
-            }, 500);
-        }
-    }, 5000);
-}
-
-// --- إضافة مستمع حدث للخروج من الصورة الكاملة بالضغط على ESC ---
-document.addEventListener('keydown', function(event) {
-    if (event.key === 'Escape') {
-        closeEmergencyImageModal();
-    }
-});
-
-// --- إضافة مستمع حدث للنافذة المنبثقة للصورة ---
-document.getElementById('emergency-image-modal').addEventListener('click', function(event) {
-    if (event.target === this) {
-        closeEmergencyImageModal();
-    }
-});
-
-// --- تحديث دالة showScreen لدعم شاشة الطوارئ ---
-function showScreen(screenId) {
-    document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
-    document.getElementById(`${screenId}-screen`).classList.add('active');
-    window.scrollTo(0, 0);
-    
-    const userInfoDiv = document.getElementById('header-user-info');
-    userInfoDiv.style.display = (screenId === 'login') ? 'none' : 'flex';
-    
-    // التعامل مع شاشة الطوارئ
-    if(screenId === 'emergency-info') {
-        loadEmergencyData();
-    }
-    // ... باقي الشاشات الموجودة سابقاً
 }
     </script>
 </body>
