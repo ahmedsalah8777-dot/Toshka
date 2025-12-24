@@ -4471,7 +4471,7 @@ function showScreen(screenId) {
                 }
             });
             
-            db.ref('history').limitToLast(20000).on('value', (snapshot) => {
+            db.ref('history').limitToLast(200000).on('value', (snapshot) => {
                 const val = snapshot.val();
                 if(val) {
                     appData.operationHistory = Object.values(val).reverse();
@@ -5417,7 +5417,7 @@ function saveDataInternal(options = {}) {
             // عملية الحفظ في Firebase
             const savePromise = db.ref('stations/' + sName).update(updates).then(() => {
                 // حفظ السجلات الجانبية (لا ننتظرها لإنهاء الـ Promise الأساسي لتسريع العملية)
-                if (appData.operationHistory.length >= 20000) db.ref('history').orderByKey().limitToFirst(1).once('child_added', (snapshot) => { snapshot.ref.remove(); });
+                if (appData.operationHistory.length >= 200000) db.ref('history').orderByKey().limitToFirst(1).once('child_added', (snapshot) => { snapshot.ref.remove(); });
                 db.ref('history').push(log);
                 if(consumptionLogData) db.ref('consumption_logs').push(consumptionLogData);
                 
@@ -5436,7 +5436,7 @@ function saveDataInternal(options = {}) {
                                 logs[index].active = false; logs[index].endTime = stationFullDateTime; 
                             } else { logs.unshift(rf); } 
                         });
-                        if (logs.length > 20000) logs = logs.slice(0, 20000); 
+                        if (logs.length > 200000) logs = logs.slice(0, 200000); 
                         db.ref('faults_log').set(logs);
                     });
                 }
