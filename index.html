@@ -2080,6 +2080,55 @@
     border-color: #2980b9;
     background: #eaf2f8;
 }
+/* تنسيقات إضافية لزر الحذف */
+#btn-delete-history {
+    background: linear-gradient(135deg, #c0392b, #e74c3c);
+    border: none;
+    border-radius: 6px;
+    padding: 0 15px;
+    font-weight: bold;
+    transition: all 0.3s ease;
+}
+
+#btn-delete-history:hover {
+    background: linear-gradient(135deg, #a93226, #c0392b);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(192, 57, 43, 0.3);
+}
+
+/* تنسيقات زر الحذف في النافذة المنبثقة */
+#btn-confirm-delete {
+    background: linear-gradient(135deg, #c0392b, #e74c3c);
+    border: none;
+    padding: 12px;
+    font-size: 1rem;
+    font-weight: bold;
+}
+
+#btn-confirm-delete:hover {
+    background: linear-gradient(135deg, #a93226, #c0392b);
+}
+
+/* تنسيقات أزرار العد السريع */
+.btn-outline.btn-sm {
+    padding: 5px 10px;
+    font-size: 0.8rem;
+    border: 1px solid #ddd;
+}
+
+.btn-outline.btn-sm:hover {
+    border-color: var(--primary-color);
+    background-color: #f0f7ff;
+}
+
+/* تنسيق حقل العدد */
+#delete-count {
+    border: 2px solid var(--danger-color);
+    border-radius: 6px;
+    padding: 10px;
+    background-color: #fff5f5;
+    color: #c0392b;
+}
     </style>
 </head>
 <body>
@@ -2726,6 +2775,11 @@
             تصدير 📥
         </button>
     </div>
+<div class="filter-item" style="display:flex; align-items:flex-end; gap: 5px;">
+    <button id="btn-delete-history" class="btn btn-danger" style="height: 38px; display: flex; align-items: center; justify-content: center; display: none;">
+        🗑️ حذف السجلات
+    </button>
+</div>
 </div>
             
             <div class="table-responsive">
@@ -2970,6 +3024,57 @@
         <button id="btn-confirm-fix" class="btn btn-success" style="width: 100%;">تأكيد وإغلاق الأمر ✅</button>
     </div>
 </div>
+<!-- نافذة منبثقة لحذف السجلات -->
+<div id="modal-delete-history" class="custom-modal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <span>🗑️ حذف السجلات القديمة</span>
+            <span class="close-modal" onclick="closeModal('modal-delete-history')">&times;</span>
+        </div>
+        
+        <div style="padding: 15px;">
+            <p style="margin-bottom: 15px; color: #666;">
+                يمكنك حذف أقدم السجلات من قاعدة البيانات. هذا الإجراء لا يمكن التراجع عنه.
+            </p>
+            
+            <div class="form-group">
+                <label>عدد السجلات المراد حذفها</label>
+                <div style="display: flex; gap: 10px; margin-bottom: 10px;">
+                    <button type="button" class="btn btn-outline btn-sm" onclick="setDeleteCount(10)">10</button>
+                    <button type="button" class="btn btn-outline btn-sm" onclick="setDeleteCount(50)">50</button>
+                    <button type="button" class="btn btn-outline btn-sm" onclick="setDeleteCount(100)">100</button>
+                    <button type="button" class="btn btn-outline btn-sm" onclick="setDeleteCount(500)">500</button>
+                    <button type="button" class="btn btn-outline btn-sm" onclick="setDeleteCount(1000)">1000</button>
+                </div>
+                <input type="number" id="delete-count" min="1" max="10000" value="100" 
+                       style="text-align: center; font-size: 1.2rem; font-weight: bold;">
+            </div>
+            
+            <div class="form-group">
+                <label>الحد الأدنى للتاريخ (اختياري)</label>
+                <input type="date" id="delete-before-date" style="width: 100%;">
+            </div>
+            
+            <div class="alert alert-warning" style="display: block; margin: 15px 0; padding: 10px;">
+                <div style="font-weight: bold; margin-bottom: 5px;">⚠️ تحذير هام:</div>
+                <div style="font-size: 0.9rem;">
+                    سيتم حذف <span id="delete-count-preview">100</span> سجل من أقدم السجلات.
+                    هذا الإجراء <strong style="color: #c0392b;">لا يمكن التراجع عنه</strong>.
+                </div>
+            </div>
+            
+            <div style="display: flex; gap: 10px; margin-top: 20px;">
+                <button id="btn-confirm-delete" class="btn btn-danger" style="flex: 1;">
+                    🗑️ تأكيد الحذف
+                </button>
+                <button onclick="closeModal('modal-delete-history')" class="btn btn-outline" style="flex: 1;">
+                    ❌ إلغاء
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
 <div id="modal-freeze" class="custom-modal">
     <div class="modal-content">
         <div class="modal-header">
@@ -4471,7 +4576,7 @@ function showScreen(screenId) {
                 }
             });
             
-            db.ref('history').limitToLast(20000).on('value', (snapshot) => {
+            db.ref('history').limitToLast(200000).on('value', (snapshot) => {
                 const val = snapshot.val();
                 if(val) {
                     appData.operationHistory = Object.values(val).reverse();
@@ -5417,7 +5522,7 @@ function saveDataInternal(options = {}) {
             // عملية الحفظ في Firebase
             const savePromise = db.ref('stations/' + sName).update(updates).then(() => {
                 // حفظ السجلات الجانبية (لا ننتظرها لإنهاء الـ Promise الأساسي لتسريع العملية)
-                if (appData.operationHistory.length >= 20000) db.ref('history').orderByKey().limitToFirst(1).once('child_added', (snapshot) => { snapshot.ref.remove(); });
+                if (appData.operationHistory.length >= 200000) db.ref('history').orderByKey().limitToFirst(1).once('child_added', (snapshot) => { snapshot.ref.remove(); });
                 db.ref('history').push(log);
                 if(consumptionLogData) db.ref('consumption_logs').push(consumptionLogData);
                 
@@ -5436,7 +5541,7 @@ function saveDataInternal(options = {}) {
                                 logs[index].active = false; logs[index].endTime = stationFullDateTime; 
                             } else { logs.unshift(rf); } 
                         });
-                        if (logs.length > 20000) logs = logs.slice(0, 20000); 
+                        if (logs.length > 200000) logs = logs.slice(0, 200000); 
                         db.ref('faults_log').set(logs);
                     });
                 }
@@ -7337,6 +7442,7 @@ window.exportConsumptionsToExcel = function() {
                 const fStation = document.getElementById('filter-station').value;
                 const fDateFrom = document.getElementById('filter-date-from').value;
                 const fDateTo = document.getElementById('filter-date-to').value;
+              
                 
                 // Filter by zone
                 const zoneSelect = document.getElementById('filter-zone');
@@ -8776,6 +8882,202 @@ function openFreezeModal(orderId) {
  function closeModal(modalId) {
     document.getElementById(modalId).classList.remove('show');
 }
+// دالة لإظهار زر الحذف بناءً على صلاحية المستخدم
+function updateDeleteButtonVisibility() {
+    const deleteBtn = document.getElementById('btn-delete-history');
+    if (deleteBtn && appData.currentUser) {
+        deleteBtn.style.display = (appData.currentUser.type === 'admin') ? 'flex' : 'none';
+    }
+}
+
+// دالة لفتح نافذة حذف السجلات
+function openDeleteHistoryModal() {
+    if (appData.currentUser.type !== 'admin') {
+        alert('⛔ هذه الصلاحية متاحة فقط للمدير');
+        return;
+    }
+    
+    // تحديث عدد السجلات الإجمالي
+    const totalRecords = appData.operationHistory.length;
+    const deleteCountInput = document.getElementById('delete-count');
+    const deleteCountPreview = document.getElementById('delete-count-preview');
+    
+    // تحديد القيمة القصوى بناءً على عدد السجلات
+    const maxDelete = Math.min(totalRecords, 10000);
+    deleteCountInput.max = maxDelete;
+    
+    // تعيين قيمة افتراضية معقولة
+    const defaultDelete = Math.min(100, maxDelete);
+    deleteCountInput.value = defaultDelete;
+    deleteCountPreview.textContent = defaultDelete;
+    
+    // إضافة مستمع للأحداث
+    deleteCountInput.addEventListener('input', function() {
+        const value = Math.min(Math.max(1, parseInt(this.value) || 1), maxDelete);
+        this.value = value;
+        deleteCountPreview.textContent = value;
+    });
+    
+    // فتح النافذة
+    document.getElementById('modal-delete-history').classList.add('show');
+}
+
+// دالة لتعيين عدد السجلات المطلوب حذفها
+window.setDeleteCount = function(count) {
+    const deleteCountInput = document.getElementById('delete-count');
+    const deleteCountPreview = document.getElementById('delete-count-preview');
+    const maxDelete = parseInt(deleteCountInput.max);
+    
+    const value = Math.min(count, maxDelete);
+    deleteCountInput.value = value;
+    deleteCountPreview.textContent = value;
+};
+
+// دالة لتأكيد الحذف
+function confirmDeleteHistory() {
+    const deleteCount = parseInt(document.getElementById('delete-count').value);
+    const deleteBeforeDate = document.getElementById('delete-before-date').value;
+    
+    if (!deleteCount || deleteCount < 1) {
+        alert('يرجى تحديد عدد السجلات المراد حذفها');
+        return;
+    }
+    
+    if (!confirm(`هل أنت متأكد من حذف ${deleteCount} سجل من أقدم السجلات؟\n\n⚠️ هذا الإجراء لا يمكن التراجع عنه!`)) {
+        return;
+    }
+    
+    const confirmBtn = document.getElementById('btn-confirm-delete');
+    const originalText = confirmBtn.innerHTML;
+    confirmBtn.innerHTML = '<span class="loading-spinner"></span> جاري الحذف...';
+    confirmBtn.disabled = true;
+    
+    // الحصول على أقدم السجلات بناءً على التاريخ
+    let recordsToDelete = [...appData.operationHistory];
+    
+    // إذا تم تحديد تاريخ محدد، فلتر السجلات الأقدم منه
+    if (deleteBeforeDate) {
+        const selectedDate = new Date(deleteBeforeDate);
+        recordsToDelete = recordsToDelete.filter(record => {
+            const recordDate = parseCustomDate(record.timestamp || '');
+            return recordDate && recordDate < selectedDate;
+        });
+    }
+    
+    // ترتيب السجلات من الأقدم للأحدث
+    recordsToDelete.sort((a, b) => {
+        const dateA = parseCustomDate(a.timestamp || '') || new Date(0);
+        const dateB = parseCustomDate(b.timestamp || '') || new Date(0);
+        return dateA - dateB;
+    });
+    
+    // تحديد السجلات المراد حذفها
+    const recordsToRemove = recordsToDelete.slice(0, deleteCount);
+    
+    if (recordsToRemove.length === 0) {
+        alert('لا توجد سجلات تطابق معايير الحذف');
+        confirmBtn.innerHTML = originalText;
+        confirmBtn.disabled = false;
+        return;
+    }
+    
+    // إنشاء نسخة جديدة من السجلات بدون السجلات المحددة للحذف
+    const updatedHistory = appData.operationHistory.filter(record => 
+        !recordsToRemove.some(toDelete => 
+            JSON.stringify(toDelete) === JSON.stringify(record)
+        )
+    );
+    
+    // حفظ السجلات المحدثة في Firebase
+    db.ref('history').set(updatedHistory.reverse()) // إعادة ترتيب من الأحدث للأقدم
+        .then(() => {
+            // تحديث البيانات المحلية
+            appData.operationHistory = updatedHistory;
+            
+            // تحديث الواجهة
+            if (document.getElementById('history-screen').classList.contains('active')) {
+                renderHistoryTable(true);
+            }
+            
+            // إظهار رسالة نجاح
+            alert(`✅ تم حذف ${recordsToRemove.length} سجل بنجاح`);
+            
+            // إغلاق النافذة
+            closeModal('modal-delete-history');
+            
+            // إعادة تعيين الزر
+            confirmBtn.innerHTML = originalText;
+            confirmBtn.disabled = false;
+        })
+        .catch(error => {
+            console.error('Error deleting history:', error);
+            alert(`❌ فشل حذف السجلات: ${error.message}`);
+            
+            // إعادة تعيين الزر
+            confirmBtn.innerHTML = originalText;
+            confirmBtn.disabled = false;
+        });
+}
+
+// دالة إغلاق النافذة
+function closeModal(modalId) {
+    document.getElementById(modalId).classList.remove('show');
+}
+
+// إضافة مستمع الأحداث لزر الحذف
+document.addEventListener('DOMContentLoaded', function() {
+    // إضافة زر الحذف إذا لم يكن موجوداً
+    const filtersContainer = document.querySelector('.filters-container');
+    if (filtersContainer && !document.getElementById('btn-delete-history')) {
+        const deleteButtonHtml = `
+            <div class="filter-item" style="display:flex; align-items:flex-end; gap: 5px;">
+                <button id="btn-delete-history" class="btn btn-danger" style="height: 38px; display: none;">
+                    🗑️ حذف السجلات
+                </button>
+            </div>
+        `;
+        
+        // إضافة زر الحذف بعد زر التصدير
+        const exportDiv = document.querySelector('.filter-item:has(#btn-export-history)');
+        if (exportDiv) {
+            exportDiv.insertAdjacentHTML('afterend', deleteButtonHtml);
+        }
+    }
+    
+    // إضافة مستمع الحدث لزر الحذف
+    document.getElementById('btn-delete-history').addEventListener('click', openDeleteHistoryModal);
+    
+    // إضافة مستمع الحدث لتأكيد الحذف
+    document.getElementById('btn-confirm-delete').addEventListener('click', confirmDeleteHistory);
+    
+    // تحديث ظهور زر الحذف عند الدخول
+    updateDeleteButtonVisibility();
+});
+
+// تحديث ظهور زر الحذف عند تسجيل الدخول أو تغيير الشاشة
+const originalShowScreen = showScreen;
+showScreen = function(screenId) {
+    originalShowScreen(screenId);
+    
+    if (screenId === 'history') {
+        setTimeout(updateDeleteButtonVisibility, 100);
+    }
+};
+
+// إضافة مستمع لحدث الإدخال في حقل عدد السجلات
+document.addEventListener('input', function(e) {
+    if (e.target.id === 'delete-count') {
+        const value = parseInt(e.target.value) || 1;
+        const maxDelete = parseInt(e.target.max) || 10000;
+        const validValue = Math.min(Math.max(1, value), maxDelete);
+        
+        if (value !== validValue) {
+            e.target.value = validValue;
+        }
+        
+        document.getElementById('delete-count-preview').textContent = validValue;
+    }
+});
     </script>
 </body>
 </html>
