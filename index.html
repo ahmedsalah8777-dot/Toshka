@@ -1078,17 +1078,19 @@
             margin-bottom: 5px; 
         }
 
-        /* Offline Banner */
+        /* Offline Banner - توضيح أن البيانات في الجهاز فقط وليست في السيرفر */
         #offline-sync-banner { 
             display: none; 
             background: #fff3cd; 
-            border: 1px solid #ffeeba; 
+            border: 2px solid #e6b800; 
             color: #856404; 
-            padding: 10px; 
+            padding: 10px 12px; 
             text-align: center; 
             margin-bottom: 10px; 
             border-radius: 8px; 
         }
+        .offline-banner-main { display: block; font-weight: 500; }
+        .offline-banner-note { font-size: 0.85em; margin-top: 4px; opacity: 0.95; }
 
         /* NEW STYLES FOR CONSUMPTION TABLE (V1.5.9 Modified) */
         .cons-cell { 
@@ -2171,8 +2173,8 @@
 
     <div class="container">
         <div id="offline-sync-banner">
-            يوجد <b><span id="offline-count">0</span></b> عمليات معلقة.
-سيتم رفعها تلقائياً عند عودة الإنترنت. ⏳
+            <span class="offline-banner-main">يوجد <b><span id="offline-count">0</span></b> عمليات محفوظة في <b>الجهاز فقط</b> — لم تُرفع للسيرفر بعد. سيتم رفعها تلقائياً عند عودة الإنترنت. ⏳</span>
+            <div class="offline-banner-note">انتباه: المشرفون والأجهزة الأخرى لن يروا هذه التحديثات حتى يتم الرفع.</div>
         </div>
 
         <div id="login-screen" class="screen active">
@@ -3554,22 +3556,24 @@ function updateNetworkStatus() {
     const loginBtn = document.getElementById('login-btn');
     
     // منطق تحديد الحالة في الشريط العلوي
+    var tip = '';
     if (isWeakSignal) {
-        // حالة: إشارة ضعيفة (تم اكتشافها بواسطة التايم أوت)
         indicator.className = 'network-status net-weak';
         icon.textContent = '🟠';
         text.textContent = 'إشارة ضعيفة';
+        tip = 'البيانات المحفوظة الآن قد تكون في الجهاز فقط — انتظر عودة الاتصال لرفعها للسيرفر';
     } else if (navigator.onLine && isFirebaseConnected) {
-        // حالة: متصل بقوة
         indicator.className = 'network-status net-online';
         icon.textContent = '🟢';
         text.textContent = 'متصل';
+        tip = 'متصل بالسيرفر — الحفظ يتم عليه مباشرة';
     } else {
-        // حالة: غير متصل
         indicator.className = 'network-status net-offline';
         icon.textContent = '🔴';
         text.textContent = 'غير متصل';
+        tip = 'البيانات المحفوظة الآن في الجهاز فقط — لن تُرفع للسيرفر حتى يعود الاتصال';
     }
+    if (indicator) indicator.title = tip;
 
     // منطق زر الدخول
     if(loginBtn) {
@@ -3581,9 +3585,11 @@ function updateNetworkStatus() {
             if (navigator.onLine && isFirebaseConnected && !isWeakSignal) {
                 loginBtn.textContent = "دخول";
                 loginBtn.style.backgroundColor = ''; 
+                loginBtn.title = '';
             } else {
                 loginBtn.textContent = "دخول (Offline)";
                 loginBtn.style.backgroundColor = '#7f8c8d'; 
+                loginBtn.title = 'الحفظ سيتم في الجهاز فقط ولن يُرفع للسيرفر حتى يعود الاتصال';
             }
         } else {
             loginBtn.disabled = true;
@@ -3594,6 +3600,12 @@ function updateNetworkStatus() {
             }
         }
     }
+
+    // حفظ آخر حالة شبكة محلياً لعرضها فوراً عند فتح الصفحة (منع وميض "متصل" عند الـ Offline)
+    try {
+        var st = (isWeakSignal) ? 'weak' : ((navigator.onLine && isFirebaseConnected) ? 'online' : 'offline');
+        localStorage.setItem('toshka_network_status', st);
+    } catch (_) {}
 }
 // --- بيانات الطوارئ الافتراضية ---
 const defaultEmergencyData = {
@@ -3624,7 +3636,6 @@ document.getElementById('emergency-info-btn').addEventListener('click', () => {
         return;
     }
     showScreen('emergency-info');
-    loadEmergencyData();
 });
 
 // --- دالة تحميل بيانات الطوارئ ---
@@ -4476,147 +4487,64 @@ function showScreen(screenId) {
     }
     // ... باقي الشاشات الموجودة سابقاً
 }
-        function loadSystemData() {
-            const cachedStations = localStorage.getItem('toshka_stations_cache');
-            if (cachedStations) {
-                appData.stations = JSON.parse(cachedStations);
-                renderStations('all');
-            }
-            const cachedUsers = localStorage.getItem('toshka_users_cache');
-            if(cachedUsers) {
-                appData.users = JSON.parse(cachedUsers);
-            }
-            const cachedProfiles = localStorage.getItem('toshka_user_profiles_cache');
-            if(cachedProfiles) {
-                appData.userProfiles = JSON.parse(cachedProfiles);
-            }
-
-            db.ref('stations').on('value', (snapshot) => {
-                let data = snapshot.val();
-                if (!data) { forceRepairStations(); } 
-                else { 
-                    appData.stations = data; 
-                    localStorage.setItem('toshka_stations_cache', JSON.stringify(data)); 
-                    forceRepairStations(); 
-                }
-                
-                if (document.getElementById('stations-screen').classList.contains('active')) {
-                    const activeTab = document.querySelector('.nav-tab.active');
-                    renderStations(activeTab ? activeTab.dataset.zone : 'all');
-                }
-                if (document.getElementById('station-screen').classList.contains('active') && appData.currentStation) {
-                    showStationDetails(appData.currentStation);
-                }
-                if (document.getElementById('user-profile-screen').classList.contains('active')) {
-                    renderUserProfileForm();
-                    renderUsersProfilesList();
-                }
-                if (document.getElementById('users-data-screen').classList.contains('active')) {
-                    renderUsersDataManagement();
-                }
-                if (document.getElementById('inspection-export-screen').classList.contains('active')) {
-                    updateExportFilters();
-                }
-            });
-            
-            db.ref('users').on('value', (snapshot) => {
-                const loginBtn = document.getElementById('login-btn');
-                if (snapshot.val()) {
-                    appData.users = snapshot.val();
-                    localStorage.setItem('toshka_users_cache', JSON.stringify(appData.users)); 
-                    
-                    if (loginBtn) {
-                        loginBtn.disabled = false;
-                        loginBtn.textContent = "دخول";
-                        loginBtn.style.backgroundColor = '';
-                        loginBtn.style.color = '';
-                        loginBtn.style.cursor = 'pointer';
-                        loginBtn.classList.add('btn-primary');
-                    }
-                }
-                else {
-                    const defaultUsers = {
-                        admin: { type: 'admin', password: 'admin123', active: true },
-                        engineer1: { type: 'engineer', password: 'eng123', active: true },
-                        supervisor1: { type: 'supervisor', password: 'sup123', active: true },
-                        operator1: { type: 'operator', password: 'op123', active: true }
-                    };
-                    
+        // --- تحميل المستخدمين فقط عند بدء التطبيق (للاقتصاد في البيانات) ---
+        function loadUsersOnly() {
+            var cache = localStorage.getItem('toshka_users_cache');
+            if (cache) { try { appData.users = JSON.parse(cache); updateNetworkStatus(); } catch(e){} }
+            db.ref('users').once('value').then(function(snap) {
+                var d = snap.val();
+                if (!d) {
+                    var defaultUsers = { admin: { type: 'admin', password: 'admin123', active: true }, engineer1: { type: 'engineer', password: 'eng123', active: true }, supervisor1: { type: 'supervisor', password: 'sup123', active: true }, operator1: { type: 'operator', password: 'op123', active: true } };
                     db.ref('users').set(defaultUsers);
                     appData.users = defaultUsers;
-                    localStorage.setItem('toshka_users_cache', JSON.stringify(defaultUsers));
-                    
-                    if (loginBtn) {
-                        loginBtn.disabled = false;
-                        loginBtn.textContent = "دخول";
-                        loginBtn.style.backgroundColor = '';
-                        loginBtn.style.color = '';
-                        loginBtn.style.cursor = 'pointer';
-                        loginBtn.classList.add('btn-primary');
-                    }
-                }
-            });
-            
-            db.ref('userProfiles').on('value', (snapshot) => {
-                const data = snapshot.val();
-                if (data) {
-                    appData.userProfiles = data;
-                    localStorage.setItem('toshka_user_profiles_cache', JSON.stringify(data));
-                } else {
-                    appData.userProfiles = {};
-                    localStorage.setItem('toshka_user_profiles_cache', JSON.stringify({}));
-                }
-                
-                if (document.getElementById('user-profile-screen').classList.contains('active')) {
-                    renderUserProfileForm();
-                    renderUsersProfilesList();
-                }
-                if (document.getElementById('users-data-screen').classList.contains('active')) {
-                    renderUsersDataManagement();
-                }
-            });
-            
-            db.ref('history').limitToLast(200000).on('value', (snapshot) => {
-                const val = snapshot.val();
-                if(val) {
-                    appData.operationHistory = Object.values(val).reverse();
-                    cleanHistoricalData();
-                }
-                else appData.operationHistory = [];
-                if (document.getElementById('history-screen').classList.contains('active')) renderHistoryTable(true);
-            });
-            
-            db.ref('faults_log').on('value', (snapshot) => {
-                const val = snapshot.val();
-                if (val) appData.faultsLog = Array.isArray(val) ? val : Object.values(val);
-                else appData.faultsLog = [];
-                if (document.getElementById('faults-log-screen').classList.contains('active')) renderFaultsLog();
-            });
-            
-            db.ref('consumption_logs').on('value', (snapshot) => {
-                const val = snapshot.val();
-                if(val) appData.consumptionLog = Object.values(val);
-                else appData.consumptionLog = [];
-            });
-db.ref('emergencyData').on('value', (snapshot) => {
-    if (snapshot.exists()) {
-        const data = snapshot.val();
-        emergencyData = {
-            publicServices: data.publicServices || defaultEmergencyData.publicServices,
-            emergencyTeam: data.emergencyTeam || defaultEmergencyData.emergencyTeam,
-            clinicInfo: data.clinicInfo || defaultEmergencyData.clinicInfo,
-            emergencyImage: data.emergencyImage || null
-        };
-        
-        // تحديث الواجهة إذا كانت شاشة الطوارئ مفتوحة
-        if (document.getElementById('emergency-info-screen').classList.contains('active')) {
-            renderEmergencyData();
+                } else { appData.users = d; }
+                localStorage.setItem('toshka_users_cache', JSON.stringify(appData.users));
+                updateNetworkStatus();
+                updateOfflineBanner();
+            }).catch(function(){ updateNetworkStatus(); updateOfflineBanner(); });
         }
-    }
-});
-            
-            updateNetworkStatus();
-            updateOfflineBanner();
+
+        // --- تحميل عند استدعاء الشاشة فقط (Lazy) ---
+        function loadStations(cb) {
+            var cache = localStorage.getItem('toshka_stations_cache');
+            if (cache) { try { appData.stations = JSON.parse(cache); if (cb) cb(); } catch(e){} }
+            db.ref('stations').once('value').then(function(snap) {
+                var d = snap.val();
+                appData.stations = d || {};
+                localStorage.setItem('toshka_stations_cache', JSON.stringify(appData.stations));
+                forceRepairStations();
+                if (cb) cb();
+            }).catch(function(){ if (cb) cb(); });
+        }
+        function loadUserProfiles(cb) {
+            db.ref('userProfiles').once('value').then(function(snap) {
+                var d = snap.val();
+                appData.userProfiles = d || {};
+                localStorage.setItem('toshka_user_profiles_cache', JSON.stringify(appData.userProfiles));
+                if (cb) cb();
+            }).catch(function(){ if (cb) cb(); });
+        }
+        function loadHistory(cb) {
+            db.ref('history').limitToLast(200000).once('value').then(function(snap) {
+                var v = snap.val();
+                appData.operationHistory = v ? Object.values(v).reverse() : [];
+                cleanHistoricalData();
+                if (cb) cb();
+            }).catch(function(){ if (cb) cb(); });
+        }
+        function loadFaultsLog(cb) {
+            db.ref('faults_log').once('value').then(function(snap) {
+                var v = snap.val();
+                appData.faultsLog = (v && (Array.isArray(v) ? v : Object.values(v))) || [];
+                if (cb) cb();
+            }).catch(function(){ if (cb) cb(); });
+        }
+        function loadConsumptionLogs(cb) {
+            db.ref('consumption_logs').once('value').then(function(snap) {
+                var v = snap.val();
+                appData.consumptionLog = v ? Object.values(v) : [];
+                if (cb) cb();
+            }).catch(function(){ if (cb) cb(); });
         }
 
         function forceRepairStations() {
@@ -4675,32 +4603,41 @@ db.ref('emergencyData').on('value', (snapshot) => {
             
             const userInfoDiv = document.getElementById('header-user-info');
             userInfoDiv.style.display = (screenId === 'login') ? 'none' : 'flex';
+            // تحميل البيانات من Firebase عند فتح كل شاشة (للاقتصاد في البيانات)
             if(screenId === 'stations') {
-                const activeTab = document.querySelector('.nav-tab.active');
-                renderStations(activeTab ? activeTab.dataset.zone : 'all');
+                loadStations(function() { renderZonesTabs(); var at = document.querySelector('.nav-tab.active'); renderStations(at ? at.dataset.zone : 'all'); });
             }
             if(screenId === 'users') {
-                appData.currentUsersPage = 0;
-                renderUsersManagement();
+                loadUserProfiles(function() { appData.currentUsersPage = 0; renderUsersManagement(); });
             }
             if(screenId === 'users-data') {
-                appData.currentUsersDataPage = 0;
-                renderUsersDataManagement();
+                loadUserProfiles(function() { appData.currentUsersDataPage = 0; renderUsersDataManagement(); });
             }
             if(screenId === 'history') {
-                renderHistoryTable(true);
+                loadStations(function() { loadHistory(function() { renderHistoryTable(true); }); });
             }
             if(screenId === 'faults-log') {
-                appData.faultsLimit = 100;
-                renderFaultsLog();
+                loadFaultsLog(function() { appData.faultsLimit = 100; renderFaultsLog(); });
             }
             if(screenId === 'user-profile') {
-                appData.currentProfilesPage = 0;
-                renderUserProfileForm();
-                renderUsersProfilesList();
+                loadUserProfiles(function() { appData.currentProfilesPage = 0; renderUserProfileForm(); renderUsersProfilesList(); });
             }
             if(screenId === 'inspection-export') {
-                updateExportFilters();
+                loadStations(function() { updateExportFilters(); });
+            }
+            if(screenId === 'emergency-info') { loadEmergencyData(); }
+            if(screenId === 'consumptions-report') {
+                loadStations(function() { if (typeof updateConsStationFilter === 'function') updateConsStationFilter(); loadConsumptionLogs(function() { if (typeof renderConsumptionsTable === 'function') renderConsumptionsTable(); }); });
+            }
+            if(screenId === 'fault-reporting') {
+                loadStations(function() { if (typeof initFaultReportingScreen === 'function') initFaultReportingScreen(); if (typeof renderFaultReportsTable === 'function') renderFaultReportsTable(); });
+            }
+            if(screenId === 'work-orders') {
+                var z = document.getElementById('wo-filter-zone');
+                if (z && z.options.length <= 1) { appData.zones.forEach(function(zone){ z.innerHTML += '<option value="'+zone+'">'+zone+'</option>'; }); }
+                if (typeof resetActiveLimit === 'function') resetActiveLimit();
+                if (typeof resetArchiveLimit === 'function') resetArchiveLimit();
+                if (typeof renderWorkOrdersTables === 'function') renderWorkOrdersTables();
             }
         }
 
@@ -4769,8 +4706,6 @@ document.getElementById('work-orders-btn').style.display = 'none';
                 }
 
                 showScreen('stations');
-                renderZonesTabs();
-                renderStations('all');
             } else { 
                 alert('بيانات خاطئة أو المستخدم غير مفعل'); 
             }
@@ -4782,10 +4717,7 @@ document.getElementById('work-orders-btn').style.display = 'none';
                 alert('يجب تسجيل الدخول أولاً');
                 return;
             }
-            
             showScreen('user-profile');
-            renderUserProfileForm();
-            renderUsersProfilesList();
         });
         
         document.getElementById('users-management-btn').addEventListener('click', () => {
@@ -5579,13 +5511,15 @@ function saveDataInternal(options = {}) {
 
         function showSuccessFeedback(sName, isOffline = false) {
             const alertDiv = document.getElementById('operator-alert');
-            alertDiv.textContent = isOffline ? 'تم الحفظ في الجهاز (سيتم الرفع عند الاتصال) ⏳' : 'تم الحفظ والمزامنة! ✅';
+            alertDiv.textContent = isOffline 
+                ? 'تم الحفظ في الجهاز فقط — لم يُرفع للسيرفر بعد. ⏳ سيتم الرفع عند عودة الإنترنت. (المشرفون لن يروه حتى يُرفع)' 
+                : 'تم الحفظ والمزامنة مع السيرفر! ✅';
             alertDiv.className = isOffline ? 'alert alert-warning' : 'alert alert-success';
             alertDiv.style.display = 'block';
             setTimeout(() => { 
                 alertDiv.style.display = 'none'; 
                 showStationDetails(sName); 
-            }, 1500);
+            }, isOffline ? 4500 : 1500);
         }
 
         function cleanHistoricalData() {
@@ -5815,7 +5749,7 @@ if (idx === 5) { // الرقم 5 يمثل "المضخه" في مصفوفة ال�
             if (navigator.onLine && isFirebaseConnected) { 
                 db.ref(`stations/${sName}/inspectionData`).update(newInsData).then(() => { 
                     db.ref('history').push(log); 
-                    alert("تم حفظ بيانات الفحص بنجاح ✅"); 
+                    alert("تم حفظ بيانات الفحص والمزامنة مع السيرفر بنجاح ✅"); 
                     renderInspection('edit'); 
                 });
             } 
@@ -5825,7 +5759,7 @@ if (idx === 5) { // الرقم 5 يمثل "المضخه" في مصفوفة ال�
                     inspectionData: newInsData, 
                     log: log 
                 });
-                alert("تم حفظ الفحص في الجهاز (Offline) وسيتم رفعه عند الاتصال ⏳"); 
+                alert("تم الحفظ في الجهاز فقط — لم يُرفع للسيرفر بعد. ⏳ سيتم الرفع عند عودة الإنترنت.\n\nانتباه: المشرفون والأجهزة الأخرى لن يروا التحديث حتى يتم الرفع."); 
                 renderInspection('edit');
             }
         });
@@ -6646,7 +6580,7 @@ if (idx === 5) { // الرقم 5 يمثل "المضخه" في مصفوفة ال�
             if (navigator.onLine && isFirebaseConnected) {
                 db.ref('userProfiles/' + username).set(profileData)
                     .then(() => {
-                        showProfileAlert('تم حفظ البيانات الشخصية بنجاح ✅', 'success');
+                        showProfileAlert('تم حفظ البيانات الشخصية والمزامنة مع السيرفر بنجاح ✅', 'success');
                         
                         appData.userProfiles[username] = profileData;
                         localStorage.setItem('toshka_user_profiles_cache', JSON.stringify(appData.userProfiles));
@@ -6675,7 +6609,7 @@ if (idx === 5) { // الرقم 5 يمثل "المضخه" في مصفوفة ال�
                     profileData: profileData
                 });
                 
-                showProfileAlert('تم حفظ البيانات في الجهاز (سيتم المزامنة عند الاتصال) ⏳', 'warning');
+                showProfileAlert('تم الحفظ في الجهاز فقط — لم يُرفع للسيرفر بعد. سيتم الرفع عند عودة الإنترنت. (المشرفون لن يروه حتى يُرفع) ⏳', 'warning');
                 renderUsersProfilesList();
             }
         }
@@ -6697,7 +6631,7 @@ if (idx === 5) { // الرقم 5 يمثل "المضخه" في مصفوفة ال�
                 if (navigator.onLine && isFirebaseConnected) {
                     db.ref('userProfiles/' + username).remove()
                         .then(() => {
-                            showProfileAlert('تم حذف البيانات الشخصية بنجاح ✅', 'success');
+                            showProfileAlert('تم حذف البيانات الشخصية والمزامنة مع السيرفر بنجاح ✅', 'success');
                             renderUsersProfilesList();
                             
                             const nowStd = getStandardDateTime();
@@ -6723,7 +6657,7 @@ if (idx === 5) { // الرقم 5 يمثل "المضخه" في مصفوفة ال�
                     delete appData.userProfiles[username];
                     localStorage.setItem('toshka_user_profiles_cache', JSON.stringify(appData.userProfiles));
                     
-                    showProfileAlert('تم حذف البيانات في الجهاز (سيتم المزامنة عند الاتصال) ⏳', 'warning');
+                    showProfileAlert('تم الحذف في الجهاز فقط — لم يُرفع للسيرفر بعد. سيتم الرفع عند عودة الإنترنت. (المشرفون لن يروه حتى يُرفع) ⏳', 'warning');
                     renderUsersProfilesList();
                 }
             }
@@ -7192,7 +7126,7 @@ if (idx === 5) { // الرقم 5 يمثل "المضخه" في مصفوفة ال�
             renderUsersManagement();
         });
 document.getElementById('consumptions-btn').addEventListener('click', () => {
-    // أ) تعبئة قائمة المناطق
+    // أ) تعبئة قائمة المناطق (من appData.zones الثابتة)
     const zoneSelect = document.getElementById('cons-filter-zone');
     if (zoneSelect && zoneSelect.options.length <= 1) {
         zoneSelect.innerHTML = '<option value="all">كل المناطق</option>';
@@ -7201,12 +7135,7 @@ document.getElementById('consumptions-btn').addEventListener('click', () => {
         });
     }
 
-    // ب) استدعاء دالة تحديث المحطات بناءً على المنطقة
-    if (typeof updateConsStationFilter === 'function') {
-        updateConsStationFilter();
-    }
-
-    // ج) ضبط التواريخ الافتراضية
+    // ب) ضبط التواريخ الافتراضية
     const today = new Date();
     const firstDayThisMonth = new Date(today.getFullYear(), today.getMonth(), 1);
     const firstDayLastMonth = new Date(today.getFullYear(), today.getMonth() - 1, 1);
@@ -7217,7 +7146,6 @@ document.getElementById('consumptions-btn').addEventListener('click', () => {
     if(dateToElem) dateToElem.valueAsDate = firstDayThisMonth;
     if(dateFromElem) dateFromElem.valueAsDate = firstDayLastMonth;
 
-    renderConsumptionsTable();
     showScreen('consumptions-report');
 });
 
@@ -7687,9 +7615,9 @@ function renderFaultsLog() {
             list.sort((a,b) => a.name.localeCompare(b.name)).forEach(st => s.innerHTML += `<option value="${st.name}">${st.name}</option>`);
         }
 
-        // Initial Load
+        // Initial Load — تحميل المستخدمين فقط للدخول، باقي البيانات عند فتح كل شاشة
         checkRememberedUser();
-        loadSystemData();
+        loadUsersOnly();
 // --- دعم زر الرجوع في الموبايل (Mobile Back Button Logic) ---
         
         // 1. نحتفظ بنسخة من دالة العرض الأصلية
@@ -8070,30 +7998,67 @@ function processOfflineQueue() {
 
     console.log(`Attempting to sync ${queue.length} items...`);
     
-    // نأخذ نسخة ونفرغ الطابور مؤقتاً لتجنب التكرار، إذا فشل سنعيدهم
+    // نأخذ نسخة ونفرغ الطابور مؤقتاً لتجنب التكرار
     const currentQueue = [...queue];
     localStorage.setItem('toshka_offline_queue', '[]');
     updateOfflineBanner();
 
+    const nowStd = typeof getStandardDateTime === 'function' ? getStandardDateTime() : (function(){
+        var n=new Date();
+        var d=String(n.getDate()).padStart(2,'0'),m=String(n.getMonth()+1).padStart(2,'0'),y=n.getFullYear();
+        var h=String(n.getHours()).padStart(2,'0'),mn=String(n.getMinutes()).padStart(2,'0'),s=String(n.getSeconds()).padStart(2,'0');
+        return {date:d+'/'+m+'/'+y,time:h+':'+mn+':'+s,full:d+'/'+m+'/'+y+' '+h+':'+mn+':'+s};
+    })();
+
     // معالجة كل عنصر
     currentQueue.forEach(item => {
-        if (item.action === 'update_station') {
-            const d = item.data;
-            db.ref('stations/' + d.stationId).update(d.updates);
-            if(d.log) db.ref('history').push(d.log);
-            if(d.consLog) db.ref('consumption_logs').push(d.consLog);
-            // معالجة الأعطال بنفس المنطق... (اختصاراً هنا)
-        }
-        else if (item.action === 'update_inspection') {
-            const d = item.data;
-            db.ref(`stations/${d.stationId}/inspectionData`).update(d.inspectionData);
-            if(d.log) db.ref('history').push(d.log);
-        }
-        // ... باقي الحالات
+        try {
+            if (item.action === 'update_station') {
+                const d = item.data;
+                db.ref('stations/' + d.stationId).update(d.updates);
+                if(d.log) db.ref('history').push(d.log);
+                if(d.consLog) db.ref('consumption_logs').push(d.consLog);
+                // معالجة سجل الأعطال (newFaults / resolvedFaults)
+                var nf = (d.newFaults || []), rf = (d.resolvedFaults || []), sid = d.stationId, dt = (d.updates && d.updates.lastUpdate) || nowStd.full;
+                if (nf.length > 0 || rf.length > 0) {
+                    db.ref('faults_log').once('value').then(function(snap) {
+                        var rawVal = snap.val(), logs = [];
+                        if (rawVal) { logs = Array.isArray(rawVal) ? rawVal : Object.values(rawVal); }
+                        nf.forEach(function(newF) {
+                            var ex = logs.some(function(f){ return f.active === true && f.station === newF.station && f.type === newF.type; });
+                            if (!ex) logs.unshift(newF);
+                        });
+                        rf.forEach(function(resF) {
+                            var idx = logs.findIndex(function(f){ return f.station === sid && f.type === resF.type && f.active === true; });
+                            if (idx !== -1) { logs[idx].active = false; logs[idx].endTime = dt; }
+                            else { logs.unshift(resF); }
+                        });
+                        if (logs.length > 200000) logs = logs.slice(0, 200000);
+                        db.ref('faults_log').set(logs);
+                    });
+                }
+            }
+            else if (item.action === 'update_inspection') {
+                const d = item.data;
+                db.ref(`stations/${d.stationId}/inspectionData`).update(d.inspectionData);
+                if(d.log) db.ref('history').push(d.log);
+            }
+            else if (item.action === 'update_profile') {
+                const d = item.data;
+                db.ref('userProfiles/' + d.username).set(d.profileData).then(function() {
+                    var log = { date: nowStd.date, time: nowStd.time, station: (d.profileData && d.profileData.station) || 'النظام', operator: d.username, details: 'تحديث البيانات الشخصية للمستخدم: ' + (d.profileData && d.profileData.fullname || d.username) };
+                    db.ref('history').push(log);
+                });
+            }
+            else if (item.action === 'delete_profile') {
+                const d = item.data;
+                db.ref('userProfiles/' + d.username).remove().then(function() {
+                    var log = { date: nowStd.date, time: nowStd.time, station: 'النظام', operator: d.deletedBy || 'admin', details: 'حذف البيانات الشخصية للمستخدم: ' + d.username };
+                    db.ref('history').push(log);
+                });
+            }
+        } catch (e) { console.warn('processOfflineQueue item error:', e); }
     });
-    
-    // ملاحظة: في التطبيقات المعقدة ننتظر التأكيد (Promises)، 
-    // لكن للتبسيط هنا نرسل ونفترض النجاح طالما الاتصال "connected"
 }
 /* ==========================================================
    كود نظام البلاغات وأوامر الشغل (جديد V1.6)
@@ -8105,11 +8070,6 @@ let currentReportId = null; // لتخزين ID البلاغ الجاري الع�
 // الاستماع لأزرار القائمة الجديدة
 document.getElementById('fault-reporting-btn').addEventListener('click', () => {
     showScreen('fault-reporting');
-    initFaultReportingScreen();
-});
-document.getElementById('work-orders-btn').addEventListener('click', () => {
-    showScreen('work-orders');
-    renderWorkOrdersTables();
 });
 document.getElementById('back-to-stations-from-reports').addEventListener('click', () => showScreen('stations'));
 document.getElementById('back-to-stations-from-orders').addEventListener('click', () => showScreen('stations'));
@@ -8213,12 +8173,7 @@ document.getElementById('btn-send-report').addEventListener('click', () => {
     });
 });
 
-// 4. عرض جدول البلاغات (Real-time)
-db.ref('fault_reports').on('value', (snapshot) => {
-    if(document.getElementById('fault-reporting-screen').classList.contains('active')) {
-        renderFaultReportsTable();
-    }
-});
+// 4. عرض جدول البلاغات — يُحمّل عند فتح الشاشة من showScreen (لا .on للاقتصاد في البيانات)
 
 // --- دالة عرض جدول البلاغات (المصححة) ---
 function renderFaultReportsTable() {
@@ -8399,13 +8354,7 @@ document.getElementById('btn-confirm-work-order').addEventListener('click', () =
     });
 });
 
-// 6. شاشة أوامر الشغل (Tables)
-db.ref('work_orders').on('value', (snapshot) => {
-    if(document.getElementById('work-orders-screen').classList.contains('active')) {
-        renderWorkOrdersTables();
-    }
-});
-
+// 6. شاشة أوامر الشغل — يُحمّل عند فتح الشاشة من showScreen (لا .on للاقتصاد في البيانات)
 
 // 7. إتمام الإصلاح
 window.openFixModal = function(key) {
@@ -8515,18 +8464,6 @@ function loadMoreArchiveOrders() {
 // تحديث قائمة المناطق في الفلتر عند فتح الشاشة
 document.getElementById('work-orders-btn').addEventListener('click', () => {
     showScreen('work-orders');
-    
-    // تعبئة فلتر المناطق
-    const zoneSelect = document.getElementById('wo-filter-zone');
-    if (zoneSelect.options.length <= 1) {
-        appData.zones.forEach(z => {
-            zoneSelect.innerHTML += `<option value="${z}">${z}</option>`;
-        });
-    }
-    
-    resetActiveLimit();
-    resetArchiveLimit();
-    renderWorkOrdersTables();
 });
 
 // --- الدالة الرئيسية لعرض الجداول (معدلة بالكامل) ---
@@ -9026,6 +8963,24 @@ function closeModal(modalId) {
 
 // إضافة مستمع الأحداث لزر الحذف
 document.addEventListener('DOMContentLoaded', function() {
+    // عرض العمليات المعلقة (Offline) وطابور التزامن
+    if (typeof updateOfflineBanner === 'function') updateOfflineBanner();
+
+    // تطبيق آخر حالة شبكة محفوظة (منع وميض "متصل" عند فتح الصفحة دون إنترنت)
+    try {
+        var last = localStorage.getItem('toshka_network_status');
+        if (last === 'offline' || last === 'weak') {
+            var ind = document.getElementById('network-status-indicator');
+            var icon = document.getElementById('net-icon');
+            var text = document.getElementById('net-text');
+            if (ind && icon && text) {
+                ind.className = 'network-status net-' + (last === 'weak' ? 'weak' : 'offline');
+                icon.textContent = last === 'weak' ? '🟠' : '🔴';
+                text.textContent = last === 'weak' ? 'إشارة ضعيفة' : 'غير متصل';
+            }
+        }
+    } catch (_) {}
+
     // إضافة زر الحذف إذا لم يكن موجوداً
     const filtersContainer = document.querySelector('.filters-container');
     if (filtersContainer && !document.getElementById('btn-delete-history')) {
@@ -9081,5 +9036,3 @@ document.addEventListener('input', function(e) {
     </script>
 </body>
 </html>
-
-
