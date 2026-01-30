@@ -2541,6 +2541,7 @@
                     <select id="fault-archive-station-filter" style="flex:1; max-width:300px;" onchange="appData.faultsLimit=100; renderFaultsLog();">
                         <option value="all">-- عرض كافة المحطات --</option>
                     </select>
+                    <button class="btn btn-success" onclick="exportFaultsArchiveToExcel()" style="white-space: nowrap;">📊 تصدير Excel</button>
                 </div>
 
                 <div class="table-responsive">
@@ -4507,7 +4508,14 @@ function showScreen(screenId) {
         // --- تحميل عند استدعاء الشاشة فقط (Lazy) ---
         function loadStations(cb) {
             var cache = localStorage.getItem('toshka_stations_cache');
-            if (cache) { try { appData.stations = JSON.parse(cache); if (cb) cb(); } catch(e){} }
+            if (cache) { 
+                try { 
+                    appData.stations = JSON.parse(cache); 
+                    if (cb) cb(); 
+                } catch(e){}
+            }
+            
+            // ✅ تحميل البيانات الأولية مرة واحدة
             db.ref('stations').once('value').then(function(snap) {
                 var d = snap.val();
                 appData.stations = d || {};
@@ -4515,6 +4523,35 @@ function showScreen(screenId) {
                 forceRepairStations();
                 if (cb) cb();
             }).catch(function(){ if (cb) cb(); });
+            
+            // ✅ **NEW**: إضافة مستمع فوري لكل تغيير في البيانات
+            // هذا يضمن التحديث الفوري والحي للكروت
+            db.ref('stations').on('value', function(snap) {
+                var d = snap.val();
+                appData.stations = d || {};
+                
+                // حفظ في الذاكرة المحلية
+                localStorage.setItem('toshka_stations_cache', JSON.stringify(appData.stations));
+                
+                // ✅ إعادة رسم الكروت بشكل فوري
+                const activeScreen = document.querySelector('.screen.active');
+                if (activeScreen && activeScreen.id === 'main-screen') {
+                    const zoneFilter = document.getElementById('zone-filter')?.value || 'all';
+                    displayAllStations(zoneFilter);
+                }
+                
+                // ✅ تحديث شاشة التفاصيل إذا كانت مفتوحة
+                if (appData.currentStation && appData.stations[appData.currentStation]) {
+                    showStationDetails(appData.currentStation);
+                }
+                
+                // ✅ تحديث سجل الأعطال النشطة بشكل فوري
+                if (activeScreen && activeScreen.id === 'faults-log-screen') {
+                    renderFaultsLog();
+                }
+            }, function(error) {
+                console.error('خطأ في استقبال بيانات المحطات:', error);
+            });
         }
         function loadUserProfiles(cb) {
             db.ref('userProfiles').once('value').then(function(snap) {
@@ -4525,19 +4562,48 @@ function showScreen(screenId) {
             }).catch(function(){ if (cb) cb(); });
         }
         function loadHistory(cb) {
+            // ✅ تحميل البيانات الأولية مرة واحدة
             db.ref('history').limitToLast(200000).once('value').then(function(snap) {
                 var v = snap.val();
                 appData.operationHistory = v ? Object.values(v).reverse() : [];
                 cleanHistoricalData();
                 if (cb) cb();
             }).catch(function(){ if (cb) cb(); });
+            
+            // ✅ **NEW**: مستمع فوري للسجلات الجديدة
+            db.ref('history').limitToLast(100).on('child_added', function(snap) {
+                var newRecord = snap.val();
+                // أضف السجل الجديد إلى بداية المصفوفة (الأحدث أولاً)
+                appData.operationHistory.unshift(newRecord);
+                
+                // ✅ تحديث الجدول إذا كان مفتوحاً
+                const activeScreen = document.querySelector('.screen.active');
+                if (activeScreen && activeScreen.id === 'history-screen') {
+                    renderHistoryTable(false);
+                }
+            });
         }
         function loadFaultsLog(cb) {
+            // ✅ تحميل البيانات الأولية مرة واحدة
             db.ref('faults_log').once('value').then(function(snap) {
                 var v = snap.val();
                 appData.faultsLog = (v && (Array.isArray(v) ? v : Object.values(v))) || [];
                 if (cb) cb();
             }).catch(function(){ if (cb) cb(); });
+            
+            // ✅ **NEW**: مستمع فوري لكل تغيير في سجل الأعطال
+            db.ref('faults_log').on('value', function(snap) {
+                var v = snap.val();
+                appData.faultsLog = (v && (Array.isArray(v) ? v : Object.values(v))) || [];
+                
+                // ✅ تحديث الشاشة بشكل فوري إذا كانت مفتوحة
+                const activeScreen = document.querySelector('.screen.active');
+                if (activeScreen && activeScreen.id === 'faults-log-screen') {
+                    renderFaultsLog();
+                }
+            }, function(error) {
+                console.error('خطأ في استقبال سجل الأعطال:', error);
+            });
         }
         function loadConsumptionLogs(cb) {
             db.ref('consumption_logs').once('value').then(function(snap) {
@@ -9033,6 +9099,142 @@ document.addEventListener('input', function(e) {
         document.getElementById('delete-count-preview').textContent = validValue;
     }
 });
+
+// ============================================
+// 📊 دوال تصدير أرشيف الأعطال السابقة إلى Excel
+// ============================================
+
+function exportFaultsArchiveToExcel() {
+    // 🔍 الحصول على الأعطال السابقة (non-active)
+    const archivedFaults = appData.faultsLog.filter(f => !f.active);
+    
+    if (archivedFaults.length === 0) {
+        alert('لا توجد أعطال سابقة لتصديرها');
+        return;
+    }
+    
+    // 📋 تحضير البيانات
+    const data = [];
+    
+    // إضافة العنوان والتاريخ
+    data.push(['تقرير أرشيف الأعطال السابقة']);
+    data.push(['تاريخ التصدير: ' + new Date().toLocaleString('ar-EG')]);
+    data.push([]);
+    
+    // إضافة رؤوس الأعمدة
+    data.push([
+        'رقم العطل',
+        'المحطة',
+        'نوع العطل',
+        'الوصف',
+        'وقت البدء',
+        'وقت الإصلاح',
+        'المدة',
+        'حالة الإصلاح',
+        'القائم بالإصلاح'
+    ]);
+    
+    // إضافة البيانات مع ترقيم
+    archivedFaults.forEach((fault, index) => {
+        // حساب المدة
+        const startTime = new Date(fault.startTime || '');
+        const endTime = new Date(fault.endTime || '');
+        let duration = '-';
+        
+        if (!isNaN(startTime) && !isNaN(endTime)) {
+            const diffMs = endTime - startTime;
+            const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
+            const diffMinutes = Math.floor((diffMs % (1000 * 60 * 60)) / (1000 * 60));
+            duration = `${diffHours}س ${diffMinutes}د`;
+        }
+        
+        data.push([
+            index + 1,
+            fault.station || '-',
+            fault.type || '-',
+            fault.description || '-',
+            fault.startTime || '-',
+            fault.endTime || '-',
+            duration,
+            'تم الإصلاح',
+            fault.repairedBy || '-'
+        ]);
+    });
+    
+    // إضافة ملخص إحصائي
+    data.push([]);
+    data.push(['الملخص الإحصائي:']);
+    data.push(['إجمالي الأعطال:', archivedFaults.length]);
+    
+    // تجميع الأعطال حسب النوع
+    const faultTypes = {};
+    archivedFaults.forEach(fault => {
+        faultTypes[fault.type] = (faultTypes[fault.type] || 0) + 1;
+    });
+    
+    data.push([]);
+    data.push(['توزيع الأعطال حسب النوع:']);
+    Object.keys(faultTypes).forEach(type => {
+        data.push([type, faultTypes[type]]);
+    });
+    
+    // إنشاء ملف Excel
+    try {
+        const ws = XLSX.utils.aoa_to_sheet(data);
+        
+        // تنسيق العرض
+        ws['!cols'] = [
+            { wch: 10 }, // رقم العطل
+            { wch: 15 }, // المحطة
+            { wch: 20 }, // نوع العطل
+            { wch: 20 }, // الوصف
+            { wch: 20 }, // وقت البدء
+            { wch: 20 }, // وقت الإصلاح
+            { wch: 15 }, // المدة
+            { wch: 15 }, // الحالة
+            { wch: 15 }  // القائم بالإصلاح
+        ];
+        
+        const wb = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(wb, ws, 'أرشيف الأعطال');
+        
+        // تحميل الملف
+        const fileName = `أرشيف_الأعطال_${new Date().toISOString().slice(0,10)}.xlsx`;
+        XLSX.writeFile(wb, fileName);
+        
+        alert(`✅ تم تصدير ${archivedFaults.length} عطل سابق بنجاح`);
+    } catch(e) {
+        console.error('خطأ في التصدير:', e);
+        // استخدام CSV كبديل
+        exportFaultsAsCSV(data);
+    }
+}
+
+// دالة بديلة: تصدير كـ CSV
+function exportFaultsAsCSV(data) {
+    let csv = '\uFEFF'; // BOM لدعم العربية
+    
+    data.forEach(row => {
+        csv += row.map(cell => {
+            return `"${(cell || '').toString().replace(/"/g, '""')}"`;
+        }).join(',') + '\n';
+    });
+    
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement('a');
+    const url = URL.createObjectURL(blob);
+    
+    link.setAttribute('href', url);
+    link.setAttribute('download', `أرشيف_الأعطال_${new Date().toISOString().slice(0,10)}.csv`);
+    link.style.visibility = 'hidden';
+    
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    
+    alert(`✅ تم تصدير الأعطال بصيغة CSV`);
+}
+
     </script>
 </body>
 </html>
