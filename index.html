@@ -8179,6 +8179,8 @@ document.getElementById('btn-send-report').addEventListener('click', () => {
         alert("تم إرسال البلاغ بنجاح ✅");
         document.getElementById('report-desc').value = '';
         document.getElementById('report-component').value = '';
+        // تحديث الجدول تلقائياً بعد إرسال البلاغ
+        renderFaultReportsTable();
     });
 });
 
@@ -8283,12 +8285,20 @@ window.confirmReport = function(key, isConfirmed) {
     db.ref(`fault_reports/${key}`).update({
         supervisorStatus: isConfirmed ? 'confirmed' : 'cancelled',
         confirmedBy: appData.currentUser.username
+    }).then(() => {
+        // تحديث الجدول تلقائياً بعد التأكيد أو الإلغاء
+        renderFaultReportsTable();
+    }).catch(err => {
+        alert("حدث خطأ: " + err.message);
     });
 };
 window.deleteReport = function(key) {
     if(!confirm("هل أنت متأكد من حذف هذا البلاغ نهائياً من السجل؟")) return;
     db.ref(`fault_reports/${key}`).remove()
-    // تم إزالة renderFaultReportsTable() لأن التحديث سيحدث تلقائياً
+    .then(() => {
+        // تحديث الجدول تلقائياً بعد الحذف
+        renderFaultReportsTable();
+    })
     .catch(err => alert("حدث خطأ: " + err.message));
 };
 // دالة تعديل وصف البلاغ
@@ -8302,6 +8312,8 @@ window.editReportDescription = function(key, currentDesc) {
             .then(() => {
                 // التحديث سيظهر تلقائياً لأن الجدول يستمع للتغييرات
                 alert("✅ تم تعديل الوصف بنجاح");
+                // تحديث الجدول تلقائياً بعد التعديل
+                renderFaultReportsTable();
             })
             .catch(err => alert("حدث خطأ: " + err.message));
     }
