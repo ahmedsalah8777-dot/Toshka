@@ -8370,6 +8370,9 @@ document.getElementById('btn-confirm-work-order').addEventListener('click', () =
             db.ref(`fault_reports/${currentReportId}`).update({ status: 'work_order' });
             closeModal('modal-dept-select');
             alert("تم إصدار أمر الشغل بنجاح وتحويله للقسم المختص 🛠️");
+            // تحديث جدول البلاغات لإخفاء البلاغ المحول
+            renderFaultReportsTable();
+            // تحديث جدول أوامر الشغل لإظهار الأمر الجديد
             renderWorkOrdersTables();
         });
     });
