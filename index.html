@@ -5103,54 +5103,11 @@ function showScreen(screenId) {
             const savedUser = localStorage.getItem('toshka_user');
             const savedPass = localStorage.getItem('toshka_pass');
             if (savedUser && savedPass) {
+                // فقط ملء حقول اسم المستخدم وكلمة المرور
+                // المستخدم يجب أن يضغط على زر "دخول" بنفسه
                 document.getElementById('username').value = savedUser;
                 document.getElementById('password').value = savedPass;
                 document.getElementById('remember-me').checked = true;
-                
-                // الانتظار قليلاً للتأكد من تحميل بيانات المستخدمين من Firebase
-                setTimeout(() => {
-                    const user = appData.users[savedUser];
-                    if (user && user.password === savedPass && user.active !== false) {
-                        // تسجيل الدخول تلقائياً
-                        appData.currentUser = {
-                            username: savedUser,
-                            id: savedUser,
-                            name: savedUser,
-                            type: user.type,
-                            permissions: appData.userTypes[user.type].permissions
-                        };
-                        
-                        document.getElementById('current-user').textContent = `${appData.userTypes[user.type].name}: ${savedUser}`;
-                        
-                        const userType = user.type;
-                        const permissions = appData.userTypes[userType].permissions;
-                        
-                        document.getElementById('users-management-btn').style.display = permissions.manage_users ? 'inline-block' : 'none';
-                        document.getElementById('history-management-btn').style.display = permissions.view_history ? 'inline-block' : 'none';
-                        document.getElementById('export-inspection-report-btn').style.display = permissions.export_inspection ? 'inline-block' : 'none';
-                        
-                        if (userType === 'admin' || userType === 'engineer') {
-                            document.getElementById('consumptions-btn').style.display = 'inline-block';
-                            document.getElementById('work-orders-btn').style.display = 'flex';
-                        } else {
-                            document.getElementById('consumptions-btn').style.display = 'none';
-                            document.getElementById('work-orders-btn').style.display = 'none';
-                        }
-                        
-                        // تحديث صلاحيات القائمة (بما في ذلك زر الإعلانات)
-                        updateMenuPermissions();
-                        
-                        // الانتقال لشاشة المحطات تلقائياً
-                        showScreen('stations');
-                        
-                        // عرض الإعلان بعد تسجيل الدخول
-                        showAnnouncementAfterLogin();
-                    } else {
-                        // إذا فشل التحقق، مسح البيانات المحفوظة
-                        localStorage.removeItem('toshka_user');
-                        localStorage.removeItem('toshka_pass');
-                    }
-                }, 500); // انتظار 500 ميلي ثانية للتأكد من تحميل البيانات
             }
         }
         
