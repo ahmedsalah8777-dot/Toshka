@@ -10102,7 +10102,7 @@ function addPendingChange(operation, path, data) {
     pendingChanges.push(change);
     savePendingChanges();
     
-    showToast('warning', 'تعديل معلق', 'سيتم رفع التعديلات عند عودة الاتصال');
+    showPersistentToast('warning', 'عمليات محفوظة محلياً', `لديك ${pendingChanges.length} عملية محفوظة. سيتم رفعها عند عودة الاتصال`);
 }
 
 // تحديث عداد التعديلات المعلقة
@@ -10163,9 +10163,19 @@ async function syncPendingChanges() {
     updateNetworkStatusDisplay();
 
     if (failedChanges.length === 0) {
-        showToast('success', 'تمت المزامنة', `تم رفع ${successCount} تعديل بنجاح`);
+        // إزالة الإشعار الدائم عند نجاح الرفع
+        if (persistentToast) {
+            persistentToast.classList.add('removing');
+            setTimeout(() => {
+                persistentToast.remove();
+                persistentToast = null;
+            }, 300);
+        }
+        showToast('success', 'تمت المزامنة', `تم رفع ${successCount} عملية بنجاح`);
     } else {
-        showToast('warning', 'مزامنة جزئية', `تم رفع ${successCount} تعديل، ${failedChanges.length} فشل`);
+        // تحديث الإشعار الدائم في حالة الفشل الجزئي
+        showPersistentToast('warning', 'عمليات محفوظة محلياً', `لديك ${failedChanges.length} عملية محفوظة. سيتم رفعها عند عودة الاتصال`);
+        showToast('warning', 'مزامنة جزئية', `تم رفع ${successCount} عملية، ${failedChanges.length} فشل`);
     }
 }
 
@@ -10237,6 +10247,8 @@ function enableButton(button) {
 // نظام الإشعارات (Toast)
 // ═══════════════════════════════════════════════════════
 
+let persistentToast = null;
+
 function showToast(type, title, message, duration = 5000) {
     const container = document.getElementById('toastContainer');
     if (!container) return;
@@ -10265,6 +10277,52 @@ function showToast(type, title, message, duration = 5000) {
     setTimeout(() => {
         removeToast(toast.querySelector('.toast-close'));
     }, duration);
+}
+
+function showPersistentToast(type, title, message) {
+    const container = document.getElementById('toastContainer');
+    if (!container) return;
+    
+    // إزالة الإشعار الدائم السابق إن وجد
+    if (persistentToast) {
+        persistentToast.remove();
+    }
+    
+    const toast = document.createElement('div');
+    toast.className = `toast ${type}`;
+    toast.dataset.persistent = 'true';
+    
+    const icons = {
+        success: '✅',
+        error: '❌',
+        warning: '⚠️',
+        info: 'ℹ️'
+    };
+    
+    toast.innerHTML = `
+        <div class="toast-icon">${icons[type]}</div>
+        <div class="toast-content">
+            <div class="toast-title">${title}</div>
+            <div class="toast-message">${message}</div>
+        </div>
+        <button class="toast-close" onclick="removePersistentToast(this)">✖</button>
+    `;
+    
+    container.appendChild(toast);
+    persistentToast = toast;
+}
+
+function removePersistentToast(closeButton) {
+    const toast = closeButton.closest('.toast');
+    if (toast) {
+        toast.classList.add('removing');
+        setTimeout(() => {
+            toast.remove();
+            if (persistentToast === toast) {
+                persistentToast = null;
+            }
+        }, 300);
+    }
 }
 
 function removeToast(closeButton) {
@@ -10313,7 +10371,6 @@ function updateNetworkStatusDisplay() {
 
 window.addEventListener('online', function() {
     updateNetworkStatusDisplay();
-    showToast('success', 'تم الاتصال', 'عاد الاتصال بالإنترنت');
     
     setTimeout(() => {
         syncPendingChanges();
@@ -10322,7 +10379,6 @@ window.addEventListener('online', function() {
 
 window.addEventListener('offline', function() {
     updateNetworkStatusDisplay();
-    showToast('error', 'انقطع الاتصال', 'تم قطع الاتصال بالإنترنت. سيتم حفظ التعديلات محلياً');
 });
 
 // ═══════════════════════════════════════════════════════
