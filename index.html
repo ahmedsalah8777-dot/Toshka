@@ -1063,6 +1063,123 @@
             position: relative; 
             overflow: hidden; 
         }
+
+        /* أنماط الإحصائيات الجديدة */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .stat-card {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            padding: 20px;
+        }
+
+        .stat-icon {
+            width: 60px;
+            height: 60px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.8rem;
+            flex-shrink: 0;
+        }
+
+        .stat-content {
+            flex: 1;
+        }
+
+        .stat-title {
+            font-size: 0.9rem;
+            color: #666;
+            margin-bottom: 5px;
+            font-weight: 500;
+        }
+
+        .stat-value {
+            font-size: 1.8rem;
+            font-weight: bold;
+            color: #2c3e50;
+            margin-bottom: 3px;
+        }
+
+        .stat-percentage {
+            font-size: 0.9rem;
+            color: #7f8c8d;
+            font-weight: 500;
+        }
+
+        .details-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 15px;
+        }
+
+        .station-stat-card {
+            background: #f8f9fa;
+            border-radius: 10px;
+            padding: 15px;
+            border: 1px solid #e9ecef;
+        }
+
+        .station-stat-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid #dee2e6;
+        }
+
+        .station-name {
+            font-weight: bold;
+            color: var(--primary-color);
+        }
+
+        .station-efficiency {
+            font-weight: bold;
+            padding: 4px 8px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+        }
+
+        .efficiency-high { background: #e8f5e9; color: #2e7d32; }
+        .efficiency-medium { background: #fff3e0; color: #f57c00; }
+        .efficiency-low { background: #ffebee; color: #c62828; }
+
+        .station-stats {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 10px;
+        }
+
+        .station-stat-item {
+            text-align: center;
+            padding: 8px;
+            border-radius: 6px;
+            background: white;
+        }
+
+        .station-stat-label {
+            font-size: 0.8rem;
+            color: #6c757d;
+            margin-bottom: 3px;
+        }
+
+        .station-stat-value {
+            font-size: 1.1rem;
+            font-weight: bold;
+            color: #495057;
+        }
+
+        .statistics-section {
+            margin-bottom: 30px;
+        }
         
         .station-card:active { 
             transform: scale(0.98); 
@@ -2633,334 +2750,6 @@
     background-color: #fff5f5;
     color: #c0392b;
 }
-/* ═══════════════════════════════════════════════════════
-   تنسيقات شاشة الإحصائيات
-   ═══════════════════════════════════════════════════════ */
-
-.stats-tabs {
-    display: flex;
-    gap: 10px;
-    margin-bottom: 25px;
-    flex-wrap: wrap;
-    border-bottom: 2px solid #eee;
-    padding-bottom: 0;
-}
-
-.stats-tab {
-    padding: 12px 20px;
-    border: none;
-    background: #f5f5f5;
-    color: #333;
-    cursor: pointer;
-    border-radius: 8px 8px 0 0;
-    font-weight: 500;
-    transition: all 0.3s ease;
-    font-size: 0.95rem;
-}
-
-.stats-tab:hover {
-    background: #e0e0e0;
-    transform: translateY(-2px);
-}
-
-.stats-tab.active {
-    background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
-    color: white;
-    border-bottom: 3px solid var(--secondary-color);
-}
-
-.stats-content {
-    position: relative;
-}
-
-.stats-tab-content {
-    display: none;
-    animation: fadeIn 0.4s ease;
-}
-
-.stats-tab-content.active {
-    display: block;
-}
-
-.stats-header {
-    margin-bottom: 30px;
-    padding-bottom: 20px;
-    border-bottom: 2px solid var(--header-bg);
-}
-
-.stats-header h3 {
-    color: var(--primary-color);
-    font-size: 1.8rem;
-    margin-bottom: 10px;
-}
-
-.stats-subtitle {
-    color: #666;
-    font-size: 1rem;
-}
-
-.stats-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
-    gap: 25px;
-    margin-bottom: 30px;
-}
-
-.stats-card {
-    background: white;
-    border-radius: 12px;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-    border: 1px solid #f0f0f0;
-    overflow: hidden;
-    transition: all 0.3s ease;
-}
-
-.stats-card:hover {
-    box-shadow: 0 4px 16px rgba(0,0,0,0.12);
-    transform: translateY(-2px);
-}
-
-.stats-card.large {
-    grid-column: 1 / -1;
-}
-
-@media (max-width: 1200px) {
-    .stats-card.large {
-        grid-column: 1 / -1;
-    }
-    
-    .stats-grid {
-        grid-template-columns: 1fr;
-    }
-}
-
-.card-header {
-    background: linear-gradient(135deg, #f8f9fa, #f0f0f0);
-    padding: 20px;
-    border-bottom: 1px solid #eee;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-}
-
-.card-header h4 {
-    color: var(--primary-color);
-    margin: 0;
-    font-size: 1.1rem;
-}
-
-.refresh-btn {
-    cursor: pointer;
-    font-size: 1.2rem;
-    transition: transform 0.3s;
-    padding: 8px;
-    border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    width: 36px;
-    height: 36px;
-}
-
-.refresh-btn:hover {
-    background: #e0e0e0;
-    transform: rotate(180deg);
-}
-
-.card-body {
-    padding: 25px;
-}
-
-.chart-container {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    min-height: 300px;
-    margin-bottom: 20px;
-}
-
-.stats-list {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-    gap: 15px;
-    margin-top: 20px;
-}
-
-.stat-item {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    padding: 15px;
-    border-radius: 10px;
-    border-left: 4px solid;
-}
-
-.stat-item.efficient {
-    background: #e8f5e9;
-    border-left-color: #27ae60;
-}
-
-.stat-item.fault {
-    background: #fff3e0;
-    border-left-color: #f39c12;
-}
-
-.stat-item.broken {
-    background: #ffebee;
-    border-left-color: #c0392b;
-}
-
-.stat-item.none {
-    background: #f5f5f5;
-    border-left-color: #95a5a6;
-}
-
-.stat-icon {
-    font-size: 1.8rem;
-    min-width: 40px;
-    text-align: center;
-}
-
-.stat-info {
-    flex: 1;
-}
-
-.stat-label {
-    font-size: 0.85rem;
-    color: #666;
-    margin-bottom: 5px;
-}
-
-.stat-value {
-    font-size: 1.5rem;
-    font-weight: bold;
-    color: #333;
-}
-
-.best-worst-container {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 20px;
-}
-
-@media (max-width: 768px) {
-    .best-worst-container {
-        grid-template-columns: 1fr;
-    }
-}
-
-.best-section,
-.worst-section {
-    padding: 15px;
-    border-radius: 8px;
-    background: #f9f9f9;
-}
-
-.best-section h5,
-.worst-section h5 {
-    margin-top: 0;
-    margin-bottom: 15px;
-    color: var(--primary-color);
-    font-size: 0.95rem;
-}
-
-.stations-list {
-    list-style: none;
-    padding: 0;
-    margin: 0;
-}
-
-.stations-list li {
-    padding: 8px 0;
-    border-bottom: 1px solid #eee;
-    font-size: 0.9rem;
-    color: #333;
-}
-
-.stations-list li:last-child {
-    border-bottom: none;
-}
-
-.stations-list li:before {
-    content: "• ";
-    color: var(--secondary-color);
-    font-weight: bold;
-    margin-right: 8px;
-}
-
-.system-stats-list {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
-    gap: 15px;
-}
-
-.system-stat {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    padding: 15px;
-    border-radius: 10px;
-    background: linear-gradient(135deg, #f5f7fa, #f0f2f5);
-    border: 1px solid #e0e0e0;
-    transition: all 0.3s ease;
-}
-
-.system-stat:hover {
-    background: linear-gradient(135deg, #eaf2f8, #e3f2fd);
-    box-shadow: 0 3px 8px rgba(0,0,0,0.1);
-}
-
-.system-icon {
-    font-size: 1.5rem;
-    min-width: 40px;
-    text-align: center;
-}
-
-.system-info {
-    flex: 1;
-}
-
-.system-label {
-    font-size: 0.8rem;
-    color: #666;
-    margin-bottom: 5px;
-    font-weight: 600;
-}
-
-.system-value {
-    font-size: 1.2rem;
-    font-weight: bold;
-    color: var(--primary-color);
-}
-
-.mini-table {
-    width: 100%;
-    border-collapse: collapse;
-    font-size: 0.85rem;
-}
-
-.mini-table th {
-    background: var(--header-bg);
-    color: var(--primary-color);
-    padding: 10px;
-    text-align: right;
-    font-weight: 600;
-}
-
-.mini-table td {
-    padding: 10px;
-    border-bottom: 1px solid #eee;
-    text-align: right;
-}
-
-.mini-table tr:hover {
-    background: #f9f9f9;
-}
-
-/* مخطط Chart.js */
-.chart-container canvas {
-    max-height: 400px;
-}
     </style>
 </head>
 <body>
@@ -3021,11 +2810,11 @@
     <button id="consumptions-btn" class="menu-item" style="display: none;">⚡ الاستهلاكات</button>
     <button id="history-management-btn" class="menu-item" style="display: none;">📜 السجل العام</button>
     <button id="export-inspection-report-btn" class="menu-item" style="display: none;">📊 تصدير الفحص</button>
-<button id="statistics-btn" class="menu-item">📊 الإحصائيات</button>
 <button id="fault-reporting-btn" class="menu-item">📢 بلاغات الأعطال</button>
 <button id="work-orders-btn" class="menu-item" style="display: none;">🛠️ أوامر الشغل</button>
 <button id="calculator-btn" class="menu-item">🧮 الحاسبة</button>
 <button id="emergency-info-btn" class="menu-item">🚨 معلومات الطوارئ</button>
+    <button id="statistics-btn" class="menu-item">📈 الإحصائيات</button>
     <button id="profile-btn" class="menu-item">📋 بياناتي الشخصية</button>
     <button id="announcement-settings-btn" class="menu-item" style="display: none;">📢 إعدادات الإعلانات</button>
     <button id="logout-btn" class="menu-item logout">👋 خروج</button>
@@ -3084,7 +2873,7 @@
             <h2 id="station-title">التفاصيل</h2>
             <div style="display:flex; gap:10px; flex-wrap:wrap;">
                 <button id="back-to-stations" class="btn btn-outline">عودة للقائمة</button>
-                <button id="view-inspection-btn" class="btn btn-info">📋 عرض الفحص</button>
+                <button id="view-inspection-btn" class="btn btn-info" style="display:none;">📋 عرض الفحص</button>
             </div>
             
             <div id="station-fault-banner" class="alert" style="background: #ffecec; color: #b71c1c; border: 1px solid #ffcdd2; margin-top: 15px; display: none;">
@@ -3908,27 +3697,25 @@
             </p>
             
             <div class="form-group">
-                <label>عدد السجلات المراد حذفها</label>
-                <div style="display: flex; gap: 10px; margin-bottom: 10px;">
-                    <button type="button" class="btn btn-outline btn-sm" onclick="setDeleteCount(10)">10</button>
-                    <button type="button" class="btn btn-outline btn-sm" onclick="setDeleteCount(50)">50</button>
-                    <button type="button" class="btn btn-outline btn-sm" onclick="setDeleteCount(100)">100</button>
-                    <button type="button" class="btn btn-outline btn-sm" onclick="setDeleteCount(500)">500</button>
-                    <button type="button" class="btn btn-outline btn-sm" onclick="setDeleteCount(1000)">1000</button>
-                </div>
-                <input type="number" id="delete-count" min="1" max="10000" value="100" 
-                       style="text-align: center; font-size: 1.2rem; font-weight: bold;">
+                <label>الفترة من</label>
+                <input type="date" id="delete-from-date" class="input-field" onchange="calculateDeleteCount()">
             </div>
             
             <div class="form-group">
-                <label>الحد الأدنى للتاريخ (اختياري)</label>
-                <input type="date" id="delete-before-date" style="width: 100%;">
+                <label>الفترة إلى</label>
+                <input type="date" id="delete-to-date" class="input-field" onchange="calculateDeleteCount()">
+            </div>
+            
+            <div class="form-group" style="text-align: center; margin: 20px 0; background: #f8f9fa; padding: 15px; border-radius: 8px;">
+                <label style="display: block; margin-bottom: 10px; color: #555;">عدد السجلات في هذه الفترة</label>
+                <span id="delete-count-display" style="font-size: 2rem; font-weight: bold; color: #c0392b;">0</span>
+                <span style="font-size: 1.2rem; color: #7f8c8d;"> سجل</span>
             </div>
             
             <div class="alert alert-warning" style="display: block; margin: 15px 0; padding: 10px;">
                 <div style="font-weight: bold; margin-bottom: 5px;">⚠️ تحذير هام:</div>
                 <div style="font-size: 0.9rem;">
-                    سيتم حذف <span id="delete-count-preview">100</span> سجل من أقدم السجلات.
+                    سيتم حذف جميع السجلات في الفترة المحددة.
                     هذا الإجراء <strong style="color: #c0392b;">لا يمكن التراجع عنه</strong>.
                 </div>
             </div>
@@ -4240,275 +4027,144 @@
         </div>
     </div>
 </div>
-<!-- شاشة الإحصائيات الجديدة -->
+
+<!-- شاشة الإحصائيات -->
 <div id="statistics-screen" class="screen">
     <div class="user-data-card">
         <div class="user-data-header">
-            <h2 class="user-data-title">📊 لوحة الإحصائيات والتقارير</h2>
-            <button id="back-to-stations-from-stats" class="btn btn-outline">عودة للرئيسية</button>
+            <h2 class="user-data-title">📈 الإحصائيات الشاملة</h2>
+            <button id="back-from-statistics" class="btn btn-outline">عودة للرئيسية</button>
         </div>
         
-        <!-- قائمة الخيارات (Tabs) -->
-        <div class="stats-tabs" id="stats-tabs">
-            <button class="stats-tab active" data-tab="pumps">🔧 إحصائيات المضخات</button>
-            <button class="stats-tab" data-tab="water-hammer">💧 إحصائيات المطرقة المائية</button>
-            <button class="stats-tab" data-tab="control-systems">🖥️ إحصائيات أنظمة التحكم</button>
+        <!-- فلتر المنطقة والمحطة -->
+        <div class="section-card" style="margin-bottom: 20px;">
+            <h3 style="color: var(--primary-color); margin-bottom: 15px;">🔍 تصفية البيانات</h3>
+            <div style="display: flex; gap: 15px; flex-wrap: wrap;">
+                <div style="flex: 1; min-width: 200px;">
+                    <label style="display: block; margin-bottom: 5px; font-weight: bold;">المنطقة</label>
+                    <select id="statistics-zone-filter" class="form-control">
+                        <option value="all">الكل</option>
+                    </select>
+                </div>
+                <div style="flex: 1; min-width: 200px;">
+                    <label style="display: block; margin-bottom: 5px; font-weight: bold;">المحطة</label>
+                    <select id="statistics-station-filter" class="form-control">
+                        <option value="all">الكل</option>
+                    </select>
+                </div>
+                <div style="flex: 1; min-width: 200px;">
+                    <label style="display: block; margin-bottom: 5px; font-weight: bold;">نوع الإحصائية</label>
+                    <select id="statistics-type-filter" class="form-control">
+                        <option value="pumps">إحصائية المضخات</option>
+                        <option value="control-systems">إحصائية نظم التحكم</option>
+                    </select>
+                </div>
+            </div>
         </div>
-
-        <!-- محتوى التبويبات -->
-        <div class="stats-content">
+        
+        <div id="pumps-statistics" class="statistics-section">
+            <h3 style="color: var(--primary-color); margin-bottom: 20px; display: flex; align-items: center; gap: 10px;">
+                🔧 إحصائية حالة المضخات
+                <span id="pumps-stats-summary" style="font-size: 0.9rem; color: #666; margin-right: auto;"></span>
+            </h3>
             
-            <!-- 1. إحصائيات المضخات -->
-            <div id="pumps-stats" class="stats-tab-content active">
-                <div class="stats-header">
-                    <h3>🔧 إحصائيات المضخات</h3>
-                    <p class="stats-subtitle">إجمالي المضخات: <span id="total-pumps">0</span></p>
+            <div class="stats-grid" style="grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));">
+                <div class="stat-card">
+                    <div class="stat-icon" style="background: var(--success-color);">✅</div>
+                    <div class="stat-content">
+                        <div class="stat-title">تعمل بكفاءة</div>
+                        <div class="stat-value" id="working-pumps-count">0</div>
+                        <div class="stat-percentage" id="working-pumps-percentage">0%</div>
+                    </div>
                 </div>
-
-                <div class="stats-grid">
-                    <!-- بطاقة حالة المضخات -->
-                    <div class="stats-card large">
-                        <div class="card-header">
-                            <h4>حالة المضخات</h4>
-                            <span class="refresh-btn" onclick="updatePumpsStatistics()">🔄</span>
-                        </div>
-                        <div class="card-body">
-                            <!-- مخطط دائري (Donut Chart) -->
-                            <div class="chart-container">
-                                <canvas id="pumps-status-chart" style="max-width: 300px; margin: 0 auto;"></canvas>
-                            </div>
-                            
-                            <!-- الإحصائيات النصية -->
-                            <div class="stats-list">
-                                <div class="stat-item efficient">
-                                    <div class="stat-icon">✅</div>
-                                    <div class="stat-info">
-                                        <div class="stat-label">يعمل بكفاءة</div>
-                                        <div class="stat-value" id="pumps-efficient">0</div>
-                                    </div>
-                                </div>
-                                <div class="stat-item fault">
-                                    <div class="stat-icon">⚠️</div>
-                                    <div class="stat-info">
-                                        <div class="stat-label">معطل / يحتاج صيانة</div>
-                                        <div class="stat-value" id="pumps-fault">0</div>
-                                    </div>
-                                </div>
-                                <div class="stat-item broken">
-                                    <div class="stat-icon">🛑</div>
-                                    <div class="stat-info">
-                                        <div class="stat-label">لا يعمل</div>
-                                        <div class="stat-value" id="pumps-broken">0</div>
-                                    </div>
-                                </div>
-                                <div class="stat-item none">
-                                    <div class="stat-icon">⚪</div>
-                                    <div class="stat-info">
-                                        <div class="stat-label">غير موجود</div>
-                                        <div class="stat-value" id="pumps-none">0</div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
+                
+                <div class="stat-card">
+                    <div class="stat-icon" style="background: var(--warning-color);">⚠️</div>
+                    <div class="stat-content">
+                        <div class="stat-title">عطل / ملاحظة</div>
+                        <div class="stat-value" id="fault-pumps-count">0</div>
+                        <div class="stat-percentage" id="fault-pumps-percentage">0%</div>
                     </div>
-
-                    <!-- بطاقة أفضل وأسوأ المحطات -->
-                    <div class="stats-card">
-                        <div class="card-header">
-                            <h4>أفضل وأسوأ المحطات</h4>
-                        </div>
-                        <div class="card-body">
-                            <div class="best-worst-container">
-                                <div class="best-section">
-                                    <h5>🏆 أفضل المحطات</h5>
-                                    <ul id="best-stations-list" class="stations-list">
-                                        <li>-</li>
-                                    </ul>
-                                </div>
-                                <div class="worst-section">
-                                    <h5>⚠️ أسوأ المحطات</h5>
-                                    <ul id="worst-stations-list" class="stations-list">
-                                        <li>-</li>
-                                    </ul>
-                                </div>
-                            </div>
-                        </div>
+                </div>
+                
+                <div class="stat-card">
+                    <div class="stat-icon" style="background: var(--danger-color);">🛑</div>
+                    <div class="stat-content">
+                        <div class="stat-title">لا تعمل (معطلة)</div>
+                        <div class="stat-value" id="broken-pumps-count">0</div>
+                        <div class="stat-percentage" id="broken-pumps-percentage">0%</div>
                     </div>
-
-                    <!-- بطاقة توزيع حسب المناطق -->
-                    <div class="stats-card">
-                        <div class="card-header">
-                            <h4>التوزيع حسب المناطق</h4>
-                        </div>
-                        <div class="card-body">
-                            <canvas id="pumps-zone-chart" style="max-width: 400px;"></canvas>
+                </div>
+                
+                <div class="stat-card">
+                    <div class="stat-icon" style="background: var(--primary-color);">📊</div>
+                    <div class="stat-content">
+                        <div class="stat-title">إجمالي المضخات</div>
+                        <div class="stat-value" id="total-pumps-count">0</div>
+                        <div class="stat-percentage" id="total-pumps-percentage">100%</div>
+                        <div style="font-size: 0.8rem; color: var(--success-color); margin-top: 5px; font-weight: bold;">
+                             نسبة التشغيل: <span id="total-working-percentage">0%</span>
                         </div>
                     </div>
                 </div>
             </div>
-
-            <!-- 2. إحصائيات المطرقة المائية -->
-            <div id="water-hammer-stats" class="stats-tab-content">
-                <div class="stats-header">
-                    <h3>💧 إحصائيات المطرقة المائية</h3>
-                    <p class="stats-subtitle">إجمالي أنظمة المطرقة المائية: <span id="total-water-hammers">0</span></p>
-                </div>
-
-                <div class="stats-grid">
-                    <!-- مخطط حالة أنظمة المطرقة -->
-                    <div class="stats-card large">
-                        <div class="card-header">
-                            <h4>حالة أنظمة المطرقة المائية</h4>
-                            <span class="refresh-btn" onclick="updateWaterHammerStatistics()">🔄</span>
-                        </div>
-                        <div class="card-body">
-                            <div class="chart-container">
-                                <canvas id="water-hammer-status-chart" style="max-width: 300px; margin: 0 auto;"></canvas>
-                            </div>
-                            
-                            <div class="stats-list">
-                                <div class="stat-item efficient">
-                                    <div class="stat-icon">✅</div>
-                                    <div class="stat-info">
-                                        <div class="stat-label">تعمل بكفاءة</div>
-                                        <div class="stat-value" id="water-hammer-efficient">0</div>
-                                    </div>
-                                </div>
-                                <div class="stat-item fault">
-                                    <div class="stat-icon">⚠️</div>
-                                    <div class="stat-info">
-                                        <div class="stat-label">معطلة / تحتاج صيانة</div>
-                                        <div class="stat-value" id="water-hammer-fault">0</div>
-                                    </div>
-                                </div>
-                                <div class="stat-item broken">
-                                    <div class="stat-icon">🛑</div>
-                                    <div class="stat-info">
-                                        <div class="stat-label">لا تعمل</div>
-                                        <div class="stat-value" id="water-hammer-broken">0</div>
-                                    </div>
-                                </div>
-                                <div class="stat-item none">
-                                    <div class="stat-icon">⚪</div>
-                                    <div class="stat-info">
-                                        <div class="stat-label">غير موجودة</div>
-                                        <div class="stat-value" id="water-hammer-none">0</div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
+            
+            <!-- تفاصيل المحطات -->
+            <div id="stations-details" style="margin-top: 30px;">
+                <h4 style="color: var(--primary-color); margin-bottom: 15px;">🏭 تفاصيل المحطات</h4>
+                <div id="stations-details-content" class="details-grid"></div>
+            </div>
+        </div>
+        
+        <!-- إحصائية نظم التحكم -->
+        <div id="control-systems-statistics" class="statistics-section" style="display: none;">
+            <h3 style="color: var(--primary-color); margin-bottom: 20px; display: flex; align-items: center; gap: 10px;">
+                🎛️ إحصائية نظم التحكم
+                <span id="control-systems-summary" style="font-size: 0.9rem; color: #666; margin-right: auto;"></span>
+            </h3>
+            
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-icon" style="background: #9c27b0;">📡</div>
+                    <div class="stat-content">
+                        <div class="stat-title">نظام SCADA</div>
+                        <div class="stat-value" id="scada-count">0</div>
+                        <div class="stat-percentage" id="scada-percentage">0%</div>
                     </div>
-
-                    <!-- تفاصيل المحطات -->
-                    <div class="stats-card">
-                        <div class="card-header">
-                            <h4>تفاصيل حسب المحطات</h4>
-                        </div>
-                        <div class="card-body">
-                            <div class="table-responsive">
-                                <table class="mini-table">
-                                    <thead>
-                                        <tr>
-                                            <th>المحطة</th>
-                                            <th>المنطقة</th>
-                                            <th>الحالة</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody id="water-hammer-details-body">
-                                        <tr><td colspan="3" style="text-align:center">جاري التحميل...</td></tr>
-                                    </tbody>
-                                </table>
-                            </div>
-                        </div>
+                </div>
+                
+                <div class="stat-card">
+                    <div class="stat-icon" style="background: #673ab7;">⚙️</div>
+                    <div class="stat-content">
+                        <div class="stat-title">نظام PLC</div>
+                        <div class="stat-value" id="plc-count">0</div>
+                        <div class="stat-percentage" id="plc-percentage">0%</div>
+                    </div>
+                </div>
+                
+                <div class="stat-card">
+                    <div class="stat-icon" style="background: #3f51b5;">🔌</div>
+                    <div class="stat-content">
+                        <div class="stat-title">نظام MIMIC/Marshalling</div>
+                        <div class="stat-value" id="mimic-count">0</div>
+                        <div class="stat-percentage" id="mimic-percentage">0%</div>
+                    </div>
+                </div>
+                
+                <div class="stat-card">
+                    <div class="stat-icon" style="background: #2196f3;">🖥️</div>
+                    <div class="stat-content">
+                        <div class="stat-title">نظام HMI/LCP</div>
+                        <div class="stat-value" id="hmi-count">0</div>
+                        <div class="stat-percentage" id="hmi-percentage">0%</div>
                     </div>
                 </div>
             </div>
-
-            <!-- 3. إحصائيات أنظمة التحكم -->
-            <div id="control-systems-stats" class="stats-tab-content">
-                <div class="stats-header">
-                    <h3>🖥️ إحصائيات أنظمة التحكم</h3>
-                    <p class="stats-subtitle">توزيع أنظمة التحكم المستخدمة</p>
-                </div>
-
-                <div class="stats-grid">
-                    <!-- مخطط توزيع أنظمة التحكم -->
-                    <div class="stats-card large">
-                        <div class="card-header">
-                            <h4>توزيع أنظمة التحكم</h4>
-                            <span class="refresh-btn" onclick="updateControlSystemsStatistics()">🔄</span>
-                        </div>
-                        <div class="card-body">
-                            <div class="chart-container">
-                                <canvas id="control-systems-chart" style="max-width: 400px; margin: 0 auto;"></canvas>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- الإحصائيات التفصيلية -->
-                    <div class="stats-card">
-                        <div class="card-header">
-                            <h4>تفاصيل الأنظمة</h4>
-                        </div>
-                        <div class="card-body">
-                            <div class="system-stats-list">
-                                <div class="system-stat">
-                                    <div class="system-icon">🖥️</div>
-                                    <div class="system-info">
-                                        <div class="system-label">SCADA</div>
-                                        <div class="system-value" id="system-scada">0 محطة</div>
-                                    </div>
-                                </div>
-                                <div class="system-stat">
-                                    <div class="system-icon">⚙️</div>
-                                    <div class="system-info">
-                                        <div class="system-label">PLC</div>
-                                        <div class="system-value" id="system-plc">0 محطة</div>
-                                    </div>
-                                </div>
-                                <div class="system-stat">
-                                    <div class="system-icon">📺</div>
-                                    <div class="system-info">
-                                        <div class="system-label">MIMIC / Marshalling</div>
-                                        <div class="system-value" id="system-mimic">0 محطة</div>
-                                    </div>
-                                </div>
-                                <div class="system-stat">
-                                    <div class="system-icon">💻</div>
-                                    <div class="system-info">
-                                        <div class="system-label">HMI / LCP</div>
-                                        <div class="system-value" id="system-hmi">0 محطة</div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- جدول التفاصيل -->
-                    <div class="stats-card">
-                        <div class="card-header">
-                            <h4>توزيع حسب المناطق</h4>
-                        </div>
-                        <div class="card-body">
-                            <div class="table-responsive">
-                                <table class="mini-table">
-                                    <thead>
-                                        <tr>
-                                            <th>المنطقة</th>
-                                            <th>SCADA</th>
-                                            <th>PLC</th>
-                                            <th>MIMIC</th>
-                                            <th>HMI</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody id="control-systems-details-body">
-                                        <tr><td colspan="5" style="text-align:center">جاري التحميل...</td></tr>
-                                    </tbody>
-                                </table>
-                            </div>
-                        </div>
-                    </div>
-                </div>
+            
+            <!-- تفاصيل نظم التحكم -->
+            <div id="control-systems-details" style="margin-top: 30px;">
+                <h4 style="color: var(--primary-color); margin-bottom: 15px;">🏭 تفاصيل نظم التحكم بالمحطات</h4>
+                <div id="control-systems-details-content" class="details-grid"></div>
             </div>
         </div>
     </div>
@@ -4604,6 +4260,8 @@ document.querySelectorAll('.menu-item').forEach(item => {
                     view_profiles: true,
                     delete_profiles: true,
                     export_inspection: true,
+                    view_statistics: true,
+                    view_inspection_btn: true,
                     can_manage_types: ['admin', 'engineer', 'supervisor', 'operator'],
                     can_add_types: ['admin', 'engineer', 'supervisor', 'operator'],
                     can_delete_types: ['admin', 'engineer', 'supervisor', 'operator']
@@ -4622,6 +4280,8 @@ document.querySelectorAll('.menu-item').forEach(item => {
                     view_profiles: true,
                     delete_profiles: false,
                     export_inspection: true,
+                    view_statistics: true,
+                    view_inspection_btn: true,
                     can_manage_types: ['supervisor', 'operator'],
                     can_add_types: ['supervisor', 'operator'],
                     can_delete_types: ['supervisor', 'operator']
@@ -4640,6 +4300,8 @@ document.querySelectorAll('.menu-item').forEach(item => {
                     view_profiles: true,
                     delete_profiles: false,
                     export_inspection: true,
+                    view_statistics: true,
+                    view_inspection_btn: true,
                     can_manage_types: ['operator'],
                     can_add_types: ['operator'],
                     can_delete_types: ['operator']
@@ -4658,6 +4320,8 @@ document.querySelectorAll('.menu-item').forEach(item => {
                     view_profiles: false,
                     delete_profiles: false,
                     export_inspection: false,
+                    view_statistics: false,
+                    view_inspection_btn: false,
                     can_manage_types: [],
                     can_add_types: [],
                     can_delete_types: []
@@ -5971,6 +5635,8 @@ function showScreen(screenId) {
                 document.getElementById('users-management-btn').style.display = permissions.manage_users ? 'inline-block' : 'none';
                 document.getElementById('history-management-btn').style.display = permissions.view_history ? 'inline-block' : 'none';
                 document.getElementById('export-inspection-report-btn').style.display = permissions.export_inspection ? 'inline-block' : 'none';
+                document.getElementById('statistics-btn').style.display = permissions.view_statistics ? 'inline-block' : 'none';
+                document.getElementById('view-inspection-btn').style.display = permissions.view_inspection_btn ? 'inline-block' : 'none';
                 
                 if (userType === 'admin' || userType === 'engineer') {
                     document.getElementById('consumptions-btn').style.display = 'inline-block';
@@ -10228,53 +9894,67 @@ function openDeleteHistoryModal() {
         return;
     }
     
-    // تحديث عدد السجلات الإجمالي
-    const totalRecords = appData.operationHistory.length;
-    const deleteCountInput = document.getElementById('delete-count');
-    const deleteCountPreview = document.getElementById('delete-count-preview');
+    // تعيين التواريخ الافتراضية (آخر 30 يوم)
+    const today = new Date();
+    const thirtyDaysAgo = new Date();
+    thirtyDaysAgo.setDate(today.getDate() - 30);
     
-    // تحديد القيمة القصوى بناءً على عدد السجلات
-    const maxDelete = Math.min(totalRecords, 10000);
-    deleteCountInput.max = maxDelete;
+    document.getElementById('delete-to-date').valueAsDate = today;
+    document.getElementById('delete-from-date').valueAsDate = thirtyDaysAgo;
     
-    // تعيين قيمة افتراضية معقولة
-    const defaultDelete = Math.min(100, maxDelete);
-    deleteCountInput.value = defaultDelete;
-    deleteCountPreview.textContent = defaultDelete;
-    
-    // إضافة مستمع للأحداث
-    deleteCountInput.addEventListener('input', function() {
-        const value = Math.min(Math.max(1, parseInt(this.value) || 1), maxDelete);
-        this.value = value;
-        deleteCountPreview.textContent = value;
-    });
+    // حساب العدد
+    calculateDeleteCount();
     
     // فتح النافذة
     document.getElementById('modal-delete-history').classList.add('show');
 }
 
-// دالة لتعيين عدد السجلات المطلوب حذفها
-window.setDeleteCount = function(count) {
-    const deleteCountInput = document.getElementById('delete-count');
-    const deleteCountPreview = document.getElementById('delete-count-preview');
-    const maxDelete = parseInt(deleteCountInput.max);
+// دالة لحساب عدد السجلات في الفترة المحددة
+window.calculateDeleteCount = function() {
+    const fromDateStr = document.getElementById('delete-from-date').value;
+    const toDateStr = document.getElementById('delete-to-date').value;
+    const countDisplay = document.getElementById('delete-count-display');
     
-    const value = Math.min(count, maxDelete);
-    deleteCountInput.value = value;
-    deleteCountPreview.textContent = value;
+    if (!fromDateStr || !toDateStr) {
+        countDisplay.textContent = '0';
+        return;
+    }
+    
+    // إنشاء كائنات التاريخ بالتوقيت المحلي لضمان التوافق مع parseCustomDate
+    const [fy, fm, fd] = fromDateStr.split('-').map(Number);
+    const fromDate = new Date(fy, fm - 1, fd, 0, 0, 0, 0);
+    
+    const [ty, tm, td] = toDateStr.split('-').map(Number);
+    const toDate = new Date(ty, tm - 1, td, 23, 59, 59, 999);
+    
+    // فلترة السجلات
+    const count = appData.operationHistory.filter(record => {
+        const dateStr = record.timestamp || (record.date && record.time ? `${record.date} ${record.time}` : '');
+        const recordDate = parseCustomDate(dateStr);
+        return recordDate && recordDate >= fromDate && recordDate <= toDate;
+    }).length;
+    
+    countDisplay.textContent = count;
 };
 
 // دالة لتأكيد الحذف
 function confirmDeleteHistory() {
-    const deleteCount = parseInt(document.getElementById('delete-count').value);
-    const deleteBeforeDate = document.getElementById('delete-before-date').value;
+    const fromDateStr = document.getElementById('delete-from-date').value;
+    const toDateStr = document.getElementById('delete-to-date').value;
+    const countDisplay = document.getElementById('delete-count-display');
+    const countToDelete = parseInt(countDisplay.textContent);
     
-    if (!deleteCount || deleteCount < 1) {
-        alert('يرجى تحديد عدد السجلات المراد حذفها');
+    if (!fromDateStr || !toDateStr) {
+        alert('يرجى تحديد فترة التاريخ من وإلى');
         return;
     }
     
-    if (!confirm(`هل أنت متأكد من حذف ${deleteCount} سجل من أقدم السجلات؟\n\n⚠️ هذا الإجراء لا يمكن التراجع عنه!`)) {
+    if (countToDelete === 0) {
+        alert('لا توجد سجلات للحذف في هذه الفترة');
+        return;
+    }
+    
+    if (!confirm(`هل أنت متأكد من حذف ${countToDelete} سجل في الفترة من ${fromDateStr} إلى ${toDateStr}؟\n\n⚠️ هذا الإجراء لا يمكن التراجع عنه!`)) {
         return;
     }
     
@@ -10283,41 +9963,20 @@ function confirmDeleteHistory() {
     confirmBtn.innerHTML = '<span class="loading-spinner"></span> جاري الحذف...';
     confirmBtn.disabled = true;
     
-    // الحصول على أقدم السجلات بناءً على التاريخ
-    let recordsToDelete = [...appData.operationHistory];
+    // إنشاء كائنات التاريخ بالتوقيت المحلي
+    const [fy, fm, fd] = fromDateStr.split('-').map(Number);
+    const fromDate = new Date(fy, fm - 1, fd, 0, 0, 0, 0);
     
-    // إذا تم تحديد تاريخ محدد، فلتر السجلات الأقدم منه
-    if (deleteBeforeDate) {
-        const selectedDate = new Date(deleteBeforeDate);
-        recordsToDelete = recordsToDelete.filter(record => {
-            const recordDate = parseCustomDate(record.timestamp || '');
-            return recordDate && recordDate < selectedDate;
-        });
-    }
+    const [ty, tm, td] = toDateStr.split('-').map(Number);
+    const toDate = new Date(ty, tm - 1, td, 23, 59, 59, 999);
     
-    // ترتيب السجلات من الأقدم للأحدث
-    recordsToDelete.sort((a, b) => {
-        const dateA = parseCustomDate(a.timestamp || '') || new Date(0);
-        const dateB = parseCustomDate(b.timestamp || '') || new Date(0);
-        return dateA - dateB;
+    // الاحتفاظ بالسجلات التي خارج الفترة المحددة
+    const updatedHistory = appData.operationHistory.filter(record => {
+        const dateStr = record.timestamp || (record.date && record.time ? `${record.date} ${record.time}` : '');
+        const recordDate = parseCustomDate(dateStr);
+        // نحتفظ بالسجل إذا كان خارج النطاق (أصغر من البداية أو أكبر من النهاية)
+        return !recordDate || recordDate < fromDate || recordDate > toDate;
     });
-    
-    // تحديد السجلات المراد حذفها
-    const recordsToRemove = recordsToDelete.slice(0, deleteCount);
-    
-    if (recordsToRemove.length === 0) {
-        alert('لا توجد سجلات تطابق معايير الحذف');
-        confirmBtn.innerHTML = originalText;
-        confirmBtn.disabled = false;
-        return;
-    }
-    
-    // إنشاء نسخة جديدة من السجلات بدون السجلات المحددة للحذف
-    const updatedHistory = appData.operationHistory.filter(record => 
-        !recordsToRemove.some(toDelete => 
-            JSON.stringify(toDelete) === JSON.stringify(record)
-        )
-    );
     
     // حفظ السجلات المحدثة في Firebase
     db.ref('history').set(updatedHistory.reverse()) // إعادة ترتيب من الأحدث للأقدم
@@ -10331,7 +9990,7 @@ function confirmDeleteHistory() {
             }
             
             // إظهار رسالة نجاح
-            alert(`✅ تم حذف ${recordsToRemove.length} سجل بنجاح`);
+            alert(`✅ تم حذف ${countToDelete} سجل بنجاح`);
             
             // إغلاق النافذة
             closeModal('modal-delete-history');
@@ -11004,521 +10663,381 @@ window.addEventListener('offline', function() {
         }, 30000);
     };
 })();
-// ═══════════════════════════════════════════════════════
-// نظام الإحصائيات المتقدم
-// ═══════════════════════════════════════════════════════
 
-// متغيرات المخططات
-let pumpsStatusChart = null;
-let pumpsZoneChart = null;
-let waterHammerStatusChart = null;
-let controlSystemsChart = null;
+    // ═══════════════════════════════════════════════════════
+    // وحدة الإحصائيات (جديد)
+    // ═══════════════════════════════════════════════════════
 
-// تفعيل زر الإحصائيات
-document.getElementById('statistics-btn').addEventListener('click', () => {
-    showScreen('statistics');
-    // تحميل البيانات وإنشاء المخططات
-    setTimeout(() => {
-        updatePumpsStatistics();
-    }, 100);
-});
-
-// زر العودة
-document.getElementById('back-to-stations-from-stats').addEventListener('click', () => {
-    showScreen('stations');
-});
-
-// تفعيل تبويبات الإحصائيات
-document.querySelectorAll('.stats-tab').forEach(tab => {
-    tab.addEventListener('click', function() {
-        const tabName = this.dataset.tab;
-        
-        // إزالة التنشيط من جميع التبويبات
-        document.querySelectorAll('.stats-tab').forEach(t => t.classList.remove('active'));
-        document.querySelectorAll('.stats-tab-content').forEach(c => c.classList.remove('active'));
-        
-        // تنشيط التبويب المختار
-        this.classList.add('active');
-        document.getElementById(tabName + '-stats').classList.add('active');
-        
-        // تحديث البيانات المناسبة
-        setTimeout(() => {
-            if (tabName === 'pumps') {
-                updatePumpsStatistics();
-            } else if (tabName === 'water-hammer') {
-                updateWaterHammerStatistics();
-            } else if (tabName === 'control-systems') {
-                updateControlSystemsStatistics();
-            }
-        }, 100);
-    });
-});
-
-// ═══════════════════════════════════════════════════════
-// 1. إحصائيات المضخات
-// ═══════════════════════════════════════════════════════
-
-function updatePumpsStatistics() {
-    let stats = {
-        efficient: 0,
-        fault: 0,
-        broken: 0,
-        none: 0,
-        total: 0
-    };
-
-    const zoneStats = {};
-    const stationStats = {};
-    
-    // حساب الإحصائيات
-    Object.values(appData.stations).forEach(station => {
-        if (!station.pumps) return;
-        
-        if (!zoneStats[station.zone]) {
-            zoneStats[station.zone] = { efficient: 0, fault: 0, broken: 0, none: 0, total: 0 };
+    // تهيئة مستمعات الأحداث
+    document.addEventListener('DOMContentLoaded', function() {
+        // تفعيل زر الإحصائيات في القائمة
+        const statsBtn = document.getElementById('statistics-btn');
+        if (statsBtn) {
+            // إزالة أي مستمعات قديمة (لتجنب التكرار إذا تم إعادة التحميل) عن طريق استبدال العنصر بنسخة منه (اختياري، لكن هنا سنضيف المستمع مباشرة)
+            statsBtn.addEventListener('click', function() {
+                showScreen('statistics');
+                // تحميل البيانات ثم تحديث الواجهة
+                loadStations(function() {
+                    initStatisticsFilters();
+                    updateStatistics();
+                });
+            });
         }
         
-        stationStats[station.name] = { efficient: 0, fault: 0, broken: 0, none: 0 };
-        
-        station.pumps.forEach(pump => {
-            stats.total++;
-            zoneStats[station.zone].total++;
+        // زر العودة
+        const backStatsBtn = document.getElementById('back-from-statistics');
+        if (backStatsBtn) {
+            backStatsBtn.addEventListener('click', function() {
+                showScreen('stations'); // العودة للشاشة الرئيسية
+            });
+        }
+
+        // مستمعات الفلاتر
+        const zFilter = document.getElementById('statistics-zone-filter');
+        const sFilter = document.getElementById('statistics-station-filter');
+        const tFilter = document.getElementById('statistics-type-filter');
+
+        if (zFilter) zFilter.addEventListener('change', function() { updateStatisticsStationFilter(); updateStatistics(); });
+        if (sFilter) sFilter.addEventListener('change', updateStatistics);
+        if (tFilter) tFilter.addEventListener('change', function() {
+            const type = this.value;
+            const pumpsSection = document.getElementById('pumps-statistics');
+            const controlSection = document.getElementById('control-systems-statistics');
             
-            if (!pump.status || pump.status === 'نشطة') {
-                stats.efficient++;
-                zoneStats[station.zone].efficient++;
-                stationStats[station.name].efficient++;
-            } else if (pump.status === 'معطلة') {
-                stats.fault++;
-                zoneStats[station.zone].fault++;
-                stationStats[station.name].fault++;
-            } else if (pump.status === 'متوقفة') {
-                stats.broken++;
-                zoneStats[station.zone].broken++;
-                stationStats[station.name].broken++;
-            } else {
-                stats.none++;
-                zoneStats[station.zone].none++;
-                stationStats[station.name].none++;
-            }
+            if (pumpsSection) pumpsSection.style.display = (type === 'pumps') ? 'block' : 'none';
+            if (controlSection) controlSection.style.display = (type === 'control-systems') ? 'block' : 'none';
+            
+            updateStatistics();
         });
     });
 
-    // تحديث الأرقام
-    document.getElementById('total-pumps').textContent = stats.total;
-    document.getElementById('pumps-efficient').textContent = stats.efficient;
-    document.getElementById('pumps-fault').textContent = stats.fault;
-    document.getElementById('pumps-broken').textContent = stats.broken;
-    document.getElementById('pumps-none').textContent = stats.none;
-
-    // رسم مخطط الحالة
-    drawPumpsStatusChart(stats);
-    
-    // رسم مخطط المناطق
-    drawPumpsZoneChart(zoneStats);
-    
-    // تحديث أفضل وأسوأ المحطات
-    updateBestWorstStations(stationStats);
-}
-
-function drawPumpsStatusChart(stats) {
-    const ctx = document.getElementById('pumps-status-chart').getContext('2d');
-    
-    if (pumpsStatusChart) {
-        pumpsStatusChart.destroy();
+    // تهيئة الفلاتر
+    function initStatisticsFilters() {
+        const zFilter = document.getElementById('statistics-zone-filter');
+        if (!zFilter) return;
+        
+        // حفظ القيمة الحالية إذا وجدت
+        const currentVal = zFilter.value;
+        
+        zFilter.innerHTML = '<option value="all">الكل</option>';
+        if (appData && appData.zones) {
+            appData.zones.forEach(z => {
+                zFilter.innerHTML += `<option value="${z}">${z}</option>`;
+            });
+        }
+        
+        if (currentVal) zFilter.value = currentVal;
+        updateStatisticsStationFilter();
     }
 
-    pumpsStatusChart = new Chart(ctx, {
-        type: 'doughnut',
-        data: {
-            labels: ['يعمل بكفاءة', 'معطل / يحتاج صيانة', 'لا يعمل', 'غير موجود'],
-            datasets: [{
-                data: [stats.efficient, stats.fault, stats.broken, stats.none],
-                backgroundColor: [
-                    '#27ae60',
-                    '#f39c12',
-                    '#c0392b',
-                    '#95a5a6'
-                ],
-                borderColor: ['#fff', '#fff', '#fff', '#fff'],
-                borderWidth: 2
-            }]
-        },
-        options: {
-            responsive: true,
-            maintainAspectRatio: true,
-            plugins: {
-                legend: {
-                    position: 'bottom',
-                    labels: {
-                        padding: 15,
-                        font: { size: 12, weight: 'bold' },
-                        usePointStyle: true
-                    }
-                }
-            }
-        }
-    });
-}
-
-function drawPumpsZoneChart(zoneStats) {
-    const zones = Object.keys(zoneStats).sort();
-    const efficientData = zones.map(z => zoneStats[z].efficient);
-    const faultData = zones.map(z => zoneStats[z].fault);
-    const brokenData = zones.map(z => zoneStats[z].broken);
-
-    const ctx = document.getElementById('pumps-zone-chart').getContext('2d');
-    
-    if (pumpsZoneChart) {
-        pumpsZoneChart.destroy();
-    }
-
-    pumpsZoneChart = new Chart(ctx, {
-        type: 'bar',
-        data: {
-            labels: zones,
-            datasets: [
-                {
-                    label: 'يعمل بكفاءة',
-                    data: efficientData,
-                    backgroundColor: '#27ae60'
-                },
-                {
-                    label: 'معطل',
-                    data: faultData,
-                    backgroundColor: '#f39c12'
-                },
-                {
-                    label: 'لا يعمل',
-                    data: brokenData,
-                    backgroundColor: '#c0392b'
-                }
-            ]
-        },
-        options: {
-            responsive: true,
-            maintainAspectRatio: true,
-            indexAxis: 'y',
-            plugins: {
-                legend: {
-                    position: 'top',
-                    labels: { padding: 15, font: { size: 11 } }
-                }
-            },
-            scales: {
-                x: {
-                    stacked: true,
-                    beginAtZero: true
-                },
-                y: {
-                    stacked: true
-                }
-            }
-        }
-    });
-}
-
-function updateBestWorstStations(stationStats) {
-    // حساب نسبة الكفاءة لكل محطة
-    const efficiencyRatings = Object.entries(stationStats).map(([station, stats]) => {
-        const total = stats.efficient + stats.fault + stats.broken + stats.none;
-        const efficiency = total > 0 ? (stats.efficient / total) * 100 : 0;
-        return { station, efficiency, stats };
-    });
-
-    // ترتيب من الأفضل للأسوأ
-    efficiencyRatings.sort((a, b) => b.efficiency - a.efficiency);
-
-    // عرض أفضل 5 محطات
-    const bestList = document.getElementById('best-stations-list');
-    bestList.innerHTML = '';
-    efficiencyRatings.slice(0, 5).forEach((item, index) => {
-        const li = document.createElement('li');
-        li.innerHTML = `<strong>${index + 1}. ${item.station}</strong><br><span style="color:#27ae60; font-size:0.85rem;">كفاءة: ${item.efficiency.toFixed(1)}%</span>`;
-        bestList.appendChild(li);
-    });
-
-    // عرض أسوأ 5 محطات
-    const worstList = document.getElementById('worst-stations-list');
-    worstList.innerHTML = '';
-    efficiencyRatings.slice(-5).reverse().forEach((item, index) => {
-        const li = document.createElement('li');
-        li.innerHTML = `<strong>${index + 1}. ${item.station}</strong><br><span style="color:#c0392b; font-size:0.85rem;">كفاءة: ${item.efficiency.toFixed(1)}%</span>`;
-        worstList.appendChild(li);
-    });
-}
-
-// ═══════════════════════════════════════════════════════
-// 2. إحصائيات المطرقة المائية
-// ═══════════════════════════════════════════════════════
-
-function updateWaterHammerStatistics() {
-    const waterHammerSchema = appData.inspectionSchema?.waterHammer;
-    if (!waterHammerSchema) return;
-
-    let stats = {
-        efficient: 0,
-        fault: 0,
-        broken: 0,
-        none: 0,
-        total: 0
-    };
-
-    const stationDetails = {};
-    
-    // حساب الإحصائيات من بيانات الفحص
-    Object.entries(appData.stations).forEach(([stationName, station]) => {
-        if (!station.inspectionData?.waterHammer) return;
-
-        const whData = station.inspectionData.waterHammer;
-        let stationEfficient = 0, stationFault = 0, stationBroken = 0, stationNone = 0;
-
-        Object.values(whData).forEach(item => {
-            stats.total++;
+    // تحديث فلتر المحطات بناءً على المنطقة
+    function updateStatisticsStationFilter() {
+        const zFilter = document.getElementById('statistics-zone-filter');
+        const sFilter = document.getElementById('statistics-station-filter');
+        if (!zFilter || !sFilter) return;
+        
+        const selectedZone = zFilter.value;
+        const currentStation = sFilter.value;
+        
+        sFilter.innerHTML = '<option value="all">الكل</option>';
+        
+        if (appData && appData.stations) {
+            const stationsList = Object.values(appData.stations);
+            // ترتيب أبجدي للمحطات
+            stationsList.sort((a, b) => a.name.localeCompare(b.name));
             
-            if (item.status === 'efficient') {
-                stats.efficient++;
-                stationEfficient++;
-            } else if (item.status === 'fault') {
-                stats.fault++;
-                stationFault++;
-            } else if (item.status === 'broken') {
-                stats.broken++;
-                stationBroken++;
-            } else {
-                stats.none++;
-                stationNone++;
+            stationsList.forEach(s => {
+                if (selectedZone === 'all' || s.zone === selectedZone) {
+                    sFilter.innerHTML += `<option value="${s.name}">${s.name}</option>`;
+                }
+            });
+        }
+        
+        // محاولة استعادة الاختيار السابق إذا كان لا يزال متاحاً
+        if (currentStation && sFilter.querySelector(`option[value="${currentStation}"]`)) {
+            sFilter.value = currentStation;
+        }
+    }
+
+    // دالة التحديث الرئيسية
+    function updateStatistics() {
+        const zFilter = document.getElementById('statistics-zone-filter');
+        const sFilter = document.getElementById('statistics-station-filter');
+        const tFilter = document.getElementById('statistics-type-filter');
+        
+        if (!zFilter || !appData || !appData.stations) return;
+
+        const zoneVal = zFilter.value;
+        const stationVal = sFilter.value;
+        const type = tFilter ? tFilter.value : 'pumps';
+
+        let stations = Object.values(appData.stations);
+
+        // تطبيق الفلتر
+        if (zoneVal !== 'all') {
+            stations = stations.filter(s => s.zone === zoneVal);
+        }
+        if (stationVal !== 'all') {
+            stations = stations.filter(s => s.name === stationVal);
+        }
+        
+        // تحديث ملخص الفلتر
+        const summaryText = (zoneVal === 'all' ? 'جميع المناطق' : zoneVal) + 
+                          (stationVal === 'all' ? '' : ' - ' + stationVal) +
+                          ` (${stations.length} محطة)`;
+        
+        const pumpSummary = document.getElementById('pumps-stats-summary');
+        const controlSummary = document.getElementById('control-systems-summary');
+        if (pumpSummary) pumpSummary.textContent = summaryText;
+        if (controlSummary) controlSummary.textContent = summaryText;
+
+        if (type === 'pumps') {
+            renderPumpsStatistics(stations);
+        } else {
+            renderControlSystemsStatistics(stations);
+        }
+    }
+
+    // عرض إحصائيات المضخات
+    function renderPumpsStatistics(stations) {
+        let working = 0, withFaults = 0, broken = 0, notInstalled = 0, total = 0;
+        let detailsHtml = '';
+
+        stations.forEach(s => {
+            let sWorking = 0, sWithFaults = 0, sBroken = 0, sNotInstalled = 0, sTotal = 0;
+            
+            // استخدام بيانات الفحص كمصدر للبيانات
+            const inspectionData = s.inspectionData && s.inspectionData.pumps ? s.inspectionData.pumps : {};
+            
+            // عدد المضخات الكلي (إما من تعريف المحطة أو افتراضي 4)
+            const pumpCount = s.pumps ? s.pumps.length : 4;
+            
+            for(let i=1; i<=pumpCount; i++) {
+                sTotal++;
+                
+                // الحصول على حالة "المضخة" من بيانات الفحص
+                let status = 'none';
+                if (inspectionData[i] && inspectionData[i][5]) {
+                    status = inspectionData[i][5].status;
+                }
+                
+                // تصنيف الحالة
+                // efficient: ✅ يعمل بكفاءة
+                // fault: ⚠️ عطل / ملاحظة
+                // broken: 🛑 لا يعمل
+                // none: ⚪ لا يوجد (غير مركبة)
+                
+                if (status === 'efficient') {
+                    sWorking++;
+                } else if (status === 'fault') {
+                    sWithFaults++;
+                } else if (status === 'broken') {
+                    sBroken++;
+                } else if (status === 'none') {
+                    sNotInstalled++;
+                } else {
+                    // غير محدد = لا يوجد
+                    sNotInstalled++;
+                }
             }
+            
+            working += sWorking;
+            withFaults += sWithFaults;
+            broken += sBroken;
+            notInstalled += sNotInstalled;
+            total += sTotal;
+
+            // حساب الكفاءة: (تعمل بكفاءة + عطل/ملاحظة) / (الإجمالي - لا يوجد)
+            let installedTotal = sTotal - sNotInstalled;
+            let efficiency = 0;
+            
+            if (installedTotal > 0) {
+                efficiency = ((sWorking + sWithFaults) / installedTotal) * 100;
+            }
+
+            // تحديد اللون
+            let effColor = 'var(--success-color)';
+            if (efficiency < 50) effColor = 'var(--danger-color)';
+            else if (efficiency < 80) effColor = 'var(--warning-color)';
+
+            detailsHtml += `
+                <div style="padding: 15px 10px; border-bottom: 1px solid #eee;">
+                    <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px;">
+                        <div style="font-weight: bold; color: var(--primary-color); width: 35%;">${s.name}</div>
+                        <div style="display: flex; gap: 8px; justify-content: flex-end; flex-wrap: wrap; flex: 1;">
+                            ${generatePumpCircles(s)}
+                        </div>
+                    </div>
+                    
+                    <div style="display: flex; align-items: center; gap: 10px;">
+                        <span style="font-size: 0.8rem; color: #666; width: 60px;">الكفاءة:</span>
+                        <div style="flex: 1; background: #eee; height: 8px; border-radius: 4px; overflow: hidden;">
+                            <div style="width: ${efficiency}%; background: ${effColor}; height: 100%;"></div>
+                        </div>
+                        <span style="font-weight: bold; color: ${effColor}; font-size: 0.9rem; min-width: 40px; text-align: left;">${efficiency.toFixed(0)}%</span>
+                    </div>
+                </div>
+            `;
         });
 
-        // تحديد حالة النظام الكلية
-        let stationStatus = 'تعمل بكفاءة';
-        if (stationBroken > 0) stationStatus = 'لا تعمل';
-        else if (stationFault > 0) stationStatus = 'معطلة';
+        // تحديث الأرقام الإجمالية
+        setTextContent('working-pumps-count', working);
+        setTextContent('fault-pumps-count', withFaults);
+        setTextContent('broken-pumps-count', broken);
+        setTextContent('not-installed-pumps-count', notInstalled);
+        setTextContent('total-pumps-count', total);
 
-        stationDetails[stationName] = {
-            zone: station.zone,
-            status: stationStatus,
-            efficient: stationEfficient,
-            fault: stationFault,
-            broken: stationBroken
-        };
-    });
+        // النسب المئوية
+        if (total > 0) {
+            setTextContent('working-pumps-percentage', ((working / total) * 100).toFixed(1) + '%');
+            setTextContent('fault-pumps-percentage', ((withFaults / total) * 100).toFixed(1) + '%');
+            setTextContent('broken-pumps-percentage', ((broken / total) * 100).toFixed(1) + '%');
+            setTextContent('not-installed-pumps-percentage', ((notInstalled / total) * 100).toFixed(1) + '%');
+            
+            // نسبة التشغيل (تعمل بكفاءة + عطل/ملاحظة) / الإجمالي
+            let workingPercentage = ((working + withFaults) / total) * 100;
+            setTextContent('total-working-percentage', workingPercentage.toFixed(1) + '%');
+        } else {
+            setTextContent('working-pumps-percentage', '0%');
+            setTextContent('fault-pumps-percentage', '0%');
+            setTextContent('broken-pumps-percentage', '0%');
+            setTextContent('not-installed-pumps-percentage', '0%');
+            setTextContent('total-working-percentage', '0%');
+        }
 
-    // تحديث الأرقام
-    document.getElementById('total-water-hammers').textContent = stats.total;
-    document.getElementById('water-hammer-efficient').textContent = stats.efficient;
-    document.getElementById('water-hammer-fault').textContent = stats.fault;
-    document.getElementById('water-hammer-broken').textContent = stats.broken;
-    document.getElementById('water-hammer-none').textContent = stats.none;
-
-    // رسم المخطط
-    drawWaterHammerStatusChart(stats);
-    
-    // تحديث الجدول
-    updateWaterHammerDetailsTable(stationDetails);
-}
-
-function drawWaterHammerStatusChart(stats) {
-    const ctx = document.getElementById('water-hammer-status-chart').getContext('2d');
-    
-    if (waterHammerStatusChart) {
-        waterHammerStatusChart.destroy();
+        const detailsContainer = document.getElementById('stations-details-content');
+        if (detailsContainer) {
+            // تغيير تنسيق الحاوية لتكون قائمة عمودية بدلاً من شبكة
+            detailsContainer.style.display = 'block'; 
+            detailsContainer.style.background = '#fff';
+            detailsContainer.style.borderRadius = '8px';
+            detailsContainer.style.boxShadow = '0 2px 5px rgba(0,0,0,0.05)';
+            detailsContainer.style.border = '1px solid #eee';
+            
+            detailsContainer.innerHTML = detailsHtml || '<div style="padding: 20px; text-align:center; color:#888;">لا توجد بيانات للعرض</div>';
+        }
     }
 
-    waterHammerStatusChart = new Chart(ctx, {
-        type: 'doughnut',
-        data: {
-            labels: ['تعمل بكفاءة', 'معطلة', 'لا تعمل', 'غير موجودة'],
-            datasets: [{
-                data: [stats.efficient, stats.fault, stats.broken, stats.none],
-                backgroundColor: [
-                    '#27ae60',
-                    '#f39c12',
-                    '#c0392b',
-                    '#95a5a6'
-                ],
-                borderColor: ['#fff', '#fff', '#fff', '#fff'],
-                borderWidth: 2
-            }]
-        },
-        options: {
-            responsive: true,
-            maintainAspectRatio: true,
-            plugins: {
-                legend: {
-                    position: 'bottom',
-                    labels: { padding: 15, font: { size: 12, weight: 'bold' } }
-                }
+    function generatePumpCircles(station) {
+        let html = '';
+        const inspectionData = station.inspectionData && station.inspectionData.pumps ? station.inspectionData.pumps : {};
+        const pumpCount = station.pumps ? station.pumps.length : 4;
+
+        for (let i = 1; i <= pumpCount; i++) {
+            let status = 'none';
+            if (inspectionData[i] && inspectionData[i][5]) {
+                status = inspectionData[i][5].status;
             }
+
+            let color = '#eee'; // default/none
+            let borderColor = '#ccc';
+            
+            if (status === 'efficient') {
+                color = 'var(--success-color)'; // Green
+                borderColor = '#1e7e34';
+            } else if (status === 'fault') {
+                color = 'var(--warning-color)'; // Yellow
+                borderColor = '#d39e00';
+            } else if (status === 'broken') {
+                color = 'var(--danger-color)'; // Red
+                borderColor = '#bd2130';
+            } else if (status === 'none') {
+                 // Skip drawing circle for not installed? Or draw gray?
+                 // User asked for: Green=Efficient, Yellow=Fault, Red=Broken.
+                 // He didn't specify "None". I will draw it gray or transparent to indicate slot existence but empty.
+                 // Let's make it a hollow gray circle.
+                 color = 'transparent';
+                 borderColor = '#ccc';
+            }
+
+            // إذا كانت غير مركبة (transparent)، هل نكتب الرقم؟ نعم ليعرف أنها المضخة رقم كذا.
+            
+            html += `
+                <div style="
+                    width: 24px; 
+                    height: 24px; 
+                    border-radius: 50%; 
+                    background-color: ${color}; 
+                    border: 1px solid ${borderColor}; 
+                    color: ${status === 'none' ? '#999' : '#fff'}; 
+                    display: flex; 
+                    align-items: center; 
+                    justify-content: center; 
+                    font-size: 0.75rem; 
+                    font-weight: bold;
+                    " title="مضخة ${i}: ${getStatusText(status)}">
+                    ${i}
+                </div>
+            `;
         }
-    });
-}
+        return html;
+    }
 
-function updateWaterHammerDetailsTable(stationDetails) {
-    const tbody = document.getElementById('water-hammer-details-body');
-    tbody.innerHTML = '';
+    function getStatusText(status) {
+        if (status === 'efficient') return 'تعمل بكفاءة';
+        if (status === 'fault') return 'عطل / ملاحظة';
+        if (status === 'broken') return 'لا تعمل';
+        if (status === 'none') return 'لا يوجد';
+        return 'غير محدد';
+    }
 
-    Object.entries(stationDetails).forEach(([station, details]) => {
-        const statusColor = details.status === 'تعمل بكفاءة' ? '#27ae60' : 
-                           details.status === 'معطلة' ? '#f39c12' : '#c0392b';
-        const statusIcon = details.status === 'تعمل بكفاءة' ? '✅' : 
-                          details.status === 'معطلة' ? '⚠️' : '🛑';
+    // عرض إحصائيات نظم التحكم
+    function renderControlSystemsStatistics(stations) {
+        let scada = 0, plc = 0, mimic = 0, hmi = 0, total = 0;
+        let detailsHtml = '';
 
-        tbody.innerHTML += `
-            <tr>
-                <td><strong>${station}</strong></td>
-                <td>${details.zone}</td>
-                <td>
-                    <span style="color:${statusColor}; font-weight:bold;">
-                        ${statusIcon} ${details.status}
-                    </span>
-                </td>
-            </tr>
-        `;
-    });
-}
+        stations.forEach(s => {
+            const sys = s.systemMode || 'Unknown';
+            total++; // نعتبر كل محطة لها نظام تحكم واحد
+            
+            // التصنيف
+            if (sys === 'SCADA') scada++;
+            else if (sys === 'PLC') plc++;
+            else if (sys === 'MIMIC' || sys === 'Marshalling') mimic++;
+            else if (sys === 'HMI' || sys === 'LCP') hmi++;
+            
+            // بطاقة التفاصيل
+            let badgeColor = '#777';
+            if (sys === 'SCADA') badgeColor = '#9c27b0';
+            else if (sys === 'PLC') badgeColor = '#673ab7';
+            else if (sys === 'MIMIC' || sys === 'Marshalling') badgeColor = '#3f51b5';
+            else if (sys === 'HMI' || sys === 'LCP') badgeColor = '#2196f3';
 
-// ═══════════════════════════════════════════════════════
-// 3. إحصائيات أنظمة التحكم
-// ═══════════════════════════════════════════════════════
-
-function updateControlSystemsStatistics() {
-    let systemsCount = {
-        'SCADA': 0,
-        'PLC': 0,
-        'MIMIC': 0,
-        'Marshalling': 0,
-        'HMI': 0,
-        'LCP': 0
-    };
-
-    const zoneSystemsCount = {};
-    
-    // إعداد البيانات لكل منطقة
-    appData.zones.forEach(zone => {
-        zoneSystemsCount[zone] = {
-            'SCADA': 0,
-            'PLC': 0,
-            'MIMIC': 0,
-            'Marshalling': 0,
-            'HMI': 0,
-            'LCP': 0
-        };
-    });
-
-    // العد
-    Object.values(appData.stations).forEach(station => {
-        const mode = (station.systemMode || 'SCADA').toUpperCase();
+            detailsHtml += `
+                 <div class="detail-card" style="text-align:center;">
+                    <div class="detail-title" style="margin-bottom:15px;">${s.name}</div>
+                    <span class="badge" style="background: ${badgeColor}; color: white; padding: 8px 16px; border-radius: 20px; font-size: 1rem; box-shadow: 0 2px 5px rgba(0,0,0,0.1);">${sys}</span>
+                 </div>
+            `;
+        });
         
-        // معالجة الأسماء المختلفة
-        if (mode.includes('SCADA')) {
-            systemsCount['SCADA']++;
-            zoneSystemsCount[station.zone]['SCADA']++;
-        } else if (mode.includes('PLC')) {
-            systemsCount['PLC']++;
-            zoneSystemsCount[station.zone]['PLC']++;
-        } else if (mode.includes('MIMIC')) {
-            systemsCount['MIMIC']++;
-            zoneSystemsCount[station.zone]['MIMIC']++;
-        } else if (mode.includes('MARSHALLING')) {
-            systemsCount['Marshalling']++;
-            zoneSystemsCount[station.zone]['Marshalling']++;
-        } else if (mode.includes('HMI')) {
-            systemsCount['HMI']++;
-            zoneSystemsCount[station.zone]['HMI']++;
-        } else if (mode.includes('LCP')) {
-            systemsCount['LCP']++;
-            zoneSystemsCount[station.zone]['LCP']++;
+        // تحديث الأرقام الإجمالية
+        setTextContent('scada-count', scada);
+        setTextContent('plc-count', plc);
+        setTextContent('mimic-count', mimic);
+        setTextContent('hmi-count', hmi);
+
+        if (total > 0) {
+             setTextContent('scada-percentage', ((scada/total)*100).toFixed(1) + '%');
+             setTextContent('plc-percentage', ((plc/total)*100).toFixed(1) + '%');
+             setTextContent('mimic-percentage', ((mimic/total)*100).toFixed(1) + '%');
+             setTextContent('hmi-percentage', ((hmi/total)*100).toFixed(1) + '%');
+        } else {
+             setTextContent('scada-percentage', '0%');
+             setTextContent('plc-percentage', '0%');
+             setTextContent('mimic-percentage', '0%');
+             setTextContent('hmi-percentage', '0%');
         }
-    });
-
-    // تحديث الأرقام
-    document.getElementById('system-scada').textContent = systemsCount['SCADA'] + ' محطة';
-    document.getElementById('system-plc').textContent = systemsCount['PLC'] + ' محطة';
-    document.getElementById('system-mimic').textContent = (systemsCount['MIMIC'] + systemsCount['Marshalling']) + ' محطة';
-    document.getElementById('system-hmi').textContent = (systemsCount['HMI'] + systemsCount['LCP']) + ' محطة';
-
-    // رسم المخطط
-    drawControlSystemsChart(systemsCount);
-    
-    // تحديث جدول التفاصيل
-    updateControlSystemsDetailsTable(zoneSystemsCount);
-}
-
-function drawControlSystemsChart(systemsCount) {
-    const ctx = document.getElementById('control-systems-chart').getContext('2d');
-    
-    if (controlSystemsChart) {
-        controlSystemsChart.destroy();
+        
+        const detailsContainer = document.getElementById('control-systems-details-content');
+        if (detailsContainer) detailsContainer.innerHTML = detailsHtml || '<div style="grid-column:1/-1; text-align:center; color:#888;">لا توجد بيانات للعرض</div>';
     }
 
-    // دمج الفئات المتشابهة
-    const labels = ['SCADA', 'PLC', 'MIMIC/Marshalling', 'HMI/LCP'];
-    const data = [
-        systemsCount['SCADA'],
-        systemsCount['PLC'],
-        systemsCount['MIMIC'] + systemsCount['Marshalling'],
-        systemsCount['HMI'] + systemsCount['LCP']
-    ];
+    function setTextContent(id, text) {
+        const el = document.getElementById(id);
+        if (el) el.textContent = text;
+    }
 
-    controlSystemsChart = new Chart(ctx, {
-        type: 'pie',
-        data: {
-            labels: labels,
-            datasets: [{
-                data: data,
-                backgroundColor: [
-                    '#3498db',
-                    '#2ecc71',
-                    '#e74c3c',
-                    '#f39c12'
-                ],
-                borderColor: ['#fff', '#fff', '#fff', '#fff'],
-                borderWidth: 2
-            }]
-        },
-        options: {
-            responsive: true,
-            maintainAspectRatio: true,
-            plugins: {
-                legend: {
-                    position: 'right',
-                    labels: {
-                        padding: 15,
-                        font: { size: 12, weight: 'bold' }
-                    }
-                }
-            }
-        }
-    });
-}
-
-function updateControlSystemsDetailsTable(zoneSystemsCount) {
-    const tbody = document.getElementById('control-systems-details-body');
-    tbody.innerHTML = '';
-
-    Object.entries(zoneSystemsCount).forEach(([zone, counts]) => {
-        if (counts.SCADA + counts.PLC + counts.MIMIC + counts.Marshalling + counts.HMI + counts.LCP === 0) return;
-
-        tbody.innerHTML += `
-            <tr>
-                <td><strong>${zone}</strong></td>
-                <td>${counts.SCADA}</td>
-                <td>${counts.PLC}</td>
-                <td>${counts.MIMIC + counts.Marshalling}</td>
-                <td>${counts.HMI + counts.LCP}</td>
-            </tr>
-        `;
-    });
-}
-
-// تحميل Chart.js من CDN إذا لم تكن محملة
-if (!window.Chart) {
-    const script = document.createElement('script');
-    script.src = 'https://cdn.jsdelivr.net/npm/chart.js@3.9.1/dist/chart.min.js';
-    document.head.appendChild(script);
-}
     </script>
 </body>
 </html>
