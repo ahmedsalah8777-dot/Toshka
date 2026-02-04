@@ -3703,7 +3703,6 @@
                     <thead>
                         <tr>
                             <th>التاريخ</th>
-                            <th>النوع</th>
                             <th>القائم بالبلاغ</th>
                             <th>المكون / العطل</th>
                             <th>وصف العطل</th>
@@ -3730,7 +3729,6 @@
                     <thead>
                         <tr>
                             <th>التاريخ</th>
-                            <th>النوع</th>
                             <th>الصادر للأمر</th>
                             <th>المكون / العطل</th>
                             <th>وصف العطل</th>
@@ -10087,7 +10085,6 @@ window.renderStationSpecificLogs = function(stationId) {
                 faultsBody.innerHTML += `
                     <tr style="background-color: #fff5f5;">
                         <td>${item.displayDate}</td>
-                        <td><span style="color:#c0392b; font-weight:bold;">🚨 بلاغ عطل</span></td>
                         <td>${item.reporter}</td>
                         <td>${item.component}</td>
                         <td>${item.description}</td>
@@ -10130,7 +10127,6 @@ window.renderStationSpecificLogs = function(stationId) {
                 woBody.innerHTML += `
                     <tr style="background-color: #f0f8ff;">
                         <td>${item.displayDate}</td>
-                        <td><span style="color:#2980b9; font-weight:bold;">🛠️ أمر شغل</span></td>
                         <td>${item.issuer}</td>
                         <td>${item.component}</td>
                         <td>${item.description}</td>
