@@ -6628,8 +6628,8 @@ function saveDataInternal(options = {}) {
                         let headerClass = 'pump-header-green'; 
                         let icon = '✅'; 
                         // التعديل: تحديد الحالة بناءً على عناصر محددة فقط
-                        // العناصر: 0 (محبس فراشه)، 1 (وصله فك و تركيب)، 5 (المضخه)، 11 (وصله فك و تركيب)، 12 (محبس فراشه)
-                        const targetIndices = [0, 1, 5, 11, 12];
+                        // العناصر: 0 (محبس فراشه)، 1 (وصله فك و تركيب)، 5 (المضخه)، 10 (محبس عدم رجوع)، 11 (وصله فك و تركيب)، 12 (محبس فراشه)
+                        const targetIndices = [0, 1, 5, 10, 11, 12];
                         let isRed = false; 
                         let isYellow = false;
                         
@@ -6907,8 +6907,8 @@ if (idx === 5) { // الرقم 5 يمثل "المضخه" في مصفوفة ال�
                     
                     // تحديد حالة المضخة بناءً على البيانات
                     let pumpStatus = "✅ يعمل بكفاءة";
-                    // العناصر المؤثرة: 0 (محبس فراشه)، 1 (وصله فك و تركيب)، 5 (المضخه)، 11 (وصله فك و تركيب)، 12 (محبس فراشه)
-                    const targetIndices = [0, 1, 5, 11, 12];
+                    // العناصر المؤثرة: 0 (محبس فراشه)، 1 (وصله فك و تركيب)، 5 (المضخه)، 10 (محبس عدم رجوع)، 11 (وصله فك و تركيب)، 12 (محبس فراشه)
+                    const targetIndices = [0, 1, 5, 10, 11, 12];
                     let hasCriticalFault = false;
                     let hasFault = false;
                     
@@ -7328,8 +7328,8 @@ if (idx === 5) { // الرقم 5 يمثل "المضخه" في مصفوفة ال�
                         
                         // تحديد حالة المضخة
                         let pumpStatus = "✅ يعمل بكفاءة";
-                        // العناصر المؤثرة: 0 (محبس فراشه)، 1 (وصله فك و تركيب)، 5 (المضخه)، 11 (وصله فك و تركيب)، 12 (محبس فراشه)
-                        const targetIndices = [0, 1, 5, 11, 12];
+                        // العناصر المؤثرة: 0 (محبس فراشه)، 1 (وصله فك و تركيب)، 5 (المضخه)، 10 (محبس عدم رجوع)، 11 (وصله فك و تركيب)، 12 (محبس فراشه)
+                        const targetIndices = [0, 1, 5, 10, 11, 12];
                         let hasCriticalFault = false;
                         let hasFault = false;
                         
@@ -11070,10 +11070,34 @@ window.addEventListener('offline', function() {
             for(let i=1; i<=pumpCount; i++) {
                 sTotal++;
                 
-                // الحصول على حالة "المضخة" من بيانات الفحص
-                let status = 'none';
-                if (inspectionData[i] && inspectionData[i][5]) {
-                    status = inspectionData[i][5].status;
+                // الحصول على حالة "المضخة" من بيانات الفحص بناءً على جميع العناصر المؤثرة
+                // العناصر المؤثرة: 0 (محبس فراشه)، 1 (وصله فك و تركيب)، 5 (المضخه)، 10 (محبس عدم رجوع)، 11 (وصله فك و تركيب)، 12 (محبس فراشه)
+                let status = 'none'; // الحالة الافتراضية إذا لم توجد بيانات
+                
+                // التأكد من وجود بيانات للمضخة الحالية
+                if (inspectionData[i]) {
+                    const pData = inspectionData[i];
+                    // إذا كان العنصر الأساسي (المضخة - 5) موجود، نفترض الحالة مبدئياً "efficient"
+                    // ثم نفحص باقي العناصر
+                    if (pData[5] && pData[5].status && pData[5].status !== 'none') {
+                        status = 'efficient';
+                        
+                        const targetIndices = [0, 1, 5, 10, 11, 12];
+                        let hasBroken = false;
+                        let hasFault = false;
+                        
+                        targetIndices.forEach(idx => {
+                            const itemData = pData[idx] || {};
+                            const s = itemData.status;
+                            if (s === 'broken') hasBroken = true;
+                            if (s === 'fault') hasFault = true;
+                        });
+                        
+                        if (hasBroken) status = 'broken';
+                        else if (hasFault) status = 'fault';
+                    } else if (pData[5] && pData[5].status === 'none') {
+                        status = 'none';
+                    }
                 }
                 
                 // تصنيف الحالة
@@ -11181,33 +11205,56 @@ window.addEventListener('offline', function() {
         const pumpCount = station.pumps ? station.pumps.length : 4;
 
         for (let i = 1; i <= pumpCount; i++) {
+            // منطق موحد لتحديد الحالة
+            // العناصر المؤثرة: 0 (محبس فراشه)، 1 (وصله فك و تركيب)، 5 (المضخه)، 10 (محبس عدم رجوع)، 11 (وصله فك و تركيب)، 12 (محبس فراشه)
             let status = 'none';
-            if (inspectionData[i] && inspectionData[i][5]) {
-                status = inspectionData[i][5].status;
+            
+            if (inspectionData[i]) {
+                const pData = inspectionData[i];
+                // إذا كان العنصر الأساسي (المضخة - 5) موجود، نفترض الحالة مبدئياً "efficient"
+                // ثم نفحص باقي العناصر
+                if (pData[5] && pData[5].status && pData[5].status !== 'none') {
+                    status = 'efficient';
+                    
+                    const targetIndices = [0, 1, 5, 10, 11, 12];
+                    let hasBroken = false;
+                    let hasFault = false;
+                    
+                    targetIndices.forEach(idx => {
+                        const itemData = pData[idx] || {};
+                        const s = itemData.status;
+                        if (s === 'broken') hasBroken = true;
+                        if (s === 'fault') hasFault = true;
+                    });
+                    
+                    if (hasBroken) status = 'broken';
+                    else if (hasFault) status = 'fault';
+                } else if (pData[5] && pData[5].status === 'none') {
+                    status = 'none';
+                }
             }
 
             let color = '#eee'; // default/none
             let borderColor = '#ccc';
+            let textColor = '#999';
             
             if (status === 'efficient') {
                 color = 'var(--success-color)'; // Green
                 borderColor = '#1e7e34';
+                textColor = '#fff';
             } else if (status === 'fault') {
                 color = 'var(--warning-color)'; // Yellow
                 borderColor = '#d39e00';
+                textColor = '#333';
             } else if (status === 'broken') {
                 color = 'var(--danger-color)'; // Red
                 borderColor = '#bd2130';
+                textColor = '#fff';
             } else if (status === 'none') {
-                 // Skip drawing circle for not installed? Or draw gray?
-                 // User asked for: Green=Efficient, Yellow=Fault, Red=Broken.
-                 // He didn't specify "None". I will draw it gray or transparent to indicate slot existence but empty.
-                 // Let's make it a hollow gray circle.
                  color = 'transparent';
                  borderColor = '#ccc';
+                 textColor = '#999';
             }
-
-            // إذا كانت غير مركبة (transparent)، هل نكتب الرقم؟ نعم ليعرف أنها المضخة رقم كذا.
             
             html += `
                 <div style="
@@ -11216,7 +11263,7 @@ window.addEventListener('offline', function() {
                     border-radius: 50%; 
                     background-color: ${color}; 
                     border: 1px solid ${borderColor}; 
-                    color: ${status === 'none' ? '#999' : '#fff'}; 
+                    color: ${textColor}; 
                     display: flex; 
                     align-items: center; 
                     justify-content: center; 
