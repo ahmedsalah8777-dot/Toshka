@@ -2874,6 +2874,7 @@
             <div style="display:flex; gap:10px; flex-wrap:wrap;">
                 <button id="back-to-stations" class="btn btn-outline">عودة للقائمة</button>
                 <button id="view-inspection-btn" class="btn btn-info" style="display:none;">📋 عرض الفحص</button>
+                <button id="view-station-logs-btn" class="btn btn-warning" onclick="openStationLogs()">📂 سجل الأعطال وأوامر الشغل</button>
             </div>
             
             <div id="station-fault-banner" class="alert" style="background: #ffecec; color: #b71c1c; border: 1px solid #ffcdd2; margin-top: 15px; display: none;">
@@ -3684,6 +3685,70 @@
     </div>
 </div>
 <!-- نافذة منبثقة لحذف السجلات -->
+<!-- شاشة سجل الأعطال وأوامر الشغل للمحطة -->
+<div id="station-logs-screen" class="screen">
+    <div class="user-data-card">
+        <div class="user-data-header">
+            <h2 class="user-data-title" id="station-logs-title">📂 سجل الأعطال وأوامر الشغل</h2>
+            <button onclick="showScreen('station')" class="btn btn-outline">عودة للمحطة</button>
+        </div>
+        
+        <!-- قسم بلاغات الأعطال -->
+        <div class="section-card">
+            <h3 style="color: #c0392b; margin-bottom: 15px; border-bottom: 2px solid #c0392b; padding-bottom: 5px;">
+                🚨 سجل بلاغات الأعطال (الفعلي)
+            </h3>
+            <div class="table-responsive">
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th>التاريخ</th>
+                            <th>النوع</th>
+                            <th>القائم بالبلاغ</th>
+                            <th>المكون / العطل</th>
+                            <th>وصف العطل</th>
+                            <th>الحالة</th>
+                        </tr>
+                    </thead>
+                    <tbody id="station-faults-body">
+                        <!-- سيتم ملؤها بواسطة JS -->
+                    </tbody>
+                </table>
+            </div>
+            <div id="no-station-faults" style="text-align: center; padding: 20px; color: #7f8c8d; display: none;">
+                لا توجد بلاغات أعطال نشطة
+            </div>
+        </div>
+
+        <!-- قسم أوامر الشغل -->
+        <div class="section-card" style="margin-top: 25px;">
+            <h3 style="color: #2980b9; margin-bottom: 15px; border-bottom: 2px solid #2980b9; padding-bottom: 5px;">
+                🛠️ سجل أوامر الشغل
+            </h3>
+            <div class="table-responsive">
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th>التاريخ</th>
+                            <th>النوع</th>
+                            <th>الصادر للأمر</th>
+                            <th>المكون / العطل</th>
+                            <th>وصف العطل</th>
+                            <th>الحالة</th>
+                        </tr>
+                    </thead>
+                    <tbody id="station-workorders-body">
+                        <!-- سيتم ملؤها بواسطة JS -->
+                    </tbody>
+                </table>
+            </div>
+            <div id="no-station-workorders" style="text-align: center; padding: 20px; color: #7f8c8d; display: none;">
+                لا توجد أوامر شغل نشطة
+            </div>
+        </div>
+    </div>
+</div>
+
 <div id="modal-delete-history" class="custom-modal">
     <div class="modal-content">
         <div class="modal-header">
@@ -6384,7 +6449,7 @@ function saveDataInternal(options = {}) {
             isWeakSignal = true; // نعتبرها إشارة ضعيفة لأن الرفع فشل
             updateNetworkStatus();
             showSuccessFeedback(sName, true); // رسالة صفراء
-            resetButton();
+            // resetButton(); // تم تعطيله بناءً على طلب المستخدم لتجميد الزر حتى الخروج
         };
 
         // --- محاولة الرفع مع منطق Timeout صارم ---
@@ -6436,7 +6501,7 @@ function saveDataInternal(options = {}) {
                     Object.assign(appData.stations[sName], updates);
                     localStorage.setItem('toshka_stations_cache', JSON.stringify(appData.stations));
                     showSuccessFeedback(sName, false); // رسالة خضراء
-                    resetButton();
+                    // resetButton(); // تم تعطيله بناءً على طلب المستخدم لتجميد الزر حتى الخروج
                 })
                 .catch(err => {
                     // إذا فاز التايم أوت أو حدث خطأ
@@ -6467,6 +6532,11 @@ function saveDataInternal(options = {}) {
                 alertDiv.style.display = 'none'; 
                 showStationDetails(sName); 
             }, isOffline ? 4500 : 1500);
+        }
+
+        function performOfflineSave(sName, updates, log, consumptionLogData, newFaultEntries, resolvedFaultEntries) {
+             // هذه الدالة تحتاج الوصول للمتغيرات المحلية، لذلك قد يكون من الأفضل تركها داخل saveDataInternal أو تمرير المعاملات
+             // ولكن بما أننا عدلنا فقط استدعاء resetButton، سنكتفي بالتعديل أعلاه
         }
 
         function cleanHistoricalData() {
@@ -9134,6 +9204,11 @@ function updateReportComponents() {
 
 // 3. إرسال البلاغ
 document.getElementById('btn-send-report').addEventListener('click', () => {
+    const sendBtn = document.getElementById('btn-send-report');
+    
+    // منع الإرسال المتكرر
+    if (sendBtn.disabled) return;
+    
     const reporter = document.getElementById('report-reporter').value;
     const zone = document.getElementById('report-zone').value;
     const station = document.getElementById('report-station').value;
@@ -9144,6 +9219,11 @@ document.getElementById('btn-send-report').addEventListener('click', () => {
         alert("يرجى ملء جميع الحقول المطلوبة");
         return;
     }
+
+    // تعطيل الزر وتغيير نصه
+    sendBtn.disabled = true;
+    const originalBtnText = sendBtn.innerHTML;
+    sendBtn.innerHTML = '<span class="loading-spinner"></span> جاري الإرسال...';
 
     const nowStd = getStandardDateTime();
     const newReport = {
@@ -9165,6 +9245,17 @@ document.getElementById('btn-send-report').addEventListener('click', () => {
         document.getElementById('report-component').value = '';
         // تحديث الجدول تلقائياً بعد إرسال البلاغ
         renderFaultReportsTable();
+        
+        // إعادة تفعيل الزر بعد النجاح
+        sendBtn.innerHTML = originalBtnText;
+        sendBtn.disabled = false;
+    }).catch(error => {
+        console.error("Error sending report:", error);
+        alert("فشل إرسال البلاغ: " + error.message);
+        
+        // إعادة تفعيل الزر عند الخطأ
+        sendBtn.innerHTML = originalBtnText;
+        sendBtn.disabled = false;
     });
 });
 
@@ -9921,6 +10012,121 @@ function updateDeleteButtonVisibility() {
         deleteBtn.style.display = (appData.currentUser.type === 'admin') ? 'flex' : 'none';
     }
 }
+
+// دالة فتح شاشة سجل الأعطال وأوامر الشغل للمحطة
+window.openStationLogs = function() {
+    const sName = appData.currentStation;
+    if (!sName) return;
+    
+    document.getElementById('station-logs-title').textContent = `📂 سجل الأعطال وأوامر الشغل - محطة ${appData.stations[sName].name}`;
+    renderStationSpecificLogs(sName);
+    
+    // إخفاء جميع الشاشات
+    document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+    // إظهار شاشة السجل
+    document.getElementById('station-logs-screen').classList.add('active');
+    window.scrollTo(0, 0);
+};
+
+// دالة تعبئة بيانات السجل الموحد للمحطة
+window.renderStationSpecificLogs = function(stationId) {
+    // التأكد من وجود المحطة والاسم
+    if (!stationId || !appData.stations[stationId]) return;
+    const stationName = appData.stations[stationId].name;
+    
+    // --- 1. معالجة بلاغات الأعطال ---
+    const faultsBody = document.getElementById('station-faults-body');
+    const noFaultsMsg = document.getElementById('no-station-faults');
+    faultsBody.innerHTML = '';
+    
+    db.ref('fault_reports').orderByChild('station').equalTo(stationName).once('value', (snap) => {
+        const faults = [];
+        snap.forEach(child => {
+            const val = child.val();
+            // تصفية: عرض البلاغات التي لم تتم أرشفتها
+            // هام: نستبعد البلاغات التي تحولت لأوامر شغل لمنع التكرار
+            if (val.status !== 'archived' && val.status !== 'work_order') {
+                faults.unshift({
+                    key: child.key,
+                    displayDate: `${val.date}<br>${val.time}`,
+                    reporter: val.reporter || '-',
+                    component: val.component || '-',
+                    description: val.description || '-',
+                    rawStatus: val.status,
+                    supervisorStatus: val.supervisorStatus
+                });
+            }
+        });
+        
+        if (faults.length === 0) {
+            faultsBody.parentElement.style.display = 'none';
+            noFaultsMsg.style.display = 'block';
+        } else {
+            faultsBody.parentElement.style.display = 'table';
+            noFaultsMsg.style.display = 'none';
+            
+            faults.forEach(item => {
+                let statusBadge = '<span class="status-inactive">انتظار</span>';
+                if(item.supervisorStatus === 'confirmed') statusBadge = '<span class="status-active">مؤكد</span>';
+                if(item.supervisorStatus === 'cancelled') statusBadge = '<span style="color:red">ملغي</span>';
+                
+                faultsBody.innerHTML += `
+                    <tr style="background-color: #fff5f5;">
+                        <td>${item.displayDate}</td>
+                        <td><span style="color:#c0392b; font-weight:bold;">🚨 بلاغ عطل</span></td>
+                        <td>${item.reporter}</td>
+                        <td>${item.component}</td>
+                        <td>${item.description}</td>
+                        <td>${statusBadge}</td>
+                    </tr>
+                `;
+            });
+        }
+    });
+
+    // --- 2. معالجة أوامر الشغل ---
+    const woBody = document.getElementById('station-workorders-body');
+    const noWoMsg = document.getElementById('no-station-workorders');
+    woBody.innerHTML = '';
+    
+    db.ref('work_orders').orderByChild('station').equalTo(stationName).once('value', (snap) => {
+        const orders = [];
+        snap.forEach(child => {
+            const val = child.val();
+            if (val.status === 'active') {
+                orders.unshift({
+                    key: child.key,
+                    displayDate: val.startDate,
+                    issuer: `أمر شغل #${val.orderNumber || child.key.substring(0,6)}`,
+                    component: val.component || (val.type === 'corrective' ? 'صيانة تصحيحية' : (val.type === 'preventive' ? 'صيانة وقائية' : 'صيانة طارئة')),
+                    description: val.description || '-',
+                    rawStatus: val.status
+                });
+            }
+        });
+        
+        if (orders.length === 0) {
+            woBody.parentElement.style.display = 'none';
+            noWoMsg.style.display = 'block';
+        } else {
+            woBody.parentElement.style.display = 'table';
+            noWoMsg.style.display = 'none';
+            
+            orders.forEach(item => {
+                woBody.innerHTML += `
+                    <tr style="background-color: #f0f8ff;">
+                        <td>${item.displayDate}</td>
+                        <td><span style="color:#2980b9; font-weight:bold;">🛠️ أمر شغل</span></td>
+                        <td>${item.issuer}</td>
+                        <td>${item.component}</td>
+                        <td>${item.description}</td>
+                        <td><span class="status-active">جاري العمل</span></td>
+                    </tr>
+                `;
+            });
+        }
+    });
+};
 
 // دالة لفتح نافذة حذف السجلات
 function openDeleteHistoryModal() {
