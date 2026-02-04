@@ -10108,7 +10108,7 @@ window.renderStationSpecificLogs = function(stationId) {
                 orders.unshift({
                     key: child.key,
                     displayDate: val.startDate,
-                    issuer: `أمر شغل #${val.orderNumber || child.key.substring(0,6)}`,
+                    issuer: val.issuedBy || 'غير محدد', // عرض اسم القائم بالإصدار بدلاً من رقم الأمر
                     component: val.component || (val.type === 'corrective' ? 'صيانة تصحيحية' : (val.type === 'preventive' ? 'صيانة وقائية' : 'صيانة طارئة')),
                     description: val.description || '-',
                     rawStatus: val.status
