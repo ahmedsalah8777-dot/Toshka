@@ -6627,16 +6627,24 @@ function saveDataInternal(options = {}) {
                         const pData = pumpsInsData[i] || {};
                         let headerClass = 'pump-header-green'; 
                         let icon = '✅'; 
-                        const criticalIndices = [1, 5, 10, 11, 12];
+                        // التعديل: تحديد الحالة بناءً على عناصر محددة فقط
+                        // العناصر: 0 (محبس فراشه)، 1 (وصله فك و تركيب)، 5 (المضخه)، 11 (وصله فك و تركيب)، 12 (محبس فراشه)
+                        const targetIndices = [0, 1, 5, 11, 12];
                         let isRed = false; 
                         let isYellow = false;
-                        schema.items.forEach((item, idx) => { 
-                            const status = pData[idx] ? pData[idx].status : 'efficient'; 
-                            if (criticalIndices.includes(idx)) { 
-                                if (status === 'broken') isRed = true; 
-                            } 
-                            if (status === 'fault') isYellow = true; 
+                        
+                        targetIndices.forEach(idx => {
+                            const itemData = pData[idx] || {};
+                            const status = itemData.status;
+                            if (status === 'broken') isRed = true;
+                            if (status === 'fault') isYellow = true;
                         });
+
+                        schema.items.forEach((item, idx) => { 
+                            // نحتفظ بالحلقة الأصلية فقط لإنشاء الصفوف لاحقاً، ولكن منطق اللون تم نقله للأعلى
+                            // لا نحتاج لحساب الحالة هنا مرة أخرى لأننا حسبناها في targetIndices
+                        });
+                        
                         if (isRed) { 
                             headerClass = 'pump-header-red'; 
                             icon = '🛑'; 
@@ -6899,17 +6907,15 @@ if (idx === 5) { // الرقم 5 يمثل "المضخه" في مصفوفة ال�
                     
                     // تحديد حالة المضخة بناءً على البيانات
                     let pumpStatus = "✅ يعمل بكفاءة";
-                    const criticalIndices = [1, 5, 10, 11, 12];
+                    // العناصر المؤثرة: 0 (محبس فراشه)، 1 (وصله فك و تركيب)، 5 (المضخه)، 11 (وصله فك و تركيب)، 12 (محبس فراشه)
+                    const targetIndices = [0, 1, 5, 11, 12];
                     let hasCriticalFault = false;
                     let hasFault = false;
                     
-                    inspectionSchema.pumps.items.forEach((item, idx) => {
+                    targetIndices.forEach(idx => {
                         const itemData = pumpData[idx] || {};
-                        if (itemData.status === 'broken' && criticalIndices.includes(idx)) {
-                            hasCriticalFault = true;
-                        } else if (itemData.status === 'fault') {
-                            hasFault = true;
-                        }
+                        if (itemData.status === 'broken') hasCriticalFault = true;
+                        if (itemData.status === 'fault') hasFault = true;
                     });
                     
                     if (hasCriticalFault) {
@@ -7322,17 +7328,15 @@ if (idx === 5) { // الرقم 5 يمثل "المضخه" في مصفوفة ال�
                         
                         // تحديد حالة المضخة
                         let pumpStatus = "✅ يعمل بكفاءة";
-                        const criticalIndices = [1, 5, 10, 11, 12];
+                        // العناصر المؤثرة: 0 (محبس فراشه)، 1 (وصله فك و تركيب)، 5 (المضخه)، 11 (وصله فك و تركيب)، 12 (محبس فراشه)
+                        const targetIndices = [0, 1, 5, 11, 12];
                         let hasCriticalFault = false;
                         let hasFault = false;
                         
-                        inspectionSchema.pumps.items.forEach((item, idx) => {
+                        targetIndices.forEach(idx => {
                             const itemData = pumpData[idx] || {};
-                            if (itemData.status === 'broken' && criticalIndices.includes(idx)) {
-                                hasCriticalFault = true;
-                            } else if (itemData.status === 'fault') {
-                                hasFault = true;
-                            }
+                            if (itemData.status === 'broken') hasCriticalFault = true;
+                            if (itemData.status === 'fault') hasFault = true;
                         });
                         
                         if (hasCriticalFault) {
