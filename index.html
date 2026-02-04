@@ -6745,8 +6745,14 @@ if (idx === 5) { // الرقم 5 يمثل "المضخه" في مصفوفة ال�
         };
         
         document.getElementById('save-inspection-btn').addEventListener('click', () => {
+            const btn = document.getElementById('save-inspection-btn');
             const sName = appData.currentStation; 
             if(!sName) return;
+            
+            // تعطيل الزر فوراً لمنع التكرار
+            btn.disabled = true;
+            btn.innerHTML = 'جاري الحفظ... ⏳';
+
             const oldInsData = (appData.stations[sName].inspectionData) || {}; 
             let newInsData = JSON.parse(JSON.stringify(oldInsData));
             
@@ -6802,8 +6808,13 @@ if (idx === 5) { // الرقم 5 يمثل "المضخه" في مصفوفة ال�
             if (navigator.onLine && isFirebaseConnected) { 
                 db.ref(`stations/${sName}/inspectionData`).update(newInsData).then(() => { 
                     db.ref('history').push(log); 
+                    // إعادة تفعيل الزر بعد انتهاء العملية
+                    btn.disabled = false;
+                    btn.innerHTML = 'حفظ الفحص';
+                    
                     alert("تم حفظ بيانات الفحص والمزامنة مع السيرفر بنجاح ✅"); 
-                    renderInspection('edit'); 
+                    // العودة إلى شاشة تفاصيل المحطة الحالية
+                    showStationDetails(sName);
                 });
             } 
             else { 
@@ -6812,8 +6823,13 @@ if (idx === 5) { // الرقم 5 يمثل "المضخه" في مصفوفة ال�
                     inspectionData: newInsData, 
                     log: log 
                 });
+                // إعادة تفعيل الزر
+                btn.disabled = false;
+                btn.innerHTML = 'حفظ الفحص';
+                
                 alert("تم الحفظ في الجهاز فقط — لم يُرفع للسيرفر بعد. ⏳ سيتم الرفع عند عودة الإنترنت.\n\nانتباه: المشرفون والأجهزة الأخرى لن يروا التحديث حتى يتم الرفع."); 
-                renderInspection('edit');
+                // العودة إلى شاشة تفاصيل المحطة الحالية
+                showStationDetails(sName);
             }
         });
         
