@@ -4160,6 +4160,15 @@
                         <div class="stat-percentage" id="broken-pumps-percentage">0%</div>
                     </div>
                 </div>
+
+                <div class="stat-card">
+                    <div class="stat-icon" style="background: #95a5a6;">🚫</div>
+                    <div class="stat-content">
+                        <div class="stat-title">لا يوجد (غير مركبة)</div>
+                        <div class="stat-value" id="not-installed-pumps-count">0</div>
+                        <div class="stat-percentage" id="not-installed-pumps-percentage">0%</div>
+                    </div>
+                </div>
                 
                 <div class="stat-card">
                     <div class="stat-icon" style="background: var(--primary-color);">📊</div>
@@ -11134,6 +11143,7 @@ window.addEventListener('offline', function() {
             setTextContent('fault-pumps-percentage', ((withFaults / total) * 100).toFixed(1) + '%');
             setTextContent('broken-pumps-percentage', ((broken / total) * 100).toFixed(1) + '%');
             setTextContent('not-installed-pumps-percentage', ((notInstalled / total) * 100).toFixed(1) + '%');
+            setTextContent('total-pumps-percentage', '100%');
             
             // نسبة التشغيل (تعمل بكفاءة + عطل/ملاحظة) / الإجمالي
             let workingPercentage = ((working + withFaults) / total) * 100;
@@ -11143,6 +11153,7 @@ window.addEventListener('offline', function() {
             setTextContent('fault-pumps-percentage', '0%');
             setTextContent('broken-pumps-percentage', '0%');
             setTextContent('not-installed-pumps-percentage', '0%');
+            setTextContent('total-pumps-percentage', '0%');
             setTextContent('total-working-percentage', '0%');
         }
 
