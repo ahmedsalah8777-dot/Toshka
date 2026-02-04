@@ -9873,7 +9873,7 @@ function exportActiveWorkOrders() {
     db.ref('work_orders').orderByChild('status').equalTo('active').once('value', (snap) => {
         let data = [];
         // العناوين
-        data.push(["تاريخ البدء", "المنطقة", "المحطة", "الأقسام", "العطل", "الوصف", "الصادر عنه", "المدة الحالية (يوم)"]);
+        data.push(["تاريخ البدء", "المنطقة", "المحطة", "الأقسام", "العطل", "الوصف", "الصادر عنه", "المدة الحالية (يوم)", "هل مجمد؟", "سبب التجميد", "القائم بالتجميد"]);
 
         snap.forEach(child => {
             const o = child.val();
@@ -9882,16 +9882,21 @@ function exportActiveWorkOrders() {
             const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)); 
 
             let match = true;
-            if (fZone && o.zone !== fZone) match = false;
+            if (fZone && fZone !== 'all' && o.zone !== fZone) match = false;
             if (fDept && o.departments && !o.departments.includes(fDept)) match = false;
             if (fFault && !((o.component || '').toLowerCase().includes(fFault) || (o.description || '').toLowerCase().includes(fFault))) match = false;
             if (fDuration > 0 && diffDays < fDuration) match = false;
 
             if (match) {
+                const isFrozenText = o.isFrozen ? "نعم" : "لا";
+                const freezeReason = o.isFrozen ? (o.freezeReason || "-") : "-";
+                const frozenBy = o.isFrozen ? (o.frozenBy || "-") : "-";
+
                 data.push([
-    o.startDate, o.zone, o.station, 
-    (o.departments || []).join(', '), o.component, o.description, o.issuedBy || '-', diffDays
-]);
+                    o.startDate, o.zone, o.station, 
+                    (o.departments || []).join(', '), o.component, o.description, o.issuedBy || '-', diffDays,
+                    isFrozenText, freezeReason, frozenBy
+                ]);
             }
         });
 
