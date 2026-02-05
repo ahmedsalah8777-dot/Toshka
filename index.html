@@ -1127,6 +1127,13 @@
             gap: 10px;
         }
 
+        @media (max-width: 768px) {
+            .details-grid {
+                grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
+                gap: 5px;
+            }
+        }
+
         .station-stat-card {
             background: #f8f9fa;
             border-radius: 10px;
