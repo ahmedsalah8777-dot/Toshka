@@ -4545,25 +4545,29 @@ function updateNetworkStatus() {
     const text = document.getElementById('net-text');
     const loginBtn = document.getElementById('login-btn');
     
-    // منطق تحديد الحالة في الشريط العلوي
-    var tip = '';
-    if (isWeakSignal) {
-        indicator.className = 'network-status net-weak';
-        icon.textContent = '🟠';
-        text.textContent = 'إشارة ضعيفة';
-        tip = 'البيانات المحفوظة الآن قد تكون في الجهاز فقط — انتظر عودة الاتصال لرفعها للسيرفر';
-    } else if (navigator.onLine && isFirebaseConnected) {
-        indicator.className = 'network-status net-online';
-        icon.textContent = '🟢';
-        text.textContent = 'متصل';
-        tip = 'متصل بالسيرفر — الحفظ يتم عليه مباشرة';
-    } else {
+    // 1. الأولوية الأولى: حالة المتصفح (Browser Status)
+    if (!navigator.onLine) {
+        // المتصفح يقر أنه غير متصل (تم فصل الكابل أو الواي فاي)
         indicator.className = 'network-status net-offline';
         icon.textContent = '🔴';
         text.textContent = 'غير متصل';
-        tip = 'البيانات المحفوظة الآن في الجهاز فقط — لن تُرفع للسيرفر حتى يعود الاتصال';
+        if (indicator) indicator.title = 'لا يوجد اتصال بالإنترنت (Offline)';
+    } 
+    // 2. الأولوية الثانية: حالة الاتصال بالسيرفر (Firebase)
+    else if (isFirebaseConnected) {
+        // المتصفح متصل + السيرفر متصل
+        indicator.className = 'network-status net-online';
+        icon.textContent = '🟢';
+        text.textContent = 'متصل';
+        if (indicator) indicator.title = 'متصل بالسيرفر بنجاح';
+    } 
+    else {
+        // المتصفح متصل (نظرياً) لكن السيرفر مفصول (جاري الاتصال أو نت ضعيف)
+        indicator.className = 'network-status net-weak';
+        icon.textContent = '🟠';
+        text.textContent = 'جاري الاتصال...';
+        if (indicator) indicator.title = 'يوجد إنترنت لكن جاري الاتصال بالسيرفر...';
     }
-    if (indicator) indicator.title = tip;
 
     // منطق زر الدخول
     if(loginBtn) {
@@ -4572,14 +4576,16 @@ function updateNetworkStatus() {
             loginBtn.disabled = false;
             loginBtn.style.cursor = 'pointer';
             loginBtn.classList.add('btn-primary');
-            if (navigator.onLine && isFirebaseConnected && !isWeakSignal) {
+            
+            // تحديث حالة الزر بناءً على الحالة الفعلية
+            if (navigator.onLine && isFirebaseConnected) {
                 loginBtn.textContent = "دخول";
                 loginBtn.style.backgroundColor = ''; 
                 loginBtn.title = '';
             } else {
                 loginBtn.textContent = "دخول (Offline)";
                 loginBtn.style.backgroundColor = '#7f8c8d'; 
-                loginBtn.title = 'الحفظ سيتم في الجهاز فقط ولن يُرفع للسيرفر حتى يعود الاتصال';
+                loginBtn.title = 'سيتم العمل في وضع عدم الاتصال';
             }
         } else {
             loginBtn.disabled = true;
@@ -4591,9 +4597,9 @@ function updateNetworkStatus() {
         }
     }
 
-    // حفظ آخر حالة شبكة محلياً لعرضها فوراً عند فتح الصفحة (منع وميض "متصل" عند الـ Offline)
+    // حفظ آخر حالة شبكة محلياً
     try {
-        var st = (isWeakSignal) ? 'weak' : ((navigator.onLine && isFirebaseConnected) ? 'online' : 'offline');
+        var st = (!navigator.onLine) ? 'offline' : (isFirebaseConnected ? 'online' : 'weak');
         localStorage.setItem('toshka_network_status', st);
     } catch (_) {}
 }
