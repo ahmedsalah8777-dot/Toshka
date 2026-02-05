@@ -1123,8 +1123,8 @@
 
         .details-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-            gap: 15px;
+            grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+            gap: 10px;
         }
 
         .station-stat-card {
@@ -4213,7 +4213,7 @@
                 </div>
                 
                 <div class="stat-card">
-                    <div class="stat-icon" style="background: #673ab7;">💻</div>
+                    <div class="stat-icon" style="background: #ff9800;">💻</div>
                     <div class="stat-content">
                         <div class="stat-title">نظام PLC</div>
                         <div class="stat-value" id="plc-count">0</div>
@@ -4222,7 +4222,7 @@
                 </div>
                 
                 <div class="stat-card">
-                    <div class="stat-icon" style="background: #3f51b5;">🎛️</div>
+                    <div class="stat-icon" style="background: #4caf50;">🎛️</div>
                     <div class="stat-content">
                         <div class="stat-title">نظام MIMIC/Marshalling</div>
                         <div class="stat-value" id="mimic-count">0</div>
@@ -11428,29 +11428,72 @@ window.addEventListener('offline', function() {
         let scada = 0, plc = 0, mimic = 0, hmi = 0, total = 0;
         let detailsHtml = '';
 
+        // تجميع المحطات حسب المنطقة
+        const stationsByZone = {};
         stations.forEach(s => {
-            const sys = s.systemMode || 'Unknown';
-            total++; // نعتبر كل محطة لها نظام تحكم واحد
-            
-            // التصنيف
-            if (sys === 'SCADA') scada++;
-            else if (sys === 'PLC') plc++;
-            else if (sys === 'MIMIC' || sys === 'Marshalling') mimic++;
-            else if (sys === 'HMI' || sys === 'LCP') hmi++;
-            
-            // بطاقة التفاصيل
-            let badgeColor = '#777';
-            if (sys === 'SCADA') badgeColor = '#9c27b0';
-            else if (sys === 'PLC') badgeColor = '#673ab7';
-            else if (sys === 'MIMIC' || sys === 'Marshalling') badgeColor = '#3f51b5';
-            else if (sys === 'HMI' || sys === 'LCP') badgeColor = '#2196f3';
+            const zone = s.zone || 'غير محدد';
+            if (!stationsByZone[zone]) stationsByZone[zone] = [];
+            stationsByZone[zone].push(s);
+        });
 
+        // ترتيب المناطق أبجدياً
+        const sortedZones = Object.keys(stationsByZone).sort();
+
+        sortedZones.forEach(zone => {
+            const zoneStations = stationsByZone[zone];
+            let zScada = 0, zPlc = 0, zMimic = 0, zHmi = 0, zTotal = 0;
+            let zoneCardsHtml = '';
+
+            zoneStations.forEach(s => {
+                const sys = s.systemMode ? s.systemMode.trim() : 'Unknown';
+                zTotal++;
+                total++; // الإجمالي العام
+                
+                // التصنيف
+                const sysCheck = sys.toUpperCase();
+                let type = 'other';
+                if (sysCheck.includes('SCADA')) { type = 'scada'; zScada++; scada++; }
+                else if (sysCheck.includes('PLC')) { type = 'plc'; zPlc++; plc++; }
+                else if (sysCheck.includes('MIMIC') || sysCheck.includes('MARSHALLING')) { type = 'mimic'; zMimic++; mimic++; }
+                else if (sysCheck.includes('HMI') || sysCheck.includes('LCP')) { type = 'hmi'; zHmi++; hmi++; }
+                
+                // بطاقة التفاصيل
+                let badgeColor = '#777';
+                if (type === 'scada') badgeColor = '#9c27b0';
+                else if (type === 'plc') badgeColor = '#ff9800';
+                else if (type === 'mimic') badgeColor = '#4caf50';
+                else if (type === 'hmi') badgeColor = '#2196f3';
+
+                zoneCardsHtml += `
+                     <div class="detail-card" style="text-align:center; padding: 8px;">
+                        <div class="detail-title" style="margin-bottom:8px; font-weight:bold; font-size:0.85rem;">${s.name}</div>
+                        <span class="badge" style="background: ${badgeColor}; color: white; padding: 4px 8px; border-radius: 12px; font-size: 0.8rem; box-shadow: 0 1px 2px rgba(0,0,0,0.1); display:inline-block; line-height:1.2;">${sys}</span>
+                     </div>
+                `;
+            });
+
+            // إضافة رأس المنطقة وشريط الإحصائيات
             detailsHtml += `
-                 <div class="detail-card" style="text-align:center;">
-                    <div class="detail-title" style="margin-bottom:15px;">${s.name}</div>
-                    <span class="badge" style="background: ${badgeColor}; color: white; padding: 8px 16px; border-radius: 20px; font-size: 1rem; box-shadow: 0 2px 5px rgba(0,0,0,0.1);">${sys}</span>
-                 </div>
+                <div style="grid-column: 1 / -1; margin-top: 15px; margin-bottom: 5px;">
+                    <h5 style="border-bottom: 2px solid #e0e0e0; padding-bottom: 5px; color: var(--primary-color); display: flex; justify-content: space-between; align-items: center; margin-bottom: 5px;">
+                        <span>📍 ${zone} <span style="font-size: 0.8em; color: #666; font-weight: normal;">(${zTotal} محطة)</span></span>
+                        <div style="font-size: 0.7rem; color: #555;">
+                            ${zScada > 0 ? `<span style="color:#9c27b0; font-weight:bold; margin-left:5px;">SCADA:${zScada}</span>` : ''}
+                            ${zPlc > 0 ? `<span style="color:#ff9800; font-weight:bold; margin-left:5px;">PLC:${zPlc}</span>` : ''}
+                            ${zMimic > 0 ? `<span style="color:#4caf50; font-weight:bold; margin-left:5px;">MIMIC:${zMimic}</span>` : ''}
+                            ${zHmi > 0 ? `<span style="color:#2196f3; font-weight:bold; margin-left:5px;">HMI:${zHmi}</span>` : ''}
+                        </div>
+                    </h5>
+                    <div style="display: flex; height: 6px; width: 100%; background: #eee; border-radius: 3px; overflow: hidden;">
+                        ${zScada > 0 ? `<div style="width: ${(zScada/zTotal)*100}%; background: #9c27b0;" title="SCADA: ${zScada}"></div>` : ''}
+                        ${zPlc > 0 ? `<div style="width: ${(zPlc/zTotal)*100}%; background: #ff9800;" title="PLC: ${zPlc}"></div>` : ''}
+                        ${zMimic > 0 ? `<div style="width: ${(zMimic/zTotal)*100}%; background: #4caf50;" title="MIMIC: ${zMimic}"></div>` : ''}
+                        ${zHmi > 0 ? `<div style="width: ${(zHmi/zTotal)*100}%; background: #2196f3;" title="HMI: ${zHmi}"></div>` : ''}
+                    </div>
+                </div>
             `;
+            
+            detailsHtml += zoneCardsHtml;
         });
         
         // تحديث الأرقام الإجمالية
