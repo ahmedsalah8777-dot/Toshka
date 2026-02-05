@@ -5009,17 +5009,30 @@ function uploadEmergencyImage(event) {
         const imageData = e.target.result;
         
         // حفظ الصورة في Firebase
-        db.ref('emergencyData/emergencyImage').set(imageData)
+        const timeoutDuration = 25000;
+        const timeoutPromise = new Promise((_, reject) => {
+            const id = setTimeout(() => {
+                clearTimeout(id);
+                reject(new Error("NetworkTimeout"));
+            }, timeoutDuration);
+        });
+
+        const savePromise = db.ref('emergencyData/emergencyImage').set(imageData)
+            .then(() => {
+                return "Success";
+            });
+
+        Promise.race([savePromise, timeoutPromise])
             .then(() => {
                 emergencyData.emergencyImage = imageData;
                 renderEmergencyImage();
-                showEmergencyAlert('تم رفع الصورة بنجاح!', 'success');
+                showEmergencyAlert('تم الارسال بنجاح ✅', 'success');
                 uploadBtn.innerHTML = originalText;
                 uploadBtn.disabled = false;
             })
             .catch(error => {
                 console.error('Error uploading image:', error);
-                showEmergencyAlert('فشل رفع الصورة. حاول مرة أخرى.', 'error');
+                showEmergencyAlert('❌ فشل الاتصال بالسيرفر', 'error');
                 uploadBtn.innerHTML = originalText;
                 uploadBtn.disabled = false;
             });
@@ -5046,17 +5059,30 @@ function deleteEmergencyImage() {
     deleteBtn.innerHTML = '<span class="loading-spinner"></span> جاري الحذف...';
     deleteBtn.disabled = true;
     
-    db.ref('emergencyData/emergencyImage').remove()
+    const timeoutDuration = 25000;
+    const timeoutPromise = new Promise((_, reject) => {
+        const id = setTimeout(() => {
+            clearTimeout(id);
+            reject(new Error("NetworkTimeout"));
+        }, timeoutDuration);
+    });
+
+    const deletePromise = db.ref('emergencyData/emergencyImage').remove()
+        .then(() => {
+            return "Success";
+        });
+
+    Promise.race([deletePromise, timeoutPromise])
         .then(() => {
             emergencyData.emergencyImage = null;
             renderEmergencyImage();
-            showEmergencyAlert('تم حذف الصورة بنجاح', 'success');
+            showEmergencyAlert('تم الارسال بنجاح ✅', 'success');
             deleteBtn.innerHTML = originalText;
             deleteBtn.disabled = false;
         })
         .catch(error => {
             console.error('Error deleting image:', error);
-            showEmergencyAlert('فشل حذف الصورة', 'error');
+            showEmergencyAlert('❌ فشل الاتصال بالسيرفر', 'error');
             deleteBtn.innerHTML = originalText;
             deleteBtn.disabled = false;
         });
@@ -5107,19 +5133,32 @@ function savePublicServices() {
     saveBtn.innerHTML = '<span class="loading-spinner"></span> جاري الحفظ...';
     saveBtn.disabled = true;
     
-    db.ref('emergencyData/publicServices').set(updatedServices)
+    const timeoutDuration = 25000;
+    const timeoutPromise = new Promise((_, reject) => {
+        const id = setTimeout(() => {
+            clearTimeout(id);
+            reject(new Error("NetworkTimeout"));
+        }, timeoutDuration);
+    });
+
+    const savePromise = db.ref('emergencyData/publicServices').set(updatedServices)
+        .then(() => {
+            return "Success";
+        });
+
+    Promise.race([savePromise, timeoutPromise])
         .then(() => {
             emergencyData.publicServices = updatedServices;
             document.getElementById('public-services-edit').style.display = 'none';
             document.getElementById('public-services-view').style.display = 'block';
             renderPublicServices();
-            showEmergencyAlert('تم حفظ الخدمات العامة بنجاح', 'success');
+            showEmergencyAlert('تم الارسال بنجاح ✅', 'success');
             saveBtn.innerHTML = originalText;
             saveBtn.disabled = false;
         })
         .catch(error => {
             console.error('Error saving public services:', error);
-            showEmergencyAlert('فشل حفظ البيانات', 'error');
+            showEmergencyAlert('❌ فشل الاتصال بالسيرفر', 'error');
             saveBtn.innerHTML = originalText;
             saveBtn.disabled = false;
         });
@@ -5214,7 +5253,20 @@ function saveEmergencyTeam() {
     saveBtn.innerHTML = '<span class="loading-spinner"></span> جاري الحفظ...';
     saveBtn.disabled = true;
     
-    db.ref('emergencyData/emergencyTeam').set(updatedTeam)
+    const timeoutDuration = 25000;
+    const timeoutPromise = new Promise((_, reject) => {
+        const id = setTimeout(() => {
+            clearTimeout(id);
+            reject(new Error("NetworkTimeout"));
+        }, timeoutDuration);
+    });
+
+    const savePromise = db.ref('emergencyData/emergencyTeam').set(updatedTeam)
+        .then(() => {
+            return "Success";
+        });
+
+    Promise.race([savePromise, timeoutPromise])
         .then(() => {
             emergencyData.emergencyTeam = updatedTeam;
             
@@ -5226,7 +5278,7 @@ function saveEmergencyTeam() {
             renderEmergencyTeam();
             
             // إظهار رسالة نجاح
-            showEmergencyAlert(`تم حفظ بيانات الفريق بنجاح (${updatedTeam.length} عضو)`, 'success');
+            showEmergencyAlert(`تم الارسال بنجاح (${updatedTeam.length} عضو) ✅`, 'success');
             
             // إعادة تعيين الزر
             saveBtn.innerHTML = originalText;
@@ -5234,7 +5286,7 @@ function saveEmergencyTeam() {
         })
         .catch(error => {
             console.error('Error saving emergency team:', error);
-            showEmergencyAlert('فشل حفظ البيانات: ' + error.message, 'error');
+            showEmergencyAlert('❌ فشل الاتصال بالسيرفر', 'error');
             
             // إعادة تعيين الزر
             saveBtn.innerHTML = originalText;
@@ -5381,19 +5433,32 @@ function saveClinicInfo() {
     saveBtn.innerHTML = '<span class="loading-spinner"></span> جاري الحفظ...';
     saveBtn.disabled = true;
     
-    db.ref('emergencyData/clinicInfo').set(updatedClinicInfo)
+    const timeoutDuration = 25000;
+    const timeoutPromise = new Promise((_, reject) => {
+        const id = setTimeout(() => {
+            clearTimeout(id);
+            reject(new Error("NetworkTimeout"));
+        }, timeoutDuration);
+    });
+
+    const savePromise = db.ref('emergencyData/clinicInfo').set(updatedClinicInfo)
+        .then(() => {
+            return "Success";
+        });
+
+    Promise.race([savePromise, timeoutPromise])
         .then(() => {
             emergencyData.clinicInfo = updatedClinicInfo;
             document.getElementById('clinic-info-edit').style.display = 'none';
             document.getElementById('clinic-info-view').style.display = 'block';
             renderClinicInfo();
-            showEmergencyAlert('تم حفظ معلومات العيادة بنجاح', 'success');
+            showEmergencyAlert('تم الارسال بنجاح ✅', 'success');
             saveBtn.innerHTML = originalText;
             saveBtn.disabled = false;
         })
         .catch(error => {
             console.error('Error saving clinic info:', error);
-            showEmergencyAlert('فشل حفظ البيانات', 'error');
+            showEmergencyAlert('❌ فشل الاتصال بالسيرفر', 'error');
             saveBtn.innerHTML = originalText;
             saveBtn.disabled = false;
         });
@@ -5606,6 +5671,27 @@ function showScreen(screenId) {
         }
 
         function showScreen(screenId) {
+            // إعادة تعيين الأزرار المعلقة (إصلاح مشكلة الأزرار المعلقة)
+            const resetBtns = [
+                {id: 'save-operator-data', text: 'حفظ البيانات'},
+                {id: 'save-inspection-btn', text: 'حفظ الفحص'},
+                {id: 'btn-send-report', text: '🚀 إرسال البلاغ'},
+                {id: 'save-emergency-team-btn', text: '💾 حفظ التغييرات'},
+                {id: 'save-public-services-btn', text: '💾 حفظ التغييرات'},
+                {id: 'save-clinic-info-btn', text: '💾 حفظ التغييرات'},
+                {id: 'upload-emergency-image-btn', text: '📤 رفع الصورة'},
+                {id: 'delete-emergency-image-btn', text: '🗑️ حذف الصورة'}
+            ];
+            resetBtns.forEach(btnInfo => {
+                const btn = document.getElementById(btnInfo.id);
+                if(btn) { 
+                    btn.disabled = false; 
+                    if(btn.innerHTML.includes('loading-spinner') || btn.innerHTML.includes('جاري') || btn.innerHTML.includes('syncing')) {
+                        btn.innerHTML = btnInfo.text;
+                    }
+                }
+            });
+
             document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
             document.getElementById(`${screenId}-screen`).classList.add('active');
             window.scrollTo(0, 0);
@@ -6441,85 +6527,68 @@ function saveDataInternal(options = {}) {
             consumption: { t1: consTrans1, t2: consTrans2, m3: consWater, lastUpdate: stationFullDateTime }
         };
 
-        // --- دالة الحفظ المحلي (Offline) ---
-        const performOfflineSave = () => {
-            console.log("Entering offline save mode...");
-            addToOfflineQueue('update_station', { 
-                stationId: sName, updates: updates, log: log, 
-                consLog: consumptionLogData, newFaults: newFaultEntries, resolvedFaults: resolvedFaultEntries 
-            });
-            
-            // تحديث الواجهة محلياً فوراً
-            Object.assign(appData.stations[sName], updates);
-            localStorage.setItem('toshka_stations_cache', JSON.stringify(appData.stations));
-            
-            isWeakSignal = true; // نعتبرها إشارة ضعيفة لأن الرفع فشل
-            updateNetworkStatus();
-            showSuccessFeedback(sName, true); // رسالة صفراء
-            // resetButton(); // تم تعطيله بناءً على طلب المستخدم لتجميد الزر حتى الخروج
-        };
+        // --- محاولة الحفظ المباشر على Firebase (بدون تخزين محلي) ---
+        
+        // زيادة فترة محاولة الاتصال (25 ثانية)
+        const timeoutDuration = 25000; 
 
-        // --- محاولة الرفع مع منطق Timeout صارم ---
-        if (navigator.onLine && isFirebaseConnected) {
-            
-            // إنشاء Promise يرفض الطلب بعد 7 ثواني
-            const timeoutPromise = new Promise((_, reject) => {
-                const id = setTimeout(() => {
-                    clearTimeout(id);
-                    reject(new Error("NetworkTimeout"));
-                }, 7000);
-            });
+        const timeoutPromise = new Promise((_, reject) => {
+            const id = setTimeout(() => {
+                clearTimeout(id);
+                reject(new Error("NetworkTimeout"));
+            }, timeoutDuration);
+        });
 
-            // عملية الحفظ في Firebase
-            const savePromise = db.ref('stations/' + sName).update(updates).then(() => {
-                // حفظ السجلات الجانبية (لا ننتظرها لإنهاء الـ Promise الأساسي لتسريع العملية)
-                if (appData.operationHistory.length >= 200000) db.ref('history').orderByKey().limitToFirst(1).once('child_added', (snapshot) => { snapshot.ref.remove(); });
-                db.ref('history').push(log);
-                if(consumptionLogData) db.ref('consumption_logs').push(consumptionLogData);
-                
-                if (newFaultEntries.length > 0 || resolvedFaultEntries.length > 0) {
-                     db.ref('faults_log').once('value').then(snap => {
-                        let rawVal = snap.val(); 
-                        let logs = []; 
-                        if (rawVal) { if (Array.isArray(rawVal)) logs = rawVal; else logs = Object.values(rawVal); }
-                        newFaultEntries.forEach(newF => { 
-                            const exists = logs.some(existingF => existingF.active === true && existingF.station === newF.station && existingF.type === newF.type);
-                            if (!exists) logs.unshift(newF);
-                        });
-                        resolvedFaultEntries.forEach(rf => { 
-                            const index = logs.findIndex(f => f.station === sName && f.type === rf.type && f.active === true); 
-                            if (index !== -1) { 
-                                logs[index].active = false; logs[index].endTime = stationFullDateTime; 
-                            } else { logs.unshift(rf); } 
-                        });
-                        if (logs.length > 200000) logs = logs.slice(0, 200000); 
-                        db.ref('faults_log').set(logs);
+        // عملية الحفظ في Firebase
+        const savePromise = db.ref('stations/' + sName).update(updates).then(() => {
+            // حفظ السجلات الجانبية
+            if (appData.operationHistory.length >= 200000) db.ref('history').orderByKey().limitToFirst(1).once('child_added', (snapshot) => { snapshot.ref.remove(); });
+            db.ref('history').push(log);
+            if(consumptionLogData) db.ref('consumption_logs').push(consumptionLogData);
+            
+            if (newFaultEntries.length > 0 || resolvedFaultEntries.length > 0) {
+                 db.ref('faults_log').once('value').then(snap => {
+                    let rawVal = snap.val(); 
+                    let logs = []; 
+                    if (rawVal) { if (Array.isArray(rawVal)) logs = rawVal; else logs = Object.values(rawVal); }
+                    newFaultEntries.forEach(newF => { 
+                        const exists = logs.some(existingF => existingF.active === true && existingF.station === newF.station && existingF.type === newF.type);
+                        if (!exists) logs.unshift(newF);
                     });
-                }
-                return "Success";
-            });
-
-            // السباق!
-            Promise.race([savePromise, timeoutPromise])
-                .then(() => {
-                    // إذا فاز الحفظ (الشبكة جيدة)
-                    isWeakSignal = false;
-                    updateNetworkStatus();
-                    Object.assign(appData.stations[sName], updates);
-                    localStorage.setItem('toshka_stations_cache', JSON.stringify(appData.stations));
-                    showSuccessFeedback(sName, false); // رسالة خضراء
-                    // resetButton(); // تم تعطيله بناءً على طلب المستخدم لتجميد الزر حتى الخروج
-                })
-                .catch(err => {
-                    // إذا فاز التايم أوت أو حدث خطأ
-                    console.warn("Save failed or timed out:", err.message);
-                    performOfflineSave(); // التوجه للحفظ المحلي فوراً
+                    resolvedFaultEntries.forEach(rf => { 
+                        const index = logs.findIndex(f => f.station === sName && f.type === rf.type && f.active === true); 
+                        if (index !== -1) { 
+                            logs[index].active = false; logs[index].endTime = stationFullDateTime; 
+                        } else { logs.unshift(rf); } 
+                    });
+                    if (logs.length > 200000) logs = logs.slice(0, 200000); 
+                    db.ref('faults_log').set(logs);
                 });
+            }
+            return "Success";
+        });
 
-        } else {
-            // لا يوجد اتصال من البداية
-            performOfflineSave();
-        }
+        // تنفيذ المحاولة
+        Promise.race([savePromise, timeoutPromise])
+            .then(() => {
+                // نجاح الاتصال
+                isWeakSignal = false;
+                updateNetworkStatus();
+                Object.assign(appData.stations[sName], updates);
+                // تم إزالة الحفظ المحلي localStorage
+                
+                showSuccessFeedback(sName); 
+            })
+            .catch(err => {
+                // فشل الاتصال
+                console.warn("Save failed or timed out:", err.message);
+                
+                // رسالة فشل الاتصال
+                alert("❌ فشل الاتصال بالسيرفر");
+                
+                // إعادة تنشيط الزر لإعادة المحاولة
+                resetButton();
+            });
 
     } catch (e) { 
         console.error(e);
@@ -6528,22 +6597,19 @@ function saveDataInternal(options = {}) {
     }
 }
 
-        function showSuccessFeedback(sName, isOffline = false) {
+        function showSuccessFeedback(sName) {
             const alertDiv = document.getElementById('operator-alert');
-            alertDiv.textContent = isOffline 
-                ? 'تم الحفظ في الجهاز فقط — لم يُرفع للسيرفر بعد. ⏳ سيتم الرفع عند عودة الإنترنت. (المشرفون لن يروه حتى يُرفع)' 
-                : 'تم الحفظ والمزامنة مع السيرفر! ✅';
-            alertDiv.className = isOffline ? 'alert alert-warning' : 'alert alert-success';
+            alertDiv.textContent = 'تم الارسال بنجاح ✅';
+            alertDiv.className = 'alert alert-success';
             alertDiv.style.display = 'block';
             setTimeout(() => { 
                 alertDiv.style.display = 'none'; 
                 showStationDetails(sName); 
-            }, isOffline ? 4500 : 1500);
+            }, 1500);
         }
 
         function performOfflineSave(sName, updates, log, consumptionLogData, newFaultEntries, resolvedFaultEntries) {
-             // هذه الدالة تحتاج الوصول للمتغيرات المحلية، لذلك قد يكون من الأفضل تركها داخل saveDataInternal أو تمرير المعاملات
-             // ولكن بما أننا عدلنا فقط استدعاء resetButton، سنكتفي بالتعديل أعلاه
+             // DEPRECATED: Offline save functionality removed.
         }
 
         function cleanHistoricalData() {
@@ -6803,34 +6869,35 @@ if (idx === 5) { // الرقم 5 يمثل "المضخه" في مصفوفة ال�
             
             if (!appData.stations[sName].inspectionData) appData.stations[sName].inspectionData = {}; 
             appData.stations[sName].inspectionData = newInsData; 
-            localStorage.setItem('toshka_stations_cache', JSON.stringify(appData.stations));
+            // محاولة الحفظ المباشر
+            const timeoutDuration = 25000;
+            const timeoutPromise = new Promise((_, reject) => {
+                const id = setTimeout(() => {
+                    clearTimeout(id);
+                    reject(new Error("NetworkTimeout"));
+                }, timeoutDuration);
+            });
+
+            const savePromise = db.ref(`stations/${sName}/inspectionData`).update(newInsData).then(() => { 
+                db.ref('history').push(log); 
+                return "Success";
+            });
             
-            if (navigator.onLine && isFirebaseConnected) { 
-                db.ref(`stations/${sName}/inspectionData`).update(newInsData).then(() => { 
-                    db.ref('history').push(log); 
-                    // إعادة تفعيل الزر بعد انتهاء العملية
-                    btn.disabled = false;
-                    btn.innerHTML = 'حفظ الفحص';
-                    
-                    alert("تم حفظ بيانات الفحص والمزامنة مع السيرفر بنجاح ✅"); 
-                    // العودة إلى شاشة تفاصيل المحطة الحالية
-                    showStationDetails(sName);
-                });
-            } 
-            else { 
-                addToOfflineQueue('update_inspection', { 
-                    stationId: sName, 
-                    inspectionData: newInsData, 
-                    log: log 
-                });
-                // إعادة تفعيل الزر
+            Promise.race([savePromise, timeoutPromise]).then(() => {
+                // Success
                 btn.disabled = false;
                 btn.innerHTML = 'حفظ الفحص';
-                
-                alert("تم الحفظ في الجهاز فقط — لم يُرفع للسيرفر بعد. ⏳ سيتم الرفع عند عودة الإنترنت.\n\nانتباه: المشرفون والأجهزة الأخرى لن يروا التحديث حتى يتم الرفع."); 
-                // العودة إلى شاشة تفاصيل المحطة الحالية
+                alert("تم الارسال بنجاح ✅");
                 showStationDetails(sName);
-            }
+            }).catch(err => {
+                 // Failure
+                 console.warn("Save inspection failed:", err.message);
+                 alert("❌ فشل الاتصال بالسيرفر");
+                 
+                 // Re-enable to retry
+                 btn.disabled = false;
+                 btn.innerHTML = 'حفظ الفحص';
+            });
         });
         
         document.getElementById('view-inspection-btn').addEventListener('click', () => { 
@@ -7656,41 +7723,37 @@ if (idx === 5) { // الرقم 5 يمثل "المضخه" في مصفوفة ال�
                 userType: currentUser.type
             };
             
-            if (navigator.onLine && isFirebaseConnected) {
-                db.ref('userProfiles/' + username).set(profileData)
-                    .then(() => {
-                        showProfileAlert('تم حفظ البيانات الشخصية والمزامنة مع السيرفر بنجاح ✅', 'success');
-                        
-                        appData.userProfiles[username] = profileData;
-                        localStorage.setItem('toshka_user_profiles_cache', JSON.stringify(appData.userProfiles));
-                        
-                        renderUsersProfilesList();
-                        
-                        const log = {
-                            date: nowStd.date,
-                            time: nowStd.time,
-                            station: station,
-                            operator: username,
-                            details: `تحديث البيانات الشخصية للمستخدم: ${fullname}`
-                        };
-                        db.ref('history').push(log);
-                    })
-                    .catch(err => {
-                        console.error('Error saving profile:', err);
-                        showProfileAlert('حدث خطأ في حفظ البيانات: ' + err.message, 'error');
-                    });
-            } else {
-                appData.userProfiles[username] = profileData;
-                localStorage.setItem('toshka_user_profiles_cache', JSON.stringify(appData.userProfiles));
-                
-                addToOfflineQueue('update_profile', {
-                    username: username,
-                    profileData: profileData
+            const timeoutDuration = 25000;
+            const timeoutPromise = new Promise((_, reject) => {
+                const id = setTimeout(() => {
+                    clearTimeout(id);
+                    reject(new Error("NetworkTimeout"));
+                }, timeoutDuration);
+            });
+
+            const savePromise = db.ref('userProfiles/' + username).set(profileData)
+                .then(() => {
+                    const log = {
+                        date: nowStd.date,
+                        time: nowStd.time,
+                        station: station,
+                        operator: username,
+                        details: `تحديث البيانات الشخصية للمستخدم: ${fullname}`
+                    };
+                    db.ref('history').push(log);
+                    return "Success";
                 });
-                
-                showProfileAlert('تم الحفظ في الجهاز فقط — لم يُرفع للسيرفر بعد. سيتم الرفع عند عودة الإنترنت. (المشرفون لن يروه حتى يُرفع) ⏳', 'warning');
-                renderUsersProfilesList();
-            }
+
+            Promise.race([savePromise, timeoutPromise])
+                .then(() => {
+                    showProfileAlert('تم الارسال بنجاح ✅', 'success');
+                    appData.userProfiles[username] = profileData;
+                    renderUsersProfilesList();
+                })
+                .catch(err => {
+                    console.error('Error saving profile:', err);
+                    showProfileAlert('❌ فشل الاتصال بالسيرفر', 'error');
+                });
         }
         
         function deleteUserProfile(username) {
@@ -7707,38 +7770,38 @@ if (idx === 5) { // الرقم 5 يمثل "المضخه" في مصفوفة ال�
             }
             
             if (confirm(`هل أنت متأكد من حذف البيانات الشخصية للمستخدم "${username}"؟\n\nهذا الإجراء لا يمكن التراجع عنه.`)) {
-                if (navigator.onLine && isFirebaseConnected) {
-                    db.ref('userProfiles/' + username).remove()
-                        .then(() => {
-                            showProfileAlert('تم حذف البيانات الشخصية والمزامنة مع السيرفر بنجاح ✅', 'success');
-                            renderUsersProfilesList();
-                            
-                            const nowStd = getStandardDateTime();
-                            const log = {
-                                date: nowStd.date,
-                                time: nowStd.time,
-                                station: 'النظام',
-                                operator: currentUser.username,
-                                details: `حذف البيانات الشخصية للمستخدم: ${username}`
-                            };
-                            db.ref('history').push(log);
-                        })
-                        .catch(err => {
-                            console.error('Error deleting profile:', err);
-                            showProfileAlert('حدث خطأ في حذف البيانات: ' + err.message, 'error');
-                        });
-                } else {
-                    addToOfflineQueue('delete_profile', {
-                        username: username,
-                        deletedBy: currentUser.username
+                const timeoutDuration = 25000;
+                const timeoutPromise = new Promise((_, reject) => {
+                    const id = setTimeout(() => {
+                        clearTimeout(id);
+                        reject(new Error("NetworkTimeout"));
+                    }, timeoutDuration);
+                });
+                
+                const deletePromise = db.ref('userProfiles/' + username).remove()
+                    .then(() => {
+                         const nowStd = getStandardDateTime();
+                         const log = {
+                            date: nowStd.date,
+                            time: nowStd.time,
+                            station: 'النظام',
+                            operator: currentUser.username,
+                            details: `حذف البيانات الشخصية للمستخدم: ${username}`
+                        };
+                        db.ref('history').push(log);
+                        return "Success";
                     });
-                    
-                    delete appData.userProfiles[username];
-                    localStorage.setItem('toshka_user_profiles_cache', JSON.stringify(appData.userProfiles));
-                    
-                    showProfileAlert('تم الحذف في الجهاز فقط — لم يُرفع للسيرفر بعد. سيتم الرفع عند عودة الإنترنت. (المشرفون لن يروه حتى يُرفع) ⏳', 'warning');
-                    renderUsersProfilesList();
-                }
+
+                Promise.race([deletePromise, timeoutPromise])
+                    .then(() => {
+                        showProfileAlert('تم حذف البيانات والمزامنة مع السيرفر بنجاح ✅', 'success');
+                        delete appData.userProfiles[username];
+                        renderUsersProfilesList();
+                    })
+                    .catch(err => {
+                        console.error('Error deleting profile:', err);
+                        showProfileAlert('❌ فشل الاتصال بالسيرفر', 'error');
+                    });
             }
         }
         
@@ -9266,8 +9329,20 @@ document.getElementById('btn-send-report').addEventListener('click', () => {
         supervisorStatus: 'pending' // pending -> confirmed -> cancelled
     };
 
-    db.ref('fault_reports').push(newReport).then(() => {
-        alert("تم إرسال البلاغ بنجاح ✅");
+    const timeoutDuration = 25000;
+    const timeoutPromise = new Promise((_, reject) => {
+        const id = setTimeout(() => {
+            clearTimeout(id);
+            reject(new Error("NetworkTimeout"));
+        }, timeoutDuration);
+    });
+
+    const sendPromise = db.ref('fault_reports').push(newReport).then(() => {
+        return "Success";
+    });
+
+    Promise.race([sendPromise, timeoutPromise]).then(() => {
+        alert("تم الارسال بنجاح ✅");
         document.getElementById('report-desc').value = '';
         document.getElementById('report-component').value = '';
         // تحديث الجدول تلقائياً بعد إرسال البلاغ
@@ -9278,7 +9353,7 @@ document.getElementById('btn-send-report').addEventListener('click', () => {
         sendBtn.disabled = false;
     }).catch(error => {
         console.error("Error sending report:", error);
-        alert("فشل إرسال البلاغ: " + error.message);
+        alert("❌ فشل الاتصال بالسيرفر");
         
         // إعادة تفعيل الزر عند الخطأ
         sendBtn.innerHTML = originalBtnText;
@@ -10022,14 +10097,27 @@ function openFreezeModal(orderId) {
         };
 
         // الحفظ في قاعدة البيانات
-        db.ref('work_orders/' + orderId).update(updates)
+        const timeoutDuration = 25000;
+        const timeoutPromise = new Promise((_, reject) => {
+            const id = setTimeout(() => {
+                clearTimeout(id);
+                reject(new Error("NetworkTimeout"));
+            }, timeoutDuration);
+        });
+
+        const savePromise = db.ref('work_orders/' + orderId).update(updates)
             .then(() => {
-                alert("✅ تم حفظ حالة التجميد بنجاح");
+                return "Success";
+            });
+
+        Promise.race([savePromise, timeoutPromise])
+            .then(() => {
+                alert("تم الارسال بنجاح ✅");
                 closeModal('modal-freeze');
                 renderWorkOrdersTables(); // تحديث الجدول فوراً لتغيير الأزرار
             })
             .catch(error => {
-                alert("حدث خطأ أثناء الحفظ: " + error.message);
+                alert("❌ فشل الاتصال بالسيرفر");
             });
     };
 }
@@ -11357,6 +11445,29 @@ window.addEventListener('offline', function() {
         const el = document.getElementById(id);
         if (el) el.textContent = text;
     }
+
+    // فك تعليق الأزرار عند عودة الاتصال
+    window.addEventListener('online', function() {
+        const resetBtns = [
+             {id: 'save-operator-data', text: 'حفظ البيانات'},
+             {id: 'save-inspection-btn', text: 'حفظ الفحص'},
+             {id: 'btn-send-report', text: '🚀 إرسال البلاغ'},
+             {id: 'save-emergency-team-btn', text: '💾 حفظ التغييرات'},
+             {id: 'save-public-services-btn', text: '💾 حفظ التغييرات'},
+             {id: 'save-clinic-info-btn', text: '💾 حفظ التغييرات'},
+             {id: 'upload-emergency-image-btn', text: '📤 رفع الصورة'},
+             {id: 'delete-emergency-image-btn', text: '🗑️ حذف الصورة'}
+        ];
+        resetBtns.forEach(btnInfo => {
+             const btn = document.getElementById(btnInfo.id);
+             if(btn) { 
+                 btn.disabled = false; 
+                 if(btn.innerHTML.includes('loading-spinner') || btn.innerHTML.includes('جاري') || btn.innerHTML.includes('syncing')) {
+                     btn.innerHTML = btnInfo.text;
+                 }
+             }
+        });
+    });
 
     </script>
 </body>
