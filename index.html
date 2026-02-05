@@ -5923,6 +5923,36 @@ document.getElementById('work-orders-btn').style.display = 'none';
             }
         }
 
+        // دالة التحقق من تحديث الفحص (يظهر التنبيه بدءاً من الثلاثاء 9 صباحاً)
+        function checkInspectionAdherence(lastInspectionUpdateStr) {
+            const now = new Date();
+            const day = now.getDay(); // 0=Sun, 1=Mon, ..., 6=Sat
+            const hour = now.getHours();
+
+            // حساب عدد الأيام المنقضية منذ السبت (السبت=0, الأحد=1, ..., الجمعة=6)
+            const daysSinceSat = (day + 1) % 7;
+
+            // التحقق من وقت التنبيه: يبدأ من الثلاثاء (3) الساعة 9 صباحاً
+            // فترة السماح: السبت (0)، الأحد (1)، الاثنين (2)، والثلاثاء (3) قبل الساعة 9
+            if (daysSinceSat < 3) return false; 
+            if (daysSinceSat === 3 && hour < 9) return false;
+
+            // نحن الآن في وقت التنبيه (الثلاثاء 9+، أربعاء، خميس، جمعة)
+            
+            // تحديد بداية أسبوع الفحص (السبت الماضي الساعة 00:00)
+            let lastSaturday = new Date(now);
+            lastSaturday.setHours(0, 0, 0, 0);
+            lastSaturday.setDate(now.getDate() - daysSinceSat);
+
+            if (!lastInspectionUpdateStr) return true; // لم يتم التحديث أبداً
+            
+            const lastUpdate = parseCustomDate(lastInspectionUpdateStr);
+            if (!lastUpdate || isNaN(lastUpdate.getTime())) return true; // تاريخ غير صالح
+
+            // إذا كان التحديث أقدم من السبت الماضي (بداية الأسبوع)، نعرض التنبيه
+            return lastUpdate < lastSaturday;
+        }
+
         // --- DASHBOARD RENDERER ---
         function renderZonesTabs() {
     const c = document.getElementById('zones-tabs');
@@ -6102,6 +6132,13 @@ window.handleTabClick = (zone, btn) => {
                     missedUpdateHtml = `<span class="missed-update-icon" title="لم يتم التحديث في الموعد">!</span>`;
                 }
 
+                // التحقق من تحديث الفحص الدوري (السبت-الثلاثاء)
+                let inspectionAlertHtml = '';
+                const lastInspectionUpdate = (s.inspectionData && s.inspectionData.lastUpdate) ? s.inspectionData.lastUpdate : null;
+                if (checkInspectionAdherence(lastInspectionUpdate)) {
+                    inspectionAlertHtml = `<span class="missed-update-icon" style="background-color:#ff9800; border-color:#f57c00;" title="مطلوب تحديث الفحص الدوري">🔧</span>`;
+                }
+
                 let pressureWarningHtml = '';
                 const currentPressure = parseFloat(s.pressure) || 0;
                 const maxPressure = parseFloat(s.maxPressure) || 8.0;
@@ -6109,7 +6146,7 @@ window.handleTabClick = (zone, btn) => {
                     pressureWarningHtml = `<span class="pressure-warning" title="الضغط أعلى من المسموح به (${maxPressure} Bar)">!</span>`;
                 }
 card.innerHTML = `
-                    <div style="font-weight:bold; color:var(--primary-color)">${missedUpdateHtml}${s.name}</div>
+                    <div style="font-weight:bold; color:var(--primary-color)">${inspectionAlertHtml}${missedUpdateHtml}${s.name}</div>
                     <div style="display:flex; gap:5px; margin-bottom:5px;">
                         <span class="station-status ${s.status === 'نشطة' ? 'status-active' : 'status-inactive'}">${s.status}</span>
                         <span class="station-status" style="background-color:#e3f2fd; color:#0d47a1; border:1px solid #bbdefb;">${s.systemMode || '-'}</span>
