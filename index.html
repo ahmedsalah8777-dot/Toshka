@@ -4494,11 +4494,14 @@ document.querySelectorAll('.menu-item').forEach(item => {
 // ============================================================
 let isFirebaseConnected = false;
 let isWeakSignal = false; 
+let connectionRetries = 0; // عداد محاولات الاتصال الفاشلة
+const MAX_RETRIES_BEFORE_OFFLINE = 4; // عدد المحاولات قبل اعتبار الحالة "غير متصل" (حوالي 20 ثانية)
 
 // 1. مراقبة حالة الاتصال مع سيرفرات جوجل
 db.ref(".info/connected").on("value", (snap) => {
     if (snap.val() === true) {
         isFirebaseConnected = true;
+        connectionRetries = 0; // تصفير العداد عند النجاح
         tryRecoverConnection(); // محاولة استعادة الوضع الطبيعي فوراً
     } else {
         isFirebaseConnected = false;
@@ -4509,6 +4512,7 @@ db.ref(".info/connected").on("value", (snap) => {
 // 2. مراقبة حالة المتصفح (للاستجابة السريعة عند عودة الواي فاي)
 window.addEventListener('online', () => {
     console.log("Browser Online event detected");
+    connectionRetries = 0; // إعادة تعيين العداد لمنح فرصة جديدة
     tryRecoverConnection();
 });
 window.addEventListener('offline', updateNetworkStatus);
@@ -4516,6 +4520,14 @@ window.addEventListener('offline', updateNetworkStatus);
 // 3. الفحص الدوري (الحل السحري): يفحص كل 5 ثواني
 // إذا كانت العلامة برتقالية (ضعيفة) والنت موجود، يقوم بالمزامنة وتحويلها للأخضر
 setInterval(() => {
+    // زيادة العداد إذا كان المتصفح متصل ولكن الفايربيز مفصول
+    if (navigator.onLine && !isFirebaseConnected) {
+        connectionRetries++;
+        updateNetworkStatus(); // تحديث الواجهة لتعكس الحالة الجديدة (قد يتحول لغير متصل)
+    } else if (isFirebaseConnected) {
+        connectionRetries = 0;
+    }
+
     if (isWeakSignal && navigator.onLine && isFirebaseConnected) {
         console.log("Auto-recovering form Weak Signal...");
         tryRecoverConnection();
@@ -4563,10 +4575,19 @@ function updateNetworkStatus() {
     } 
     else {
         // المتصفح متصل (نظرياً) لكن السيرفر مفصول (جاري الاتصال أو نت ضعيف)
-        indicator.className = 'network-status net-weak';
-        icon.textContent = '🟠';
-        text.textContent = 'جاري الاتصال...';
-        if (indicator) indicator.title = 'يوجد إنترنت لكن جاري الاتصال بالسيرفر...';
+        
+        // التحقق من مهلة المحاولة (إذا تجاوزنا الحد المسموح، نعتبره غير متصل)
+        if (connectionRetries > MAX_RETRIES_BEFORE_OFFLINE) {
+            indicator.className = 'network-status net-offline';
+            icon.textContent = '🔴';
+            text.textContent = 'غير متصل';
+            if (indicator) indicator.title = 'فشل الاتصال بالسيرفر بعد عدة محاولات (Internet available but no connection)';
+        } else {
+            indicator.className = 'network-status net-weak';
+            icon.textContent = '🟠';
+            text.textContent = 'جاري الاتصال';
+            if (indicator) indicator.title = 'يوجد إنترنت لكن جاري الاتصال بالسيرفر...';
+        }
     }
 
     // منطق زر الدخول
@@ -4599,7 +4620,7 @@ function updateNetworkStatus() {
 
     // حفظ آخر حالة شبكة محلياً
     try {
-        var st = (!navigator.onLine) ? 'offline' : (isFirebaseConnected ? 'online' : 'weak');
+        var st = (!navigator.onLine || (navigator.onLine && !isFirebaseConnected && connectionRetries > MAX_RETRIES_BEFORE_OFFLINE)) ? 'offline' : (isFirebaseConnected ? 'online' : 'weak');
         localStorage.setItem('toshka_network_status', st);
     } catch (_) {}
 }
