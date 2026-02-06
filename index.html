@@ -4436,7 +4436,8 @@ document.querySelectorAll('.menu-item').forEach(item => {
             currentUsersPage: 0,
             currentUsersDataPage: 0,
             currentProfilesPage: 0,
-            navigationCount: 0 // تتبع عدد التنقلات
+            navigationCount: 0, // تتبع عدد التنقلات
+            screenStack: [] // تتبع تسلسل الشاشات
         };
         
         const pumpsData = {
@@ -5714,7 +5715,11 @@ function showScreen(screenId) {
 
         // دالة للعودة للشاشة السابقة (تستخدم في أزرار الرجوع)
         window.goBack = function() {
-            if (appData.navigationCount > 0) {
+            // التحقق من المكدس أولاً لضمان العودة للشاشة الصحيحة
+            if (appData.screenStack && appData.screenStack.length > 1) {
+                appData.screenStack.pop(); // إزالة الشاشة الحالية
+                history.back(); // العودة للخلف في المتصفح
+            } else if (appData.navigationCount > 0) {
                 history.back();
             } else {
                 // إذا لم يكن هناك سجل سابق، نعود للرئيسية
@@ -5725,6 +5730,16 @@ function showScreen(screenId) {
         // معالجة زر الرجوع في المتصفح والموبايل
         window.onpopstate = function(event) {
             if (event.state && event.state.screen) {
+                // محاولة مزامنة المكدس عند استخدام زر الرجوع في المتصفح
+                if (appData.screenStack && appData.screenStack.length > 0) {
+                    const currentInStack = appData.screenStack[appData.screenStack.length - 1];
+                    if (currentInStack !== event.state.screen) {
+                        // إذا كانت الشاشة في الـ state تختلف عن قمة المكدس، فهذا يعني أننا عدنا للخلف
+                        // (بافتراض أننا لا نتقدم للأمام لأن التطبيق لا يدعم Forward حالياً)
+                        // نقوم بإزالة العنصر الأخير (الحالي سابقاً)
+                        appData.screenStack.pop();
+                    }
+                }
                 showScreen(event.state.screen, false);
             } else {
                 // إذا لم تكن هناك حالة محفوظة، نعود للشاشة الرئيسية أو تسجيل الدخول
@@ -5746,6 +5761,10 @@ function showScreen(screenId) {
                 } else {
                     appData.navigationCount = 1;
                 }
+                
+                // إدارة مكدس الشاشات
+                if (!appData.screenStack) appData.screenStack = [];
+                appData.screenStack.push(screenId);
             }
 
             // إعادة تعيين الأزرار المعلقة (إصلاح مشكلة الأزرار المعلقة)
@@ -6275,6 +6294,8 @@ card.innerHTML = `
                 appData.currentUser.permissions.edit_own
             );
             document.getElementById('edit-station-btn').style.display = canEdit ? 'block' : 'none';
+            
+            // نستخدم showScreen بدلاً من التلاعب المباشر بالـ CSS لضمان عمل سجل التاريخ بشكل صحيح
             showScreen('station');
         }
 
