@@ -4435,7 +4435,8 @@ document.querySelectorAll('.menu-item').forEach(item => {
             profilesLimit: 100,
             currentUsersPage: 0,
             currentUsersDataPage: 0,
-            currentProfilesPage: 0
+            currentProfilesPage: 0,
+            navigationCount: 0 // تتبع عدد التنقلات
         };
         
         const pumpsData = {
@@ -4958,7 +4959,7 @@ function setupAdminControls() {
 // --- إعداد مستمعي الأحداث ---
 function setupEventListeners() {
     // رجوع للرئيسية
-    document.getElementById('back-to-stations-from-emergency').addEventListener('click', () => showScreen('stations'));
+    document.getElementById('back-to-stations-from-emergency').addEventListener('click', () => goBack());
     
     // تحميل الصورة
     document.getElementById('upload-emergency-image-btn').addEventListener('click', () => {
@@ -5711,6 +5712,16 @@ function showScreen(screenId) {
             if (repairCount > 0 && navigator.onLine) db.ref('stations').update(updates);
         }
 
+        // دالة للعودة للشاشة السابقة (تستخدم في أزرار الرجوع)
+        window.goBack = function() {
+            if (appData.navigationCount > 0) {
+                history.back();
+            } else {
+                // إذا لم يكن هناك سجل سابق، نعود للرئيسية
+                showScreen('stations');
+            }
+        };
+
         // معالجة زر الرجوع في المتصفح والموبايل
         window.onpopstate = function(event) {
             if (event.state && event.state.screen) {
@@ -5729,6 +5740,12 @@ function showScreen(screenId) {
             // إضافة الحالة للتاريخ إذا لم يكن استدعاء من زر الرجوع
             if (addToHistory) {
                 history.pushState({ screen: screenId }, null, "#" + screenId);
+                // زيادة عداد التنقلات
+                if (typeof appData.navigationCount === 'number') {
+                    appData.navigationCount++;
+                } else {
+                    appData.navigationCount = 1;
+                }
             }
 
             // إعادة تعيين الأزرار المعلقة (إصلاح مشكلة الأزرار المعلقة)
@@ -5903,16 +5920,16 @@ document.getElementById('work-orders-btn').style.display = 'none';
             }
         });
 
-        document.getElementById('back-to-stations').addEventListener('click', () => showScreen('stations'));
-        document.getElementById('back-to-station').addEventListener('click', () => showStationDetails(appData.currentStation));
-        document.getElementById('back-to-stations-from-users').addEventListener('click', () => showScreen('stations'));
-        document.getElementById('back-to-stations-from-history').addEventListener('click', () => showScreen('stations'));
-        document.getElementById('back-to-stations-from-faults').addEventListener('click', () => showScreen('stations'));
-        document.getElementById('back-to-stations-from-cons').addEventListener('click', () => showScreen('stations'));
-        document.getElementById('back-from-inspection').addEventListener('click', () => { showStationDetails(appData.currentStation); });
-        document.getElementById('back-to-stations-from-profile').addEventListener('click', () => showScreen('stations'));
-        document.getElementById('back-to-stations-from-users-data').addEventListener('click', () => showScreen('stations'));
-        document.getElementById('back-to-stations-from-export').addEventListener('click', () => showScreen('stations'));
+        document.getElementById('back-to-stations').addEventListener('click', () => goBack());
+        document.getElementById('back-to-station').addEventListener('click', () => goBack());
+        document.getElementById('back-to-stations-from-users').addEventListener('click', () => goBack());
+        document.getElementById('back-to-stations-from-history').addEventListener('click', () => goBack());
+        document.getElementById('back-to-stations-from-faults').addEventListener('click', () => goBack());
+        document.getElementById('back-to-stations-from-cons').addEventListener('click', () => goBack());
+        document.getElementById('back-from-inspection').addEventListener('click', () => goBack());
+        document.getElementById('back-to-stations-from-profile').addEventListener('click', () => goBack());
+        document.getElementById('back-to-stations-from-users-data').addEventListener('click', () => goBack());
+        document.getElementById('back-to-stations-from-export').addEventListener('click', () => goBack());
 
         // New button for user data management
         document.getElementById('profile-btn').addEventListener('dblclick', () => {
@@ -8938,7 +8955,7 @@ document.getElementById('calculator-btn').addEventListener('click', () => {
     }
 });
 
-document.getElementById('back-to-stations-from-calc').addEventListener('click', () => showScreen('stations'));
+document.getElementById('back-to-stations-from-calc').addEventListener('click', () => goBack());
 
 // 2. دوال الحاسبة (تمت إعادة تسميتها لتجنب التعارض)
 function addMachineCalc() {
@@ -9321,8 +9338,8 @@ let currentReportId = null; // لتخزين ID البلاغ الجاري الع�
 document.getElementById('fault-reporting-btn').addEventListener('click', () => {
     showScreen('fault-reporting');
 });
-document.getElementById('back-to-stations-from-reports').addEventListener('click', () => showScreen('stations'));
-document.getElementById('back-to-stations-from-orders').addEventListener('click', () => showScreen('stations'));
+document.getElementById('back-to-stations-from-reports').addEventListener('click', () => goBack());
+document.getElementById('back-to-stations-from-orders').addEventListener('click', () => goBack());
 
 // 2. دوال شاشة تسجيل البلاغات
 function initFaultReportingScreen() {
@@ -10110,7 +10127,7 @@ document.getElementById('btn-go-to-archive').addEventListener('click', () => {
 
 // 2. تفعيل زر العودة من الأرشيف إلى شاشة الأوامر
 document.getElementById('back-from-archive').addEventListener('click', () => {
-    showScreen('work-orders');
+    goBack();
 });
 // متغير لتخزين معرف الأمر الحالي
 let currentFreezeOrderId = null;
@@ -10775,7 +10792,7 @@ document.getElementById('announcement-settings-btn').addEventListener('click', (
 
 // إضافة مستمع لزر العودة
 document.getElementById('back-from-announcement-settings').addEventListener('click', () => {
-    showScreen('stations');
+    goBack();
 });
 
 
@@ -11144,7 +11161,7 @@ window.addEventListener('offline', function() {
         const backStatsBtn = document.getElementById('back-from-statistics');
         if (backStatsBtn) {
             backStatsBtn.addEventListener('click', function() {
-                showScreen('stations'); // العودة للشاشة الرئيسية
+                goBack(); // العودة للشاشة السابقة
             });
         }
 
