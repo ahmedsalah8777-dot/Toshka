@@ -5711,7 +5711,26 @@ function showScreen(screenId) {
             if (repairCount > 0 && navigator.onLine) db.ref('stations').update(updates);
         }
 
-        function showScreen(screenId) {
+        // معالجة زر الرجوع في المتصفح والموبايل
+        window.onpopstate = function(event) {
+            if (event.state && event.state.screen) {
+                showScreen(event.state.screen, false);
+            } else {
+                // إذا لم تكن هناك حالة محفوظة، نعود للشاشة الرئيسية أو تسجيل الدخول
+                if (appData.currentUser) {
+                    showScreen('stations', false);
+                } else {
+                    showScreen('login', false);
+                }
+            }
+        };
+
+        function showScreen(screenId, addToHistory = true) {
+            // إضافة الحالة للتاريخ إذا لم يكن استدعاء من زر الرجوع
+            if (addToHistory) {
+                history.pushState({ screen: screenId }, null, "#" + screenId);
+            }
+
             // إعادة تعيين الأزرار المعلقة (إصلاح مشكلة الأزرار المعلقة)
             const resetBtns = [
                 {id: 'save-operator-data', text: 'حفظ البيانات'},
@@ -10501,8 +10520,8 @@ document.addEventListener('DOMContentLoaded', function() {
 
 // تحديث ظهور زر الحذف عند تسجيل الدخول أو تغيير الشاشة
 const originalShowScreen = showScreen;
-showScreen = function(screenId) {
-    originalShowScreen(screenId);
+showScreen = function(screenId, addToHistory = true) {
+    originalShowScreen(screenId, addToHistory);
     
     if (screenId === 'history') {
         setTimeout(updateDeleteButtonVisibility, 100);
