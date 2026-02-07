@@ -716,7 +716,7 @@
         .announcement-header {
             background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
             color: white;
-            padding: 20px;
+            padding: 10px; /* Reduced padding */
             display: flex;
             justify-content: space-between;
             align-items: center;
@@ -724,16 +724,16 @@
         
         .announcement-header h2 {
             margin: 0;
-            font-size: 1.5rem;
+            font-size: 1.2rem; /* Slightly smaller font */
         }
         
         .announcement-close-btn {
             background: rgba(255, 255, 255, 0.2);
             border: none;
             color: white;
-            font-size: 1.8rem;
-            width: 40px;
-            height: 40px;
+            font-size: 1.5rem; /* Slightly smaller */
+            width: 35px; /* Smaller button */
+            height: 35px;
             border-radius: 50%;
             cursor: pointer;
             transition: all 0.3s;
@@ -748,22 +748,22 @@
         }
         
         .announcement-body {
-            padding: 30px;
-            max-height: 70vh;
+            padding: 5px; /* Significantly reduced padding for image clarity */
+            max-height: 80vh; /* Increased max-height */
             overflow-y: auto;
             text-align: center;
         }
         
         .announcement-image {
             max-width: 100%;
-            max-height: 500px;
-            border-radius: 10px;
+            max-height: 60vh; /* Use viewport height unit */
+            border-radius: 8px;
             box-shadow: 0 5px 20px rgba(0, 0, 0, 0.2);
-            margin-bottom: 20px;
+            margin-bottom: 10px;
         }
         
         .announcement-footer {
-            padding: 15px 30px;
+            padding: 10px; /* Reduced padding */
             background: #f8f9fa;
             border-top: 1px solid #dee2e6;
             display: flex;
@@ -2910,6 +2910,12 @@
             .btn {
                 padding: 6px 10px;
                 font-size: 13px;
+            }
+            
+            /* Compact Tables */
+            th, td {
+                padding: 4px 6px;
+                font-size: 0.85rem;
             }
         }
     </style>
