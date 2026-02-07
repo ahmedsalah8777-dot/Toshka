@@ -11839,7 +11839,46 @@ window.addEventListener('offline', function() {
                             else if (pStatus === 'broken') { statusText = '🛑 لا تعمل'; color = 'var(--danger-color)'; }
                             else if (pStatus === 'none') { statusText = '⚪ لا يوجد'; color = '#999'; }
                             
-                            pumpsHtml += `<div style="margin: 2px 0; color: ${color};">مضخة ${i}: ${statusText}</div>`;
+                            // إضافة السبب (الملاحظات) إذا وجد
+                            let reasonText = '';
+                            if ((pStatus === 'fault' || pStatus === 'broken') && inspectionData[i]) {
+                                // نحاول البحث عن ملاحظات في أي من العناصر المرتبطة بالمضخة
+                                // العناصر: 0,1,2,5,8,10,11,12
+                                const targetIndices = [0, 1, 2, 5, 8, 10, 11, 12];
+                                let reasons = [];
+                                
+                                // قائمة أسماء العناصر (يجب أن تتطابق مع inspectionSchema.pumps.items)
+                                // 0: محبس فراشه, 1: وصله فك و تركيب, 2: وصله مرنه, 5: المضخه, 8: وصله مرنه, 10: محبس عدم رجوع, 11: وصله فك و تركيب, 12: محبس فراشه
+                                const itemNames = {
+                                    0: "محبس فراشة (سحب)",
+                                    1: "وصلة فك وتركيب (سحب)",
+                                    2: "وصلة مرنة (سحب)",
+                                    5: "المضخة",
+                                    8: "وصلة مرنة (طرد)",
+                                    10: "محبس عدم رجوع",
+                                    11: "وصلة فك وتركيب (طرد)",
+                                    12: "محبس فراشة (طرد)"
+                                };
+
+                                targetIndices.forEach(idx => {
+                                    const itemData = inspectionData[i][idx];
+                                    if (itemData && (itemData.status === 'fault' || itemData.status === 'broken')) {
+                                        let itemReason = itemNames[idx] || "عنصر غير معروف";
+                                        
+                                        // إضافة الملاحظة إذا وجدت (الحقل هو desc وليس notes)
+                                        if (itemData.desc && itemData.desc.trim() !== "") {
+                                            itemReason += ` (${itemData.desc})`;
+                                        }
+                                        reasons.push(itemReason);
+                                    }
+                                });
+                                
+                                if (reasons.length > 0) {
+                                    reasonText = ` <span style="font-size:0.8rem; color:#666;">- [ ${reasons.join('، ')} ]</span>`;
+                                }
+                            }
+                            
+                            pumpsHtml += `<div style="margin: 2px 0; color: ${color};">مضخة ${i}: ${statusText}${reasonText}</div>`;
                         }
                     }
 
