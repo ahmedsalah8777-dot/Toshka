@@ -2765,6 +2765,84 @@
     background-color: #fff5f5;
     color: #c0392b;
 }
+
+/* ═══════════════════════════════════════════════════════
+   تنسيقات شاشة عرض الفحص الجديدة (Grid System)
+═══════════════════════════════════════════════════════ */
+.inspection-view-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+    gap: 15px;
+    padding: 15px;
+}
+
+.inspection-card {
+    background: #fff;
+    border: 1px solid #eee;
+    border-radius: 10px;
+    padding: 12px 15px;
+    box-shadow: 0 3px 6px rgba(0,0,0,0.05);
+    transition: transform 0.2s, box-shadow 0.2s;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-start;
+}
+
+.inspection-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 6px 12px rgba(0,0,0,0.1);
+}
+
+.inspection-card.status-efficient { border-top: 4px solid var(--success-color); }
+.inspection-card.status-fault { border-top: 4px solid var(--warning-color); }
+.inspection-card.status-broken { border-top: 4px solid var(--danger-color); }
+.inspection-card.status-none { border-top: 4px solid #95a5a6; }
+
+/* حاوية العنوان والحالة بجانب بعضهما */
+.card-header-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px solid #f0f0f0;
+    padding-bottom: 8px;
+    margin-bottom: 8px;
+    gap: 10px;
+}
+
+.card-label {
+    font-weight: bold;
+    font-size: 0.95rem;
+    color: #2c3e50;
+    margin: 0;
+    flex: 1; /* يأخذ المساحة المتبقية */
+}
+
+.card-status {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 4px 10px;
+    border-radius: 15px;
+    font-size: 0.8rem;
+    font-weight: bold;
+    white-space: nowrap; /* منع النص من الالتفاف */
+    flex-shrink: 0; /* منع الانكماش */
+}
+
+.status-efficient .card-status { background: #d4edda; color: #155724; }
+.status-fault .card-status { background: #fff3cd; color: #856404; }
+.status-broken .card-status { background: #f8d7da; color: #721c24; }
+.status-none .card-status { background: #e2e6ea; color: #383d41; }
+
+.card-desc {
+    font-size: 0.85rem;
+    color: #555;
+    background: #f8f9fa;
+    padding: 8px;
+    border-radius: 6px;
+    margin-top: auto;
+    border: 1px dashed #ddd;
+}
     </style>
 </head>
 <body>
@@ -6893,6 +6971,10 @@ function saveDataInternal(options = {}) {
                     bodyDiv.id = `section-body-${key}`;
                 }
                 
+                // حاوية Grid للعرض فقط
+                const gridContainer = document.createElement('div');
+                if (!isEdit) gridContainer.className = 'inspection-view-grid';
+                
                 if (key === 'pumps') {
                     const totalPumps = sData.pumps ? sData.pumps.length : 4; 
                     const pumpsInsData = insData.pumps || {};
@@ -6937,26 +7019,37 @@ function saveDataInternal(options = {}) {
                         const pumpBodyDiv = document.createElement('div'); 
                         pumpBodyDiv.className = 'pump-accordion-body'; 
                         pumpBodyDiv.id = `pump-body-${i}`;
+                        
+                        // حاوية Grid للمضخات في وضع العرض
+                        const pumpGridContainer = document.createElement('div');
+                        if (!isEdit) pumpGridContainer.className = 'inspection-view-grid';
+
                         schema.items.forEach((item, idx) => {
                             if (idx === 0) { 
                                 const subHeader = document.createElement('div'); 
                                 subHeader.className = 'pump-section-divider'; 
                                 subHeader.textContent = '1- خط السحب'; 
-                                pumpBodyDiv.appendChild(subHeader); 
+                                if(isEdit) pumpBodyDiv.appendChild(subHeader); else pumpGridContainer.appendChild(subHeader);
                             } 
                             else if (idx === 5) { 
                                 const subHeader = document.createElement('div'); 
                                 subHeader.className = 'pump-section-divider'; 
                                 subHeader.textContent = '2- المضخة'; 
-                                pumpBodyDiv.appendChild(subHeader); 
+                                if(isEdit) pumpBodyDiv.appendChild(subHeader); else pumpGridContainer.appendChild(subHeader);
                             } 
                             else if (idx === 6) { 
                                 const subHeader = document.createElement('div'); 
                                 subHeader.className = 'pump-section-divider'; 
                                 subHeader.textContent = '3- خط الطرد'; 
-                                pumpBodyDiv.appendChild(subHeader); 
+                                if(isEdit) pumpBodyDiv.appendChild(subHeader); else pumpGridContainer.appendChild(subHeader);
                             }
-                            pumpBodyDiv.appendChild(createInspectionRow(idx, item, pData[idx] || {}, `pumps_${i}`, isEdit));
+                            
+                            if (isEdit) {
+                                pumpBodyDiv.appendChild(createInspectionRow(idx, item, pData[idx] || {}, `pumps_${i}`, isEdit));
+                            } else {
+                                pumpGridContainer.appendChild(createInspectionViewCard(idx, item, pData[idx] || {}));
+                            }
+                            
 if (idx === 5) { // الرقم 5 يمثل "المضخه" في مصفوفة العناصر
         // جلب ساعات التشغيل من بيانات المحطة الحالية
         const currentPump = (sData.pumps && sData.pumps[i-1]) ? sData.pumps[i-1] : {};
@@ -6967,23 +7060,67 @@ if (idx === 5) { // الرقم 5 يمثل "المضخه" في مصفوفة ال�
         hoursDiv.style.cssText = "padding: 0 10px 10px 10px; color: var(--secondary-color); font-weight: bold; font-size: 0.9rem; margin-top: -5px;";
         hoursDiv.innerHTML = `⏱️ إجمالي ساعات التشغيل: <span style="color: #333;">${hoursVal}</span> ساعة`;
         
-        pumpBodyDiv.appendChild(hoursDiv);
+        if(isEdit) pumpBodyDiv.appendChild(hoursDiv); else pumpGridContainer.appendChild(hoursDiv);
     }
                         });
+                        
+                        if (!isEdit) pumpBodyDiv.appendChild(pumpGridContainer);
+                        
                         pumpItemDiv.appendChild(pumpHeaderDiv); 
                         pumpItemDiv.appendChild(pumpBodyDiv); 
-                        bodyDiv.appendChild(pumpItemDiv);
+                        if(isEdit) bodyDiv.appendChild(pumpItemDiv); else gridContainer.appendChild(pumpItemDiv);
                     }
+                    if(!isEdit) bodyDiv.appendChild(gridContainer);
                 } else {
                     const sectionData = insData[key] || {};
                     schema.items.forEach((item, idx) => { 
-                        bodyDiv.appendChild(createInspectionRow(idx, item, sectionData[idx] || {}, key, isEdit)); 
+                        if (isEdit) {
+                            bodyDiv.appendChild(createInspectionRow(idx, item, sectionData[idx] || {}, key, isEdit)); 
+                        } else {
+                            gridContainer.appendChild(createInspectionViewCard(idx, item, sectionData[idx] || {}));
+                        }
                     });
+                    if (!isEdit) bodyDiv.appendChild(gridContainer);
                 }
                 sectionDiv.appendChild(headerDiv); 
                 sectionDiv.appendChild(bodyDiv); 
                 container.appendChild(sectionDiv);
             });
+        }
+        
+        // دالة جديدة لإنشاء كارت العرض
+        function createInspectionViewCard(itemKey, label, dataObj) {
+            const status = dataObj && dataObj.status ? dataObj.status : 'efficient';
+            const desc = dataObj && dataObj.desc ? dataObj.desc : '';
+            
+            const card = document.createElement('div');
+            card.className = `inspection-card status-${status}`;
+            
+            let statusText = 'غير محدد';
+            let statusIcon = '❓';
+            
+            if (status === 'efficient') { statusText = 'سليم'; statusIcon = '✅'; }
+            else if (status === 'fault') { statusText = 'يحتاج صيانة'; statusIcon = '⚠️'; }
+            else if (status === 'broken') { statusText = 'معطل'; statusIcon = '🛑'; }
+            else if (status === 'none') { statusText = 'غير موجود'; statusIcon = '⚪'; }
+            
+            let descHtml = '';
+            if (desc && desc.trim() !== '') {
+                descHtml = `<div class="card-desc">📝 ${desc}</div>`;
+            }
+            
+            card.innerHTML = `
+                <div class="card-header-row">
+                    <div class="card-label">${label}</div>
+                    <div class="card-status">
+                        <span>${statusIcon}</span>
+                        <span>${statusText}</span>
+                    </div>
+                </div>
+                ${descHtml}
+            `;
+            
+            return card;
         }
 
         function createInspectionRow(itemKey, label, dataObj, prefix, isEdit) {
