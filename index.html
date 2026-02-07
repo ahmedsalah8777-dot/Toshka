@@ -1031,6 +1031,27 @@
         #login-screen.active {
             display: flex;
         }
+        
+        /* توسيط مؤشر الشبكة في منتصف الهيدر */
+        header .header-content {
+            position: relative;
+        }
+
+        #network-status-indicator {
+            position: absolute;
+            left: 50%;
+            transform: translateX(-50%);
+            /* التأكد من عدم تداخله مع العناصر الأخرى */
+            white-space: nowrap;
+        }
+        
+        @media (max-width: 768px) {
+             #network-status-indicator {
+                position: static;
+                transform: none;
+                margin: 0 auto;
+            }
+        }
 
         @media (max-width: 768px) {
             .login-form {
