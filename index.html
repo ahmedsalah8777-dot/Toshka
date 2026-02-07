@@ -449,7 +449,12 @@
         
         @media (max-width: 768px) {
             header {
-                padding: 10px 0 !important; /* تكبير الهيدر في الموبايل قليلاً */
+                padding: 6px 0 !important; /* الهامش الافتراضي الصغير لباقي الشاشات */
+            }
+            
+            /* تكبير الهيدر فقط عندما تكون شاشة الدخول ظاهرة */
+            body:has(#login-screen.active) header {
+                padding: 12px 0 !important;
             }
             
             .logo {
