@@ -2767,317 +2767,81 @@
 }
 
 /* ═══════════════════════════════════════════════════════
-   تنسيقات شاشة الإعلان (محسنة احترافياً للموبايل)
+   تنسيقات شاشة عرض الفحص الجديدة (Grid System)
 ═══════════════════════════════════════════════════════ */
-.announcement-overlay {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background: rgba(0, 0, 0, 0.92);
-    z-index: 99999;
-    display: none;
-    justify-content: center;
-    align-items: center;
-    backdrop-filter: blur(8px);
-    padding: 0;
-    animation: fadeIn 0.3s ease-out;
+.inspection-view-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+    gap: 15px;
+    padding: 15px;
 }
 
-.announcement-overlay.show {
-    display: flex;
-}
-
-.announcement-content {
-    background: linear-gradient(to bottom, #ffffff, #f8f9fa);
-    width: 96%;
-    max-width: 900px;
-    max-height: 95vh;
-    border-radius: 20px;
-    box-shadow: 0 25px 60px rgba(0,0,0,0.6), 
-                0 0 0 1px rgba(255,255,255,0.1);
+.inspection-card {
+    background: #fff;
+    border: 1px solid #eee;
+    border-radius: 10px;
+    padding: 12px 15px;
+    box-shadow: 0 3px 6px rgba(0,0,0,0.05);
+    transition: transform 0.2s, box-shadow 0.2s;
     display: flex;
     flex-direction: column;
-    overflow: hidden;
-    position: relative;
-    transform: translateY(0);
-    animation: slideIn 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+    justify-content: flex-start;
 }
 
-@keyframes slideIn {
-    from {
-        opacity: 0;
-        transform: translateY(-50px) scale(0.9);
-    }
-    to {
-        opacity: 1;
-        transform: translateY(0) scale(1);
-    }
+.inspection-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 6px 12px rgba(0,0,0,0.1);
 }
 
-@keyframes fadeIn {
-    from { opacity: 0; }
-    to { opacity: 1; }
-}
+.inspection-card.status-efficient { border-top: 4px solid var(--success-color); }
+.inspection-card.status-fault { border-top: 4px solid var(--warning-color); }
+.inspection-card.status-broken { border-top: 4px solid var(--danger-color); }
+.inspection-card.status-none { border-top: 4px solid #95a5a6; }
 
-.announcement-header {
-    background: linear-gradient(135deg, #1a5276 0%, #2e86c1 50%, #3498db 100%);
-    color: white;
-    padding: 18px 20px;
+/* حاوية العنوان والحالة بجانب بعضهما */
+.card-header-row {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    flex-shrink: 0;
-    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-    position: relative;
-    overflow: hidden;
+    border-bottom: 1px solid #f0f0f0;
+    padding-bottom: 8px;
+    margin-bottom: 8px;
+    gap: 10px;
 }
 
-.announcement-header::before {
-    content: '';
-    position: absolute;
-    top: -50%;
-    right: -50%;
-    width: 200%;
-    height: 200%;
-    background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 70%);
-    animation: shimmer 3s infinite;
-}
-
-@keyframes shimmer {
-    0%, 100% { transform: translate(-50%, -50%) scale(1); }
-    50% { transform: translate(-30%, -30%) scale(1.1); }
-}
-
-.announcement-header h2 {
-    margin: 0;
-    font-size: 1.4rem;
-    font-weight: 700;
-    text-shadow: 2px 2px 4px rgba(0,0,0,0.2);
-    position: relative;
-    z-index: 1;
-}
-
-.announcement-body {
-    padding: 0;
-    overflow-y: auto;
-    overflow-x: hidden;
-    flex: 1;
-    display: flex;
-    flex-direction: column;
-    background: #f8f9fa;
-    position: relative;
-    -webkit-overflow-scrolling: touch;
-    scroll-behavior: smooth;
-}
-
-/* حاوية الصورة مع نظام التكبير والتحريك الاحترافي */
-.announcement-image-container {
-    width: 100%;
-    min-height: 300px;
-    max-height: 60vh;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    background: linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 100%);
-    position: relative;
-    overflow: auto;
-    cursor: zoom-in;
-    -webkit-overflow-scrolling: touch;
-    scroll-behavior: smooth;
-    flex-shrink: 0;
-}
-
-.announcement-image-container.zoomed {
-    cursor: grab;
-}
-
-.announcement-image-container.zoomed:active {
-    cursor: grabbing;
-}
-
-.announcement-image-container.zoomed .zoom-hint {
-    opacity: 0.3;
-    pointer-events: none;
-}
-
-.announcement-image {
-    width: 100%;
-    height: auto;
-    object-fit: contain;
-    transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-    display: block;
-    margin: auto;
-    border-radius: 8px;
-    box-shadow: 0 8px 24px rgba(0,0,0,0.3);
-}
-
-/* حالة التكبير للصورة - محسّنة */
-.announcement-image.zoomed {
-    cursor: move;
-    transform: scale(1);
-    width: auto;
-    min-width: 200%;
-    max-width: 300%;
-    transition: none;
-}
-
-/* تحسينات للشاشات الصغيرة */
-@media (max-width: 768px) {
-    .announcement-image.zoomed {
-        min-width: 250%;
-        max-width: 350%;
-    }
-    
-    .announcement-content {
-        width: 98%;
-        max-height: 96vh;
-        border-radius: 16px;
-    }
-    
-    .announcement-header h2 {
-        font-size: 1.2rem;
-    }
-    
-    .announcement-image-container {
-        max-height: 50vh;
-    }
-    
-    .announcement-text-container {
-        padding: 20px 15px;
-    }
-    
-    #announcement-message {
-        font-size: 1rem;
-    }
-    
-    .zoom-hint {
-        font-size: 0.85rem;
-        padding: 10px 16px;
-        transform: translate(-50%, -50%);
-    }
-}
-
-.announcement-text-container {
-    padding: 25px 20px;
-    text-align: center;
-    background: white;
-    width: 100%;
-    border-top: 3px solid #e8f4f8;
-    flex-shrink: 0;
-    min-height: 80px;
-}
-
-#announcement-message {
-    font-size: 1.15rem;
+.card-label {
+    font-weight: bold;
+    font-size: 0.95rem;
     color: #2c3e50;
     margin: 0;
-    line-height: 1.7;
-    font-weight: 500;
+    flex: 1; /* يأخذ المساحة المتبقية */
 }
 
-.announcement-footer {
-    padding: 16px 20px;
-    background: linear-gradient(to bottom, #f8f9fa, #e9ecef);
-    border-top: 1px solid #dee2e6;
-    text-align: center;
-    flex-shrink: 0;
-    box-shadow: 0 -2px 8px rgba(0,0,0,0.05);
-}
-
-.announcement-close-btn {
-    background: rgba(255,255,255,0.25);
-    border: 2px solid rgba(255,255,255,0.4);
-    color: white;
-    font-size: 1.6rem;
-    cursor: pointer;
-    padding: 8px 14px;
-    border-radius: 50%;
-    transition: all 0.3s ease;
-    width: 42px;
-    height: 42px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    position: relative;
-    z-index: 2;
-    font-weight: bold;
-    line-height: 1;
-}
-
-.announcement-close-btn:hover {
-    background: rgba(255,255,255,0.4);
-    transform: rotate(90deg) scale(1.1);
-    box-shadow: 0 4px 12px rgba(0,0,0,0.2);
-}
-
-.announcement-close-btn:active {
-    transform: rotate(90deg) scale(0.95);
-}
-
-/* أيقونة التكبير العائمة المحسّنة */
-.zoom-hint {
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    background: linear-gradient(135deg, rgba(0,0,0,0.75), rgba(0,0,0,0.9));
-    color: white;
-    padding: 12px 20px;
-    border-radius: 30px;
-    font-size: 1rem;
-    font-weight: 600;
-    pointer-events: none;
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    box-shadow: 0 4px 20px rgba(0,0,0,0.5);
-    border: 2px solid rgba(255,255,255,0.3);
-    z-index: 10;
-    animation: pulseHint 2s infinite;
-    white-space: nowrap;
-}
-
-@keyframes pulseHint {
-    0%, 100% { 
-        transform: translate(-50%, -50%) scale(1);
-        box-shadow: 0 4px 20px rgba(0,0,0,0.5);
-    }
-    50% { 
-        transform: translate(-50%, -50%) scale(1.05);
-        box-shadow: 0 6px 25px rgba(0,0,0,0.7);
-    }
-}
-
-.zoom-hint::before {
-    content: '👆';
-    font-size: 1.1rem;
-    animation: bounce 1.5s infinite;
-}
-
-@keyframes bounce {
-    0%, 100% { transform: translateY(0); }
-    50% { transform: translateY(-4px); }
-}
-
-/* العداد التنازلي المحسّن */
-.countdown-timer {
-    background: linear-gradient(135deg, #f39c12, #e67e22);
-    color: white;
-    padding: 10px 20px;
-    border-radius: 25px;
-    font-weight: 700;
-    font-size: 1rem;
-    box-shadow: 0 4px 12px rgba(243, 156, 18, 0.4);
+.card-status {
     display: inline-flex;
     align-items: center;
-    gap: 8px;
+    gap: 5px;
+    padding: 4px 10px;
+    border-radius: 15px;
+    font-size: 0.8rem;
+    font-weight: bold;
+    white-space: nowrap; /* منع النص من الالتفاف */
+    flex-shrink: 0; /* منع الانكماش */
 }
 
-.countdown-timer::before {
-    content: '⏱️';
-    font-size: 1.2rem;
+.status-efficient .card-status { background: #d4edda; color: #155724; }
+.status-fault .card-status { background: #fff3cd; color: #856404; }
+.status-broken .card-status { background: #f8d7da; color: #721c24; }
+.status-none .card-status { background: #e2e6ea; color: #383d41; }
+
+.card-desc {
+    font-size: 0.85rem;
+    color: #555;
+    background: #f8f9fa;
+    padding: 8px;
+    border-radius: 6px;
+    margin-top: auto;
+    border: 1px dashed #ddd;
 }
     </style>
 </head>
@@ -3125,13 +2889,8 @@
             <button class="announcement-close-btn" onclick="closeAnnouncement()">×</button>
         </div>
         <div class="announcement-body">
-            <div class="announcement-image-container" onclick="toggleZoom(this)">
-                <img id="announcement-image" class="announcement-image" src="" alt="إعلان" style="display: none;">
-                <div class="zoom-hint">🔍 اضغط للتكبير</div>
-            </div>
-            <div class="announcement-text-container">
-                <p id="announcement-message"></p>
-            </div>
+            <img id="announcement-image" class="announcement-image" src="" alt="إعلان" style="display: none;">
+            <p id="announcement-message" style="font-size: 1.1rem; color: #333; margin-top: 15px;"></p>
         </div>
         <div class="announcement-footer">
             <div class="countdown-timer" id="announcement-countdown"></div>
@@ -4677,9 +4436,9 @@ document.querySelectorAll('.menu-item').forEach(item => {
             pumps: {
                 title: "المضخات", isDynamic: true,
                 items: [
-                    "محبس فراشة (سحب)", "وصلة فك وتركيب (سحب)", "وصلة مرنة (سحب)", "عداد السحب", "حساس السحب", // Suction
+                    "محبس فراشه", "وصله فك و تركيب", "وصله مرنه", "عداد السحب", "حساس السحب", // Suction
                     "المضخه", // Pump
-                    "عداد الطرد", "حساس الطرد", "وصلة مرنة (طرد)", "اير فينت", "محبس عدم رجوع", "وصلة فك وتركيب (طرد)", "محبس فراشة (طرد)" // Discharge
+                    "عداد الطرد", "حساس الطرد", "وصله مرنه", "اير فينت", "محبس عدم رجوع", "وصله فك و تركيب", "محبس فراشه" // Discharge
                 ]
             },
             mainLine: { title: "خط الطرد الرئيسي", items: ["اير فينت", "محبس عدم رجوع", "وصله فك و تركيب 1", "الفلوميتر", "حساس ضغط", "عداد ضغط", "وصله فك و تركيب 2", "محبس فراشه", "محبس درين"] },
@@ -6205,118 +5964,6 @@ function showScreen(screenId) {
             }
         }
 
-        // ═══════════════════════════════════════════════════════
-        // نظام التكبير والتحريك المحسّن لشاشة الإعلان
-        // ═══════════════════════════════════════════════════════
-        
-        window.toggleZoom = function(container) {
-            const img = container.querySelector('img');
-            const hint = container.querySelector('.zoom-hint');
-            
-            if (!img) return;
-            
-            const isZoomed = img.classList.contains('zoomed');
-            
-            if (isZoomed) {
-                // إلغاء التكبير
-                img.classList.remove('zoomed');
-                container.classList.remove('zoomed');
-                container.style.cursor = 'zoom-in';
-                
-                // إعادة تعيين موضع التمرير
-                container.scrollTop = 0;
-                container.scrollLeft = 0;
-                
-                if (hint) {
-                    hint.innerHTML = '🔍 اضغط للتكبير';
-                }
-            } else {
-                // تفعيل التكبير
-                img.classList.add('zoomed');
-                container.classList.add('zoomed');
-                container.style.cursor = 'grab';
-                
-                if (hint) {
-                    hint.innerHTML = '🔍 اضغط للتصغير';
-                }
-                
-                // تمكين السحب للتحريك
-                enableDragging(container);
-            }
-        };
-        
-        // دالة تفعيل السحب لتحريك الصورة المكبرة
-        function enableDragging(container) {
-            let isDown = false;
-            let startX, startY, scrollLeft, scrollTop;
-            
-            const mouseDownHandler = (e) => {
-                isDown = true;
-                container.style.cursor = 'grabbing';
-                startX = e.pageX - container.offsetLeft;
-                startY = e.pageY - container.offsetTop;
-                scrollLeft = container.scrollLeft;
-                scrollTop = container.scrollTop;
-            };
-            
-            const mouseLeaveHandler = () => {
-                isDown = false;
-                if (container.classList.contains('zoomed')) {
-                    container.style.cursor = 'grab';
-                }
-            };
-            
-            const mouseUpHandler = () => {
-                isDown = false;
-                if (container.classList.contains('zoomed')) {
-                    container.style.cursor = 'grab';
-                }
-            };
-            
-            const mouseMoveHandler = (e) => {
-                if (!isDown) return;
-                e.preventDefault();
-                const x = e.pageX - container.offsetLeft;
-                const y = e.pageY - container.offsetTop;
-                const walkX = (x - startX) * 2;
-                const walkY = (y - startY) * 2;
-                container.scrollLeft = scrollLeft + walkX;
-                container.scrollTop = scrollTop + walkY;
-            };
-            
-            // إزالة المستمعات القديمة إن وجدت
-            container.removeEventListener('mousedown', mouseDownHandler);
-            container.removeEventListener('mouseleave', mouseLeaveHandler);
-            container.removeEventListener('mouseup', mouseUpHandler);
-            container.removeEventListener('mousemove', mouseMoveHandler);
-            
-            // إضافة المستمعات الجديدة
-            container.addEventListener('mousedown', mouseDownHandler);
-            container.addEventListener('mouseleave', mouseLeaveHandler);
-            container.addEventListener('mouseup', mouseUpHandler);
-            container.addEventListener('mousemove', mouseMoveHandler);
-            
-            // دعم اللمس للأجهزة المحمولة
-            let touchStartX = 0, touchStartY = 0;
-            
-            container.addEventListener('touchstart', (e) => {
-                const touch = e.touches[0];
-                touchStartX = touch.pageX;
-                touchStartY = touch.pageY;
-                scrollLeft = container.scrollLeft;
-                scrollTop = container.scrollTop;
-            }, { passive: true });
-            
-            container.addEventListener('touchmove', (e) => {
-                if (!container.classList.contains('zoomed')) return;
-                const touch = e.touches[0];
-                const walkX = (touchStartX - touch.pageX) * 1.5;
-                const walkY = (touchStartY - touch.pageY) * 1.5;
-                container.scrollLeft = scrollLeft + walkX;
-                container.scrollTop = scrollTop + walkY;
-            }, { passive: true });
-        }
-
         // --- AUTHENTICATION ---
         document.getElementById('logout-btn').addEventListener('click', () => { 
             appData.currentUser = null; 
@@ -7499,24 +7146,7 @@ if (idx === 5) { // الرقم 5 يمثل "المضخه" في مصفوفة ال�
             allPumpBodies.forEach(b => { 
                 if(b !== target) b.classList.remove('open'); 
             }); 
-            
-            // تبديل حالة الفتح
-            target.classList.toggle('open');
-            
-            // إذا تم الفتح، نقوم بالتمرير لأعلى العنصر لضمان البدء من البداية
-            if (target.classList.contains('open')) {
-                // تأخير بسيط لضمان اكتمال حركة الفتح (CSS transition)
-                setTimeout(() => {
-                    const headerOffset = 150; // هامش علوي (Header + Tabs)
-                    const elementPosition = target.parentElement.getBoundingClientRect().top;
-                    const offsetPosition = elementPosition + window.pageYOffset - headerOffset;
-                    
-                    window.scrollTo({
-                        top: offsetPosition,
-                        behavior: "smooth"
-                    });
-                }, 100);
-            }
+            target.classList.toggle('open'); 
         };
         
         window.updateInspectionColor = (selectElem) => { 
