@@ -11475,7 +11475,7 @@ window.addEventListener('offline', function() {
             let effColor = 'var(--success-color)';
             if (efficiency < 50) effColor = 'var(--danger-color)';
             else if (efficiency < 80) effColor = 'var(--warning-color)';
-
+            
             detailsHtml += `
                 <div style="padding: 15px 10px; border-bottom: 1px solid #eee;">
                     <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px;">
@@ -11533,6 +11533,392 @@ window.addEventListener('offline', function() {
             detailsContainer.style.border = '1px solid #eee';
             
             detailsContainer.innerHTML = detailsHtml || '<div style="padding: 20px; text-align:center; color:#888;">لا توجد بيانات للعرض</div>';
+            setupStatCardsFilter('pumps');
+        }
+    }
+    
+    // دالة إعداد فلترة البطاقات
+    function setupStatCardsFilter(type) {
+        // نطبق الفلترة لنظم التحكم والطرق المائي والمضخات (الآن)
+        const containerId = type === 'pumps' ? 'pumps-statistics' : (type === 'control-systems' ? 'control-systems-statistics' : (type === 'water-hammer' ? 'water-hammer-statistics' : ''));
+        if(!containerId) return;
+        
+        const container = document.getElementById(containerId);
+        const cards = container.querySelectorAll('.stat-card');
+        
+        cards.forEach(card => {
+            card.style.cursor = 'pointer';
+            card.onclick = function() {
+                // إزالة التحديد السابق
+                cards.forEach(c => c.style.border = 'none');
+                
+                const title = this.querySelector('.stat-title').textContent;
+                let filterStatus = '';
+                
+                if (type === 'water-hammer') {
+                    if (title.includes('تعمل بكفاءة')) filterStatus = 'efficient';
+                    else if (title.includes('عطل')) filterStatus = 'fault';
+                    else if (title.includes('لا تعمل') || title.includes('حرج')) filterStatus = 'broken';
+                    else if (title.includes('لا يوجد')) filterStatus = 'none';
+                    else filterStatus = 'all';
+                } else if (type === 'control-systems') {
+                    if (title.includes('SCADA')) filterStatus = 'scada';
+                    else if (title.includes('PLC')) filterStatus = 'plc';
+                    else if (title.includes('MIMIC')) filterStatus = 'mimic';
+                    else if (title.includes('HMI')) filterStatus = 'hmi';
+                    else filterStatus = 'all';
+                } else if (type === 'pumps') {
+                    if (title.includes('تعمل بكفاءة')) filterStatus = 'efficient';
+                    // تصحيح: التحقق من "لا تعمل" أو "معطلة" أو "حرج" أولاً لأن "معطلة" قد تحتوي على حروف "عطل"
+                    else if (title.includes('لا تعمل') || title.includes('معطلة') || title.includes('حرج')) filterStatus = 'broken';
+                    else if (title.includes('عطل') || title.includes('ملاحظة')) filterStatus = 'fault';
+                    else if (title.includes('لا يوجد')) filterStatus = 'none';
+                    else filterStatus = 'all';
+                }
+                
+                // إذا ضغط نفس الكارت مرة أخرى يلغي الفلتر
+                if (window.currentStatFilter === filterStatus) {
+                    window.currentStatFilter = null;
+                    this.style.border = 'none';
+                } else {
+                    window.currentStatFilter = filterStatus;
+                    this.style.border = '2px solid var(--primary-color)';
+                }
+                
+                // تطبيق الفلتر على القائمة
+                if (type === 'pumps') {
+                    renderPumpsFilteredTable(filterStatus);
+                } else if (type === 'water-hammer') {
+                    renderWaterHammerFilteredList(filterStatus);
+                } else {
+                    filterDetailsList(type);
+                }
+            };
+        });
+    }
+
+    // دالة خاصة لعرض قائمة الطرق المائي المفلترة
+    function renderWaterHammerFilteredList(filterStatus) {
+        const detailsContainer = document.getElementById('water-hammer-details-content');
+        if (!detailsContainer) return;
+
+        if (!filterStatus || filterStatus === 'all') {
+            // إعادة عرض القائمة الكاملة
+            // بما أننا لا نملك دالة منفصلة تعيد HTML فقط، سنعتمد على أن البيانات الأصلية موجودة
+            // ولكننا سنقوم بإظهار جميع العناصر المخفية كحل أسرع وأكثر كفاءة من إعادة التوليد
+            // إذا كان الهيكل لم يتغير، يمكننا فقط إعادة تعيين display
+            // ولكن المستخدم اشتكى من أن display: none لا يعمل أو العكس
+            // لذا سنعيد بناء القائمة من البيانات الأصلية لضمان الصحة
+            
+            // نحتاج للوصول لبيانات المحطات. في appData.stations
+            if (appData && appData.stations) {
+                 const stations = Object.values(appData.stations);
+                 // نطبق فلتر المنطقة والمحطة العام
+                 const zFilter = document.getElementById('statistics-zone-filter').value;
+                 const sFilter = document.getElementById('statistics-station-filter').value;
+                 const filteredStations = stations.filter(s => {
+                     if (zFilter !== 'all' && s.zone !== zFilter) return false;
+                     if (sFilter !== 'all' && s.name !== sFilter) return false;
+                     return true;
+                 });
+                 renderWaterHammerStatistics(filteredStations);
+            }
+            return;
+        }
+
+        // بناء القائمة المفلترة
+        let detailsHtml = '';
+        let hasData = false;
+
+        if (appData && appData.stations) {
+             const stations = Object.values(appData.stations);
+             const zFilter = document.getElementById('statistics-zone-filter').value;
+             const sFilter = document.getElementById('statistics-station-filter').value;
+
+             stations.forEach(s => {
+                 if (zFilter !== 'all' && s.zone !== zFilter) return;
+                 if (sFilter !== 'all' && s.name !== sFilter) return;
+
+                 const inspectionData = s.inspectionData && s.inspectionData.waterHammer ? s.inspectionData.waterHammer : {};
+                 const status = evaluateWaterHammerStatus(inspectionData);
+                 
+                 // التحقق من المطابقة للفلتر
+                 let statusAttr = 'none';
+                 if (status === 'efficient') statusAttr = 'efficient';
+                 else if (status === 'fault') statusAttr = 'fault';
+                 else if (status === 'broken') statusAttr = 'broken';
+
+                 // تصحيح: إذا كان الفلتر "تعمل بكفاءة"، يجب أن نتجاهل تماماً المحطات التي حالتها "عطل/ملاحظة" أو "لا تعمل"
+                 // لقد قمنا بتعديل دالة evaluateWaterHammerStatus لتصنيف المحطات ذات الملاحظات كـ "fault"
+                 // لذلك هذا الشرط البسيط يكفي، ولكن للتأكيد:
+                 
+                 if (statusAttr === filterStatus) {
+                     hasData = true;
+                     // ...
+                 } else if (filterStatus === 'efficient' && statusAttr !== 'efficient') {
+                     // لا تفعل شيئاً (تجاهل)
+                     return;
+                 } else if (filterStatus === 'fault' && statusAttr !== 'fault') {
+                     return;
+                 } else if (filterStatus === 'broken' && statusAttr !== 'broken') {
+                     return;
+                 }
+                 
+                 if (statusAttr === filterStatus) {
+                     hasData = true;
+                     
+                     // إعادة استخدام كود توليد البطاقة (تكرار للكود لضمان الاستقلال)
+                     let statusColor = '#95a5a6';
+                     let statusText = 'لا يوجد';
+                     if (status === 'efficient') { statusColor = 'var(--success-color)'; statusText = 'تعمل بكفاءة'; }
+                     else if (status === 'fault') { statusColor = 'var(--warning-color)'; statusText = 'عطل / ملاحظة'; }
+                     else if (status === 'broken') { statusColor = 'var(--danger-color)'; statusText = 'لا تعمل (حرج)'; }
+
+                     let iconsHtml = '';
+                     const createCircleIcon = (icon, st, title) => {
+                        let color = 'var(--success-color)';
+                        let borderColor = '#1e7e34';
+                        if(st === 'fault') { color = 'var(--warning-color)'; borderColor = '#d39e00'; }
+                        if(st === 'broken') { color = 'var(--danger-color)'; borderColor = '#bd2130'; }
+                        return `<div style="width: 24px; height: 24px; border-radius: 50%; background-color: ${color}; border: 1px solid ${borderColor}; display: flex; align-items: center; justify-content: center; font-size: 0.85rem; margin: 0 2px; box-shadow: 0 1px 2px rgba(0,0,0,0.1);" title="${title}">${icon}</div>`;
+                     };
+
+                     [3, 4, 5].forEach(idx => {
+                         const item = inspectionData[idx];
+                         if (item && item.status && item.status !== 'none') iconsHtml += createCircleIcon('🛢️', item.status, 'تانك');
+                     });
+                     [0, 1, 2].forEach(idx => {
+                         const item = inspectionData[idx];
+                         if (item && item.status && item.status !== 'none') iconsHtml += createCircleIcon('⚙️', item.status, 'كومبريسور');
+                     });
+                     const cp = inspectionData[6];
+                     if (cp && cp.status && cp.status !== 'none') iconsHtml += createCircleIcon('🎛️', cp.status, 'لوحة تحكم');
+
+                     detailsHtml += `
+                        <div style="padding: 15px 10px; border-bottom: 1px solid #eee; display: flex; align-items: center; justify-content: space-between;">
+                            <div style="font-weight: bold; color: var(--primary-color); display:flex; flex-direction:column; gap:6px;">
+                                <span>${s.name}</span>
+                                <div style="display:flex; align-items:center; flex-wrap: wrap; gap: 2px;">${iconsHtml}</div>
+                            </div>
+                            <div style="padding: 4px 10px; border-radius: 12px; font-size: 0.85rem; font-weight: bold; background-color: ${statusColor}20; color: ${statusColor}; border: 1px solid ${statusColor}; white-space:nowrap;">
+                                ${statusText}
+                            </div>
+                        </div>
+                     `;
+                 }
+             });
+        }
+
+        if (!hasData) {
+            detailsContainer.innerHTML = '<div style="padding: 20px; text-align:center; color:#888;">لا توجد بيانات مطابقة لهذا التصنيف</div>';
+        } else {
+            detailsContainer.innerHTML = detailsHtml;
+        }
+    }
+
+    // دالة خاصة لعرض جدول المضخات المفلتر
+    function renderPumpsFilteredTable(filterStatus) {
+        const detailsContainer = document.getElementById('stations-details-content');
+        if (!detailsContainer) return;
+
+        if (!filterStatus || filterStatus === 'all') {
+            // إعادة عرض القائمة الكاملة الافتراضية
+            // ملاحظة: هذا يتطلب إعادة استدعاء renderPumpsStatistics ولكننا سنحتاج للبيانات الأصلية
+            // الحل الأبسط: سنقوم بتخزين البيانات الأصلية للمحطات في متغير عام أو إعادة طلب التحديث
+            updateStatistics(); // هذا سيعيد بناء الصفحة بالكامل بدون فلتر
+            return;
+        }
+
+        // بناء الجدول المفلتر
+        let tableHtml = `
+            <div style="overflow-x:auto;">
+                <table style="width:100%; border-collapse: collapse; margin-top:10px;">
+                    <thead>
+                        <tr style="background-color: var(--primary-color); color: white;">
+                            <th style="padding: 10px; border: 1px solid #ddd; text-align: right;">اسم المحطة</th>
+                            <th style="padding: 10px; border: 1px solid #ddd; text-align: center;">حالة المضخات</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+        `;
+
+        // تجميع المحطات حسب المنطقة
+        const stationsByZone = {};
+        if (appData && appData.stations) {
+            // نطبق الفلتر الحالي للمنطقة والمحطة أيضاً إذا وجد
+            const zFilter = document.getElementById('statistics-zone-filter').value;
+            const sFilter = document.getElementById('statistics-station-filter').value;
+            
+            Object.values(appData.stations).forEach(s => {
+                if (zFilter !== 'all' && s.zone !== zFilter) return;
+                if (sFilter !== 'all' && s.name !== sFilter) return;
+
+                const zone = s.zone || 'غير محدد';
+                if (!stationsByZone[zone]) stationsByZone[zone] = [];
+                stationsByZone[zone].push(s);
+            });
+        }
+
+        const sortedZones = Object.keys(stationsByZone).sort();
+        let hasData = false;
+
+        sortedZones.forEach(zone => {
+            const zoneStations = stationsByZone[zone];
+            // تصفية المحطات داخل المنطقة حسب حالة المضخات
+            const matchingStations = zoneStations.filter(s => {
+                const inspectionData = s.inspectionData && s.inspectionData.pumps ? s.inspectionData.pumps : {};
+                const pumpCount = s.pumps ? s.pumps.length : 4;
+                
+                for(let i=1; i<=pumpCount; i++) {
+                    let pStatus = 'none';
+                    if (inspectionData[i]) {
+                        const pData = inspectionData[i];
+                        if (pData[5] && pData[5].status && pData[5].status !== 'none') {
+                            pStatus = 'efficient';
+                            const targetIndices = [0, 1, 2, 5, 8, 10, 11, 12];
+                            let hasBroken = false;
+                            let hasFault = false;
+                            targetIndices.forEach(idx => {
+                                const itemData = pData[idx] || {};
+                                if (itemData.status === 'broken') hasBroken = true;
+                                if (itemData.status === 'fault') hasFault = true;
+                            });
+                            if (hasBroken) pStatus = 'broken';
+                            else if (hasFault) pStatus = 'fault';
+                        } else if (pData[5] && pData[5].status === 'none') {
+                            pStatus = 'none';
+                        }
+                    }
+                    
+                    if (pStatus === filterStatus) return true;
+                }
+                return false;
+            });
+
+            if (matchingStations.length > 0) {
+                hasData = true;
+                tableHtml += `
+                    <tr style="background-color: #f9f9f9;">
+                        <td colspan="2" style="padding: 10px; border: 1px solid #ddd; font-weight: bold; color: var(--secondary-color);">
+                            📍 ${zone}
+                        </td>
+                    </tr>
+                `;
+
+                matchingStations.forEach(s => {
+                    const inspectionData = s.inspectionData && s.inspectionData.pumps ? s.inspectionData.pumps : {};
+                    const pumpCount = s.pumps ? s.pumps.length : 4;
+                    
+                    let pumpsHtml = '';
+                    for(let i=1; i<=pumpCount; i++) {
+                        let pStatus = 'none';
+                        if (inspectionData[i]) {
+                            const pData = inspectionData[i];
+                            if (pData[5] && pData[5].status && pData[5].status !== 'none') {
+                                pStatus = 'efficient';
+                                const targetIndices = [0, 1, 2, 5, 8, 10, 11, 12];
+                                let hasBroken = false;
+                                let hasFault = false;
+                                targetIndices.forEach(idx => {
+                                    const itemData = pData[idx] || {};
+                                    if (itemData.status === 'broken') hasBroken = true;
+                                    if (itemData.status === 'fault') hasFault = true;
+                                });
+                                if (hasBroken) pStatus = 'broken';
+                                else if (hasFault) pStatus = 'fault';
+                            } else if (pData[5] && pData[5].status === 'none') {
+                                pStatus = 'none';
+                            }
+                        }
+
+                        if (pStatus === filterStatus) {
+                            let statusText = '';
+                            let color = '#333';
+                            if (pStatus === 'efficient') { statusText = '✅ تعمل بكفاءة'; color = 'var(--success-color)'; }
+                            else if (pStatus === 'fault') { statusText = '⚠️ عطل / ملاحظة'; color = 'var(--warning-color)'; }
+                            else if (pStatus === 'broken') { statusText = '🛑 لا تعمل'; color = 'var(--danger-color)'; }
+                            else if (pStatus === 'none') { statusText = '⚪ لا يوجد'; color = '#999'; }
+                            
+                            pumpsHtml += `<div style="margin: 2px 0; color: ${color};">مضخة ${i}: ${statusText}</div>`;
+                        }
+                    }
+
+                    if (pumpsHtml) {
+                        tableHtml += `
+                            <tr>
+                                <td style="padding: 10px; border: 1px solid #ddd;">${s.name}</td>
+                                <td style="padding: 10px; border: 1px solid #ddd;">${pumpsHtml}</td>
+                            </tr>
+                        `;
+                    }
+                });
+            }
+        });
+
+        tableHtml += `</tbody></table></div>`;
+        
+        if (!hasData) {
+            detailsContainer.innerHTML = '<div style="padding: 20px; text-align:center; color:#888;">لا توجد بيانات مطابقة لهذا التصنيف</div>';
+        } else {
+            detailsContainer.innerHTML = tableHtml;
+        }
+    }
+
+    // دالة تطبيق الفلتر على القائمة
+    function filterDetailsList(type) {
+        const contentId = type === 'control-systems' ? 'control-systems-details-content' : (type === 'water-hammer' ? 'water-hammer-details-content' : '');
+        if(!contentId) return;
+        
+        const contentDiv = document.getElementById(contentId);
+        // في حالة نظم التحكم الهيكل مختلف (مجموعات حسب المنطقة)
+        // في حالة الطرق المائي قائمة مسطحة
+        
+        const filter = window.currentStatFilter;
+        
+        if (type === 'water-hammer') {
+            const items = contentDiv.children;
+            for (let i = 0; i < items.length; i++) {
+                const item = items[i];
+                if (!filter || filter === 'all') {
+                    item.style.display = 'flex';
+                } else {
+                    // تصحيح: قد يكون هناك عناصر غير مرتبطة بالمحطات (مثل رسائل الخطأ) لا تحتوي على data-status
+                    const itemStatus = item.getAttribute('data-status');
+                    if (itemStatus && itemStatus === filter) {
+                        item.style.display = 'flex';
+                    } else {
+                        item.style.display = 'none';
+                    }
+                }
+            }
+        } else if (type === 'control-systems') {
+             // الهيكل: div (zone header) -> div.detail-card ...
+             // نحتاج لفلترة البطاقات (detail-card) وإخفاء الهيدر إذا لم يبق تحته بطاقات
+             const zoneWrappers = contentDiv.querySelectorAll('div[style*="grid-column: 1 / -1"]'); // headers are in these wrappers usually, wait structure is flat list of elements?
+             // based on renderControlSystemsStatistics:
+             // It appends `zoneCardsHtml` after header div.
+             // So structure is: HeaderDiv, Card1, Card2, HeaderDiv2, Card3...
+             
+             // الأسهل هو البحث عن جميع الكروت وإخفائها/إظهارها
+             const cards = contentDiv.querySelectorAll('.detail-card');
+             cards.forEach(card => {
+                 const badge = card.querySelector('.badge');
+                 const sysText = badge ? badge.textContent.toUpperCase() : '';
+                 
+                 let show = false;
+                 if (!filter || filter === 'all') show = true;
+                 else {
+                     if (filter === 'scada' && sysText.includes('SCADA')) show = true;
+                     else if (filter === 'plc' && sysText.includes('PLC')) show = true;
+                     else if (filter === 'mimic' && (sysText.includes('MIMIC') || sysText.includes('MARSHALLING'))) show = true;
+                     else if (filter === 'hmi' && (sysText.includes('HMI') || sysText.includes('LCP'))) show = true;
+                 }
+                 
+                 card.style.display = show ? 'inline-block' : 'none';
+             });
+             
+             // إخفاء العناوين الفارغة (تحسين إضافي)
+             // (يمكن تجاوز هذه الخطوة للتبسيط حالياً، أو تنفيذها إذا لزم الأمر)
         }
     }
 
@@ -11714,7 +12100,10 @@ window.addEventListener('offline', function() {
         }
         
         const detailsContainer = document.getElementById('control-systems-details-content');
-        if (detailsContainer) detailsContainer.innerHTML = detailsHtml || '<div style="grid-column:1/-1; text-align:center; color:#888;">لا توجد بيانات للعرض</div>';
+        if (detailsContainer) {
+             detailsContainer.innerHTML = detailsHtml || '<div style="grid-column:1/-1; text-align:center; color:#888;">لا توجد بيانات للعرض</div>';
+             setupStatCardsFilter('control-systems');
+        }
     }
 
     // عرض إحصائيات الطرق المائي
@@ -11735,10 +12124,11 @@ window.addEventListener('offline', function() {
             // تفاصيل المحطة
             let statusColor = '#95a5a6';
             let statusText = 'لا يوجد';
+            let statusAttr = 'none';
             
-            if (status === 'efficient') { statusColor = 'var(--success-color)'; statusText = 'تعمل بكفاءة'; }
-            else if (status === 'fault') { statusColor = 'var(--warning-color)'; statusText = 'عطل / ملاحظة'; }
-            else if (status === 'broken') { statusColor = 'var(--danger-color)'; statusText = 'لا تعمل (حرج)'; }
+            if (status === 'efficient') { statusColor = 'var(--success-color)'; statusText = 'تعمل بكفاءة'; statusAttr = 'efficient'; }
+            else if (status === 'fault') { statusColor = 'var(--warning-color)'; statusText = 'عطل / ملاحظة'; statusAttr = 'fault'; }
+            else if (status === 'broken') { statusColor = 'var(--danger-color)'; statusText = 'لا تعمل (حرج)'; statusAttr = 'broken'; }
 
             // تجميع الرموز (Icons) داخل دوائر ملونة
             // 🛢️ تانك
@@ -11796,7 +12186,7 @@ window.addEventListener('offline', function() {
             }
 
             detailsHtml += `
-                <div style="padding: 15px 10px; border-bottom: 1px solid #eee; display: flex; align-items: center; justify-content: space-between;">
+                <div style="padding: 15px 10px; border-bottom: 1px solid #eee; display: flex; align-items: center; justify-content: space-between;" data-status="${statusAttr}">
                     <div style="font-weight: bold; color: var(--primary-color); display:flex; flex-direction:column; gap:6px;">
                         <span>${s.name}</span>
                         <div style="display:flex; align-items:center; flex-wrap: wrap; gap: 2px;">${iconsHtml}</div>
@@ -11834,6 +12224,9 @@ window.addEventListener('offline', function() {
             detailsContainer.style.boxShadow = '0 2px 5px rgba(0,0,0,0.05)';
             detailsContainer.style.border = '1px solid #eee';
             detailsContainer.innerHTML = detailsHtml || '<div style="padding: 20px; text-align:center; color:#888;">لا توجد بيانات للعرض</div>';
+            
+            // إضافة مستمعات النقر للبطاقات الإحصائية للفلترة
+            setupStatCardsFilter('water-hammer');
         }
     }
 
@@ -11868,7 +12261,9 @@ window.addEventListener('offline', function() {
                  if (item.status === 'efficient' || item.status === 'fault') {
                      workingCompressors++;
                  }
-                 // note: broken compressor doesn't necessarily mean broken system if redundancy exists
+                 
+                 if (item.status === 'fault') hasFaultComponent = true;
+                 if (item.status === 'broken') hasBrokenComponent = true;
             }
         });
 
@@ -11893,7 +12288,11 @@ window.addEventListener('offline', function() {
         if (!ruleMet) return 'broken'; // Rule violation -> Broken system
 
         // If rule met, check for other issues
-        if (hasBrokenComponent) return 'fault'; // System works (rule met) but has broken components
+        // *تعديل*: إذا كان هناك أي مكون "لا يعمل" (broken) أو "عطل" (fault)
+        // يجب أن تكون الحالة العامة "عطل/ملاحظة" (fault) حتى لو كانت المنظومة تعمل
+        // وبالتالي عند اختيار فلتر "تعمل بكفاءة" لن تظهر هذه المحطات
+        
+        if (hasBrokenComponent) return 'fault'; 
         if (hasFaultComponent) return 'fault';
         
         return 'efficient';
