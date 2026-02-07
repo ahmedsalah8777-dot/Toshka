@@ -1095,8 +1095,8 @@
         .login-form .checkbox-group {
             display: flex;
             align-items: center;
-            margin-top: 15px;
-            margin-bottom: 25px;
+            margin-top: 10px; /* تقليل المسافة العلوية */
+            margin-bottom: 15px; /* تقليل المسافة السفلية لتقريب الزر */
         }
 
         .login-form .checkbox-group input[type="checkbox"] {
@@ -1143,14 +1143,14 @@
 
         .signature {
             text-align: center;
-            margin-top: 0; /* إلغاء المسافة العلوية تماماً */
+            margin-top: -5px; /* رفع الإمضاء قليلاً لتقليل المسافة مع الزر */
             color: #95a5a6;
             font-size: 0.8rem;
             font-family: monospace;
             opacity: 0.8;
             letter-spacing: 0.5px;
             transform: none; /* إزالة الرفع */
-            padding-top: 2px; /* مسافة داخلية صغيرة جداً */
+            padding-top: 0; /* إزالة المسافة الداخلية */
         }
         #login-screen {
             background-color: #f0f2f5;
