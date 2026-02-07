@@ -280,6 +280,84 @@
             flex-shrink: 0;
         }
         
+        .pending-approval-badge-glow {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            background-color: #fff3e0;
+            color: #ef6c00;
+            width: 24px; /* تصغير الحجم */
+            height: 24px; /* تصغير الحجم */
+            border-radius: 50%;
+            font-size: 0.9rem; /* تصغير الخط */
+            border: 2px solid #ffe0b2;
+            box-shadow: 0 0 5px rgba(239, 108, 0, 0.6);
+            animation: pulse-orange 2s infinite;
+        }
+
+        @keyframes pulse-orange {
+            0% {
+                box-shadow: 0 0 0 0 rgba(239, 108, 0, 0.4);
+            }
+            70% {
+                box-shadow: 0 0 0 6px rgba(239, 108, 0, 0); /* تقليل حجم الهالة */
+            }
+            100% {
+                box-shadow: 0 0 0 0 rgba(239, 108, 0, 0);
+            }
+        }
+
+        .approved-badge-glow {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            background-color: #e8f5e9;
+            color: #2e7d32;
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            font-size: 1.2rem;
+            border: 2px solid #a5d6a7;
+            box-shadow: 0 0 8px rgba(46, 125, 50, 0.6);
+            animation: pulse-green 2s infinite;
+        }
+
+        @keyframes pulse-green {
+            0% {
+                box-shadow: 0 0 0 0 rgba(46, 125, 50, 0.4);
+            }
+            70% {
+                box-shadow: 0 0 0 10px rgba(46, 125, 50, 0);
+            }
+            100% {
+                box-shadow: 0 0 0 0 rgba(46, 125, 50, 0);
+            }
+        }
+
+        .approval-btn {
+            background-color: #fff;
+            border: 2px solid #cddc39;
+            color: #827717;
+            padding: 8px 20px;
+            border-radius: 20px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: inline-block;
+        }
+        
+        .approval-btn:hover {
+            background-color: #f9fbe7;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+        
+        .approval-btn.active {
+            background-color: #cddc39;
+            color: #fff;
+            border-color: #afb42b;
+            box-shadow: 0 0 10px rgba(205, 220, 57, 0.5);
+        }
+
         .toast.success .toast-icon {
             color: var(--success-color);
         }
@@ -6508,8 +6586,29 @@ window.handleTabClick = (zone, btn) => {
                 if (currentPressure > maxPressure) {
                     pressureWarningHtml = `<span class="pressure-warning" title="الضغط أعلى من المسموح به (${maxPressure} Bar)">!</span>`;
                 }
+
+                // --- NEW: Pending/Approved Icons ---
+                let approvalStatusHtml = '';
+                // If updated but NOT approved
+                if (lastInspectionUpdate) {
+                    if (!s.inspectionData || !s.inspectionData.approval) {
+                        // Show Glowing Icon ONLY (No Text) for Pending Approval
+                        approvalStatusHtml = `<span class="pending-approval-badge-glow" title="بانتظار الاعتماد">⏳</span>`;
+                    } else {
+                        // If Approved: DO NOT SHOW ANYTHING
+                        approvalStatusHtml = '';
+                    }
+                }
+                // ----------------------
 card.innerHTML = `
-                    <div style="font-weight:bold; color:var(--primary-color)">${inspectionAlertHtml}${missedUpdateHtml}${s.name}</div>
+                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:5px;">
+                        <div style="font-weight:bold; color:var(--primary-color); flex-grow:1;">${s.name}</div>
+                        <div style="display:flex; gap:5px; align-items:center;">
+                            ${approvalStatusHtml}
+                            ${inspectionAlertHtml}
+                            ${missedUpdateHtml}
+                        </div>
+                    </div>
                     <div style="display:flex; gap:5px; margin-bottom:5px;">
                         <span class="station-status ${s.status === 'نشطة' ? 'status-active' : 'status-inactive'}">${s.status}</span>
                         <span class="station-status" style="background-color:#e3f2fd; color:#0d47a1; border:1px solid #bbdefb;">${s.systemMode || '-'}</span>
@@ -7080,6 +7179,19 @@ function saveDataInternal(options = {}) {
             if (insData.lastUpdate || insData.modifiedBy) {
                 const infoDiv = document.createElement('div');
                 infoDiv.style.cssText = "background: #e8f4f8; padding: 10px; border-radius: 5px; margin-bottom: 15px; border-right: 4px solid #3498db; font-size: 0.9rem;";
+                
+                // Approval Info Construction
+                let approvalInfoHtml = '';
+                if (insData.approval) {
+                    const app = insData.approval;
+                    approvalInfoHtml = `
+                        <div style="margin-top:10px; padding-top:10px; border-top:1px dashed #ccc; color:#27ae60;">
+                            <b>✅ تم الاعتماد بواسطة:</b> ${app.role} / ${app.name} 
+                            <span style="font-size:0.85em; color:#7f8c8d;">(${app.date})</span>
+                        </div>
+                    `;
+                }
+
                 infoDiv.innerHTML = `
                     <div style="font-weight:bold; color:#2980b9; margin-bottom:5px; display: flex; align-items: center; gap: 5px;">
                         ℹ️ معلومات آخر تحديث للفحص
@@ -7088,6 +7200,7 @@ function saveDataInternal(options = {}) {
                         <span>📅 التاريخ: <b style="color: #333;">${insData.lastUpdate || 'غير مسجل'}</b></span>
                         <span>👤 بواسطة: <b style="color: #333;">${insData.modifiedBy || 'غير مسجل'}</b></span>
                     </div>
+                    ${approvalInfoHtml}
                 `;
                 container.appendChild(infoDiv);
             }
@@ -7257,7 +7370,74 @@ if (idx === 5) { // الرقم 5 يمثل "المضخه" في مصفوفة ال�
                 sectionDiv.appendChild(bodyDiv); 
                 container.appendChild(sectionDiv);
             });
+
+            // --- NEW: Single Approval Section ---
+            const hasUpdate = insData.lastUpdate ? true : false;
+            
+            // Check if user has permission to approve
+            const currentUser = appData.currentUser || {};
+            const userType = currentUser.type || '';
+            const canApprove = ['admin', 'manager', 'engineer', 'supervisor'].includes(userType);
+            
+            // Only show approval section in Edit mode and if there is an update to approve
+            if (isEdit && hasUpdate && canApprove) {
+                const approvalDiv = document.createElement('div');
+                approvalDiv.className = 'section-accordion';
+                
+                const approvalHeader = document.createElement('div');
+                approvalHeader.className = 'section-header-static';
+                approvalHeader.innerHTML = `<span>اعتماد الفحص</span>`;
+                
+                const approvalBody = document.createElement('div');
+                approvalBody.className = 'section-body-static';
+                approvalBody.style.padding = '15px';
+                
+                const isApproved = insData.approval ? true : false;
+                
+                let actionHtml = '';
+                if (isApproved) {
+                    actionHtml = `
+                        <div style="background:#e8f5e9; color:#2e7d32; padding:10px; border-radius:5px; margin-bottom:10px;">
+                            <strong>✅ تم اعتماد هذا الفحص.</strong><br>
+                            <small>تم تجميد التعديل حتى التحديث القادم.</small>
+                        </div>
+                    `;
+                    // Freeze button if approved
+                    actionHtml += `
+                        <div style="display:flex; justify-content:center; padding:15px; background:#f0f4c3; border-radius:5px; border:1px solid #dce775; opacity:0.8;">
+                            <label class="approval-btn active" style="cursor:not-allowed;">
+                                ✅ تم اعتماد الفحص
+                            </label>
+                        </div>
+                    `;
+                } else {
+                    actionHtml += `
+                        <div style="display:flex; justify-content:center; padding:15px; background:#f0f4c3; border-radius:5px; border:1px solid #dce775;">
+                            <input type="checkbox" id="approve_inspection_check" style="display:none;" onchange="toggleApprovalBtn(this)">
+                            <label for="approve_inspection_check" class="approval-btn" id="approval-btn-label">
+                                اعتماد الفحص
+                            </label>
+                        </div>
+                    `;
+                }
+                
+                approvalBody.innerHTML = actionHtml;
+                approvalDiv.appendChild(approvalHeader);
+                approvalDiv.appendChild(approvalBody);
+                container.appendChild(approvalDiv);
+            }
         }
+        
+        window.toggleApprovalBtn = (checkbox) => {
+            const btnLabel = document.getElementById('approval-btn-label');
+            if (checkbox.checked) {
+                btnLabel.classList.add('active');
+                btnLabel.innerHTML = '✅ تم اعتماد الفحص';
+            } else {
+                btnLabel.classList.remove('active');
+                btnLabel.innerHTML = 'اعتماد الفحص';
+            }
+        };
         
         // دالة جديدة لإنشاء كارت العرض
         function createInspectionViewCard(itemKey, label, dataObj) {
@@ -7395,6 +7575,30 @@ if (idx === 5) { // الرقم 5 يمثل "المضخه" في مصفوفة ال�
                 details: `تحديث سجل الفحص الشامل` 
             };
             
+            // Save Single Approval
+            const approvalCheck = document.getElementById('approve_inspection_check');
+            if (approvalCheck) {
+                if (approvalCheck.checked) {
+                    // If checked and not already approved (or overwriting), set new approval data
+                    // We only update date/time if it's a new approval or re-approval action
+                    const currentUser = appData.currentUser || {};
+                    const roleMap = { 'admin': 'المدير', 'manager': 'المدير', 'engineer': 'المهندس', 'supervisor': 'المشرف' };
+                    const userRole = roleMap[currentUser.type] || currentUser.type;
+                    
+                    newInsData.approval = {
+                        name: currentUser.username || currentUser.name || 'مستخدم',
+                        role: userRole,
+                        date: `${nowStd.date} ${nowStd.time}`
+                    };
+                } else {
+                    // If unchecked, remove approval
+                    newInsData.approval = null;
+                }
+            } else {
+                // If the checkbox is not present (e.g. user has no permission), preserve existing approval
+                // Do nothing, newInsData is a copy of oldInsData so approval is preserved
+            }
+
             // حفظ معلومات التعديل داخل بيانات الفحص
             newInsData.lastUpdate = nowStd.full;
             newInsData.modifiedBy = log.operator;
