@@ -7271,6 +7271,13 @@ function saveDataInternal(options = {}) {
                         const targetIndices = [0, 1, 2, 5, 8, 10, 11, 12];
                         let isRed = false; 
                         let isYellow = false;
+                        let isNone = false; // Flag for 'none' status (لا يوجد)
+                        
+                        // Check Pump Status (Index 5 is "المضخه")
+                        const pumpItemData = pData[5] || {};
+                        if (pumpItemData.status === 'none') {
+                            isNone = true;
+                        }
                         
                         targetIndices.forEach(idx => {
                             const itemData = pData[idx] || {};
@@ -7280,11 +7287,13 @@ function saveDataInternal(options = {}) {
                         });
 
                         schema.items.forEach((item, idx) => { 
-                            // نحتفظ بالحلقة الأصلية فقط لإنشاء الصفوف لاحقاً، ولكن منطق اللون تم نقله للأعلى
-                            // لا نحتاج لحساب الحالة هنا مرة أخرى لأننا حسبناها في targetIndices
+                            // نحتفظ بالحلقة الأصلية فقط لإنشاء الصفوف لاحقاً
                         });
                         
-                        if (isRed) { 
+                        if (isNone) {
+                            headerClass = 'pump-header-none'; // You might need to define this CSS class or use a default
+                            icon = '⚪';
+                        } else if (isRed) { 
                             headerClass = 'pump-header-red'; 
                             icon = '🛑'; 
                         } else if (isYellow) { 
@@ -7491,6 +7500,17 @@ if (idx === 5) { // الرقم 5 يمثل "المضخه" في مصفوفة ال�
             return row;
         }
         
+        // CSS for pump status 'none'
+        const stylePumpNone = document.createElement('style');
+        stylePumpNone.innerHTML = `
+            .pump-header-none {
+                background: linear-gradient(135deg, #e0e0e0, #bdbdbd);
+                border-left: 5px solid #9e9e9e;
+                color: #616161;
+            }
+        `;
+        document.head.appendChild(stylePumpNone);
+
         window.togglePumpAccordion = (id) => { 
             const target = document.getElementById(`pump-body-${id}`);
             const allPumpBodies = document.querySelectorAll('.pump-accordion-body'); 
