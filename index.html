@@ -2897,6 +2897,11 @@
     cursor: grabbing;
 }
 
+.announcement-image-container.zoomed .zoom-hint {
+    opacity: 0.3;
+    pointer-events: none;
+}
+
 .announcement-image {
     width: 100%;
     height: auto;
@@ -2948,9 +2953,9 @@
     }
     
     .zoom-hint {
-        font-size: 0.8rem;
-        padding: 8px 14px;
-        bottom: 10px;
+        font-size: 0.85rem;
+        padding: 10px 16px;
+        transform: translate(-50%, -50%);
     }
 }
 
@@ -3014,34 +3019,34 @@
 /* أيقونة التكبير العائمة المحسّنة */
 .zoom-hint {
     position: absolute;
-    bottom: 15px;
+    top: 50%;
     left: 50%;
-    transform: translateX(-50%);
-    background: linear-gradient(135deg, rgba(0,0,0,0.8), rgba(0,0,0,0.95));
+    transform: translate(-50%, -50%);
+    background: linear-gradient(135deg, rgba(0,0,0,0.75), rgba(0,0,0,0.9));
     color: white;
-    padding: 10px 18px;
-    border-radius: 25px;
-    font-size: 0.9rem;
+    padding: 12px 20px;
+    border-radius: 30px;
+    font-size: 1rem;
     font-weight: 600;
     pointer-events: none;
     display: flex;
     align-items: center;
     gap: 8px;
-    box-shadow: 0 4px 15px rgba(0,0,0,0.4);
-    border: 2px solid rgba(255,255,255,0.2);
+    box-shadow: 0 4px 20px rgba(0,0,0,0.5);
+    border: 2px solid rgba(255,255,255,0.3);
     z-index: 10;
-    animation: pulse 2s infinite;
+    animation: pulseHint 2s infinite;
     white-space: nowrap;
 }
 
-@keyframes pulse {
+@keyframes pulseHint {
     0%, 100% { 
-        transform: scale(1);
-        box-shadow: 0 4px 15px rgba(0,0,0,0.4);
+        transform: translate(-50%, -50%) scale(1);
+        box-shadow: 0 4px 20px rgba(0,0,0,0.5);
     }
     50% { 
-        transform: scale(1.05);
-        box-shadow: 0 6px 20px rgba(0,0,0,0.6);
+        transform: translate(-50%, -50%) scale(1.05);
+        box-shadow: 0 6px 25px rgba(0,0,0,0.7);
     }
 }
 
@@ -6275,8 +6280,8 @@ function showScreen(screenId) {
                 const y = e.pageY - container.offsetTop;
                 const walkX = (x - startX) * 2;
                 const walkY = (y - startY) * 2;
-                container.scrollLeft = scrollLeft - walkX;
-                container.scrollTop = scrollTop - walkY;
+                container.scrollLeft = scrollLeft + walkX;
+                container.scrollTop = scrollTop + walkY;
             };
             
             // إزالة المستمعات القديمة إن وجدت
