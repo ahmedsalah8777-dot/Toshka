@@ -4134,6 +4134,7 @@
                     <select id="statistics-type-filter" class="form-control">
                         <option value="pumps">إحصائية المضخات</option>
                         <option value="control-systems">إحصائية نظم التحكم</option>
+                        <option value="water-hammer">إحصائية الطرق المائي</option>
                     </select>
                 </div>
             </div>
@@ -4251,6 +4252,58 @@
             <div id="control-systems-details" style="margin-top: 30px;">
                 <h4 style="color: var(--primary-color); margin-bottom: 15px;">🏭 تفاصيل نظم التحكم بالمحطات</h4>
                 <div id="control-systems-details-content" class="details-grid"></div>
+            </div>
+        </div>
+
+        <!-- إحصائية الطرق المائي -->
+        <div id="water-hammer-statistics" class="statistics-section" style="display: none;">
+            <h3 style="color: var(--primary-color); margin-bottom: 20px; display: flex; align-items: center; gap: 10px;">
+                🌊 إحصائية الطرق المائي
+                <span id="water-hammer-summary" style="font-size: 0.9rem; color: #666; margin-right: auto;"></span>
+            </h3>
+            
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-icon" style="background: var(--success-color);">✅</div>
+                    <div class="stat-content">
+                        <div class="stat-title">يعمل بكفاءة</div>
+                        <div class="stat-value" id="wh-working-count">0</div>
+                        <div class="stat-percentage" id="wh-working-percentage">0%</div>
+                    </div>
+                </div>
+                
+                <div class="stat-card">
+                    <div class="stat-icon" style="background: var(--warning-color);">⚠️</div>
+                    <div class="stat-content">
+                        <div class="stat-title">عطل / ملاحظة</div>
+                        <div class="stat-value" id="wh-fault-count">0</div>
+                        <div class="stat-percentage" id="wh-fault-percentage">0%</div>
+                    </div>
+                </div>
+                
+                <div class="stat-card">
+                    <div class="stat-icon" style="background: var(--danger-color);">🛑</div>
+                    <div class="stat-content">
+                        <div class="stat-title">لا يعمل (حرج)</div>
+                        <div class="stat-value" id="wh-broken-count">0</div>
+                        <div class="stat-percentage" id="wh-broken-percentage">0%</div>
+                    </div>
+                </div>
+
+                <div class="stat-card">
+                    <div class="stat-icon" style="background: #95a5a6;">🚫</div>
+                    <div class="stat-content">
+                        <div class="stat-title">لا يوجد</div>
+                        <div class="stat-value" id="wh-none-count">0</div>
+                        <div class="stat-percentage" id="wh-none-percentage">0%</div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- تفاصيل الطرق المائي -->
+            <div id="water-hammer-details" style="margin-top: 30px;">
+                <h4 style="color: var(--primary-color); margin-bottom: 15px;">🏭 تفاصيل منظومة الطرق المائي بالمحطات</h4>
+                <div id="water-hammer-details-content" class="details-grid"></div>
             </div>
         </div>
     </div>
@@ -6801,13 +6854,26 @@ function saveDataInternal(options = {}) {
                     title += ` (${totalPumps})`; 
                 }
                 const headerDiv = document.createElement('div');
+                
+                // تخصيص عنوان منظومة الطرق المائي
+                let whStatusHtml = '';
+                let whBorderColor = '';
+                if (key === 'waterHammer') {
+                    const status = evaluateWaterHammerStatus(insData.waterHammer || {});
+                    if (status === 'broken') { whStatusHtml = ' <span style="font-size:0.8em">🛑</span>'; whBorderColor = 'var(--danger-color)'; }
+                    else if (status === 'fault') { whStatusHtml = ' <span style="font-size:0.8em">⚠️</span>'; whBorderColor = 'var(--warning-color)'; }
+                    else if (status === 'efficient') { whStatusHtml = ' <span style="font-size:0.8em">✅</span>'; whBorderColor = 'var(--success-color)'; }
+                }
+
                 if (isEdit) { 
                     headerDiv.className = 'section-header-static'; 
-                    headerDiv.innerHTML = `<span>${title}</span>`; 
+                    headerDiv.innerHTML = `<span>${title}${whStatusHtml}</span>`; 
+                    if(whBorderColor) headerDiv.style.borderRight = `5px solid ${whBorderColor}`;
                 } 
                 else {
                     headerDiv.className = 'section-accordion-header'; 
-                    headerDiv.innerHTML = `<span>${title}</span> <span class="arrow">▼</span>`;
+                    headerDiv.innerHTML = `<span>${title}${whStatusHtml}</span> <span class="arrow">▼</span>`;
+                    if(whBorderColor) headerDiv.style.borderRight = `5px solid ${whBorderColor}`;
                     headerDiv.onclick = function() { 
                         const body = this.nextElementSibling; 
                         body.classList.toggle('open'); 
@@ -7154,6 +7220,19 @@ if (idx === 5) { // الرقم 5 يمثل "المضخه" في مصفوفة ال�
                     
                     data.push([]);
                 }
+            }
+
+            // تقييم منظومة الطرق المائي
+            if (inspectionData.waterHammer) {
+                const whStatus = evaluateWaterHammerStatus(inspectionData.waterHammer);
+                let statusText = "غير محدد";
+                if (whStatus === 'efficient') statusText = "✅ تعمل بكفاءة";
+                else if (whStatus === 'fault') statusText = "⚠️ عطل / ملاحظة";
+                else if (whStatus === 'broken') statusText = "🛑 لا تعمل (حرج)";
+                else if (whStatus === 'none') statusText = "⚪ لا يوجد";
+
+                data.push(["حالة منظومة الطرق المائي", statusText, "", ""]);
+                data.push([]);
             }
             
             // الأعطال المسجلة
@@ -7574,6 +7653,19 @@ if (idx === 5) { // الرقم 5 يمثل "المضخه" في مصفوفة ال�
                         
                         data.push([]);
                     }
+                }
+
+                // تقييم منظومة الطرق المائي
+                if (inspectionData.waterHammer) {
+                    const whStatus = evaluateWaterHammerStatus(inspectionData.waterHammer);
+                    let statusText = "غير محدد";
+                    if (whStatus === 'efficient') statusText = "✅ تعمل بكفاءة";
+                    else if (whStatus === 'fault') statusText = "⚠️ عطل / ملاحظة";
+                    else if (whStatus === 'broken') statusText = "🛑 لا تعمل (حرج)";
+                    else if (whStatus === 'none') statusText = "⚪ لا يوجد";
+
+                    data.push(["حالة منظومة الطرق المائي", statusText, "", ""]);
+                    data.push([]);
                 }
                 
                 // الأعطال المسجلة
@@ -11197,9 +11289,11 @@ window.addEventListener('offline', function() {
             const type = this.value;
             const pumpsSection = document.getElementById('pumps-statistics');
             const controlSection = document.getElementById('control-systems-statistics');
+            const whSection = document.getElementById('water-hammer-statistics');
             
             if (pumpsSection) pumpsSection.style.display = (type === 'pumps') ? 'block' : 'none';
             if (controlSection) controlSection.style.display = (type === 'control-systems') ? 'block' : 'none';
+            if (whSection) whSection.style.display = (type === 'water-hammer') ? 'block' : 'none';
             
             updateStatistics();
         });
@@ -11282,11 +11376,15 @@ window.addEventListener('offline', function() {
         
         const pumpSummary = document.getElementById('pumps-stats-summary');
         const controlSummary = document.getElementById('control-systems-summary');
+        const whSummary = document.getElementById('water-hammer-summary');
         if (pumpSummary) pumpSummary.textContent = summaryText;
         if (controlSummary) controlSummary.textContent = summaryText;
+        if (whSummary) whSummary.textContent = summaryText;
 
         if (type === 'pumps') {
             renderPumpsStatistics(stations);
+        } else if (type === 'water-hammer') {
+            renderWaterHammerStatistics(stations);
         } else {
             renderControlSystemsStatistics(stations);
         }
@@ -11617,6 +11715,188 @@ window.addEventListener('offline', function() {
         
         const detailsContainer = document.getElementById('control-systems-details-content');
         if (detailsContainer) detailsContainer.innerHTML = detailsHtml || '<div style="grid-column:1/-1; text-align:center; color:#888;">لا توجد بيانات للعرض</div>';
+    }
+
+    // عرض إحصائيات الطرق المائي
+    function renderWaterHammerStatistics(stations) {
+        let working = 0, withFaults = 0, broken = 0, notInstalled = 0, total = 0;
+        let detailsHtml = '';
+
+        stations.forEach(s => {
+            total++;
+            const inspectionData = s.inspectionData && s.inspectionData.waterHammer ? s.inspectionData.waterHammer : {};
+            const status = evaluateWaterHammerStatus(inspectionData);
+
+            if (status === 'efficient') working++;
+            else if (status === 'fault') withFaults++;
+            else if (status === 'broken') broken++;
+            else notInstalled++;
+
+            // تفاصيل المحطة
+            let statusColor = '#95a5a6';
+            let statusText = 'لا يوجد';
+            
+            if (status === 'efficient') { statusColor = 'var(--success-color)'; statusText = 'تعمل بكفاءة'; }
+            else if (status === 'fault') { statusColor = 'var(--warning-color)'; statusText = 'عطل / ملاحظة'; }
+            else if (status === 'broken') { statusColor = 'var(--danger-color)'; statusText = 'لا تعمل (حرج)'; }
+
+            // تجميع الرموز (Icons) داخل دوائر ملونة
+            // 🛢️ تانك
+            // ⚙️ كومبريسور
+            // 🎛️ لوحة تحكم
+            
+            let iconsHtml = '';
+            
+            // دالة مساعدة لإنشاء الدائرة
+            const createCircleIcon = (icon, status, title) => {
+                let color = 'var(--success-color)';
+                let borderColor = '#1e7e34';
+                if(status === 'fault') { color = 'var(--warning-color)'; borderColor = '#d39e00'; }
+                if(status === 'broken') { color = 'var(--danger-color)'; borderColor = '#bd2130'; }
+                
+                return `<div style="
+                    width: 24px; 
+                    height: 24px; 
+                    border-radius: 50%; 
+                    background-color: ${color}; 
+                    border: 1px solid ${borderColor}; 
+                    display: flex; 
+                    align-items: center; 
+                    justify-content: center; 
+                    font-size: 0.85rem; 
+                    margin: 0 2px;
+                    box-shadow: 0 1px 2px rgba(0,0,0,0.1);
+                    " title="${title}">
+                    ${icon}
+                </div>`;
+            };
+
+            // Tanks (3, 4, 5)
+            [3, 4, 5].forEach(idx => {
+                 const item = inspectionData[idx];
+                 if (item && item.status && item.status !== 'none') {
+                     iconsHtml += createCircleIcon('🛢️', item.status, 'تانك');
+                 }
+            });
+            
+            // Compressors (0, 1, 2)
+             [0, 1, 2].forEach(idx => {
+                 const item = inspectionData[idx];
+                 if (item && item.status && item.status !== 'none') {
+                     // حالة الكومبريسور: efficient/fault = working (green/yellow), broken (red)
+                     // في التقييم السابق اعتبرنا fault يعمل، هنا سنعطيه لونه الحقيقي
+                     iconsHtml += createCircleIcon('⚙️', item.status, 'كومبريسور');
+                 }
+            });
+
+            // Control Panel (6)
+            const cp = inspectionData[6];
+            if (cp && cp.status && cp.status !== 'none') {
+                 iconsHtml += createCircleIcon('🎛️', cp.status, 'لوحة تحكم');
+            }
+
+            detailsHtml += `
+                <div style="padding: 15px 10px; border-bottom: 1px solid #eee; display: flex; align-items: center; justify-content: space-between;">
+                    <div style="font-weight: bold; color: var(--primary-color); display:flex; flex-direction:column; gap:6px;">
+                        <span>${s.name}</span>
+                        <div style="display:flex; align-items:center; flex-wrap: wrap; gap: 2px;">${iconsHtml}</div>
+                    </div>
+                    <div style="padding: 4px 10px; border-radius: 12px; font-size: 0.85rem; font-weight: bold; background-color: ${statusColor}20; color: ${statusColor}; border: 1px solid ${statusColor}; white-space:nowrap;">
+                        ${statusText}
+                    </div>
+                </div>
+            `;
+        });
+
+        // تحديث الأرقام
+        setTextContent('wh-working-count', working);
+        setTextContent('wh-fault-count', withFaults);
+        setTextContent('wh-broken-count', broken);
+        setTextContent('wh-none-count', notInstalled);
+
+        if (total > 0) {
+            setTextContent('wh-working-percentage', ((working/total)*100).toFixed(1) + '%');
+            setTextContent('wh-fault-percentage', ((withFaults/total)*100).toFixed(1) + '%');
+            setTextContent('wh-broken-percentage', ((broken/total)*100).toFixed(1) + '%');
+            setTextContent('wh-none-percentage', ((notInstalled/total)*100).toFixed(1) + '%');
+        } else {
+            setTextContent('wh-working-percentage', '0%');
+            setTextContent('wh-fault-percentage', '0%');
+            setTextContent('wh-broken-percentage', '0%');
+            setTextContent('wh-none-percentage', '0%');
+        }
+
+        const detailsContainer = document.getElementById('water-hammer-details-content');
+        if (detailsContainer) {
+            detailsContainer.style.display = 'block'; 
+            detailsContainer.style.background = '#fff';
+            detailsContainer.style.borderRadius = '8px';
+            detailsContainer.style.boxShadow = '0 2px 5px rgba(0,0,0,0.05)';
+            detailsContainer.style.border = '1px solid #eee';
+            detailsContainer.innerHTML = detailsHtml || '<div style="padding: 20px; text-align:center; color:#888;">لا توجد بيانات للعرض</div>';
+        }
+    }
+
+    // دالة تقييم حالة الطرق المائي
+    function evaluateWaterHammerStatus(waterHammerData) {
+        if (!waterHammerData) return 'none';
+
+        // Indices:
+        // 0: Compressor 1, 1: Compressor 2, 2: Compressor 3
+        // 3: Tank 1, 4: Tank 2, 5: Tank 3
+        // 6: Control Panel
+
+        let installedTanks = 0;
+        let workingCompressors = 0;
+        let hasBrokenComponent = false;
+        let hasFaultComponent = false;
+
+        // Check Tanks (3, 4, 5)
+        [3, 4, 5].forEach(idx => {
+            const item = waterHammerData[idx];
+            if (item && item.status && item.status !== 'none') {
+                installedTanks++;
+                if (item.status === 'broken') hasBrokenComponent = true;
+                if (item.status === 'fault') hasFaultComponent = true;
+            }
+        });
+
+        // Check Compressors (0, 1, 2)
+        [0, 1, 2].forEach(idx => {
+            const item = waterHammerData[idx];
+            if (item && item.status) {
+                 if (item.status === 'efficient' || item.status === 'fault') {
+                     workingCompressors++;
+                 }
+                 // note: broken compressor doesn't necessarily mean broken system if redundancy exists
+            }
+        });
+
+        // If no tanks installed, system is not applicable
+        if (installedTanks === 0) return 'none';
+
+        // Check Control Panel (Index 6)
+        const cp = waterHammerData[6];
+        if (cp && cp.status === 'broken') return 'broken';
+        if (cp && cp.status === 'fault') hasFaultComponent = true;
+
+        // Critical Rule Check
+        // If 1 tank -> need >= 1 compressor
+        // If 2+ tanks -> need >= 2 compressors
+        let ruleMet = false;
+        if (installedTanks === 1) {
+            if (workingCompressors >= 1) ruleMet = true;
+        } else if (installedTanks >= 2) {
+            if (workingCompressors >= 2) ruleMet = true;
+        }
+
+        if (!ruleMet) return 'broken'; // Rule violation -> Broken system
+
+        // If rule met, check for other issues
+        if (hasBrokenComponent) return 'fault'; // System works (rule met) but has broken components
+        if (hasFaultComponent) return 'fault';
+        
+        return 'efficient';
     }
 
     function setTextContent(id, text) {
