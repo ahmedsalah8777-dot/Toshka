@@ -1,4 +1,5 @@
 
+
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
@@ -50,21 +51,22 @@
         /* تحسينات للهواتف المحمولة */
         @media (max-width: 768px) {
             .container {
-                padding: 5px;
+                padding: 2px;
                 margin: 0 auto;
                 width: 100%;
             }
             
             .screen {
-                margin-left: 2px;
-                margin-right: 2px;
-                padding-left: 8px;
-                padding-right: 8px;
+                margin-left: 0;
+                margin-right: 0;
+                padding-left: 2px;
+                padding-right: 2px;
             }
             
             .detail-card, .stat-card, .station-card {
-                margin-left: 2px;
-                margin-right: 2px;
+                margin-left: 0;
+                margin-right: 0;
+                padding: 8px 5px; /* تقليل البادينج الداخلي للكروت أيضاً */
             }
 
             /* تحسين مكان مؤشر الشبكة في الموبايل */
@@ -2843,6 +2845,73 @@
     margin-top: auto;
     border: 1px dashed #ddd;
 }
+        /* تحسينات إضافية للموبايل لتقليل الحواف وضغط المحتوى */
+        @media (max-width: 768px) {
+            /* Compact Header */
+            header {
+                padding: 5px 0;
+            }
+            .logo {
+                font-size: 16px;
+            }
+            
+            /* Compact Forms */
+            .form-group {
+                margin-bottom: 8px;
+            }
+            input, select, textarea {
+                padding: 6px 8px;
+            }
+            label {
+                margin-bottom: 2px;
+                font-size: 0.9rem;
+            }
+            
+            /* Compact Lists & Accordions */
+            .section-accordion-header, .pump-accordion-header {
+                padding: 8px 10px;
+                font-size: 1rem;
+            }
+            .section-accordion-body, .pump-accordion-body {
+                padding: 5px;
+            }
+            .inspection-row {
+                padding: 8px 5px;
+                gap: 5px;
+            }
+            
+            /* Compact Tabs */
+            .nav-tabs {
+                gap: 5px;
+                margin-bottom: 10px;
+            }
+            .nav-tab {
+                padding: 5px 10px;
+                font-size: 0.85rem;
+            }
+            
+            /* Compact Zone Separator */
+            .zone-separator {
+                padding: 6px 10px;
+                margin-top: 10px;
+                font-size: 1rem;
+            }
+
+            /* Tighten general layout override */
+            .container {
+                padding: 2px !important;
+            }
+            .screen {
+                padding: 2px !important;
+                margin: 0 !important;
+            }
+            
+            /* Compact Buttons */
+            .btn {
+                padding: 6px 10px;
+                font-size: 13px;
+            }
+        }
     </style>
 </head>
 <body>
