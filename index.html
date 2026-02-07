@@ -444,15 +444,15 @@
             }
             
             .user-badge { 
-                font-size: 10px !important;
-                padding: 3px 6px !important;
+                font-size: 11px !important; /* Slightly larger */
+                padding: 4px 8px !important; /* Slightly larger */
             }
             
             .alarm-btn, .profile-btn { 
-                font-size: 1.2rem !important;
-                margin-left: 5px !important;
-                min-width: 36px;
-                height: 36px;
+                font-size: 1.3rem !important; /* Slightly larger */
+                margin-left: 6px !important;
+                min-width: 38px;
+                height: 38px;
                 display: flex;
                 align-items: center;
                 justify-content: center;
@@ -461,9 +461,9 @@
             .alarm-count { 
                 top: -2px !important;
                 right: -2px !important;
-                width: 16px !important;
-                height: 16px !important;
-                font-size: 9px !important;
+                width: 17px !important;
+                height: 17px !important;
+                font-size: 10px !important;
             }
         }
         
@@ -1005,6 +1005,140 @@
             overflow: hidden;
             border: 1px solid rgba(0,0,0,0.03);
             z-index: 1001; /* رفع مستوى الفورم */
+        }
+        
+        /* شريط زخرفي علوي */
+        .login-form::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 6px;
+            background: linear-gradient(90deg, var(--primary-color), var(--secondary-color));
+        }
+
+        .login-form h2 {
+            text-align: center;
+            color: var(--primary-color);
+            font-size: 2rem; /* تكبير العنوان */
+            margin-bottom: 30px;
+            position: relative;
+            padding-bottom: 15px;
+            border-bottom: none;
+            font-weight: 700;
+        }
+        
+        /* خط تحت العنوان */
+        .login-form h2::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 60px;
+            height: 4px;
+            background: var(--secondary-color);
+            border-radius: 2px;
+        }
+
+        .login-form .form-group {
+            margin-bottom: 25px; /* زيادة المسافة */
+        }
+
+        .login-form .form-group label {
+            color: #555;
+            font-weight: 600;
+            margin-bottom: 8px;
+            display: block;
+            font-size: 1.1rem; /* تكبير الخط */
+        }
+
+        .login-form input[type="text"],
+        .login-form input[type="password"] {
+            width: 100%;
+            padding: 14px 18px; /* تكبير البادينج */
+            border: 2px solid #e1e8ed;
+            border-radius: 10px;
+            background-color: #f8f9fa;
+            font-size: 1.1rem; /* تكبير الخط */
+            transition: all 0.3s ease;
+            color: #333;
+        }
+
+        .login-form input:focus {
+            background-color: #fff;
+            border-color: var(--secondary-color);
+            box-shadow: 0 0 0 4px rgba(46, 134, 193, 0.1);
+            outline: none;
+        }
+
+        .password-container {
+            position: relative;
+        }
+
+        .toggle-password {
+            position: absolute;
+            left: 15px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #95a5a6;
+            cursor: pointer;
+            transition: color 0.3s;
+            font-size: 1.2rem; /* تكبير الأيقونة */
+        }
+
+        .toggle-password:hover {
+            color: var(--secondary-color);
+        }
+
+        .login-form .checkbox-group {
+            display: flex;
+            align-items: center;
+            margin-top: 15px;
+            margin-bottom: 25px;
+        }
+
+        .login-form .checkbox-group input[type="checkbox"] {
+            width: 20px; /* تكبير المربع */
+            height: 20px;
+            margin-left: 10px;
+            cursor: pointer;
+            accent-color: var(--secondary-color);
+        }
+
+        .login-form .checkbox-group label {
+            font-weight: normal;
+            color: #666;
+            cursor: pointer;
+            user-select: none;
+            font-size: 1rem; /* تكبير الخط */
+        }
+
+        /* تحسين زر الدخول مع الحفاظ على وظيفته */
+        #login-btn {
+            width: 100%;
+            padding: 16px; /* تكبير البادينج */
+            font-size: 1.25rem; /* تكبير الخط */
+            font-weight: 700;
+            border-radius: 10px;
+            border: none;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            /* سيتم تعيين الخلفية واللون عبر الجافا سكريبت أو inline styles */
+        }
+
+        #login-btn:not(:disabled):hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(46, 134, 193, 0.25);
+        }
+
+        #login-btn:disabled {
+            opacity: 0.7;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
         }
 
         /* خلفية شاشة الدخول */
