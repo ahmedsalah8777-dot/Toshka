@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
@@ -6031,7 +6032,7 @@ document.getElementById('work-orders-btn').style.display = 'none';
             }
         }
 
-        // دالة التحقق من تحديث الفحص (يظهر التنبيه بدءاً من الثلاثاء 9 صباحاً)
+        // دالة التحقق من تحديث الفحص (يظهر التنبيه إذا مر أسبوع كامل دون تحديث، أو جاء موعد التحديث الجديد)
         function checkInspectionAdherence(lastInspectionUpdateStr) {
             const now = new Date();
             const day = now.getDay(); // 0=Sun, 1=Mon, ..., 6=Sat
@@ -6040,25 +6041,30 @@ document.getElementById('work-orders-btn').style.display = 'none';
             // حساب عدد الأيام المنقضية منذ السبت (السبت=0, الأحد=1, ..., الجمعة=6)
             const daysSinceSat = (day + 1) % 7;
 
-            // التحقق من وقت التنبيه: يبدأ من الثلاثاء (3) الساعة 9 صباحاً
-            // فترة السماح: السبت (0)، الأحد (1)، الاثنين (2)، والثلاثاء (3) قبل الساعة 9
-            if (daysSinceSat < 3) return false; 
-            if (daysSinceSat === 3 && hour < 9) return false;
+            // تحديد بداية أسبوع الفحص الحالي (السبت الماضي الساعة 00:00)
+            let currentWeekStart = new Date(now);
+            currentWeekStart.setHours(0, 0, 0, 0);
+            currentWeekStart.setDate(now.getDate() - daysSinceSat);
 
-            // نحن الآن في وقت التنبيه (الثلاثاء 9+، أربعاء، خميس، جمعة)
-            
-            // تحديد بداية أسبوع الفحص (السبت الماضي الساعة 00:00)
-            let lastSaturday = new Date(now);
-            lastSaturday.setHours(0, 0, 0, 0);
-            lastSaturday.setDate(now.getDate() - daysSinceSat);
+            // تحديد بداية أسبوع الفحص السابق (السبت قبل الماضي)
+            let previousWeekStart = new Date(currentWeekStart);
+            previousWeekStart.setDate(previousWeekStart.getDate() - 7);
 
-            if (!lastInspectionUpdateStr) return true; // لم يتم التحديث أبداً
+            if (!lastInspectionUpdateStr) return true; // لم يتم التحديث أبداً -> إظهار التنبيه فوراً
             
             const lastUpdate = parseCustomDate(lastInspectionUpdateStr);
-            if (!lastUpdate || isNaN(lastUpdate.getTime())) return true; // تاريخ غير صالح
+            if (!lastUpdate || isNaN(lastUpdate.getTime())) return true; // تاريخ غير صالح -> إظهار التنبيه
 
-            // إذا كان التحديث أقدم من السبت الماضي (بداية الأسبوع)، نعرض التنبيه
-            return lastUpdate < lastSaturday;
+            // الحالة 1: نحن في فترة السماح (السبت - الثلاثاء 9ص)
+            // في هذه الفترة، يجب أن يكون التحديث قد تم *على الأقل* في الأسبوع السابق
+            if (daysSinceSat < 3 || (daysSinceSat === 3 && hour < 9)) {
+                // إذا كان آخر تحديث أقدم من بداية الأسبوع السابق، فهذا يعني أنه فاته الفحص السابق أيضاً -> استمرار التنبيه
+                return lastUpdate < previousWeekStart;
+            }
+
+            // الحالة 2: انتهت فترة السماح (بعد الثلاثاء 9ص)
+            // يجب أن يكون التحديث قد تم في الأسبوع *الحالي*
+            return lastUpdate < currentWeekStart;
         }
 
         // --- DASHBOARD RENDERER ---
