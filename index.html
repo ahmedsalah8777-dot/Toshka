@@ -2767,81 +2767,142 @@
 }
 
 /* ═══════════════════════════════════════════════════════
-   تنسيقات شاشة عرض الفحص الجديدة (Grid System)
+   تنسيقات شاشة الإعلان (محسنة للموبايل)
 ═══════════════════════════════════════════════════════ */
-.inspection-view-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
-    gap: 15px;
-    padding: 15px;
+.announcement-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.85); /* خلفية داكنة أكثر للتركيز */
+    z-index: 99999;
+    display: none;
+    justify-content: center;
+    align-items: center;
+    backdrop-filter: blur(5px); /* تأثير ضبابي للخلفية */
+    padding: 10px; /* هامش أمان للشاشات الصغيرة */
 }
 
-.inspection-card {
+.announcement-overlay.show {
+    display: flex;
+    animation: fadeIn 0.3s ease-out;
+}
+
+.announcement-content {
     background: #fff;
-    border: 1px solid #eee;
-    border-radius: 10px;
-    padding: 12px 15px;
-    box-shadow: 0 3px 6px rgba(0,0,0,0.05);
-    transition: transform 0.2s, box-shadow 0.2s;
+    width: 95%; /* عرض أكبر للموبايل */
+    max-width: 800px; /* حد أقصى أكبر للشاشات الكبيرة */
+    max-height: 90vh; /* ارتفاع أقصى لمنع الخروج عن الشاشة */
+    border-radius: 12px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.5);
     display: flex;
     flex-direction: column;
-    justify-content: flex-start;
+    overflow: hidden; /* لمنع المحتوى من الخروج */
+    position: relative;
 }
 
-.inspection-card:hover {
-    transform: translateY(-3px);
-    box-shadow: 0 6px 12px rgba(0,0,0,0.1);
-}
-
-.inspection-card.status-efficient { border-top: 4px solid var(--success-color); }
-.inspection-card.status-fault { border-top: 4px solid var(--warning-color); }
-.inspection-card.status-broken { border-top: 4px solid var(--danger-color); }
-.inspection-card.status-none { border-top: 4px solid #95a5a6; }
-
-/* حاوية العنوان والحالة بجانب بعضهما */
-.card-header-row {
+.announcement-header {
+    background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+    color: white;
+    padding: 15px;
     display: flex;
     justify-content: space-between;
     align-items: center;
-    border-bottom: 1px solid #f0f0f0;
-    padding-bottom: 8px;
-    margin-bottom: 8px;
-    gap: 10px;
+    flex-shrink: 0; /* منع انكماش الهيدر */
 }
 
-.card-label {
-    font-weight: bold;
-    font-size: 0.95rem;
-    color: #2c3e50;
+.announcement-header h2 {
     margin: 0;
-    flex: 1; /* يأخذ المساحة المتبقية */
+    font-size: 1.2rem;
 }
 
-.card-status {
-    display: inline-flex;
+.announcement-body {
+    padding: 0; /* إزالة الحشو للسماح للصورة بأخذ العرض الكامل */
+    overflow-y: auto; /* تمكين التمرير إذا كان المحتوى طويلاً */
+    flex: 1; /* التمدد لملء المساحة المتبقية */
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    background: #f0f0f0;
+}
+
+/* حاوية الصورة مع خاصية التكبير */
+.announcement-image-container {
+    width: 100%;
+    display: flex;
+    justify-content: center;
+    background: #000;
+    position: relative;
+    overflow: hidden; /* لإخفاء أجزاء الصورة عند التكبير */
+    cursor: zoom-in; /* مؤشر التكبير */
+}
+
+.announcement-image {
+    max-width: 100%;
+    max-height: 70vh; /* ارتفاع مناسب للشاشة */
+    object-fit: contain; /* الحفاظ على أبعاد الصورة */
+    transition: transform 0.3s ease; /* حركة ناعمة للتكبير */
+}
+
+/* حالة التكبير للصورة */
+.announcement-image.zoomed {
+    cursor: zoom-out;
+    transform: scale(2); /* تكبير الضعف */
+}
+
+.announcement-text-container {
+    padding: 20px;
+    text-align: center;
+    background: #fff;
+    width: 100%;
+    border-top: 1px solid #eee;
+}
+
+#announcement-message {
+    font-size: 1.1rem;
+    color: #333;
+    margin: 0;
+    line-height: 1.6;
+}
+
+.announcement-footer {
+    padding: 15px;
+    background: #f9f9f9;
+    border-top: 1px solid #eee;
+    text-align: center;
+    flex-shrink: 0;
+}
+
+.announcement-close-btn {
+    background: rgba(255,255,255,0.2);
+    border: none;
+    color: white;
+    font-size: 1.5rem;
+    cursor: pointer;
+    padding: 0 10px;
+    border-radius: 5px;
+    transition: background 0.2s;
+}
+
+.announcement-close-btn:hover {
+    background: rgba(255,255,255,0.4);
+}
+
+/* زر التكبير العائم للموبايل */
+.zoom-hint {
+    position: absolute;
+    bottom: 10px;
+    right: 10px;
+    background: rgba(0,0,0,0.6);
+    color: white;
+    padding: 5px 10px;
+    border-radius: 20px;
+    font-size: 0.8rem;
+    pointer-events: none; /* للسماح بالنقر على الصورة تحته */
+    display: flex;
     align-items: center;
     gap: 5px;
-    padding: 4px 10px;
-    border-radius: 15px;
-    font-size: 0.8rem;
-    font-weight: bold;
-    white-space: nowrap; /* منع النص من الالتفاف */
-    flex-shrink: 0; /* منع الانكماش */
-}
-
-.status-efficient .card-status { background: #d4edda; color: #155724; }
-.status-fault .card-status { background: #fff3cd; color: #856404; }
-.status-broken .card-status { background: #f8d7da; color: #721c24; }
-.status-none .card-status { background: #e2e6ea; color: #383d41; }
-
-.card-desc {
-    font-size: 0.85rem;
-    color: #555;
-    background: #f8f9fa;
-    padding: 8px;
-    border-radius: 6px;
-    margin-top: auto;
-    border: 1px dashed #ddd;
 }
     </style>
 </head>
@@ -2889,8 +2950,13 @@
             <button class="announcement-close-btn" onclick="closeAnnouncement()">×</button>
         </div>
         <div class="announcement-body">
-            <img id="announcement-image" class="announcement-image" src="" alt="إعلان" style="display: none;">
-            <p id="announcement-message" style="font-size: 1.1rem; color: #333; margin-top: 15px;"></p>
+            <div class="announcement-image-container" onclick="toggleZoom(this)">
+                <img id="announcement-image" class="announcement-image" src="" alt="إعلان" style="display: none;">
+                <div class="zoom-hint">🔍 اضغط للتكبير</div>
+            </div>
+            <div class="announcement-text-container">
+                <p id="announcement-message"></p>
+            </div>
         </div>
         <div class="announcement-footer">
             <div class="countdown-timer" id="announcement-countdown"></div>
@@ -5963,6 +6029,18 @@ function showScreen(screenId) {
                 if (typeof renderWorkOrdersTables === 'function') renderWorkOrdersTables();
             }
         }
+
+        window.toggleZoom = function(container) {
+            const img = container.querySelector('img');
+            if(img) {
+                img.classList.toggle('zoomed');
+                // تبديل أيقونة التكبير
+                const hint = container.querySelector('.zoom-hint');
+                if(hint) {
+                    hint.textContent = img.classList.contains('zoomed') ? '🔍 اضغط للتصغير' : '🔍 اضغط للتكبير';
+                }
+            }
+        };
 
         // --- AUTHENTICATION ---
         document.getElementById('logout-btn').addEventListener('click', () => { 
