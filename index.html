@@ -12887,7 +12887,13 @@ window.addEventListener('offline', function() {
 
         // Check Control Panel (Index 6)
         const cp = waterHammerData[6];
-        if (cp && cp.status === 'broken') return 'broken';
+        
+        // --- NEW RULE: Control Panel Status ---
+        // If Control Panel is 'broken' OR 'none' -> System is BROKEN (if there are other installed components)
+        if (cp && (cp.status === 'broken' || cp.status === 'none')) {
+            return 'broken';
+        }
+        
         if (cp && cp.status === 'fault') hasFaultComponent = true;
 
         // Critical Rule Check
