@@ -8781,6 +8781,17 @@ if (idx === 5) { // الرقم 5 يمثل "المضخه" في مصفوفة ال�
                     })
                     .then(() => {
                         alert('✅ تم حذف المستخدم وبياناته بنجاح');
+                        
+                        // حذف المستخدم من الذاكرة المحلية فوراً
+                        if (appData.users && appData.users[username]) {
+                            delete appData.users[username];
+                        }
+                        
+                        // حذف البروفايل من الذاكرة المحلية أيضاً
+                        if (appData.userProfiles && appData.userProfiles[username]) {
+                            delete appData.userProfiles[username];
+                        }
+                        
                         renderUsersDataManagement();
                     })
                     .catch(err => {
@@ -8941,6 +8952,9 @@ if (idx === 5) { // الرقم 5 يمثل "المضخه" في مصفوفة ال�
                 db.ref('users/' + username).remove()
                     .then(() => {
                         alert('✅ تم حذف المستخدم بنجاح');
+                        // حذف المستخدم من الذاكرة المحلية فوراً
+                        delete appData.users[username];
+                        
                         appData.currentUsersPage = 0; // Reset to first page
                         renderUsersManagement();
                     })
@@ -9034,6 +9048,13 @@ if (idx === 5) { // الرقم 5 يمثل "المضخه" في مصفوفة ال�
                 active: true
             }).then(() => {
                 alert('✅ تمت إضافة المستخدم بنجاح');
+                // تحديث الذاكرة المحلية (appData.users) فوراً
+                appData.users[name] = {
+                    type: type,
+                    password: pass,
+                    active: true
+                };
+                
                 document.getElementById('user-form-container').style.display = 'none';
                 document.getElementById('new-username').value = '';
                 document.getElementById('new-password').value = '';
