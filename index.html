@@ -10403,6 +10403,57 @@ if(btnPerfBack) btnPerfBack.addEventListener('click', () => goBack());
         }).sort((a, b) => b.score - a.score);
     }
 
+    function isInspectionOnTimeDayOfWeek(dayOfWeek) {
+        return dayOfWeek === 6 || dayOfWeek === 0 || dayOfWeek === 1 || dayOfWeek === 2;
+    }
+
+    function calculateInspectionPerformanceData(targetYear, targetMonthIndex, stations) {
+        const stationBuckets = {};
+        stations.forEach(s => { stationBuckets[s.name] = { 1: {has:false,onTime:false}, 2: {has:false,onTime:false}, 3: {has:false,onTime:false}, 4: {has:false,onTime:false} }; });
+        const allowedStations = new Set(stations.map(s => s.name));
+
+        const history = appData.operationHistory || [];
+        history.forEach(log => {
+            try {
+                if (!log || !allowedStations.has(log.station)) return;
+                if (!log.date) return;
+                if (!log.details || !log.details.includes('تحديث سجل الفحص')) return;
+                const d = parseDateSimple(log.date);
+                if (!d) return;
+                if (d.getFullYear() !== targetYear || d.getMonth() !== targetMonthIndex) return;
+                const bucket = Math.min(4, Math.ceil(d.getDate() / 7));
+                stationBuckets[log.station][bucket].has = true;
+                stationBuckets[log.station][bucket].onTime = stationBuckets[log.station][bucket].onTime || isInspectionOnTimeDayOfWeek(d.getDay());
+            } catch (e) {}
+        });
+
+        return stations.map(s => {
+            const buckets = stationBuckets[s.name] || {};
+            let onTimeCount = 0;
+            let lateCount = 0;
+            for (let b = 1; b <= 4; b++) {
+                const st = buckets[b] || {has:false,onTime:false};
+                if (st.has) {
+                    if (st.onTime) onTimeCount++;
+                    else lateCount++;
+                }
+            }
+            const rawScore = (onTimeCount * 25) + (lateCount * 12.5);
+            const score = Math.round(rawScore * 10) / 10;
+            let details = `على الموعد: ${onTimeCount}/4`;
+            if (lateCount > 0) details += ` | متأخر: ${lateCount}/4`;
+            const ins = s.inspectionData;
+            if (ins && ins.lastUpdate) {
+                const updateDate = parseDateSimple(ins.lastUpdate);
+                if (updateDate && updateDate.getMonth() === targetMonthIndex && updateDate.getFullYear() === targetYear) {
+                    if (ins.approval) details += ' | ✅ معتمد';
+                    else details += ' | ⚠️ انتظار';
+                }
+            }
+            return { name: s.name, zone: s.zone, score, details };
+        }).sort((a, b) => b.score - a.score);
+    }
+
     function calculateAndRenderShiftPerformance(shiftType) {
         const listId = shiftType === 'day' ? 'day-shift-list' : 'night-shift-list';
         const container = document.getElementById(listId);
@@ -10463,54 +10514,12 @@ if(btnPerfBack) btnPerfBack.addEventListener('click', () => goBack());
             const currentMonth = now.getMonth();
             const currentYear = now.getFullYear();
             
-            const history = appData.operationHistory || [];
             const stations = getPerformanceStations();
             if (stations.length === 0) {
                 container.innerHTML = '<div style="text-align:center; padding:20px; color:#666;">لا توجد محطات مطابقة للفلتر</div>';
                 return;
             }
-            const allowedStations = new Set(stations.map(s => s.name));
-            const inspectionLogs = history.filter(log => {
-                 if (!log.date) return false;
-                 if (!log.details || !log.details.includes('تحديث سجل الفحص')) return false;
-                 const logDate = parseDateSimple(log.date);
-                 if (!logDate) return false;
-                 if (!allowedStations.has(log.station)) return false;
-                 return logDate.getMonth() === currentMonth && logDate.getFullYear() === currentYear;
-            });
-
-            const stationWeeks = {}; 
-            inspectionLogs.forEach(log => {
-                if (!stationWeeks[log.station]) stationWeeks[log.station] = new Set();
-                const d = parseDateSimple(log.date).getDate();
-                const week = Math.ceil(d / 7);
-                stationWeeks[log.station].add(week);
-            });
-
-            const rankedStations = [];
-            stations.forEach(s => {
-                const uniqueWeeks = stationWeeks[s.name] ? stationWeeks[s.name].size : 0;
-                const count = Math.min(uniqueWeeks, 4);
-                
-                let score = Math.round((count / 4) * 100);
-                let details = `تم الفحص: ${count}/4`;
-                
-                const ins = s.inspectionData;
-                if (ins && ins.lastUpdate) {
-                     const updateDate = parseDateSimple(ins.lastUpdate);
-                     if (updateDate && updateDate.getMonth() === currentMonth && updateDate.getFullYear() === currentYear) {
-                         if (ins.approval) {
-                             details += ' | ✅ معتمد';
-                         } else {
-                             details += ' | ⚠️ انتظار';
-                         }
-                     }
-                }
-                
-                rankedStations.push({ name: s.name, zone: s.zone, score: score, details: details });
-            });
-            
-            rankedStations.sort((a, b) => b.score - a.score);
+            const rankedStations = calculateInspectionPerformanceData(currentYear, currentMonth, stations);
 
             let html = '';
             rankedStations.forEach((s, index) => {
@@ -10667,49 +10676,12 @@ if(btnPerfBack) btnPerfBack.addEventListener('click', () => goBack());
             const currentYear = typeof selectedYear === 'number' ? selectedYear : new Date().getFullYear();
             const currentMonth = typeof selectedMonthIndex === 'number' ? selectedMonthIndex : new Date().getMonth();
             
-            const history = appData.operationHistory || [];
             const stations = getPerformanceStations();
             if (stations.length === 0) {
                 container.innerHTML = '<div style="text-align:center; padding:20px; color:#666;">لا توجد محطات مطابقة للفلتر</div>';
                 return;
             }
-            const allowedStations = new Set(stations.map(s => s.name));
-            const inspectionLogs = history.filter(log => {
-                 if (!log.date) return false;
-                 if (!log.details || !log.details.includes('تحديث سجل الفحص')) return false;
-                 const logDate = parseDateSimple(log.date);
-                 if (!logDate) return false;
-                 if (!allowedStations.has(log.station)) return false;
-                 return logDate.getMonth() === currentMonth && logDate.getFullYear() === currentYear;
-            });
-
-            const stationWeeks = {}; 
-            inspectionLogs.forEach(log => {
-                if (!stationWeeks[log.station]) stationWeeks[log.station] = new Set();
-                const d = parseDateSimple(log.date).getDate();
-                const week = Math.ceil(d / 7);
-                stationWeeks[log.station].add(week);
-            });
-
-            const rankedStations = [];
-            stations.forEach(s => {
-                const uniqueWeeks = stationWeeks[s.name] ? stationWeeks[s.name].size : 0;
-                const count = Math.min(uniqueWeeks, 4);
-                let score = Math.round((count / 4) * 100);
-                let details = `تم: ${count}/4`;
-                
-                const ins = s.inspectionData;
-                if (ins && ins.lastUpdate) {
-                     const updateDate = parseDateSimple(ins.lastUpdate);
-                     if (updateDate && updateDate.getMonth() === currentMonth && updateDate.getFullYear() === currentYear) {
-                         if (ins.approval) { details += ' ✅'; } 
-                         else { details += ' ⚠️'; }
-                     }
-                }
-                rankedStations.push({ name: s.name, zone: s.zone, score: score, details: details });
-            });
-            
-            rankedStations.sort((a, b) => b.score - a.score);
+            const rankedStations = calculateInspectionPerformanceData(currentYear, currentMonth, stations);
             const topRanked = rankedStations.slice(0, limit);
 
             let html = '';
