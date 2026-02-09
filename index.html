@@ -3978,6 +3978,16 @@
 
                 <!-- Tab Content: Top Results -->
                 <div id="tab-top-results" class="eval-content" style="display:none;">
+                    <div class="filters-container" style="background: #f9f9f9; padding: 15px; border-radius: 8px; border: 1px solid #eee; margin-bottom: 15px; display: grid; gap: 10px; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); align-items: end;">
+                        <div class="filter-item">
+                            <label>الشهر</label>
+                            <input type="month" id="perf-top-month" style="width:100%; padding:10px; border:1px solid #ddd; border-radius:8px;">
+                        </div>
+                        <div class="filter-item" style="display:flex; gap:10px; align-items:flex-end;">
+                            <button class="btn btn-primary" onclick="renderTopResults()">بحث</button>
+                            <div id="top-results-save-status" style="font-size:0.9rem; color:#666; padding:10px 0;"></div>
+                        </div>
+                    </div>
                     <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap:20px;">
                         
                         <!-- Top 20 Day Shift -->
@@ -10307,6 +10317,7 @@ if(btnPerfBack) btnPerfBack.addEventListener('click', () => goBack());
     function initPerformanceFilters() {
         const zoneSel = document.getElementById('perf-filter-zone');
         const stationSel = document.getElementById('perf-filter-station');
+        const monthInput = document.getElementById('perf-top-month');
         if (!zoneSel || !stationSel) return;
         
         const prevZone = appData.performanceFilterZone || zoneSel.value || 'all';
@@ -10329,6 +10340,13 @@ if(btnPerfBack) btnPerfBack.addEventListener('click', () => goBack());
         
         appData.performanceFilterStation = prevStation;
         window.updatePerfStationFilter();
+        
+        if (monthInput) {
+            const now = new Date();
+            const y = now.getFullYear();
+            const m = String(now.getMonth() + 1).padStart(2, '0');
+            if (!monthInput.value) monthInput.value = `${y}-${m}`;
+        }
     }
     
     function getPerformanceStations() {
@@ -10605,20 +10623,80 @@ if(btnPerfBack) btnPerfBack.addEventListener('click', () => goBack());
     }
 
     function renderTopResults() {
-        calculateAndRenderShiftPerformanceToTarget('day', 'top20-day-list', 20);
-        calculateAndRenderShiftPerformanceToTarget('night', 'top20-night-list', 20);
-        calculateAndRenderInspectionPerformanceToTarget('top20-inspection-list', 20);
+        const monthInput = document.getElementById('perf-top-month');
+        let selectedYear, selectedMonthIndex, monthKey;
+        if (monthInput && monthInput.value && monthInput.value.includes('-')) {
+            const parts = monthInput.value.split('-');
+            selectedYear = parseInt(parts[0]);
+            selectedMonthIndex = parseInt(parts[1]) - 1;
+        } else {
+            const now = new Date();
+            selectedYear = now.getFullYear();
+            selectedMonthIndex = now.getMonth();
+        }
+        monthKey = `${selectedYear}-${String(selectedMonthIndex + 1).padStart(2, '0')}`;
+        
+        const dayTop = calculateAndRenderShiftPerformanceToTarget('day', 'top20-day-list', 20, selectedYear, selectedMonthIndex);
+        const nightTop = calculateAndRenderShiftPerformanceToTarget('night', 'top20-night-list', 20, selectedYear, selectedMonthIndex);
+        const inspTop = calculateAndRenderInspectionPerformanceToTarget('top20-inspection-list', 20, selectedYear, selectedMonthIndex);
+        
+        saveTop20Results(monthKey, dayTop, nightTop, inspTop);
+    }
+    
+    function saveTop20Results(monthKey, dayTop, nightTop, inspTop) {
+        const statusEl = document.getElementById('top-results-save-status');
+        if (!dayTop || !nightTop || !inspTop) {
+            if (statusEl) statusEl.textContent = '';
+            return;
+        }
+        
+        const zoneSel = document.getElementById('perf-filter-zone');
+        const stationSel = document.getElementById('perf-filter-station');
+        const zone = (zoneSel ? zoneSel.value : (appData.performanceFilterZone || 'all')) || 'all';
+        const station = (stationSel ? stationSel.value : (appData.performanceFilterStation || 'all')) || 'all';
+        
+        const signature = `${monthKey}|${zone}|${station}`;
+        if (appData.lastTop20SavedSignature === signature) {
+            if (statusEl) statusEl.textContent = 'تم حفظ النتائج';
+            return;
+        }
+        
+        if (typeof db === 'undefined' || !navigator.onLine) {
+            if (statusEl) statusEl.textContent = 'غير متصل - لم يتم الحفظ';
+            return;
+        }
+        
+        const safeKey = (v) => String(v || 'all').replace(/[.#$\[\]]/g, '_');
+        const nowStd = typeof getStandardDateTime === 'function' ? getStandardDateTime() : null;
+        
+        const payload = {
+            month: monthKey,
+            zoneFilter: zone,
+            stationFilter: station,
+            savedAt: nowStd ? nowStd.full : new Date().toISOString(),
+            day: dayTop,
+            night: nightTop,
+            inspection: inspTop
+        };
+        
+        if (statusEl) statusEl.textContent = 'جاري حفظ النتائج...';
+        db.ref('performance_top20').child(safeKey(monthKey)).child(safeKey(zone)).child(safeKey(station)).set(payload).then(() => {
+            appData.lastTop20SavedSignature = signature;
+            if (statusEl) statusEl.textContent = 'تم حفظ النتائج';
+        }).catch((e) => {
+            if (statusEl) statusEl.textContent = 'فشل حفظ النتائج';
+            console.warn('saveTop20Results failed:', e && e.message ? e.message : e);
+        });
     }
 
-    function calculateAndRenderShiftPerformanceToTarget(shiftType, targetId, limit) {
+    function calculateAndRenderShiftPerformanceToTarget(shiftType, targetId, limit, selectedYear, selectedMonthIndex) {
         const container = document.getElementById(targetId);
         if(!container) return;
         container.innerHTML = '<div style="text-align:center; padding:10px;">جاري الحساب...</div>';
         
         try {
-            const now = new Date();
-            const currentMonth = now.getMonth();
-            const currentYear = now.getFullYear();
+            const currentYear = typeof selectedYear === 'number' ? selectedYear : new Date().getFullYear();
+            const currentMonth = typeof selectedMonthIndex === 'number' ? selectedMonthIndex : new Date().getMonth();
             const daysInMonth = new Date(currentYear, currentMonth + 1, 0).getDate();
             
             const stationScores = {};
@@ -10681,21 +10759,22 @@ if(btnPerfBack) btnPerfBack.addEventListener('click', () => goBack());
             });
             if(html === '') html = '<div style="text-align:center; padding:20px; color:#666;">لا توجد بيانات</div>';
             container.innerHTML = html;
+            return rankedStations;
         } catch(e) {
             console.error("Error calculating top shift performance:", e);
             container.innerHTML = '<div style="text-align:center; padding:10px; color:red;">خطأ في الحساب</div>';
+            return null;
         }
     }
     
-    function calculateAndRenderInspectionPerformanceToTarget(targetId, limit) {
+    function calculateAndRenderInspectionPerformanceToTarget(targetId, limit, selectedYear, selectedMonthIndex) {
         const container = document.getElementById(targetId);
         if(!container) return;
         container.innerHTML = '<div style="text-align:center; padding:10px;">جاري الحساب...</div>';
         
         try {
-            const now = new Date();
-            const currentMonth = now.getMonth();
-            const currentYear = now.getFullYear();
+            const currentYear = typeof selectedYear === 'number' ? selectedYear : new Date().getFullYear();
+            const currentMonth = typeof selectedMonthIndex === 'number' ? selectedMonthIndex : new Date().getMonth();
             
             const history = appData.operationHistory || [];
             const stations = getPerformanceStations();
@@ -10758,9 +10837,11 @@ if(btnPerfBack) btnPerfBack.addEventListener('click', () => goBack());
             });
             if(html === '') html = '<div style="text-align:center; padding:20px; color:#666;">لا توجد بيانات</div>';
             container.innerHTML = html;
+            return topRanked;
         } catch(e) {
             console.error("Error calculating top inspection performance:", e);
             container.innerHTML = '<div style="text-align:center; padding:10px; color:red;">خطأ في الحساب</div>';
+            return null;
         }
     }
 
