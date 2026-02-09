@@ -10448,6 +10448,62 @@ if(btnPerfBack) btnPerfBack.addEventListener('click', () => goBack());
         return new Date(parseInt(parts[2]), parseInt(parts[1])-1, parseInt(parts[0]));
     }
 
+    function calculateShiftPerformanceData(shiftType, targetYear, targetMonthIndex, stations, daysInMonth, eligibleDayLimit) {
+        const stationShiftDays = {};
+        stations.forEach(s => { stationShiftDays[s.name] = new Set(); });
+        const allowedStations = new Set(stations.map(s => s.name));
+        
+        const history = appData.operationHistory || [];
+        history.forEach(log => {
+            try {
+                if (!log || !allowedStations.has(log.station)) return;
+                if (!log.date || !log.time) return;
+                
+                const d = parseDateSimple(log.date);
+                if (!d) return;
+                
+                const timeStr = toEnglishDigits(log.time);
+                const timeParts = timeStr.split(':');
+                if (timeParts.length < 2) return;
+                const hour = parseInt(timeParts[0]);
+                const min = parseInt(timeParts[1]);
+                const sec = timeParts[2] ? parseInt(timeParts[2]) : 0;
+                if (isNaN(hour) || isNaN(min) || isNaN(sec)) return;
+                
+                const dt = new Date(d.getFullYear(), d.getMonth(), d.getDate(), hour, min, sec);
+                
+                let shiftDayDate = null;
+                if (shiftType === 'day') {
+                    if (dt.getHours() >= 6 && dt.getHours() < 18) shiftDayDate = dt;
+                } else {
+                    if (dt.getHours() >= 18) {
+                        shiftDayDate = dt;
+                    } else if (dt.getHours() < 6) {
+                        shiftDayDate = new Date(dt);
+                        shiftDayDate.setDate(shiftDayDate.getDate() - 1);
+                    }
+                }
+                
+                if (!shiftDayDate) return;
+                if (shiftDayDate.getFullYear() !== targetYear || shiftDayDate.getMonth() !== targetMonthIndex) return;
+                
+                const dayNum = shiftDayDate.getDate();
+                if (dayNum < 1 || dayNum > daysInMonth) return;
+                stationShiftDays[log.station].add(dayNum);
+            } catch (e) {}
+        });
+        
+        return stations.map(s => {
+            const daysSet = stationShiftDays[s.name] || new Set();
+            let eligibleUpdates = 0;
+            daysSet.forEach(dayNum => { if (dayNum <= eligibleDayLimit) eligibleUpdates++; });
+            const successfulUpdates = daysSet.size;
+            const totalShifts = daysInMonth;
+            const score = eligibleDayLimit > 0 ? Math.round((eligibleUpdates / eligibleDayLimit) * 100) : 0;
+            return { name: s.name, zone: s.zone, totalShifts, successfulUpdates, score };
+        }).sort((a, b) => b.score - a.score);
+    }
+
     function calculateAndRenderShiftPerformance(shiftType) {
         const listId = shiftType === 'day' ? 'day-shift-list' : 'night-shift-list';
         const container = document.getElementById(listId);
@@ -10460,64 +10516,21 @@ if(btnPerfBack) btnPerfBack.addEventListener('click', () => goBack());
             const currentYear = now.getFullYear();
             const daysInMonth = new Date(currentYear, currentMonth + 1, 0).getDate(); 
 
-            const stationScores = {};
             const stations = getPerformanceStations();
             if (stations.length === 0) {
                 container.innerHTML = '<div style="text-align:center; padding:20px; color:#666;">لا توجد محطات مطابقة للفلتر</div>';
                 return;
             }
-            stations.forEach(s => {
-                stationScores[s.name] = { 
-                    name: s.name, 
-                    zone: s.zone,
-                    totalShifts: 0, 
-                    successfulUpdates: 0,
-                    score: 0 
-                };
-            });
-            const allowedStations = new Set(stations.map(s => s.name));
-
-            const history = appData.operationHistory || [];
             
-            const monthlyLogs = history.filter(log => {
-                if(!log.date) return false;
-                const logDate = parseDateSimple(log.date); 
-                if (!logDate) return false;
-                if (!allowedStations.has(log.station)) return false;
-                return logDate.getMonth() === currentMonth && logDate.getFullYear() === currentYear;
-            });
-
-            for (let d = 1; d <= daysInMonth; d++) {
-                Object.keys(stationScores).forEach(sName => {
-                    stationScores[sName].totalShifts++;
-                    
-                    const hasUpdate = monthlyLogs.some(log => {
-                        if (log.station !== sName) return false;
-                        const logDate = parseDateSimple(log.date);
-                        if (logDate.getDate() !== d) return false; 
-                        
-                        if(!log.time) return false;
-                        const timeStr = toEnglishDigits(log.time);
-                        const timeParts = timeStr.split(':');
-                        const hour = parseInt(timeParts[0]);
-                        
-                        if (shiftType === 'day') {
-                            return hour >= 6 && hour < 18;
-                        } else {
-                            return (hour >= 18) || (hour < 6);
-                        }
-                    });
-
-                    if (hasUpdate) {
-                        stationScores[sName].successfulUpdates++;
-                    }
-                });
+            let eligibleDayLimit = daysInMonth;
+            if (shiftType === 'day') {
+                eligibleDayLimit = now.getHours() >= 6 ? now.getDate() : (now.getDate() - 1);
+            } else {
+                eligibleDayLimit = now.getHours() >= 18 ? now.getDate() : (now.getDate() - 1);
             }
+            eligibleDayLimit = Math.max(0, Math.min(daysInMonth, eligibleDayLimit));
 
-            const rankedStations = Object.values(stationScores).map(s => {
-                s.score = s.totalShifts > 0 ? Math.round((s.successfulUpdates / s.totalShifts) * 100) : 0;
-                return s;
-            }).sort((a, b) => b.score - a.score);
+            const rankedStations = calculateShiftPerformanceData(shiftType, currentYear, currentMonth, stations, daysInMonth, eligibleDayLimit);
 
             let html = '';
             rankedStations.forEach((s, index) => {
@@ -10695,53 +10708,32 @@ if(btnPerfBack) btnPerfBack.addEventListener('click', () => goBack());
         container.innerHTML = '<div style="text-align:center; padding:10px;">جاري الحساب...</div>';
         
         try {
-            const currentYear = typeof selectedYear === 'number' ? selectedYear : new Date().getFullYear();
-            const currentMonth = typeof selectedMonthIndex === 'number' ? selectedMonthIndex : new Date().getMonth();
-            const daysInMonth = new Date(currentYear, currentMonth + 1, 0).getDate();
-            
-            const stationScores = {};
             const stations = getPerformanceStations();
             if (stations.length === 0) {
                 container.innerHTML = '<div style="text-align:center; padding:20px; color:#666;">لا توجد محطات مطابقة للفلتر</div>';
                 return;
             }
-            stations.forEach(s => {
-                stationScores[s.name] = { name: s.name, zone: s.zone, totalShifts: 0, successfulUpdates: 0, score: 0 };
-            });
-            const allowedStations = new Set(stations.map(s => s.name));
-
-            const history = appData.operationHistory || [];
-            const monthlyLogs = history.filter(log => {
-                if(!log.date) return false;
-                const logDate = parseDateSimple(log.date);
-                if (!logDate) return false;
-                if (!allowedStations.has(log.station)) return false;
-                return logDate.getMonth() === currentMonth && logDate.getFullYear() === currentYear;
-            });
-
-            for (let d = 1; d <= daysInMonth; d++) {
-                Object.keys(stationScores).forEach(sName => {
-                    stationScores[sName].totalShifts++;
-                    const hasUpdate = monthlyLogs.some(log => {
-                        if (log.station !== sName) return false;
-                        const logDate = parseDateSimple(log.date);
-                        if (logDate.getDate() !== d) return false;
-                        
-                        if(!log.time) return false;
-                        const timeStr = toEnglishDigits(log.time);
-                        const timeParts = timeStr.split(':');
-                        const hour = parseInt(timeParts[0]);
-                        if (shiftType === 'day') return hour >= 6 && hour < 18;
-                        else return (hour >= 18) || (hour < 6);
-                    });
-                    if (hasUpdate) stationScores[sName].successfulUpdates++;
-                });
+            
+            const targetYear = typeof selectedYear === 'number' ? selectedYear : new Date().getFullYear();
+            const targetMonth = typeof selectedMonthIndex === 'number' ? selectedMonthIndex : new Date().getMonth();
+            const daysInMonth = new Date(targetYear, targetMonth + 1, 0).getDate();
+            
+            const now = new Date();
+            let eligibleDayLimit = daysInMonth;
+            const isFuture = (targetYear > now.getFullYear()) || (targetYear === now.getFullYear() && targetMonth > now.getMonth());
+            const isCurrent = (targetYear === now.getFullYear() && targetMonth === now.getMonth());
+            if (isFuture) {
+                eligibleDayLimit = 0;
+            } else if (isCurrent) {
+                if (shiftType === 'day') {
+                    eligibleDayLimit = now.getHours() >= 6 ? now.getDate() : (now.getDate() - 1);
+                } else {
+                    eligibleDayLimit = now.getHours() >= 18 ? now.getDate() : (now.getDate() - 1);
+                }
+                eligibleDayLimit = Math.max(0, Math.min(daysInMonth, eligibleDayLimit));
             }
 
-            const rankedStations = Object.values(stationScores).map(s => {
-                s.score = s.totalShifts > 0 ? Math.round((s.successfulUpdates / s.totalShifts) * 100) : 0;
-                return s;
-            }).sort((a, b) => b.score - a.score).slice(0, limit);
+            const rankedStations = calculateShiftPerformanceData(shiftType, targetYear, targetMonth, stations, daysInMonth, eligibleDayLimit).slice(0, limit);
 
             let html = '';
             rankedStations.forEach((s, index) => {
