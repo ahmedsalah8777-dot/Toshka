@@ -3297,6 +3297,7 @@
 <button id="emergency-info-btn" class="menu-item">🚨 معلومات الطوارئ</button>
     <button id="statistics-btn" class="menu-item">📈 الإحصائيات</button>
     <button id="performance-menu-btn" class="menu-item">🏅 تقييم الأداء</button>
+    <button id="supervisor-btn" class="menu-item" style="display: none;">🧑‍💼 شاشة المشرف</button>
     <button id="profile-btn" class="menu-item">📋 بياناتي الشخصية</button>
     <button id="announcement-settings-btn" class="menu-item" style="display: none;">📢 إعدادات الإعلانات</button>
     <button id="logout-btn" class="menu-item logout">👋 خروج</button>
@@ -3989,6 +3990,139 @@
                     </div>
                 </div>
 
+            </div>
+        </div>
+
+        <!-- شاشة المشرف -->
+        <div id="supervisor-dashboard-screen" class="screen">
+            <div class="screen-header">
+                <h2>🧑‍💼 شاشة المشرف</h2>
+                <button class="btn btn-outline" id="back-to-stations-from-supervisor">عودة للرئيسية</button>
+            </div>
+            
+            <div class="container">
+                <div class="filters-container" style="background: #f9f9f9; padding: 15px; border-radius: 8px; border: 1px solid #eee; margin-bottom: 15px; display: grid; gap: 10px; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); align-items: end;">
+                    <div class="filter-item" id="supervisor-target-wrapper" style="display:none;">
+                        <label>المشرف</label>
+                        <select id="supervisor-target-select">
+                            <option value="">اختر المشرف</option>
+                        </select>
+                    </div>
+                    <div class="filter-item">
+                        <label>الشهر</label>
+                        <input type="month" id="supervisor-month" style="width:100%; padding:10px; border:1px solid #ddd; border-radius:8px;">
+                    </div>
+                    <div class="filter-item" style="display:flex; gap:10px;">
+                        <button class="btn btn-primary" id="supervisor-refresh-btn" style="flex:1">تحديث</button>
+                        <button class="btn btn-outline" id="supervisor-edit-stations-btn" style="flex:1">اختيار المحطات</button>
+                        <button class="btn btn-outline" id="supervisor-history-btn" style="flex:1; display:none;">📅 سجل التقييم</button>
+                    </div>
+                </div>
+                
+                <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap:15px; margin-bottom: 15px;">
+                    <div class="detail-card"><div class="detail-title">تقييم المشرف</div><div class="detail-value" id="supervisor-score">-</div></div>
+                    <div class="detail-card"><div class="detail-title">كفاءة المحطات</div><div class="detail-value" id="supervisor-efficiency-score">-</div></div>
+                    <div class="detail-card"><div class="detail-title">التزام التمام</div><div class="detail-value" id="supervisor-shifts-score">-</div></div>
+                    <div class="detail-card"><div class="detail-title">تحديث الفحص</div><div class="detail-value" id="supervisor-inspection-score">-</div></div>
+                    <div class="detail-card"><div class="detail-title">اعتماد الفحص</div><div class="detail-value" id="supervisor-approval-score">-</div></div>
+                    <div class="detail-card"><div class="detail-title">بلاغات الأعطال</div><div class="detail-value" id="supervisor-faultreports-score">-</div></div>
+                </div>
+                
+                <div class="performance-card">
+                    <div class="performance-header">
+                        <div class="performance-title">📌 ملخص المحطات</div>
+                    </div>
+                    <div id="supervisor-stations-summary" class="rank-list"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- شاشة اختيار محطات المشرف -->
+        <div id="supervisor-stations-screen" class="screen">
+            <div class="screen-header">
+                <h2>✅ اختيار محطات المشرف</h2>
+                <button class="btn btn-outline" id="back-to-supervisor-dashboard">عودة</button>
+            </div>
+            
+            <div class="container">
+                <div class="filters-container" style="background: #f9f9f9; padding: 15px; border-radius: 8px; border: 1px solid #eee; margin-bottom: 15px; display: grid; gap: 10px; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); align-items: end;">
+                    <div class="filter-item" id="supervisor-assign-wrapper" style="display:none;">
+                        <label>المشرف</label>
+                        <select id="supervisor-assign-select">
+                            <option value="">اختر المشرف</option>
+                        </select>
+                    </div>
+                    <div class="filter-item">
+                        <label>المنطقة</label>
+                        <select id="supervisor-assign-zone">
+                            <option value="all">كل المناطق</option>
+                        </select>
+                    </div>
+                    <div class="filter-item">
+                        <label>بحث</label>
+                        <input type="text" id="supervisor-assign-search" placeholder="ابحث باسم المحطة..." style="width:100%;">
+                    </div>
+                    <div class="filter-item" style="display:flex; gap:10px;">
+                        <button class="btn btn-outline" id="supervisor-select-all" style="flex:1">تحديد الكل</button>
+                        <button class="btn btn-outline" id="supervisor-clear-all" style="flex:1">إلغاء الكل</button>
+                    </div>
+                </div>
+                
+                <div class="performance-card">
+                    <div class="performance-header">
+                        <div class="performance-title">🏭 المحطات</div>
+                        <div id="supervisor-assign-status" style="font-size:0.9rem; color:#666;"></div>
+                    </div>
+                    <div id="supervisor-stations-list" style="display:grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap:10px;"></div>
+                    <div style="display:flex; gap:10px; margin-top:15px;">
+                        <button class="btn btn-success" id="supervisor-save-assignments" style="flex:1">💾 حفظ</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- شاشة سجل تقييم المشرف -->
+        <div id="supervisor-history-screen" class="screen">
+            <div class="screen-header">
+                <h2>📅 سجل تقييم المشرف</h2>
+                <button class="btn btn-outline" id="back-to-supervisor-dashboard-from-history">عودة</button>
+            </div>
+            
+            <div class="container">
+                <div class="filters-container" style="background: #f9f9f9; padding: 15px; border-radius: 8px; border: 1px solid #eee; margin-bottom: 15px; display: grid; gap: 10px; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); align-items: end;">
+                    <div class="filter-item">
+                        <label>المشرف</label>
+                        <select id="sup-hist-supervisor"></select>
+                    </div>
+                    <div class="filter-item">
+                        <label>الفترة</label>
+                        <select id="sup-hist-period">
+                            <option value="monthly">شهري</option>
+                            <option value="quarterly">ربع سنوي</option>
+                            <option value="semiannual">نصف سنوي</option>
+                            <option value="annual">سنوي</option>
+                        </select>
+                    </div>
+                    <div class="filter-item" id="sup-hist-year-wrapper">
+                        <label>السنة</label>
+                        <select id="sup-hist-year"></select>
+                    </div>
+                    <div class="filter-item">
+                        <label>تقسيم الفترة</label>
+                        <select id="sup-hist-segment"></select>
+                    </div>
+                    <div class="filter-item" style="display:flex; gap:10px; align-items:flex-end;">
+                        <button class="btn btn-primary" id="sup-hist-refresh" style="flex:1">عرض</button>
+                        <div id="sup-hist-status" style="font-size:0.9rem; color:#666; padding:10px 0;"></div>
+                    </div>
+                </div>
+                
+                <div class="performance-card">
+                    <div class="performance-header">
+                        <div class="performance-title">📊 النتائج</div>
+                    </div>
+                    <div id="sup-hist-results" class="rank-list"></div>
+                </div>
             </div>
         </div>
 
@@ -6384,6 +6518,25 @@ document.getElementById('emergency-image-modal').addEventListener('click', funct
                 if (typeof resetArchiveLimit === 'function') resetArchiveLimit();
                 if (typeof renderWorkOrdersTables === 'function') renderWorkOrdersTables();
             }
+            if(screenId === 'supervisor-dashboard') {
+                loadStations(function() { 
+                    loadHistory(function() { 
+                        if (typeof renderSupervisorDashboard === 'function') renderSupervisorDashboard(); 
+                    }); 
+                });
+            }
+            if(screenId === 'supervisor-stations') {
+                loadStations(function() { 
+                    if (typeof renderSupervisorAssignmentsScreen === 'function') renderSupervisorAssignmentsScreen(); 
+                });
+            }
+            if(screenId === 'supervisor-history') {
+                loadStations(function() { 
+                    loadHistory(function() { 
+                        if (typeof renderSupervisorHistory === 'function') renderSupervisorHistory(); 
+                    }); 
+                });
+            }
         }
 
         // تسجيل الدخول
@@ -6452,6 +6605,7 @@ document.getElementById('emergency-image-modal').addEventListener('click', funct
                 document.getElementById('export-inspection-report-btn').style.display = permissions.export_inspection ? 'inline-block' : 'none';
                 document.getElementById('statistics-btn').style.display = permissions.view_statistics ? 'inline-block' : 'none';
                 document.getElementById('view-inspection-btn').style.display = permissions.view_inspection_btn ? 'inline-block' : 'none';
+                document.getElementById('supervisor-btn').style.display = (userType === 'admin' || userType === 'engineer' || userType === 'supervisor') ? 'inline-block' : 'none';
                 
                 if (userType === 'admin' || userType === 'engineer') {
                     document.getElementById('consumptions-btn').style.display = 'inline-block';
@@ -6492,6 +6646,7 @@ document.getElementById('work-orders-btn').style.display = 'none';
         
         document.getElementById('history-management-btn').addEventListener('click', () => showScreen('history'));
         document.getElementById('alarm-btn').addEventListener('click', () => showScreen('faults-log'));
+        document.getElementById('supervisor-btn').addEventListener('click', () => showScreen('supervisor-dashboard'));
         document.getElementById('export-inspection-report-btn').addEventListener('click', () => {
             if (appData.currentUser && appData.currentUser.permissions.export_inspection) {
                 showScreen('inspection-export');
@@ -6510,6 +6665,9 @@ document.getElementById('work-orders-btn').style.display = 'none';
         document.getElementById('back-to-stations-from-profile').addEventListener('click', () => goBack());
         document.getElementById('back-to-stations-from-users-data').addEventListener('click', () => goBack());
         document.getElementById('back-to-stations-from-export').addEventListener('click', () => goBack());
+        document.getElementById('back-to-stations-from-supervisor').addEventListener('click', () => goBack());
+        document.getElementById('back-to-supervisor-dashboard').addEventListener('click', () => goBack());
+        document.getElementById('back-to-supervisor-dashboard-from-history').addEventListener('click', () => goBack());
 
         // New button for user data management
         document.getElementById('profile-btn').addEventListener('dblclick', () => {
@@ -10708,6 +10866,654 @@ if(btnPerfBack) btnPerfBack.addEventListener('click', () => goBack());
         }
     }
 
+    function getEligibleDayLimitForMonth(shiftType, targetYear, targetMonthIndex) {
+        const daysInMonth = new Date(targetYear, targetMonthIndex + 1, 0).getDate();
+        const now = new Date();
+        const isFuture = (targetYear > now.getFullYear()) || (targetYear === now.getFullYear() && targetMonthIndex > now.getMonth());
+        const isCurrent = (targetYear === now.getFullYear() && targetMonthIndex === now.getMonth());
+        if (isFuture) return 0;
+        if (!isCurrent) return daysInMonth;
+        let limit = daysInMonth;
+        if (shiftType === 'day') limit = now.getHours() >= 6 ? now.getDate() : (now.getDate() - 1);
+        else limit = now.getHours() >= 18 ? now.getDate() : (now.getDate() - 1);
+        return Math.max(0, Math.min(daysInMonth, limit));
+    }
+
+    function computeStationEfficiencyScore(station) {
+        const ins = station ? station.inspectionData : null;
+        if (!ins) return null;
+        let earned = 0;
+        let total = 0;
+        const scoreFor = (v) => {
+            if (v === 'efficient') return 1;
+            if (v === 'fault') return 0.5;
+            if (v === 'broken') return 0;
+            return null;
+        };
+        Object.keys(ins).forEach(k => {
+            if (k === 'approval' || k === 'lastUpdate' || k === 'modifiedBy') return;
+            const bucket = ins[k];
+            if (!bucket || typeof bucket !== 'object') return;
+            Object.keys(bucket).forEach(idx => {
+                const item = bucket[idx];
+                const v = item && item.status ? item.status : null;
+                const sc = scoreFor(v);
+                if (sc === null) return;
+                total += 1;
+                earned += sc;
+            });
+        });
+        if (total === 0) return null;
+        return Math.round((earned / total) * 1000) / 10;
+    }
+
+    function loadSupervisorStations(username) {
+        if (!username) return Promise.resolve([]);
+        if (!appData.supervisorStationsCache) appData.supervisorStationsCache = {};
+        if (typeof db === 'undefined' || !navigator.onLine) {
+            return Promise.resolve(appData.supervisorStationsCache[username] || []);
+        }
+        return db.ref('supervisorStations/' + username).once('value').then(snap => {
+            const v = snap.val() || {};
+            const list = Array.isArray(v) ? v : Object.keys(v).filter(k => v[k]);
+            appData.supervisorStationsCache[username] = list;
+            return list;
+        }).catch(() => {
+            return appData.supervisorStationsCache[username] || [];
+        });
+    }
+
+    function saveSupervisorStations(username, stationNames) {
+        if (!username) return Promise.reject(new Error('MissingUsername'));
+        const obj = {};
+        (stationNames || []).forEach(n => { obj[n] = true; });
+        if (!appData.supervisorStationsCache) appData.supervisorStationsCache = {};
+        appData.supervisorStationsCache[username] = Object.keys(obj);
+        if (typeof db === 'undefined' || !navigator.onLine) return Promise.reject(new Error('Offline'));
+        return db.ref('supervisorStations/' + username).set(obj);
+    }
+
+    function getSupervisorUsers() {
+        const users = appData.users || {};
+        return Object.keys(users).filter(u => users[u] && users[u].type === 'supervisor' && users[u].active !== false).sort((a, b) => a.localeCompare(b, 'ar'));
+    }
+
+    function calculateApprovalPerformanceData(targetYear, targetMonthIndex, stations) {
+        const result = [];
+        stations.forEach(s => {
+            const ins = s.inspectionData;
+            let score = 0;
+            let details = 'غير معتمد';
+            if (ins && ins.lastUpdate) {
+                const lastDt = (typeof parseCustomDate === 'function' ? parseCustomDate(ins.lastUpdate) : null) || parseDateSimple(ins.lastUpdate);
+                if (lastDt && lastDt.getFullYear() === targetYear && lastDt.getMonth() === targetMonthIndex) {
+                    if (ins.approval && ins.approval.date) {
+                        const apprDt = (typeof parseCustomDate === 'function' ? parseCustomDate(ins.approval.date) : null) || parseCustomDate(ins.approval.date + '');
+                        if (apprDt) {
+                            let diffHrs = (apprDt.getTime() - lastDt.getTime()) / 3600000;
+                            if (!isFinite(diffHrs) || diffHrs < 0) diffHrs = 0;
+                            if (diffHrs <= 12) score = 100;
+                            else if (diffHrs <= 24) score = 90;
+                            else if (diffHrs <= 48) score = 75;
+                            else if (diffHrs <= 72) score = 60;
+                            else score = 40;
+                            details = `خلال ${Math.round(diffHrs)} ساعة`;
+                        }
+                    }
+                }
+            }
+            result.push({ name: s.name, zone: s.zone, score, details });
+        });
+        result.sort((a, b) => b.score - a.score);
+        return result;
+    }
+
+    function bindSupervisorHandlers() {
+        if (appData.supervisorHandlersBound) return;
+        appData.supervisorHandlersBound = true;
+        
+        const refreshBtn = document.getElementById('supervisor-refresh-btn');
+        if (refreshBtn) refreshBtn.addEventListener('click', () => { if (typeof renderSupervisorDashboard === 'function') renderSupervisorDashboard(); });
+        
+        const editBtn = document.getElementById('supervisor-edit-stations-btn');
+        if (editBtn) editBtn.addEventListener('click', () => showScreen('supervisor-stations'));
+
+        const historyBtn = document.getElementById('supervisor-history-btn');
+        if (historyBtn) historyBtn.addEventListener('click', () => showScreen('supervisor-history'));
+        
+        const targetSel = document.getElementById('supervisor-target-select');
+        if (targetSel) targetSel.addEventListener('change', () => { appData.supervisorTargetUser = targetSel.value; if (typeof renderSupervisorDashboard === 'function') renderSupervisorDashboard(); });
+        
+        const monthInput = document.getElementById('supervisor-month');
+        if (monthInput) monthInput.addEventListener('change', () => { if (typeof renderSupervisorDashboard === 'function') renderSupervisorDashboard(); });
+        
+        const assignSel = document.getElementById('supervisor-assign-select');
+        if (assignSel) assignSel.addEventListener('change', () => { appData.supervisorAssignUser = assignSel.value; if (typeof renderSupervisorAssignmentsScreen === 'function') renderSupervisorAssignmentsScreen(); });
+        
+        const zoneSel = document.getElementById('supervisor-assign-zone');
+        if (zoneSel) zoneSel.addEventListener('change', () => { if (typeof renderSupervisorAssignmentsScreen === 'function') renderSupervisorAssignmentsScreen(); });
+        
+        const searchInput = document.getElementById('supervisor-assign-search');
+        if (searchInput) searchInput.addEventListener('input', () => { if (typeof renderSupervisorAssignmentsScreen === 'function') renderSupervisorAssignmentsScreen(); });
+        
+        const btnAll = document.getElementById('supervisor-select-all');
+        if (btnAll) btnAll.addEventListener('click', () => {
+            const list = document.getElementById('supervisor-stations-list');
+            if (!list) return;
+            list.querySelectorAll('input[type="checkbox"]').forEach(cb => { cb.checked = true; });
+        });
+        
+        const btnNone = document.getElementById('supervisor-clear-all');
+        if (btnNone) btnNone.addEventListener('click', () => {
+            const list = document.getElementById('supervisor-stations-list');
+            if (!list) return;
+            list.querySelectorAll('input[type="checkbox"]').forEach(cb => { cb.checked = false; });
+        });
+        
+        const btnSave = document.getElementById('supervisor-save-assignments');
+        if (btnSave) btnSave.addEventListener('click', () => {
+            const list = document.getElementById('supervisor-stations-list');
+            const statusEl = document.getElementById('supervisor-assign-status');
+            const u = getSupervisorAssignmentsTarget();
+            if (!list || !u) return;
+            const selected = Array.from(list.querySelectorAll('input[type="checkbox"]:checked')).map(cb => cb.value);
+            if (statusEl) statusEl.textContent = 'جاري الحفظ...';
+            btnSave.disabled = true;
+            saveSupervisorStations(u, selected).then(() => {
+                appData.supervisorTargetUser = u;
+                if (statusEl) statusEl.textContent = 'تم الحفظ';
+                showScreen('supervisor-dashboard');
+            }).catch((e) => {
+                const msg = e && e.message ? e.message : '';
+                appData.supervisorTargetUser = u;
+                if (msg === 'Offline') {
+                    if (statusEl) statusEl.textContent = 'تم الحفظ محلياً - غير متصل';
+                    showScreen('supervisor-dashboard');
+                } else {
+                    if (statusEl) statusEl.textContent = 'فشل الحفظ';
+                }
+            }).finally(() => {
+                btnSave.disabled = false;
+            });
+        });
+
+        const histSupervisor = document.getElementById('sup-hist-supervisor');
+        if (histSupervisor) histSupervisor.addEventListener('change', () => { appData.supHistSupervisor = histSupervisor.value; if (typeof renderSupervisorHistory === 'function') renderSupervisorHistory(); });
+        const histPeriod = document.getElementById('sup-hist-period');
+        if (histPeriod) histPeriod.addEventListener('change', () => { appData.supHistPeriod = histPeriod.value; if (typeof renderSupervisorHistory === 'function') renderSupervisorHistory(true); });
+        const histYear = document.getElementById('sup-hist-year');
+        if (histYear) histYear.addEventListener('change', () => { appData.supHistYear = histYear.value; if (typeof renderSupervisorHistory === 'function') renderSupervisorHistory(); });
+        const histSegment = document.getElementById('sup-hist-segment');
+        if (histSegment) histSegment.addEventListener('change', () => { appData.supHistSegment = histSegment.value; if (typeof renderSupervisorHistory === 'function') renderSupervisorHistory(); });
+        const histRefresh = document.getElementById('sup-hist-refresh');
+        if (histRefresh) histRefresh.addEventListener('click', () => { if (typeof renderSupervisorHistory === 'function') renderSupervisorHistory(); });
+    }
+
+    function getSupervisorDashboardTarget() {
+        const current = appData.currentUser;
+        if (!current) return '';
+        if (current.type === 'admin' || current.type === 'engineer') {
+            const sel = document.getElementById('supervisor-target-select');
+            return (sel && sel.value) || appData.supervisorTargetUser || '';
+        }
+        return current.username || current.name || '';
+    }
+
+    function getSupervisorAssignmentsTarget() {
+        const current = appData.currentUser;
+        if (!current) return '';
+        if (current.type === 'admin' || current.type === 'engineer') {
+            const sel = document.getElementById('supervisor-assign-select');
+            return (sel && sel.value) || appData.supervisorAssignUser || '';
+        }
+        return current.username || current.name || '';
+    }
+
+    window.renderSupervisorDashboard = function() {
+        bindSupervisorHandlers();
+        const current = appData.currentUser;
+        if (!current) return;
+
+        const historyBtn = document.getElementById('supervisor-history-btn');
+        if (historyBtn) historyBtn.style.display = (current.type === 'admin' || current.type === 'engineer') ? 'inline-block' : 'none';
+        
+        const monthInput = document.getElementById('supervisor-month');
+        if (monthInput && !monthInput.value) {
+            const now = new Date();
+            monthInput.value = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+        }
+        
+        const wrapper = document.getElementById('supervisor-target-wrapper');
+        const sel = document.getElementById('supervisor-target-select');
+        if (current.type === 'admin' || current.type === 'engineer') {
+            if (wrapper) wrapper.style.display = 'block';
+            if (sel) {
+                const supervisors = getSupervisorUsers();
+                sel.innerHTML = '<option value="">اختر المشرف</option>' + supervisors.map(u => `<option value="${u}">${u}</option>`).join('');
+                if (!sel.value) sel.value = appData.supervisorTargetUser || supervisors[0] || '';
+                appData.supervisorTargetUser = sel.value;
+            }
+        } else {
+            if (wrapper) wrapper.style.display = 'none';
+        }
+        
+        const targetUser = getSupervisorDashboardTarget();
+        const summaryEl = document.getElementById('supervisor-stations-summary');
+        if (!targetUser) {
+            if (summaryEl) summaryEl.innerHTML = '<div style="text-align:center; padding:20px; color:#666;">اختر المشرف</div>';
+            return;
+        }
+        
+        let targetYear, targetMonthIndex;
+        if (monthInput && monthInput.value && monthInput.value.includes('-')) {
+            const parts = monthInput.value.split('-');
+            targetYear = parseInt(parts[0]);
+            targetMonthIndex = parseInt(parts[1]) - 1;
+        } else {
+            const now = new Date();
+            targetYear = now.getFullYear();
+            targetMonthIndex = now.getMonth();
+        }
+        
+        loadSupervisorStations(targetUser).then(stationNames => {
+            const selectedStations = (stationNames || []).map(n => appData.stations[n]).filter(Boolean);
+            const scoreEl = document.getElementById('supervisor-score');
+            const effEl = document.getElementById('supervisor-efficiency-score');
+            const shiftsEl = document.getElementById('supervisor-shifts-score');
+            const inspEl = document.getElementById('supervisor-inspection-score');
+            const apprEl = document.getElementById('supervisor-approval-score');
+            const frEl = document.getElementById('supervisor-faultreports-score');
+            
+            if (selectedStations.length === 0) {
+                if (summaryEl) summaryEl.innerHTML = '<div style="text-align:center; padding:20px; color:#666;">لا توجد محطات محددة لهذا المشرف</div>';
+                if (scoreEl) scoreEl.textContent = '-';
+                if (effEl) effEl.textContent = '-';
+                if (shiftsEl) shiftsEl.textContent = '-';
+                if (inspEl) inspEl.textContent = '-';
+                if (apprEl) apprEl.textContent = '-';
+                if (frEl) frEl.textContent = '-';
+                return;
+            }
+            
+            const daysInMonth = new Date(targetYear, targetMonthIndex + 1, 0).getDate();
+            const eligibleDay = getEligibleDayLimitForMonth('day', targetYear, targetMonthIndex);
+            const eligibleNight = getEligibleDayLimitForMonth('night', targetYear, targetMonthIndex);
+            const dayData = calculateShiftPerformanceData('day', targetYear, targetMonthIndex, selectedStations, daysInMonth, eligibleDay);
+            const nightData = calculateShiftPerformanceData('night', targetYear, targetMonthIndex, selectedStations, daysInMonth, eligibleNight);
+            const inspData = calculateInspectionPerformanceData(targetYear, targetMonthIndex, selectedStations);
+            const apprData = calculateApprovalPerformanceData(targetYear, targetMonthIndex, selectedStations);
+            
+            const byName = (arr) => {
+                const m = {};
+                (arr || []).forEach(x => { m[x.name] = x; });
+                return m;
+            };
+            const dayMap = byName(dayData);
+            const nightMap = byName(nightData);
+            const inspMap = byName(inspData);
+            const apprMap = byName(apprData);
+            
+            const avg = (arr) => {
+                const v = (arr || []).map(x => Number(x.score)).filter(n => isFinite(n));
+                if (v.length === 0) return 0;
+                return v.reduce((a, b) => a + b, 0) / v.length;
+            };
+            const avgShift = (avg(dayData) + avg(nightData)) / 2;
+            const avgInspection = avg(inspData);
+            const avgApproval = avg(apprData);
+            const effScores = selectedStations.map(s => computeStationEfficiencyScore(s)).filter(v => v !== null);
+            const avgEfficiency = effScores.length ? (effScores.reduce((a, b) => a + b, 0) / effScores.length) : 0;
+
+            calculateFaultReportsSupervisorScore(targetYear, targetMonthIndex, stationNames || [], targetUser).then(fr => {
+                const avgFault = fr && fr.score !== null ? fr.score : null;
+                
+                if (effEl) effEl.textContent = (Math.round(avgEfficiency * 10) / 10) + '%';
+                if (shiftsEl) shiftsEl.textContent = (Math.round(avgShift * 10) / 10) + '%';
+                if (inspEl) inspEl.textContent = (Math.round(avgInspection * 10) / 10) + '%';
+                if (apprEl) apprEl.textContent = (Math.round(avgApproval * 10) / 10) + '%';
+                if (frEl) {
+                    if (avgFault === null) frEl.textContent = (fr && fr.details ? fr.details : '-');
+                    else frEl.textContent = (Math.round(avgFault * 10) / 10) + '%';
+                    frEl.title = fr && fr.details ? fr.details : '';
+                }
+                
+                const wShift = 0.30;
+                const wInspection = 0.20;
+                const wApproval = 0.20;
+                const wEfficiency = 0.10;
+                const wFault = 0.20;
+                
+                const faultForScore = avgFault === null ? 0 : avgFault;
+                const supervisorScore = Math.round(((avgShift * wShift) + (avgInspection * wInspection) + (avgApproval * wApproval) + (avgEfficiency * wEfficiency) + (faultForScore * wFault)) * 10) / 10;
+                if (scoreEl) scoreEl.textContent = supervisorScore + '%';
+                
+                const stationRows = selectedStations.map(s => {
+                    const eff = computeStationEfficiencyScore(s);
+                    const d = dayMap[s.name] ? dayMap[s.name].score : 0;
+                    const n = nightMap[s.name] ? nightMap[s.name].score : 0;
+                    const i = inspMap[s.name] ? inspMap[s.name].score : 0;
+                    const a = apprMap[s.name] ? apprMap[s.name].score : 0;
+                    const e = eff === null ? 0 : eff;
+                    const composite = Math.round((((d + n) / 2) * wShift + i * wInspection + a * wApproval + e * wEfficiency + faultForScore * wFault) * 10) / 10;
+                    return { name: s.name, zone: s.zone, composite, details: `كفاءة ${e}% | نهاري ${d}% | مسائي ${n}% | فحص ${i}% | اعتماد ${a}%` };
+                }).sort((a, b) => b.composite - a.composite);
+                
+                let html = '';
+                stationRows.forEach((r, idx) => {
+                    const rankClass = idx < 3 ? `top-${idx + 1}` : '';
+                    html += `
+                        <li class="rank-item ${rankClass}">
+                            <div class="rank-number">${idx + 1}</div>
+                            <div class="rank-info">
+                                <div class="rank-name">${r.name}</div>
+                                <div class="rank-details">${r.zone} | ${r.details}</div>
+                            </div>
+                            <div class="rank-score">${r.composite}%</div>
+                        </li>
+                    `;
+                });
+                if (summaryEl) summaryEl.innerHTML = html || '<div style="text-align:center; padding:20px; color:#666;">لا توجد بيانات</div>';
+            });
+        });
+    };
+
+    window.renderSupervisorAssignmentsScreen = function() {
+        bindSupervisorHandlers();
+        const current = appData.currentUser;
+        if (!current) return;
+        
+        const wrapper = document.getElementById('supervisor-assign-wrapper');
+        const sel = document.getElementById('supervisor-assign-select');
+        if (current.type === 'admin' || current.type === 'engineer') {
+            if (wrapper) wrapper.style.display = 'block';
+            if (sel) {
+                const supervisors = getSupervisorUsers();
+                sel.innerHTML = '<option value="">اختر المشرف</option>' + supervisors.map(u => `<option value="${u}">${u}</option>`).join('');
+                if (!sel.value) sel.value = appData.supervisorAssignUser || supervisors[0] || '';
+                appData.supervisorAssignUser = sel.value;
+            }
+        } else {
+            if (wrapper) wrapper.style.display = 'none';
+        }
+        
+        const targetUser = getSupervisorAssignmentsTarget();
+        const listEl = document.getElementById('supervisor-stations-list');
+        const statusEl = document.getElementById('supervisor-assign-status');
+        if (!targetUser) {
+            if (listEl) listEl.innerHTML = '<div style="text-align:center; padding:20px; color:#666;">اختر المشرف</div>';
+            return;
+        }
+        
+        const zoneSel = document.getElementById('supervisor-assign-zone');
+        if (zoneSel && zoneSel.options.length <= 1) {
+            const zones = new Set();
+            if (appData.zones && Array.isArray(appData.zones)) appData.zones.forEach(z => zones.add(z));
+            if (appData.stations) Object.values(appData.stations).forEach(s => { if (s && s.zone) zones.add(s.zone); });
+            const arr = Array.from(zones).filter(z => z && z !== 'all').sort();
+            zoneSel.innerHTML = '<option value="all">كل المناطق</option>' + arr.map(z => `<option value="${z}">${z}</option>`).join('');
+        }
+        
+        const zone = zoneSel ? zoneSel.value : 'all';
+        const q = (document.getElementById('supervisor-assign-search') ? document.getElementById('supervisor-assign-search').value : '').trim().toLowerCase();
+        
+        loadSupervisorStations(targetUser).then(selected => {
+            const selectedSet = new Set(selected || []);
+            const stations = Object.values(appData.stations || {}).filter(s => s && s.name);
+            const filtered = stations.filter(s => {
+                if (zone !== 'all' && s.zone !== zone) return false;
+                if (q && !String(s.name).toLowerCase().includes(q)) return false;
+                return true;
+            }).sort((a, b) => String(a.name).localeCompare(String(b.name), 'ar'));
+            
+            if (statusEl) statusEl.textContent = `المحدد: ${selectedSet.size}`;
+            if (!listEl) return;
+            if (filtered.length === 0) {
+                listEl.innerHTML = '<div style="text-align:center; padding:20px; color:#666;">لا توجد محطات مطابقة</div>';
+                return;
+            }
+            listEl.innerHTML = filtered.map(s => {
+                const checked = selectedSet.has(s.name) ? 'checked' : '';
+                return `
+                    <label style="background:#fff; border:1px solid #eee; border-radius:10px; padding:10px; display:flex; gap:10px; align-items:center;">
+                        <input type="checkbox" value="${s.name}" ${checked}>
+                        <div style="display:flex; flex-direction:column;">
+                            <div style="font-weight:bold;">${s.name}</div>
+                            <div style="font-size:0.85rem; color:#666;">${s.zone || ''}</div>
+                        </div>
+                    </label>
+                `;
+            }).join('');
+        });
+    };
+
+    function ensureSupervisorHistorySegments(periodValue) {
+        const seg = document.getElementById('sup-hist-segment');
+        if (!seg) return;
+        const v = periodValue || (document.getElementById('sup-hist-period') ? document.getElementById('sup-hist-period').value : 'monthly');
+        let html = '<option value="all">الكل</option>';
+        if (v === 'monthly') {
+            const months = ['يناير','فبراير','مارس','أبريل','مايو','يونيو','يوليو','أغسطس','سبتمبر','أكتوبر','نوفمبر','ديسمبر'];
+            html += months.map((m, i) => `<option value="${i+1}">${m}</option>`).join('');
+        } else if (v === 'quarterly') {
+            html += ['الربع الأول','الربع الثاني','الربع الثالث','الربع الرابع'].map((q, i) => `<option value="${i+1}">${q}</option>`).join('');
+        } else if (v === 'semiannual') {
+            html += ['النصف الأول','النصف الثاني'].map((h, i) => `<option value="${i+1}">${h}</option>`).join('');
+        } else {
+            html = '<option value="all">السنة كاملة</option>';
+        }
+        seg.innerHTML = html;
+        if (appData.supHistSegment && Array.from(seg.options).some(o => o.value === String(appData.supHistSegment))) {
+            seg.value = String(appData.supHistSegment);
+        } else if (seg.options.length) {
+            seg.value = seg.options[0].value;
+            appData.supHistSegment = seg.value;
+        }
+    }
+
+    function ensureSupervisorHistoryYears() {
+        const yearSel = document.getElementById('sup-hist-year');
+        if (!yearSel) return;
+        const now = new Date();
+        const minYear = 2026;
+        const maxYear = now.getFullYear();
+        let years = [];
+        for (let y = maxYear; y >= minYear; y--) years.push(y);
+        yearSel.innerHTML = years.map(y => `<option value="${y}">${y}</option>`).join('');
+        const desired = appData.supHistYear ? parseInt(appData.supHistYear) : maxYear;
+        yearSel.value = String(years.includes(desired) ? desired : maxYear);
+        appData.supHistYear = yearSel.value;
+    }
+
+    function ensureSupervisorHistorySupervisors() {
+        const sel = document.getElementById('sup-hist-supervisor');
+        if (!sel) return;
+        const supervisors = getSupervisorUsers();
+        sel.innerHTML = supervisors.map(u => `<option value="${u}">${u}</option>`).join('');
+        const desired = appData.supHistSupervisor || supervisors[0] || '';
+        if (desired) sel.value = desired;
+        appData.supHistSupervisor = sel.value;
+    }
+
+    function getSupervisorHistorySegments(period, segmentValue, year) {
+        const months = ['يناير','فبراير','مارس','أبريل','مايو','يونيو','يوليو','أغسطس','سبتمبر','أكتوبر','نوفمبر','ديسمبر'];
+        const seg = String(segmentValue || 'all');
+        const segments = [];
+        if (period === 'monthly') {
+            const addMonth = (m) => segments.push({ label: months[m] + ' ' + year, months: [m] });
+            if (seg === 'all') { for (let m = 0; m < 12; m++) addMonth(m); }
+            else { const m = parseInt(seg) - 1; if (m >= 0 && m < 12) addMonth(m); }
+        } else if (period === 'quarterly') {
+            const quarters = [
+                { label: 'الربع الأول ' + year, months: [0,1,2] },
+                { label: 'الربع الثاني ' + year, months: [3,4,5] },
+                { label: 'الربع الثالث ' + year, months: [6,7,8] },
+                { label: 'الربع الرابع ' + year, months: [9,10,11] }
+            ];
+            if (seg === 'all') return quarters;
+            const q = parseInt(seg) - 1;
+            if (q >= 0 && q < 4) segments.push(quarters[q]);
+        } else if (period === 'semiannual') {
+            const halves = [
+                { label: 'النصف الأول ' + year, months: [0,1,2,3,4,5] },
+                { label: 'النصف الثاني ' + year, months: [6,7,8,9,10,11] }
+            ];
+            if (seg === 'all') return halves;
+            const h = parseInt(seg) - 1;
+            if (h >= 0 && h < 2) segments.push(halves[h]);
+        } else {
+            segments.push({ label: 'السنة ' + year, months: [0,1,2,3,4,5,6,7,8,9,10,11] });
+        }
+        return segments;
+    }
+
+    function computeSupervisorMonthScore(targetUser, year, monthIndex, stationNames) {
+        if (!appData.supervisorHistoryMonthCache) appData.supervisorHistoryMonthCache = {};
+        const key = `${year}-${String(monthIndex + 1).padStart(2, '0')}`;
+        if (!appData.supervisorHistoryMonthCache[targetUser]) appData.supervisorHistoryMonthCache[targetUser] = {};
+        if (appData.supervisorHistoryMonthCache[targetUser][key]) return Promise.resolve(appData.supervisorHistoryMonthCache[targetUser][key]);
+
+        const now = new Date();
+        const isFuture = (year > now.getFullYear()) || (year === now.getFullYear() && monthIndex > now.getMonth());
+        if (isFuture) {
+            const result = { score: null, details: 'لم تبدأ', parts: { shift: null, inspection: null, approval: null, efficiency: null, faults: null }, faultDetails: '' };
+            appData.supervisorHistoryMonthCache[targetUser][key] = result;
+            return Promise.resolve(result);
+        }
+
+        const selectedStations = (stationNames || []).map(n => appData.stations[n]).filter(Boolean);
+        if (selectedStations.length === 0) return Promise.resolve({ score: null, details: 'لا توجد محطات' });
+
+        const daysInMonth = new Date(year, monthIndex + 1, 0).getDate();
+        const eligibleDay = getEligibleDayLimitForMonth('day', year, monthIndex);
+        const eligibleNight = getEligibleDayLimitForMonth('night', year, monthIndex);
+        const dayData = calculateShiftPerformanceData('day', year, monthIndex, selectedStations, daysInMonth, eligibleDay);
+        const nightData = calculateShiftPerformanceData('night', year, monthIndex, selectedStations, daysInMonth, eligibleNight);
+        const inspData = calculateInspectionPerformanceData(year, monthIndex, selectedStations);
+        const apprData = calculateApprovalPerformanceData(year, monthIndex, selectedStations);
+        const avg = (arr) => {
+            const v = (arr || []).map(x => Number(x.score)).filter(n => isFinite(n));
+            if (v.length === 0) return 0;
+            return v.reduce((a, b) => a + b, 0) / v.length;
+        };
+        const avgShift = (avg(dayData) + avg(nightData)) / 2;
+        const avgInspection = avg(inspData);
+        const avgApproval = avg(apprData);
+        const effScores = selectedStations.map(s => computeStationEfficiencyScore(s)).filter(v => v !== null);
+        const avgEfficiency = effScores.length ? (effScores.reduce((a, b) => a + b, 0) / effScores.length) : 0;
+
+        const wShift = 0.30;
+        const wInspection = 0.20;
+        const wApproval = 0.20;
+        const wEfficiency = 0.10;
+        const wFault = 0.20;
+
+        return calculateFaultReportsSupervisorScore(year, monthIndex, stationNames || [], targetUser).then(fr => {
+            const avgFault = fr && fr.score !== null ? fr.score : null;
+            const faultForScore = avgFault === null ? 0 : avgFault;
+            const score = Math.round(((avgShift * wShift) + (avgInspection * wInspection) + (avgApproval * wApproval) + (avgEfficiency * wEfficiency) + (faultForScore * wFault)) * 10) / 10;
+            const result = { score, parts: { shift: avgShift, inspection: avgInspection, approval: avgApproval, efficiency: avgEfficiency, faults: avgFault }, faultDetails: fr && fr.details ? fr.details : '' };
+            appData.supervisorHistoryMonthCache[targetUser][key] = result;
+            return result;
+        });
+    }
+
+    window.renderSupervisorHistory = function(forceRebuildSegments) {
+        bindSupervisorHandlers();
+        const current = appData.currentUser;
+        if (!current) return;
+        if (!(current.type === 'admin' || current.type === 'engineer')) {
+            alert('هذه الصفحة متاحة للمدير والمهندس فقط');
+            showScreen('supervisor-dashboard');
+            return;
+        }
+
+        const periodSel = document.getElementById('sup-hist-period');
+        if (periodSel) {
+            if (!periodSel.value) periodSel.value = appData.supHistPeriod || 'monthly';
+            appData.supHistPeriod = periodSel.value;
+        }
+        ensureSupervisorHistoryYears();
+        ensureSupervisorHistorySupervisors();
+        if (forceRebuildSegments) appData.supHistSegment = 'all';
+        ensureSupervisorHistorySegments(appData.supHistPeriod);
+
+        const targetUser = appData.supHistSupervisor || '';
+        const year = parseInt(appData.supHistYear || '');
+        const period = appData.supHistPeriod || 'monthly';
+        const segment = appData.supHistSegment || 'all';
+
+        const statusEl = document.getElementById('sup-hist-status');
+        const resultsEl = document.getElementById('sup-hist-results');
+        if (statusEl) statusEl.textContent = '';
+        if (!targetUser || !year) {
+            if (resultsEl) resultsEl.innerHTML = '<div style="text-align:center; padding:20px; color:#666;">اختر المشرف والفترة</div>';
+            return;
+        }
+
+        if (resultsEl) resultsEl.innerHTML = '<div style="text-align:center; padding:20px; color:#666;">جاري التحميل...</div>';
+        loadSupervisorStations(targetUser).then(stationNames => {
+            if (!stationNames || stationNames.length === 0) {
+                if (resultsEl) resultsEl.innerHTML = '<div style="text-align:center; padding:20px; color:#666;">لا توجد محطات محددة لهذا المشرف</div>';
+                return;
+            }
+
+            const segments = getSupervisorHistorySegments(period, segment, year);
+            const tasks = segments.map(segItem => {
+                const monthTasks = segItem.months.map(m => computeSupervisorMonthScore(targetUser, year, m, stationNames).catch(() => ({ score: null })));
+                return Promise.all(monthTasks).then(monthResults => {
+                    const scores = monthResults.map(r => (r && isFinite(Number(r.score)) ? Number(r.score) : null)).filter(v => v !== null);
+                    const avgScore = scores.length ? (scores.reduce((a, b) => a + b, 0) / scores.length) : null;
+                    
+                    const avgPart = (key) => {
+                        const values = monthResults.map(r => {
+                            if (!r || !r.parts) return null;
+                            const v = r.parts[key];
+                            return isFinite(Number(v)) ? Number(v) : null;
+                        }).filter(v => v !== null);
+                        if (values.length === 0) return null;
+                        return Math.round((values.reduce((a, b) => a + b, 0) / values.length) * 10) / 10;
+                    };
+                    
+                    return { 
+                        label: segItem.label, 
+                        score: avgScore === null ? null : (Math.round(avgScore * 10) / 10),
+                        parts: {
+                            shift: avgPart('shift'),
+                            inspection: avgPart('inspection'),
+                            approval: avgPart('approval'),
+                            efficiency: avgPart('efficiency'),
+                            faults: avgPart('faults')
+                        }
+                    };
+                });
+            });
+
+            Promise.all(tasks).then(items => {
+                let html = '';
+                items.forEach((it, idx) => {
+                    const v = it.score === null ? '-' : (it.score + '%');
+                    const parts = it.parts || {};
+                    const fmt = (x) => (x === null || typeof x === 'undefined') ? '-' : (Math.round(Number(x) * 10) / 10) + '%';
+                    const details = `التمام ${fmt(parts.shift)} | الفحص ${fmt(parts.inspection)} | الاعتماد ${fmt(parts.approval)} | الكفاءة ${fmt(parts.efficiency)} | البلاغات ${fmt(parts.faults)}`;
+                    html += `
+                        <li class="rank-item">
+                            <div class="rank-number">${idx + 1}</div>
+                            <div class="rank-info">
+                                <div class="rank-name">${it.label}</div>
+                                <div class="rank-details">${targetUser} | ${details}</div>
+                            </div>
+                            <div class="rank-score">${v}</div>
+                        </li>
+                    `;
+                });
+                if (resultsEl) resultsEl.innerHTML = html || '<div style="text-align:center; padding:20px; color:#666;">لا توجد بيانات</div>';
+                if (statusEl) statusEl.textContent = `المشرف: ${targetUser}`;
+            }).catch(() => {
+                if (resultsEl) resultsEl.innerHTML = '<div style="text-align:center; padding:20px; color:#666;">فشل التحميل</div>';
+            });
+        });
+    };
+
 // 2. دوال شاشة تسجيل البلاغات
 function initFaultReportingScreen() {
     // تعيين مقدم البلاغ
@@ -10940,9 +11746,13 @@ if (canEditDesc) {
 // 5. إجراءات الجدول (تأكيد / تحويل)
 window.confirmReport = function(key, isConfirmed) {
     if(!confirm(isConfirmed ? "تأكيد صحة البلاغ؟" : "هل أنت متأكد من إلغاء البلاغ؟")) return;
+    const nowStd = typeof getStandardDateTime === 'function' ? getStandardDateTime() : null;
     db.ref(`fault_reports/${key}`).update({
         supervisorStatus: isConfirmed ? 'confirmed' : 'cancelled',
-        confirmedBy: appData.currentUser.username
+        confirmedBy: appData.currentUser.username,
+        confirmedAt: firebase.database.ServerValue.TIMESTAMP,
+        confirmedDate: nowStd ? nowStd.date : '',
+        confirmedTime: nowStd ? nowStd.time : ''
     }).then(() => {
         // تحديث الجدول تلقائياً بعد التأكيد أو الإلغاء
         renderFaultReportsTable();
@@ -10950,6 +11760,93 @@ window.confirmReport = function(key, isConfirmed) {
         alert("حدث خطأ: " + err.message);
     });
 };
+
+function getMonthTimestampRange(year, monthIndex) {
+    const start = new Date(year, monthIndex, 1, 0, 0, 0, 0).getTime();
+    const end = new Date(year, monthIndex + 1, 0, 23, 59, 59, 999).getTime();
+    return { start, end };
+}
+
+function parseReportCreatedAtMs(item) {
+    if (item && typeof item.timestamp === 'number') return item.timestamp;
+    if (item && typeof item.timestamp === 'string' && item.timestamp.trim() !== '' && !isNaN(Number(item.timestamp))) return Number(item.timestamp);
+    if (item && item.date && item.time && typeof parseCustomDate === 'function') {
+        const dt = parseCustomDate(item.date + ' ' + item.time);
+        if (dt && dt.getTime) return dt.getTime();
+    }
+    if (item && item.date) {
+        const d = parseDateSimple(item.date);
+        if (d && d.getTime) return d.getTime();
+    }
+    return null;
+}
+
+function parseReportActionAtMs(item) {
+    if (item && typeof item.confirmedAt === 'number') return item.confirmedAt;
+    if (item && typeof item.confirmedAt === 'string' && item.confirmedAt.trim() !== '' && !isNaN(Number(item.confirmedAt))) return Number(item.confirmedAt);
+    if (item && item.confirmedDate && item.confirmedTime && typeof parseCustomDate === 'function') {
+        const dt = parseCustomDate(item.confirmedDate + ' ' + item.confirmedTime);
+        if (dt && dt.getTime) return dt.getTime();
+    }
+    return null;
+}
+
+function calculateFaultReportsSupervisorScore(targetYear, targetMonthIndex, stationNames, supervisorUsername) {
+    if (!stationNames || stationNames.length === 0 || !supervisorUsername) return Promise.resolve({ score: null, details: 'لا توجد محطات', total: 0, late: 0, onTime: 0 });
+    if (typeof db === 'undefined' || !navigator.onLine) return Promise.resolve({ score: null, details: 'غير متصل', total: 0, late: 0, onTime: 0 });
+    
+    const stationsSet = new Set(stationNames);
+    const { start, end } = getMonthTimestampRange(targetYear, targetMonthIndex);
+    const nowMs = Date.now();
+    const deadlineMs = 2 * 24 * 60 * 60 * 1000;
+    const cutoffStartMs = new Date(2026, 1, 9, 0, 0, 0, 0).getTime();
+    const queryStart = Math.max(start, cutoffStartMs);
+    if (end < cutoffStartMs) {
+        return Promise.resolve({ score: 100, details: 'لا توجد بلاغات', total: 0, late: 0, onTime: 0 });
+    }
+    
+    return db.ref('fault_reports').orderByChild('timestamp').startAt(queryStart).endAt(end).once('value').then(snap => {
+        let total = 0;
+        let late = 0;
+        
+        snap.forEach(child => {
+            const item = child.val() || {};
+            if (!stationsSet.has(item.station)) return;
+            
+            const createdAt = parseReportCreatedAtMs(item);
+            if (!createdAt) return;
+            if (createdAt < cutoffStartMs) return;
+            total++;
+            
+            const status = item.supervisorStatus || 'pending';
+            if (status === 'pending') {
+                const age = nowMs - createdAt;
+                if (age > deadlineMs) late++;
+                return;
+            }
+            
+            const actionAt = parseReportActionAtMs(item);
+            if (!actionAt) {
+                const age = nowMs - createdAt;
+                if (age > deadlineMs) late++;
+                return;
+            }
+            const diff = actionAt - createdAt;
+            if (diff > deadlineMs) late++;
+        });
+        
+        if (total === 0) {
+            return { score: 100, details: 'لا توجد بلاغات', total: 0, late: 0, onTime: 0 };
+        }
+        const onTime = Math.max(0, total - late);
+        const score = Math.round((onTime / total) * 1000) / 10;
+        const latePct = Math.round((late / total) * 1000) / 10;
+        const details = `الإجمالي: ${total} | المتأخر: ${late} (${latePct}%)`;
+        return { score, details, total, late, onTime };
+    }).catch(() => {
+        return { score: null, details: 'فشل التحميل', total: 0, late: 0, onTime: 0 };
+    });
+}
 window.deleteReport = function(key) {
     if(!confirm("هل أنت متأكد من حذف هذا البلاغ نهائياً من السجل؟")) return;
     db.ref(`fault_reports/${key}`).remove()
@@ -11195,6 +12092,7 @@ function updateMenuPermissions() {
     const type = appData.currentUser.type;
     const woBtn = document.getElementById('work-orders-btn');
     const announcementBtn = document.getElementById('announcement-settings-btn');
+    const supervisorBtn = document.getElementById('supervisor-btn');
     
     // أوامر الشغل متاحة للمهندس والمدير فقط
     if(type === 'admin' || type === 'engineer') {
@@ -11210,6 +12108,10 @@ function updateMenuPermissions() {
         } else {
             announcementBtn.style.display = 'none';
         }
+    }
+    
+    if (supervisorBtn) {
+        supervisorBtn.style.display = (type === 'admin' || type === 'engineer' || type === 'supervisor') ? 'inline-block' : 'none';
     }
 }
 // --- تهيئة المتغيرات الجديدة للحدود (Pagination) ---
