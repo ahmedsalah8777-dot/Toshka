@@ -712,6 +712,15 @@
             border: 1px solid var(--secondary-color); 
             color: var(--secondary-color); 
         }
+
+        .screen-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 2px solid #eee;
+        }
         
         .btn-warning { 
             background-color: var(--warning-color); 
@@ -2669,6 +2678,134 @@
 .reports-table td { font-size: 0.9rem; vertical-align: middle; }
 .action-btn-group { display: flex; gap: 5px; justify-content: center; flex-wrap: wrap; }
 /* =========================================
+   تنسيقات شاشة تقييم الأداء (جديد)
+   ========================================= */
+.performance-card {
+    background: white;
+    border-radius: 12px;
+    padding: 20px;
+    margin-bottom: 20px;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+    border: 1px solid #e1e8ed;
+}
+
+.performance-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 2px solid #f0f2f5;
+    padding-bottom: 15px;
+    margin-bottom: 20px;
+}
+
+.performance-title {
+    font-size: 1.2rem;
+    font-weight: bold;
+    color: var(--primary-color);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.score-badge {
+    background: #e3f2fd;
+    color: #1976d2;
+    padding: 5px 12px;
+    border-radius: 20px;
+    font-weight: bold;
+    font-size: 0.9rem;
+}
+
+.rank-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.rank-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px;
+    border-bottom: 1px solid #f0f2f5;
+    transition: background 0.2s;
+}
+
+.rank-item:hover {
+    background-color: #f8f9fa;
+}
+
+.rank-item:last-child {
+    border-bottom: none;
+}
+
+.rank-number {
+    width: 30px;
+    height: 30px;
+    background: #ecf0f1;
+    color: #7f8c8d;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+    font-size: 0.9rem;
+}
+
+.rank-item.top-1 .rank-number { background: #ffd700; color: #fff; text-shadow: 0 1px 2px rgba(0,0,0,0.2); }
+.rank-item.top-2 .rank-number { background: #c0c0c0; color: #fff; }
+.rank-item.top-3 .rank-number { background: #cd7f32; color: #fff; }
+
+.rank-info {
+    flex: 1;
+    margin-right: 15px;
+}
+
+.rank-name {
+    font-weight: bold;
+    color: #2c3e50;
+    margin-bottom: 2px;
+}
+
+.rank-details {
+    font-size: 0.8rem;
+    color: #7f8c8d;
+}
+
+.rank-score {
+    font-weight: bold;
+    color: var(--success-color);
+    font-size: 1.1rem;
+}
+
+.evaluation-tabs {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 20px;
+    overflow-x: auto;
+    padding-bottom: 5px;
+}
+
+.eval-tab {
+    padding: 10px 20px;
+    background: #fff;
+    border: 1px solid #ddd;
+    border-radius: 20px;
+    cursor: pointer;
+    white-space: nowrap;
+    transition: all 0.3s;
+    font-weight: 600;
+    color: #555;
+}
+
+.eval-tab.active {
+    background: var(--primary-color);
+    color: white;
+    border-color: var(--primary-color);
+    box-shadow: 0 4px 10px rgba(26, 82, 118, 0.2);
+}
+
+/* =========================================
    تنسيقات شاشة معلومات الطوارئ
    ========================================= */
 .emergency-grid {
@@ -3167,6 +3304,7 @@
 <button id="calculator-btn" class="menu-item">🧮 الحاسبة</button>
 <button id="emergency-info-btn" class="menu-item">🚨 معلومات الطوارئ</button>
     <button id="statistics-btn" class="menu-item">📈 الإحصائيات</button>
+    <button id="performance-menu-btn" class="menu-item">🏅 تقييم الأداء</button>
     <button id="profile-btn" class="menu-item">📋 بياناتي الشخصية</button>
     <button id="announcement-settings-btn" class="menu-item" style="display: none;">📢 إعدادات الإعلانات</button>
     <button id="logout-btn" class="menu-item logout">👋 خروج</button>
@@ -3763,6 +3901,113 @@
             <!-- Pagination for users -->
             <div class="pagination-info" id="users-pagination-info"></div>
             <button id="load-more-users-btn" class="load-more-btn">عرض المزيد من المستخدمين (100)</button>
+        </div>
+
+        <!-- PERFORMANCE EVALUATION SCREEN -->
+        <div id="performance-evaluation-screen" class="screen">
+            <div class="screen-header">
+                <h2>📊 تقييم أداء المحطات</h2>
+                <button class="btn btn-outline" id="back-to-stations-from-performance">عودة للرئيسية</button>
+            </div>
+            
+            <div class="container">
+                <div class="filters-container" style="background: #f9f9f9; padding: 15px; border-radius: 8px; border: 1px solid #eee; margin-bottom: 15px; display: grid; gap: 10px; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));">
+                    <div class="filter-item">
+                        <label>المنطقة</label>
+                        <select id="perf-filter-zone" onchange="updatePerfStationFilter(); refreshPerformanceTab();">
+                            <option value="all">كل المناطق</option>
+                        </select>
+                    </div>
+                    <div class="filter-item">
+                        <label>المحطة</label>
+                        <select id="perf-filter-station" onchange="refreshPerformanceTab();">
+                            <option value="all">كل المحطات</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="evaluation-tabs">
+                    <div class="eval-tab active" data-tab="day-shift">☀️ التمام النهاري</div>
+                    <div class="eval-tab" data-tab="night-shift">🌙 التمام المسائي</div>
+                    <div class="eval-tab" data-tab="inspection-adherence">🔧 تحديث الفحص</div>
+                    <div class="eval-tab" data-tab="top-results" style="color: gold; border-color: gold;">🏆 سجل النتائج (أفضل 20)</div>
+                </div>
+
+                <!-- Tab Content: Day Shift -->
+                <div id="tab-day-shift" class="eval-content">
+                    <div class="performance-card">
+                        <div class="performance-header">
+                            <div class="performance-title">📋 تقييم الالتزام بالتمام النهاري (6:00 ص - 6:00 م)</div>
+                            <div class="score-badge">الشهر الحالي</div>
+                        </div>
+                        <div id="day-shift-list" class="rank-list">
+                            <!-- Populated by JS -->
+                            <div style="text-align:center; padding:20px; color:#777;">جاري التحميل...</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Tab Content: Night Shift -->
+                <div id="tab-night-shift" class="eval-content" style="display:none;">
+                    <div class="performance-card">
+                        <div class="performance-header">
+                            <div class="performance-title">📋 تقييم الالتزام بالتمام المسائي (6:00 م - 6:00 ص)</div>
+                            <div class="score-badge">الشهر الحالي</div>
+                        </div>
+                        <div id="night-shift-list" class="rank-list">
+                            <!-- Populated by JS -->
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Tab Content: Inspection -->
+                <div id="tab-inspection-adherence" class="eval-content" style="display:none;">
+                    <div class="performance-card">
+                        <div class="performance-header">
+                            <div class="performance-title">📋 تقييم تحديث سجل الفحص (أسبوعياً)</div>
+                            <div class="score-badge">الشهر الحالي</div>
+                        </div>
+                        <div class="alert-box info" style="margin-bottom:15px;">
+                            <span class="icon">ℹ️</span>
+                            يتم احتساب النقاط بناءً على التحديث في الموعد (السبت-الثلاثاء) واعتماد الفحص.
+                        </div>
+                        <div id="inspection-rank-list" class="rank-list">
+                            <!-- Populated by JS -->
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Tab Content: Top Results -->
+                <div id="tab-top-results" class="eval-content" style="display:none;">
+                    <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap:20px;">
+                        
+                        <!-- Top 20 Day Shift -->
+                        <div class="performance-card">
+                            <div class="performance-header">
+                                <div class="performance-title">☀️ أفضل 20 - تمام نهاري</div>
+                            </div>
+                            <div id="top20-day-list" class="rank-list"></div>
+                        </div>
+
+                        <!-- Top 20 Night Shift -->
+                        <div class="performance-card">
+                            <div class="performance-header">
+                                <div class="performance-title">🌙 أفضل 20 - تمام مسائي</div>
+                            </div>
+                            <div id="top20-night-list" class="rank-list"></div>
+                        </div>
+
+                        <!-- Top 20 Inspection -->
+                        <div class="performance-card">
+                            <div class="performance-header">
+                                <div class="performance-title">🔧 أفضل 20 - فحص دوري</div>
+                            </div>
+                            <div id="top20-inspection-list" class="rank-list"></div>
+                        </div>
+
+                    </div>
+                </div>
+
+            </div>
         </div>
 
         <div id="history-screen" class="screen">
@@ -10027,8 +10272,497 @@ let currentReportId = null; // لتخزين ID البلاغ الجاري الع�
 document.getElementById('fault-reporting-btn').addEventListener('click', () => {
     showScreen('fault-reporting');
 });
-document.getElementById('back-to-stations-from-reports').addEventListener('click', () => goBack());
-document.getElementById('back-to-stations-from-orders').addEventListener('click', () => goBack());
+document.getElementById('performance-menu-btn').addEventListener('click', () => {
+    showScreen('performance-evaluation');
+    if(typeof renderPerformanceScreen === 'function') {
+        renderPerformanceScreen();
+    } else {
+        console.error("renderPerformanceScreen is not defined");
+    }
+});
+
+const btnReports = document.getElementById('back-to-stations-from-reports');
+if(btnReports) btnReports.addEventListener('click', () => goBack());
+
+const btnOrders = document.getElementById('back-to-stations-from-orders');
+if(btnOrders) btnOrders.addEventListener('click', () => goBack());
+
+const btnPerfBack = document.getElementById('back-to-stations-from-performance');
+if(btnPerfBack) btnPerfBack.addEventListener('click', () => goBack());
+
+    // --- Performance Evaluation Logic ---
+    window.renderPerformanceScreen = function() {
+        loadStations(function() {
+            appData.performanceStationsLoaded = true;
+            initPerformanceFilters();
+            loadHistory(function() {
+                appData.performanceHistoryLoaded = true;
+                const activeTab = document.querySelector('.eval-tab.active');
+                const tabName = activeTab ? activeTab.dataset.tab : 'day-shift';
+                switchPerformanceTab(tabName);
+            });
+        });
+    };
+
+    function initPerformanceFilters() {
+        const zoneSel = document.getElementById('perf-filter-zone');
+        const stationSel = document.getElementById('perf-filter-station');
+        if (!zoneSel || !stationSel) return;
+        
+        const prevZone = appData.performanceFilterZone || zoneSel.value || 'all';
+        const prevStation = appData.performanceFilterStation || stationSel.value || 'all';
+        
+        const zones = new Set();
+        if (appData.zones && Array.isArray(appData.zones)) {
+            appData.zones.forEach(z => zones.add(z));
+        }
+        if (appData.stations) {
+            Object.values(appData.stations).forEach(s => {
+                if (s && s.zone) zones.add(s.zone);
+            });
+        }
+        
+        const zonesArr = Array.from(zones).filter(z => z && z !== 'all').sort();
+        zoneSel.innerHTML = '<option value="all">كل المناطق</option>' + zonesArr.map(z => `<option value="${z}">${z}</option>`).join('');
+        zoneSel.value = zonesArr.includes(prevZone) ? prevZone : 'all';
+        appData.performanceFilterZone = zoneSel.value;
+        
+        appData.performanceFilterStation = prevStation;
+        window.updatePerfStationFilter();
+    }
+    
+    function getPerformanceStations() {
+        const zoneSel = document.getElementById('perf-filter-zone');
+        const stationSel = document.getElementById('perf-filter-station');
+        const zone = (zoneSel ? zoneSel.value : appData.performanceFilterZone) || 'all';
+        const station = (stationSel ? stationSel.value : appData.performanceFilterStation) || 'all';
+        
+        let stations = [];
+        if (appData.stations) {
+            stations = Object.values(appData.stations).filter(s => s && s.name);
+        }
+        if (zone !== 'all') stations = stations.filter(s => s.zone === zone);
+        if (station !== 'all') stations = stations.filter(s => s.name === station);
+        stations.sort((a, b) => String(a.name).localeCompare(String(b.name), 'ar'));
+        return stations;
+    }
+    
+    window.updatePerfStationFilter = function() {
+        const zoneSel = document.getElementById('perf-filter-zone');
+        const stationSel = document.getElementById('perf-filter-station');
+        if (!zoneSel || !stationSel) return;
+        
+        appData.performanceFilterZone = zoneSel.value;
+        const prevStation = appData.performanceFilterStation || stationSel.value || 'all';
+        
+        let stations = [];
+        if (appData.stations) {
+            stations = Object.values(appData.stations).filter(s => s && s.name);
+        }
+        if (zoneSel.value !== 'all') stations = stations.filter(s => s.zone === zoneSel.value);
+        stations.sort((a, b) => String(a.name).localeCompare(String(b.name), 'ar'));
+        
+        stationSel.innerHTML = '<option value="all">كل المحطات</option>' + stations.map(s => `<option value="${s.name}">${s.name}</option>`).join('');
+        const stationNames = new Set(stations.map(s => s.name));
+        stationSel.value = stationNames.has(prevStation) ? prevStation : 'all';
+        appData.performanceFilterStation = stationSel.value;
+    };
+    
+    window.refreshPerformanceTab = function() {
+        const zoneSel = document.getElementById('perf-filter-zone');
+        const stationSel = document.getElementById('perf-filter-station');
+        if (zoneSel) appData.performanceFilterZone = zoneSel.value;
+        if (stationSel) appData.performanceFilterStation = stationSel.value;
+        const activeTab = document.querySelector('.eval-tab.active');
+        const tabName = activeTab ? activeTab.dataset.tab : 'day-shift';
+        switchPerformanceTab(tabName);
+    };
+    
+    // Tab Switching
+    document.querySelectorAll('.eval-tab').forEach(tab => {
+        tab.addEventListener('click', function() {
+            const target = this.dataset.tab;
+            switchPerformanceTab(target);
+        });
+    });
+
+    function switchPerformanceTab(tabName) {
+        if ((!appData.performanceStationsLoaded) && (!appData.stations || Object.keys(appData.stations).length === 0)) {
+            loadStations(function() { appData.performanceStationsLoaded = true; switchPerformanceTab(tabName); });
+            return;
+        }
+        if ((!appData.performanceHistoryLoaded) && (!appData.operationHistory || appData.operationHistory.length === 0)) {
+            loadHistory(function() { appData.performanceHistoryLoaded = true; switchPerformanceTab(tabName); });
+            return;
+        }
+        // Update Tabs UI
+        document.querySelectorAll('.eval-tab').forEach(t => t.classList.remove('active'));
+        document.querySelector(`.eval-tab[data-tab="${tabName}"]`).classList.add('active');
+
+        // Hide all content
+        document.querySelectorAll('.eval-content').forEach(c => c.style.display = 'none');
+        
+        // Show target content
+        document.getElementById(`tab-${tabName}`).style.display = 'block';
+
+        // Calculate & Render based on tab
+        if (tabName === 'day-shift') {
+            calculateAndRenderShiftPerformance('day');
+        } else if (tabName === 'night-shift') {
+            calculateAndRenderShiftPerformance('night');
+        } else if (tabName === 'inspection-adherence') {
+            calculateAndRenderInspectionPerformance();
+        } else if (tabName === 'top-results') {
+            renderTopResults();
+        }
+    }
+
+    function parseDateSimple(str) {
+        if(!str) return null;
+        str = toEnglishDigits(str);
+        if (str.includes('-')) {
+             const parts = str.split(' ')[0].split('-');
+             if(parts.length < 3) return null;
+             return new Date(parseInt(parts[0]), parseInt(parts[1])-1, parseInt(parts[2]));
+        }
+        const parts = str.split(' ')[0].split('/');
+        if(parts.length < 3) return null;
+        return new Date(parseInt(parts[2]), parseInt(parts[1])-1, parseInt(parts[0]));
+    }
+
+    function calculateAndRenderShiftPerformance(shiftType) {
+        const listId = shiftType === 'day' ? 'day-shift-list' : 'night-shift-list';
+        const container = document.getElementById(listId);
+        if(!container) return;
+        container.innerHTML = '<div style="text-align:center; padding:20px;">جاري الحساب...</div>';
+
+        try {
+            const now = new Date();
+            const currentMonth = now.getMonth(); 
+            const currentYear = now.getFullYear();
+            const daysInMonth = new Date(currentYear, currentMonth + 1, 0).getDate(); 
+
+            const stationScores = {};
+            const stations = getPerformanceStations();
+            if (stations.length === 0) {
+                container.innerHTML = '<div style="text-align:center; padding:20px; color:#666;">لا توجد محطات مطابقة للفلتر</div>';
+                return;
+            }
+            stations.forEach(s => {
+                stationScores[s.name] = { 
+                    name: s.name, 
+                    zone: s.zone,
+                    totalShifts: 0, 
+                    successfulUpdates: 0,
+                    score: 0 
+                };
+            });
+            const allowedStations = new Set(stations.map(s => s.name));
+
+            const history = appData.operationHistory || [];
+            
+            const monthlyLogs = history.filter(log => {
+                if(!log.date) return false;
+                const logDate = parseDateSimple(log.date); 
+                if (!logDate) return false;
+                if (!allowedStations.has(log.station)) return false;
+                return logDate.getMonth() === currentMonth && logDate.getFullYear() === currentYear;
+            });
+
+            for (let d = 1; d <= daysInMonth; d++) {
+                Object.keys(stationScores).forEach(sName => {
+                    stationScores[sName].totalShifts++;
+                    
+                    const hasUpdate = monthlyLogs.some(log => {
+                        if (log.station !== sName) return false;
+                        const logDate = parseDateSimple(log.date);
+                        if (logDate.getDate() !== d) return false; 
+                        
+                        if(!log.time) return false;
+                        const timeStr = toEnglishDigits(log.time);
+                        const timeParts = timeStr.split(':');
+                        const hour = parseInt(timeParts[0]);
+                        
+                        if (shiftType === 'day') {
+                            return hour >= 6 && hour < 18;
+                        } else {
+                            return (hour >= 18) || (hour < 6);
+                        }
+                    });
+
+                    if (hasUpdate) {
+                        stationScores[sName].successfulUpdates++;
+                    }
+                });
+            }
+
+            const rankedStations = Object.values(stationScores).map(s => {
+                s.score = s.totalShifts > 0 ? Math.round((s.successfulUpdates / s.totalShifts) * 100) : 0;
+                return s;
+            }).sort((a, b) => b.score - a.score);
+
+            let html = '';
+            rankedStations.forEach((s, index) => {
+                const rankClass = index < 3 ? `top-${index + 1}` : '';
+                html += `
+                    <li class="rank-item ${rankClass}">
+                        <div class="rank-number">${index + 1}</div>
+                        <div class="rank-info">
+                            <div class="rank-name">${s.name}</div>
+                            <div class="rank-details">${s.zone} | التزام: ${s.successfulUpdates}/${s.totalShifts}</div>
+                        </div>
+                        <div class="rank-score">${s.score}%</div>
+                    </li>
+                `;
+            });
+            if(html === '') html = '<div style="text-align:center; padding:20px; color:#666;">لا توجد بيانات لهذا الشهر</div>';
+            container.innerHTML = html;
+        } catch(e) {
+            console.error("Error calculating shift performance:", e);
+            container.innerHTML = '<div style="text-align:center; padding:20px; color:red;">حدث خطأ في الحساب</div>';
+        }
+    }
+
+    function calculateAndRenderInspectionPerformance() {
+        const container = document.getElementById('inspection-rank-list');
+        if(!container) return;
+        container.innerHTML = '<div style="text-align:center; padding:20px;">جاري الحساب...</div>';
+
+        try {
+            const now = new Date();
+            const currentMonth = now.getMonth();
+            const currentYear = now.getFullYear();
+            
+            const history = appData.operationHistory || [];
+            const stations = getPerformanceStations();
+            if (stations.length === 0) {
+                container.innerHTML = '<div style="text-align:center; padding:20px; color:#666;">لا توجد محطات مطابقة للفلتر</div>';
+                return;
+            }
+            const allowedStations = new Set(stations.map(s => s.name));
+            const inspectionLogs = history.filter(log => {
+                 if (!log.date) return false;
+                 if (!log.details || !log.details.includes('تحديث سجل الفحص')) return false;
+                 const logDate = parseDateSimple(log.date);
+                 if (!logDate) return false;
+                 if (!allowedStations.has(log.station)) return false;
+                 return logDate.getMonth() === currentMonth && logDate.getFullYear() === currentYear;
+            });
+
+            const stationWeeks = {}; 
+            inspectionLogs.forEach(log => {
+                if (!stationWeeks[log.station]) stationWeeks[log.station] = new Set();
+                const d = parseDateSimple(log.date).getDate();
+                const week = Math.ceil(d / 7);
+                stationWeeks[log.station].add(week);
+            });
+
+            const rankedStations = [];
+            stations.forEach(s => {
+                const uniqueWeeks = stationWeeks[s.name] ? stationWeeks[s.name].size : 0;
+                const count = Math.min(uniqueWeeks, 4);
+                
+                let score = Math.round((count / 4) * 100);
+                let details = `تم الفحص: ${count}/4`;
+                
+                const ins = s.inspectionData;
+                if (ins && ins.lastUpdate) {
+                     const updateDate = parseDateSimple(ins.lastUpdate);
+                     if (updateDate && updateDate.getMonth() === currentMonth && updateDate.getFullYear() === currentYear) {
+                         if (ins.approval) {
+                             details += ' | ✅ معتمد';
+                         } else {
+                             details += ' | ⚠️ انتظار';
+                         }
+                     }
+                }
+                
+                rankedStations.push({ name: s.name, zone: s.zone, score: score, details: details });
+            });
+            
+            rankedStations.sort((a, b) => b.score - a.score);
+
+            let html = '';
+            rankedStations.forEach((s, index) => {
+                const rankClass = index < 3 ? `top-${index + 1}` : '';
+                html += `
+                    <li class="rank-item ${rankClass}">
+                        <div class="rank-number">${index + 1}</div>
+                        <div class="rank-info">
+                            <div class="rank-name">${s.name}</div>
+                            <div class="rank-details">${s.zone} | ${s.details}</div>
+                        </div>
+                        <div class="rank-score">${s.score}%</div>
+                    </li>
+                `;
+            });
+            if(html === '') html = '<div style="text-align:center; padding:20px; color:#666;">لا توجد بيانات</div>';
+            container.innerHTML = html;
+        } catch(e) {
+            console.error("Error calculating inspection performance:", e);
+            container.innerHTML = '<div style="text-align:center; padding:20px; color:red;">حدث خطأ في الحساب</div>';
+        }
+    }
+
+    function renderTopResults() {
+        calculateAndRenderShiftPerformanceToTarget('day', 'top20-day-list', 20);
+        calculateAndRenderShiftPerformanceToTarget('night', 'top20-night-list', 20);
+        calculateAndRenderInspectionPerformanceToTarget('top20-inspection-list', 20);
+    }
+
+    function calculateAndRenderShiftPerformanceToTarget(shiftType, targetId, limit) {
+        const container = document.getElementById(targetId);
+        if(!container) return;
+        container.innerHTML = '<div style="text-align:center; padding:10px;">جاري الحساب...</div>';
+        
+        try {
+            const now = new Date();
+            const currentMonth = now.getMonth();
+            const currentYear = now.getFullYear();
+            const daysInMonth = new Date(currentYear, currentMonth + 1, 0).getDate();
+            
+            const stationScores = {};
+            const stations = getPerformanceStations();
+            if (stations.length === 0) {
+                container.innerHTML = '<div style="text-align:center; padding:20px; color:#666;">لا توجد محطات مطابقة للفلتر</div>';
+                return;
+            }
+            stations.forEach(s => {
+                stationScores[s.name] = { name: s.name, zone: s.zone, totalShifts: 0, successfulUpdates: 0, score: 0 };
+            });
+            const allowedStations = new Set(stations.map(s => s.name));
+
+            const history = appData.operationHistory || [];
+            const monthlyLogs = history.filter(log => {
+                if(!log.date) return false;
+                const logDate = parseDateSimple(log.date);
+                if (!logDate) return false;
+                if (!allowedStations.has(log.station)) return false;
+                return logDate.getMonth() === currentMonth && logDate.getFullYear() === currentYear;
+            });
+
+            for (let d = 1; d <= daysInMonth; d++) {
+                Object.keys(stationScores).forEach(sName => {
+                    stationScores[sName].totalShifts++;
+                    const hasUpdate = monthlyLogs.some(log => {
+                        if (log.station !== sName) return false;
+                        const logDate = parseDateSimple(log.date);
+                        if (logDate.getDate() !== d) return false;
+                        
+                        if(!log.time) return false;
+                        const timeStr = toEnglishDigits(log.time);
+                        const timeParts = timeStr.split(':');
+                        const hour = parseInt(timeParts[0]);
+                        if (shiftType === 'day') return hour >= 6 && hour < 18;
+                        else return (hour >= 18) || (hour < 6);
+                    });
+                    if (hasUpdate) stationScores[sName].successfulUpdates++;
+                });
+            }
+
+            const rankedStations = Object.values(stationScores).map(s => {
+                s.score = s.totalShifts > 0 ? Math.round((s.successfulUpdates / s.totalShifts) * 100) : 0;
+                return s;
+            }).sort((a, b) => b.score - a.score).slice(0, limit);
+
+            let html = '';
+            rankedStations.forEach((s, index) => {
+                const rankClass = index < 3 ? `top-${index + 1}` : '';
+                html += `
+                    <li class="rank-item ${rankClass}">
+                        <div class="rank-number">${index + 1}</div>
+                        <div class="rank-info">
+                            <div class="rank-name">${s.name}</div>
+                            <div class="rank-details">${s.zone}</div>
+                        </div>
+                        <div class="rank-score">${s.score}%</div>
+                    </li>
+                `;
+            });
+            if(html === '') html = '<div style="text-align:center; padding:20px; color:#666;">لا توجد بيانات</div>';
+            container.innerHTML = html;
+        } catch(e) {
+            console.error("Error calculating top shift performance:", e);
+            container.innerHTML = '<div style="text-align:center; padding:10px; color:red;">خطأ في الحساب</div>';
+        }
+    }
+    
+    function calculateAndRenderInspectionPerformanceToTarget(targetId, limit) {
+        const container = document.getElementById(targetId);
+        if(!container) return;
+        container.innerHTML = '<div style="text-align:center; padding:10px;">جاري الحساب...</div>';
+        
+        try {
+            const now = new Date();
+            const currentMonth = now.getMonth();
+            const currentYear = now.getFullYear();
+            
+            const history = appData.operationHistory || [];
+            const stations = getPerformanceStations();
+            if (stations.length === 0) {
+                container.innerHTML = '<div style="text-align:center; padding:20px; color:#666;">لا توجد محطات مطابقة للفلتر</div>';
+                return;
+            }
+            const allowedStations = new Set(stations.map(s => s.name));
+            const inspectionLogs = history.filter(log => {
+                 if (!log.date) return false;
+                 if (!log.details || !log.details.includes('تحديث سجل الفحص')) return false;
+                 const logDate = parseDateSimple(log.date);
+                 if (!logDate) return false;
+                 if (!allowedStations.has(log.station)) return false;
+                 return logDate.getMonth() === currentMonth && logDate.getFullYear() === currentYear;
+            });
+
+            const stationWeeks = {}; 
+            inspectionLogs.forEach(log => {
+                if (!stationWeeks[log.station]) stationWeeks[log.station] = new Set();
+                const d = parseDateSimple(log.date).getDate();
+                const week = Math.ceil(d / 7);
+                stationWeeks[log.station].add(week);
+            });
+
+            const rankedStations = [];
+            stations.forEach(s => {
+                const uniqueWeeks = stationWeeks[s.name] ? stationWeeks[s.name].size : 0;
+                const count = Math.min(uniqueWeeks, 4);
+                let score = Math.round((count / 4) * 100);
+                let details = `تم: ${count}/4`;
+                
+                const ins = s.inspectionData;
+                if (ins && ins.lastUpdate) {
+                     const updateDate = parseDateSimple(ins.lastUpdate);
+                     if (updateDate && updateDate.getMonth() === currentMonth && updateDate.getFullYear() === currentYear) {
+                         if (ins.approval) { details += ' ✅'; } 
+                         else { details += ' ⚠️'; }
+                     }
+                }
+                rankedStations.push({ name: s.name, zone: s.zone, score: score, details: details });
+            });
+            
+            rankedStations.sort((a, b) => b.score - a.score);
+            const topRanked = rankedStations.slice(0, limit);
+
+            let html = '';
+            topRanked.forEach((s, index) => {
+                const rankClass = index < 3 ? `top-${index + 1}` : '';
+                html += `
+                    <li class="rank-item ${rankClass}">
+                        <div class="rank-number">${index + 1}</div>
+                        <div class="rank-info">
+                            <div class="rank-name">${s.name}</div>
+                            <div class="rank-details">${s.details}</div>
+                        </div>
+                        <div class="rank-score">${s.score}%</div>
+                    </li>
+                `;
+            });
+            if(html === '') html = '<div style="text-align:center; padding:20px; color:#666;">لا توجد بيانات</div>';
+            container.innerHTML = html;
+        } catch(e) {
+            console.error("Error calculating top inspection performance:", e);
+            container.innerHTML = '<div style="text-align:center; padding:10px; color:red;">خطأ في الحساب</div>';
+        }
+    }
 
 // 2. دوال شاشة تسجيل البلاغات
 function initFaultReportingScreen() {
