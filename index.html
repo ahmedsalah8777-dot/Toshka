@@ -1817,6 +1817,21 @@
             width: 100%; 
             font-size: 0.9rem; 
         }
+
+        .status-badge {
+            display: inline-flex;
+            align-items: center;
+            padding: 3px 10px;
+            border-radius: 999px;
+            font-size: 0.82rem;
+            font-weight: bold;
+            white-space: nowrap;
+            border: 1px solid transparent;
+        }
+        .status-badge.efficient { background: #d4edda; color: #155724; border-color: #c3e6cb; }
+        .status-badge.fault { background: #fff3cd; color: #856404; border-color: #ffeeba; }
+        .status-badge.broken { background: #f8d7da; color: #721c24; border-color: #f5c6cb; }
+        .status-badge.none { background: #e2e3e5; color: #383d41; border-color: #d6d8db; }
         
         .pump-accordion-item { 
             margin-bottom: 10px; 
@@ -3539,7 +3554,10 @@
             <h2 id="inspection-title">شاشة الفحص الشامل</h2>
             <div style="display:flex; justify-content:space-between; margin-bottom: 20px;">
                 <button id="back-from-inspection" class="btn btn-outline">عودة</button>
-                <button id="export-inspection-excel" class="btn btn-excel" style="display: none;">📊 تصدير Excel</button>
+                <div style="display:flex; gap:10px; flex-wrap:wrap; justify-content:flex-end;">
+                    <button id="view-inspection-status-log-btn" class="btn btn-info" style="display:none;">📘 سجل التحويل</button>
+                    <button id="export-inspection-excel" class="btn btn-excel" style="display: none;">📊 تصدير Excel</button>
+                </div>
             </div>
             
             <div id="inspection-container"></div>
@@ -3547,6 +3565,17 @@
             <div id="inspection-actions" style="margin-top:10px; display:none; position:sticky; bottom:10px; z-index:999;">
                 <button id="save-inspection-btn" class="btn btn-success">💾 حفظ الفحص بالكامل</button>
             </div>
+        </div>
+
+        <div id="inspection-status-log-screen" class="screen">
+            <h2 style="color: var(--primary-color);">سجل تحويل حالة الفحص</h2>
+            <div style="display:flex; justify-content:space-between; margin-bottom: 15px; gap:10px; flex-wrap:wrap;">
+                <button id="back-from-inspection-status-log" class="btn btn-outline">عودة</button>
+                <div style="font-size:0.85rem; color:#666; display:flex; align-items:center; gap:8px;">
+                    <span>المحطة:</span> <b id="inspection-status-log-station-name">-</b>
+                </div>
+            </div>
+            <div id="inspection-status-log-container"></div>
         </div>
 
         <!-- شاشة جديدة: تصدير تقرير الفحص -->
@@ -5201,13 +5230,17 @@ document.querySelectorAll('.menu-item').forEach(item => {
             };
         }
 
+        function toDateOnly(str) {
+            if (!str) return '';
+            return String(str).trim().split(/\s+/)[0] || '';
+        }
+
         function parseCustomDate(str) {
             if(!str) return null;
             str = toEnglishDigits(str);
             const parts = str.split(/\s+/);
-            if(parts.length < 2) return null;
             const dateParts = parts[0].split('/');
-            const timeParts = parts[1].split(':');
+            const timeParts = (parts[1] ? parts[1] : '00:00:00').split(':');
             if(dateParts.length < 3 || timeParts.length < 2) return null;
             const year = parseInt(dateParts[2]);
             const month = parseInt(dateParts[1]) - 1;
@@ -6504,6 +6537,9 @@ document.getElementById('emergency-image-modal').addEventListener('click', funct
             if(screenId === 'inspection-export') {
                 loadStations(function() { updateExportFilters(); });
             }
+            if(screenId === 'inspection-status-log') {
+                if (typeof renderInspectionStatusLog === 'function') renderInspectionStatusLog();
+            }
             if(screenId === 'emergency-info') { loadEmergencyData(); }
             if(screenId === 'consumptions-report') {
                 loadStations(function() { if (typeof updateConsStationFilter === 'function') updateConsStationFilter(); loadConsumptionLogs(function() { if (typeof renderConsumptionsTable === 'function') renderConsumptionsTable(); }); });
@@ -6662,6 +6698,7 @@ document.getElementById('work-orders-btn').style.display = 'none';
         document.getElementById('back-to-stations-from-faults').addEventListener('click', () => goBack());
         document.getElementById('back-to-stations-from-cons').addEventListener('click', () => goBack());
         document.getElementById('back-from-inspection').addEventListener('click', () => goBack());
+        document.getElementById('back-from-inspection-status-log').addEventListener('click', () => goBack());
         document.getElementById('back-to-stations-from-profile').addEventListener('click', () => goBack());
         document.getElementById('back-to-stations-from-users-data').addEventListener('click', () => goBack());
         document.getElementById('back-to-stations-from-export').addEventListener('click', () => goBack());
@@ -7504,6 +7541,140 @@ function saveDataInternal(options = {}) {
         }
 
         // --- MOBILE OPTIMIZED INSPECTION LOGIC ---
+        function getLatestModifiedAtFromInspectionItems(itemsObj) {
+            if (!itemsObj) return '';
+            let latestStr = '';
+            let latestDt = null;
+            Object.values(itemsObj).forEach(v => {
+                if (!v || !v.modifiedAt) return;
+                const m = String(v.modifiedAt);
+                const dt = (typeof parseCustomDate === 'function') ? parseCustomDate(m) : null;
+                if (dt && !isNaN(dt.getTime())) {
+                    if (!latestDt || dt > latestDt) {
+                        latestDt = dt;
+                        latestStr = m;
+                    }
+                } else {
+                    if (!latestStr) latestStr = m;
+                }
+            });
+            return latestStr;
+        }
+
+        function getLatestModifiedAtForInspectionSection(insData, key) {
+            if (!insData) return '';
+            if (key === 'pumps') {
+                const pumpsObj = insData.pumps || {};
+                let latestStr = '';
+                let latestDt = null;
+                Object.values(pumpsObj).forEach(p => {
+                    const m = getLatestModifiedAtFromInspectionItems(p);
+                    if (!m) return;
+                    const dt = (typeof parseCustomDate === 'function') ? parseCustomDate(String(m)) : null;
+                    if (dt && !isNaN(dt.getTime())) {
+                        if (!latestDt || dt > latestDt) {
+                            latestDt = dt;
+                            latestStr = String(m);
+                        }
+                    } else {
+                        if (!latestStr) latestStr = String(m);
+                    }
+                });
+                return latestStr;
+            }
+            return getLatestModifiedAtFromInspectionItems(insData[key] || {});
+        }
+
+        function computeSectionHeaderStatus(sectionData) {
+            const arr = Object.values(sectionData || {});
+            if (arr.length === 0) return 'efficient';
+            const statuses = arr.map(v => (v && v.status) ? v.status : 'efficient');
+            if (statuses.some(s => s === 'broken')) return 'broken';
+            if (statuses.some(s => s === 'fault')) return 'fault';
+            if (statuses.every(s => s === 'none')) return 'none';
+            return 'efficient';
+        }
+
+        function computePumpHeaderStatus(pData) {
+            const pumpItemData = (pData && pData[5]) ? pData[5] : {};
+            if (pumpItemData && pumpItemData.status === 'none') return 'none';
+            const targetIndices = [0, 1, 2, 5, 8, 10, 11, 12];
+            if (targetIndices.some(idx => ((pData && pData[idx]) ? pData[idx].status : 'efficient') === 'broken')) return 'broken';
+            if (targetIndices.some(idx => ((pData && pData[idx]) ? pData[idx].status : 'efficient') === 'fault')) return 'fault';
+            return 'efficient';
+        }
+
+        function getReasonFromChanges(changesArr) {
+            if (!Array.isArray(changesArr) || changesArr.length === 0) return 'غير مسجل';
+            const parts = [];
+            for (let i = 0; i < changesArr.length && parts.length < 3; i++) {
+                const c = changesArr[i] || {};
+                const label = c.label || '';
+                const desc = (c.desc || '').trim();
+                if (desc) parts.push(`${label}: ${desc}`);
+            }
+            if (parts.length > 0) return parts.join(' | ');
+            const fallback = changesArr.find(c => c && c.label) || {};
+            return fallback.label || 'غير مسجل';
+        }
+
+        function renderInspectionStatusLog() {
+            const sName = appData.currentStation;
+            const sData = sName ? appData.stations[sName] : null;
+            const titleEl = document.getElementById('inspection-status-log-station-name');
+            if (titleEl) titleEl.textContent = sName || '-';
+            const container = document.getElementById('inspection-status-log-container');
+            if (!container) return;
+            const insData = sData && sData.inspectionData ? sData.inspectionData : {};
+            const logs = Array.isArray(insData.statusChangeLog) ? insData.statusChangeLog : [];
+            if (!logs.length) {
+                container.innerHTML = `
+                    <div class="detail-card" style="background:#f8f9fa; border:1px dashed #ccc;">
+                        <div class="detail-title">لا يوجد سجل تحويل</div>
+                        <div class="detail-value" style="font-size:0.95rem; color:#666;">لم يتم تسجيل أي تحويل حالة للأقسام أو المضخات بعد.</div>
+                    </div>
+                `;
+                return;
+            }
+            const rows = logs.map(l => {
+                const date = l.date || '-';
+                const scope = l.scope || '-';
+                const name = l.name || '-';
+                const prev = l.prevStatus || '';
+                const cur = l.currentStatus || '';
+                const reason = l.reason || 'غير مسجل';
+                const prevText = statusTextMap[prev] || prev || '-';
+                const curText = statusTextMap[cur] || cur || '-';
+                const prevBadge = prev ? `<span class="status-badge ${prev}">${prevText}</span>` : '-';
+                const curBadge = cur ? `<span class="status-badge ${cur}">${curText}</span>` : '-';
+                return `
+                    <tr>
+                        <td style="white-space:nowrap;">${date}</td>
+                        <td>${scope} - <b>${name}</b></td>
+                        <td>${prevBadge}</td>
+                        <td>${curBadge}</td>
+                        <td style="min-width:220px;">${reason}</td>
+                    </tr>
+                `;
+            }).join('');
+            container.innerHTML = `
+                <div class="table-responsive">
+                    <table class="history-table">
+                        <thead>
+                            <tr>
+                                <th>تاريخ التحول</th>
+                                <th>البند</th>
+                                <th>الحالة السابقة</th>
+                                <th>الحالة الحالية</th>
+                                <th>السبب</th>
+                            </tr>
+                        </thead>
+                        <tbody>${rows}</tbody>
+                    </table>
+                </div>
+            `;
+        }
+
         function renderInspection(mode = 'view') {
             const container = document.getElementById('inspection-container');
             container.innerHTML = '';
@@ -7525,7 +7696,7 @@ function saveDataInternal(options = {}) {
                     approvalInfoHtml = `
                         <div style="margin-top:10px; padding-top:10px; border-top:1px dashed #ccc; color:#27ae60;">
                             <b>✅ تم الاعتماد بواسطة:</b> ${app.role} / ${app.name} 
-                            <span style="font-size:0.85em; color:#7f8c8d;">(${app.date})</span>
+                            <span style="font-size:0.85em; color:#7f8c8d;">(${toDateOnly(app.date)})</span>
                         </div>
                     `;
                 }
@@ -7535,7 +7706,7 @@ function saveDataInternal(options = {}) {
                         ℹ️ معلومات آخر تحديث للفحص
                     </div>
                     <div style="display:flex; flex-wrap:wrap; gap:15px; color: #555;">
-                        <span>📅 التاريخ: <b style="color: #333;">${insData.lastUpdate || 'غير مسجل'}</b></span>
+                        <span>📅 التاريخ: <b style="color: #333;">${toDateOnly(insData.lastUpdate) || 'غير مسجل'}</b></span>
                         <span>👤 بواسطة: <b style="color: #333;">${insData.modifiedBy || 'غير مسجل'}</b></span>
                     </div>
                     ${approvalInfoHtml}
@@ -7549,6 +7720,9 @@ function saveDataInternal(options = {}) {
             // إظهار زر تصدير Excel فقط في وضع العرض وليس التعديل
             const exportBtn = document.getElementById('export-inspection-excel');
             exportBtn.style.display = (mode === 'view' && sData.inspectionData) ? 'block' : 'none';
+
+            const statusLogBtn = document.getElementById('view-inspection-status-log-btn');
+            if (statusLogBtn) statusLogBtn.style.display = (mode === 'view' && sData.inspectionData) ? 'block' : 'none';
             
             Object.keys(inspectionSchema).forEach((key) => {
                 const schema = inspectionSchema[key];
@@ -7571,14 +7745,17 @@ function saveDataInternal(options = {}) {
                     else if (status === 'efficient') { whStatusHtml = ' <span style="font-size:0.8em">✅</span>'; whBorderColor = 'var(--success-color)'; }
                 }
 
+                const sectionLastModified = getLatestModifiedAtForInspectionSection(insData, key);
+                const sectionLastModifiedHtml = sectionLastModified ? `<span style="font-size:0.75rem; ${isEdit ? 'color:#7f8c8d' : 'color:rgba(255,255,255,0.85)'};">${toDateOnly(sectionLastModified)}</span>` : '';
+
                 if (isEdit) { 
                     headerDiv.className = 'section-header-static'; 
-                    headerDiv.innerHTML = `<span>${title}${whStatusHtml}</span>`; 
+                    headerDiv.innerHTML = `<div style="display:flex; justify-content:space-between; align-items:center; gap:10px;"><span>${title}${whStatusHtml}</span>${sectionLastModifiedHtml}</div>`; 
                     if(whBorderColor) headerDiv.style.borderRight = `5px solid ${whBorderColor}`;
                 } 
                 else {
                     headerDiv.className = 'section-accordion-header'; 
-                    headerDiv.innerHTML = `<span>${title}${whStatusHtml}</span> <span class="arrow">▼</span>`;
+                    headerDiv.innerHTML = `<span>${title}${whStatusHtml}</span><span style="display:flex; align-items:center; gap:10px;">${sectionLastModifiedHtml}<span class="arrow">▼</span></span>`;
                     if(whBorderColor) headerDiv.style.borderRight = `5px solid ${whBorderColor}`;
                     headerDiv.onclick = function() { 
                         const body = this.nextElementSibling; 
@@ -7642,7 +7819,9 @@ function saveDataInternal(options = {}) {
                         pumpItemDiv.className = 'pump-accordion-item';
                         const pumpHeaderDiv = document.createElement('div'); 
                         pumpHeaderDiv.className = `pump-accordion-header ${headerClass}`; 
-                        pumpHeaderDiv.innerHTML = `<span>مضخة رقم ${i}</span> <span class="icon-state">${icon}</span>`;
+                        const pumpLastModified = getLatestModifiedAtFromInspectionItems(pData);
+                        const pumpLastModifiedHtml = pumpLastModified ? `<span style="font-size:0.75rem; opacity:0.9;">${toDateOnly(pumpLastModified)}</span>` : '';
+                        pumpHeaderDiv.innerHTML = `<span>مضخة رقم ${i}</span><span style="display:flex; align-items:center; gap:10px;">${pumpLastModifiedHtml}<span class="icon-state">${icon}</span></span>`;
                         pumpHeaderDiv.onclick = (e) => { 
                             e.stopPropagation(); 
                             togglePumpAccordion(i); 
@@ -7790,6 +7969,7 @@ if (idx === 5) { // الرقم 5 يمثل "المضخه" في مصفوفة ال�
         function createInspectionViewCard(itemKey, label, dataObj) {
             const status = dataObj && dataObj.status ? dataObj.status : 'efficient';
             const desc = dataObj && dataObj.desc ? dataObj.desc : '';
+            const modifiedAt = dataObj && dataObj.modifiedAt ? toDateOnly(dataObj.modifiedAt) : '';
             
             const card = document.createElement('div');
             card.className = `inspection-card status-${status}`;
@@ -7806,6 +7986,11 @@ if (idx === 5) { // الرقم 5 يمثل "المضخه" في مصفوفة ال�
             if (desc && desc.trim() !== '') {
                 descHtml = `<div class="card-desc">📝 ${desc}</div>`;
             }
+
+            let modifiedHtml = '';
+            if (modifiedAt && String(modifiedAt).trim() !== '') {
+                modifiedHtml = `<div style="font-size:0.75rem; color:#888; margin-top:6px;">🕒 آخر تعديل: <span style="color:#666;">${modifiedAt}</span></div>`;
+            }
             
             card.innerHTML = `
                 <div class="card-header-row">
@@ -7815,6 +8000,7 @@ if (idx === 5) { // الرقم 5 يمثل "المضخه" في مصفوفة ال�
                         <span>${statusText}</span>
                     </div>
                 </div>
+                ${modifiedHtml}
                 ${descHtml}
             `;
             
@@ -7891,6 +8077,10 @@ if (idx === 5) { // الرقم 5 يمثل "المضخه" في مصفوفة ال�
 
             const oldInsData = (appData.stations[sName].inspectionData) || {}; 
             let newInsData = JSON.parse(JSON.stringify(oldInsData));
+            const nowStd = getStandardDateTime();
+            let hasInspectionChanges = !oldInsData || !oldInsData.lastUpdate;
+            const sectionStatusChanges = {};
+            const pumpStatusChanges = {};
             
             Object.keys(inspectionSchema).forEach(key => {
                 if (key === 'pumps') return; 
@@ -7899,9 +8089,22 @@ if (idx === 5) { // الرقم 5 يمثل "المضخه" في مصفوفة ال�
                     const statEl = document.getElementById(`stat_${key}_${idx}`); 
                     const descEl = document.getElementById(`desc_${key}_${idx}`); 
                     if (statEl) { 
+                        const oldItemData = (oldInsData[key] && oldInsData[key][idx]) ? oldInsData[key][idx] : {};
+                        const oldStatus = oldItemData && oldItemData.status ? oldItemData.status : 'efficient';
+                        const oldDesc = oldItemData && oldItemData.desc ? oldItemData.desc : '';
+                        const oldModifiedAt = oldItemData && oldItemData.modifiedAt ? oldItemData.modifiedAt : '';
+                        const nextStatus = statEl.value;
+                        const nextDesc = descEl.value;
+                        const nextModifiedAt = (oldStatus !== nextStatus) ? nowStd.date : oldModifiedAt;
+                        if (oldStatus !== nextStatus || oldDesc !== nextDesc) hasInspectionChanges = true;
+                        if (oldStatus !== nextStatus) {
+                            if (!sectionStatusChanges[key]) sectionStatusChanges[key] = [];
+                            sectionStatusChanges[key].push({ label: item, oldStatus, newStatus: nextStatus, desc: nextDesc });
+                        }
                         newInsData[key][idx] = { 
-                            status: statEl.value, 
-                            desc: descEl.value 
+                            status: nextStatus, 
+                            desc: nextDesc,
+                            modifiedAt: nextModifiedAt
                         }; 
                     } 
                 });
@@ -7916,27 +8119,44 @@ if (idx === 5) { // الرقم 5 يمثل "المضخه" في مصفوفة ال�
                     const statEl = document.getElementById(`stat_${prefix}_${idx}`); 
                     const descEl = document.getElementById(`desc_${prefix}_${idx}`); 
                     if (statEl) { 
+                        const oldPumpObj = (oldInsData.pumps && oldInsData.pumps[i]) ? oldInsData.pumps[i] : {};
+                        const oldItemData = oldPumpObj && oldPumpObj[idx] ? oldPumpObj[idx] : {};
+                        const oldStatus = oldItemData && oldItemData.status ? oldItemData.status : 'efficient';
+                        const oldDesc = oldItemData && oldItemData.desc ? oldItemData.desc : '';
+                        const oldModifiedAt = oldItemData && oldItemData.modifiedAt ? oldItemData.modifiedAt : '';
+                        const nextStatus = statEl.value;
+                        const nextDesc = descEl.value;
+                        const nextModifiedAt = (oldStatus !== nextStatus) ? nowStd.date : oldModifiedAt;
+                        if (oldStatus !== nextStatus || oldDesc !== nextDesc) hasInspectionChanges = true;
+                        if (oldStatus !== nextStatus) {
+                            if (!pumpStatusChanges[i]) pumpStatusChanges[i] = [];
+                            pumpStatusChanges[i].push({ label: item, oldStatus, newStatus: nextStatus, desc: nextDesc, idx });
+                        }
                         newInsData.pumps[i][idx] = { 
-                            status: statEl.value, 
-                            desc: descEl.value 
+                            status: nextStatus, 
+                            desc: nextDesc,
+                            modifiedAt: nextModifiedAt
                         }; 
                     } 
                 });
             }
-            
-            const nowStd = getStandardDateTime();
+
+            let didApproveAction = false;
+            let didUnapproveAction = false;
+
             const log = { 
                 date: nowStd.date, 
                 time: nowStd.time, 
                 station: sName, 
                 operator: appData.currentUser ? (appData.currentUser.username || appData.currentUser.name || 'مستخدم النظام') : 'مستخدم النظام',
-                details: `تحديث سجل الفحص الشامل` 
+                details: '' 
             };
             
             // Save Single Approval
             const approvalCheck = document.getElementById('approve_inspection_check');
             if (approvalCheck) {
                 if (approvalCheck.checked) {
+                    didApproveAction = !oldInsData.approval;
                     // If checked and not already approved (or overwriting), set new approval data
                     // We only update date/time if it's a new approval or re-approval action
                     const currentUser = appData.currentUser || {};
@@ -7946,9 +8166,10 @@ if (idx === 5) { // الرقم 5 يمثل "المضخه" في مصفوفة ال�
                     newInsData.approval = {
                         name: currentUser.username || currentUser.name || 'مستخدم',
                         role: userRole,
-                        date: `${nowStd.date} ${nowStd.time}`
+                        date: `${nowStd.date}`
                     };
                 } else {
+                    didUnapproveAction = !!oldInsData.approval;
                     // If unchecked, remove approval
                     newInsData.approval = null;
                 }
@@ -7957,9 +8178,61 @@ if (idx === 5) { // الرقم 5 يمثل "المضخه" في مصفوفة ال�
                 // Do nothing, newInsData is a copy of oldInsData so approval is preserved
             }
 
-            // حفظ معلومات التعديل داخل بيانات الفحص
-            newInsData.lastUpdate = nowStd.full;
-            newInsData.modifiedBy = log.operator;
+            const oldHeaderStatus = oldInsData && oldInsData.headerStatus ? oldInsData.headerStatus : null;
+            const newHeaderStatus = { sections: {}, pumps: {} };
+            Object.keys(inspectionSchema).forEach(key => {
+                if (key === 'pumps') return;
+                newHeaderStatus.sections[key] = computeSectionHeaderStatus(newInsData[key] || {});
+            });
+            for (let i = 1; i <= totalPumps; i++) {
+                newHeaderStatus.pumps[i] = computePumpHeaderStatus(newInsData.pumps[i] || {});
+            }
+
+            const statusChangeLog = Array.isArray(oldInsData.statusChangeLog) ? oldInsData.statusChangeLog.slice() : [];
+            Object.keys(newHeaderStatus.sections).forEach(key => {
+                const oldSectionStatus = oldHeaderStatus && oldHeaderStatus.sections ? oldHeaderStatus.sections[key] : computeSectionHeaderStatus((oldInsData && oldInsData[key]) ? oldInsData[key] : {});
+                const newSectionStatus = newHeaderStatus.sections[key];
+                if (oldSectionStatus !== newSectionStatus) {
+                    statusChangeLog.unshift({
+                        date: nowStd.date,
+                        scope: 'قسم',
+                        name: (inspectionSchema[key] && inspectionSchema[key].title) ? inspectionSchema[key].title : key,
+                        prevStatus: oldSectionStatus,
+                        currentStatus: newSectionStatus,
+                        reason: getReasonFromChanges(sectionStatusChanges[key] || [])
+                    });
+                }
+            });
+            for (let i = 1; i <= totalPumps; i++) {
+                const oldPumpStatus = oldHeaderStatus && oldHeaderStatus.pumps ? oldHeaderStatus.pumps[i] : computePumpHeaderStatus((oldInsData && oldInsData.pumps && oldInsData.pumps[i]) ? oldInsData.pumps[i] : {});
+                const newPumpStatus = newHeaderStatus.pumps[i];
+                if (oldPumpStatus !== newPumpStatus) {
+                    const changes = Array.isArray(pumpStatusChanges[i]) ? pumpStatusChanges[i] : [];
+                    const targetIndices = [0, 1, 2, 5, 8, 10, 11, 12];
+                    const filtered = changes.filter(c => targetIndices.includes(c.idx));
+                    statusChangeLog.unshift({
+                        date: nowStd.date,
+                        scope: 'مضخة',
+                        name: `مضخة رقم ${i}`,
+                        prevStatus: oldPumpStatus,
+                        currentStatus: newPumpStatus,
+                        reason: getReasonFromChanges(filtered.length ? filtered : changes)
+                    });
+                }
+            }
+            if (statusChangeLog.length > 2000) statusChangeLog.splice(2000);
+            newInsData.statusChangeLog = statusChangeLog;
+            newInsData.headerStatus = newHeaderStatus;
+
+            if (hasInspectionChanges) {
+                newInsData.lastUpdate = nowStd.date;
+                newInsData.modifiedBy = log.operator;
+            }
+
+            if (hasInspectionChanges) log.details = 'تحديث سجل الفحص الشامل';
+            else if (didApproveAction) log.details = 'اعتماد الفحص';
+            else if (didUnapproveAction) log.details = 'إلغاء اعتماد الفحص';
+            else log.details = 'حفظ الفحص بدون تعديل';
             
             if (!appData.stations[sName].inspectionData) appData.stations[sName].inspectionData = {}; 
             appData.stations[sName].inspectionData = newInsData; 
@@ -7998,6 +8271,11 @@ if (idx === 5) { // الرقم 5 يمثل "المضخه" في مصفوفة ال�
             renderInspection('view'); 
             document.getElementById('inspection-title').textContent = `نتائج الفحص: ${appData.stations[appData.currentStation].name}`; 
             showScreen('inspection'); 
+        });
+
+        document.getElementById('view-inspection-status-log-btn').addEventListener('click', () => {
+            renderInspectionStatusLog();
+            showScreen('inspection-status-log');
         });
         
         document.getElementById('edit-inspection-btn').addEventListener('click', () => { 
@@ -10014,7 +10292,7 @@ function renumberMachinesCalc() {
 
 function calculateAllCalc() {
     const spanLength = 55;
-    const waterPerFeddan = 60;
+    const waterPerFeddan = 32.5;
     let totalFed = 0, totalM3 = 0, count = 0;
     
     // تحديد المدخلات داخل شاشة الحاسبة فقط
