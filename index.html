@@ -5201,13 +5201,17 @@ document.querySelectorAll('.menu-item').forEach(item => {
             };
         }
 
+        function toDateOnly(str) {
+            if (!str) return '';
+            return String(str).trim().split(/\s+/)[0] || '';
+        }
+
         function parseCustomDate(str) {
             if(!str) return null;
             str = toEnglishDigits(str);
             const parts = str.split(/\s+/);
-            if(parts.length < 2) return null;
             const dateParts = parts[0].split('/');
-            const timeParts = parts[1].split(':');
+            const timeParts = (parts[1] ? parts[1] : '00:00:00').split(':');
             if(dateParts.length < 3 || timeParts.length < 2) return null;
             const year = parseInt(dateParts[2]);
             const month = parseInt(dateParts[1]) - 1;
@@ -7504,6 +7508,50 @@ function saveDataInternal(options = {}) {
         }
 
         // --- MOBILE OPTIMIZED INSPECTION LOGIC ---
+        function getLatestModifiedAtFromInspectionItems(itemsObj) {
+            if (!itemsObj) return '';
+            let latestStr = '';
+            let latestDt = null;
+            Object.values(itemsObj).forEach(v => {
+                if (!v || !v.modifiedAt) return;
+                const m = String(v.modifiedAt);
+                const dt = (typeof parseCustomDate === 'function') ? parseCustomDate(m) : null;
+                if (dt && !isNaN(dt.getTime())) {
+                    if (!latestDt || dt > latestDt) {
+                        latestDt = dt;
+                        latestStr = m;
+                    }
+                } else {
+                    if (!latestStr) latestStr = m;
+                }
+            });
+            return latestStr;
+        }
+
+        function getLatestModifiedAtForInspectionSection(insData, key) {
+            if (!insData) return '';
+            if (key === 'pumps') {
+                const pumpsObj = insData.pumps || {};
+                let latestStr = '';
+                let latestDt = null;
+                Object.values(pumpsObj).forEach(p => {
+                    const m = getLatestModifiedAtFromInspectionItems(p);
+                    if (!m) return;
+                    const dt = (typeof parseCustomDate === 'function') ? parseCustomDate(String(m)) : null;
+                    if (dt && !isNaN(dt.getTime())) {
+                        if (!latestDt || dt > latestDt) {
+                            latestDt = dt;
+                            latestStr = String(m);
+                        }
+                    } else {
+                        if (!latestStr) latestStr = String(m);
+                    }
+                });
+                return latestStr;
+            }
+            return getLatestModifiedAtFromInspectionItems(insData[key] || {});
+        }
+
         function renderInspection(mode = 'view') {
             const container = document.getElementById('inspection-container');
             container.innerHTML = '';
@@ -7525,7 +7573,7 @@ function saveDataInternal(options = {}) {
                     approvalInfoHtml = `
                         <div style="margin-top:10px; padding-top:10px; border-top:1px dashed #ccc; color:#27ae60;">
                             <b>✅ تم الاعتماد بواسطة:</b> ${app.role} / ${app.name} 
-                            <span style="font-size:0.85em; color:#7f8c8d;">(${app.date})</span>
+                            <span style="font-size:0.85em; color:#7f8c8d;">(${toDateOnly(app.date)})</span>
                         </div>
                     `;
                 }
@@ -7535,7 +7583,7 @@ function saveDataInternal(options = {}) {
                         ℹ️ معلومات آخر تحديث للفحص
                     </div>
                     <div style="display:flex; flex-wrap:wrap; gap:15px; color: #555;">
-                        <span>📅 التاريخ: <b style="color: #333;">${insData.lastUpdate || 'غير مسجل'}</b></span>
+                        <span>📅 التاريخ: <b style="color: #333;">${toDateOnly(insData.lastUpdate) || 'غير مسجل'}</b></span>
                         <span>👤 بواسطة: <b style="color: #333;">${insData.modifiedBy || 'غير مسجل'}</b></span>
                     </div>
                     ${approvalInfoHtml}
@@ -7571,14 +7619,17 @@ function saveDataInternal(options = {}) {
                     else if (status === 'efficient') { whStatusHtml = ' <span style="font-size:0.8em">✅</span>'; whBorderColor = 'var(--success-color)'; }
                 }
 
+                const sectionLastModified = getLatestModifiedAtForInspectionSection(insData, key);
+                const sectionLastModifiedHtml = sectionLastModified ? `<span style="font-size:0.75rem; ${isEdit ? 'color:#7f8c8d' : 'color:rgba(255,255,255,0.85)'};">${toDateOnly(sectionLastModified)}</span>` : '';
+
                 if (isEdit) { 
                     headerDiv.className = 'section-header-static'; 
-                    headerDiv.innerHTML = `<span>${title}${whStatusHtml}</span>`; 
+                    headerDiv.innerHTML = `<div style="display:flex; justify-content:space-between; align-items:center; gap:10px;"><span>${title}${whStatusHtml}</span>${sectionLastModifiedHtml}</div>`; 
                     if(whBorderColor) headerDiv.style.borderRight = `5px solid ${whBorderColor}`;
                 } 
                 else {
                     headerDiv.className = 'section-accordion-header'; 
-                    headerDiv.innerHTML = `<span>${title}${whStatusHtml}</span> <span class="arrow">▼</span>`;
+                    headerDiv.innerHTML = `<span>${title}${whStatusHtml}</span><span style="display:flex; align-items:center; gap:10px;">${sectionLastModifiedHtml}<span class="arrow">▼</span></span>`;
                     if(whBorderColor) headerDiv.style.borderRight = `5px solid ${whBorderColor}`;
                     headerDiv.onclick = function() { 
                         const body = this.nextElementSibling; 
@@ -7642,7 +7693,9 @@ function saveDataInternal(options = {}) {
                         pumpItemDiv.className = 'pump-accordion-item';
                         const pumpHeaderDiv = document.createElement('div'); 
                         pumpHeaderDiv.className = `pump-accordion-header ${headerClass}`; 
-                        pumpHeaderDiv.innerHTML = `<span>مضخة رقم ${i}</span> <span class="icon-state">${icon}</span>`;
+                        const pumpLastModified = getLatestModifiedAtFromInspectionItems(pData);
+                        const pumpLastModifiedHtml = pumpLastModified ? `<span style="font-size:0.75rem; opacity:0.9;">${toDateOnly(pumpLastModified)}</span>` : '';
+                        pumpHeaderDiv.innerHTML = `<span>مضخة رقم ${i}</span><span style="display:flex; align-items:center; gap:10px;">${pumpLastModifiedHtml}<span class="icon-state">${icon}</span></span>`;
                         pumpHeaderDiv.onclick = (e) => { 
                             e.stopPropagation(); 
                             togglePumpAccordion(i); 
@@ -7790,6 +7843,7 @@ if (idx === 5) { // الرقم 5 يمثل "المضخه" في مصفوفة ال�
         function createInspectionViewCard(itemKey, label, dataObj) {
             const status = dataObj && dataObj.status ? dataObj.status : 'efficient';
             const desc = dataObj && dataObj.desc ? dataObj.desc : '';
+            const modifiedAt = dataObj && dataObj.modifiedAt ? toDateOnly(dataObj.modifiedAt) : '';
             
             const card = document.createElement('div');
             card.className = `inspection-card status-${status}`;
@@ -7806,6 +7860,11 @@ if (idx === 5) { // الرقم 5 يمثل "المضخه" في مصفوفة ال�
             if (desc && desc.trim() !== '') {
                 descHtml = `<div class="card-desc">📝 ${desc}</div>`;
             }
+
+            let modifiedHtml = '';
+            if (modifiedAt && String(modifiedAt).trim() !== '') {
+                modifiedHtml = `<div style="font-size:0.75rem; color:#888; margin-top:6px;">🕒 آخر تعديل: <span style="color:#666;">${modifiedAt}</span></div>`;
+            }
             
             card.innerHTML = `
                 <div class="card-header-row">
@@ -7815,6 +7874,7 @@ if (idx === 5) { // الرقم 5 يمثل "المضخه" في مصفوفة ال�
                         <span>${statusText}</span>
                     </div>
                 </div>
+                ${modifiedHtml}
                 ${descHtml}
             `;
             
@@ -7891,6 +7951,8 @@ if (idx === 5) { // الرقم 5 يمثل "المضخه" في مصفوفة ال�
 
             const oldInsData = (appData.stations[sName].inspectionData) || {}; 
             let newInsData = JSON.parse(JSON.stringify(oldInsData));
+            const nowStd = getStandardDateTime();
+            let hasInspectionChanges = !oldInsData || !oldInsData.lastUpdate;
             
             Object.keys(inspectionSchema).forEach(key => {
                 if (key === 'pumps') return; 
@@ -7899,9 +7961,18 @@ if (idx === 5) { // الرقم 5 يمثل "المضخه" في مصفوفة ال�
                     const statEl = document.getElementById(`stat_${key}_${idx}`); 
                     const descEl = document.getElementById(`desc_${key}_${idx}`); 
                     if (statEl) { 
+                        const oldItemData = (oldInsData[key] && oldInsData[key][idx]) ? oldInsData[key][idx] : {};
+                        const oldStatus = oldItemData && oldItemData.status ? oldItemData.status : 'efficient';
+                        const oldDesc = oldItemData && oldItemData.desc ? oldItemData.desc : '';
+                        const oldModifiedAt = oldItemData && oldItemData.modifiedAt ? oldItemData.modifiedAt : '';
+                        const nextStatus = statEl.value;
+                        const nextDesc = descEl.value;
+                        const nextModifiedAt = (oldStatus !== nextStatus) ? nowStd.date : oldModifiedAt;
+                        if (oldStatus !== nextStatus || oldDesc !== nextDesc) hasInspectionChanges = true;
                         newInsData[key][idx] = { 
-                            status: statEl.value, 
-                            desc: descEl.value 
+                            status: nextStatus, 
+                            desc: nextDesc,
+                            modifiedAt: nextModifiedAt
                         }; 
                     } 
                 });
@@ -7916,27 +7987,40 @@ if (idx === 5) { // الرقم 5 يمثل "المضخه" في مصفوفة ال�
                     const statEl = document.getElementById(`stat_${prefix}_${idx}`); 
                     const descEl = document.getElementById(`desc_${prefix}_${idx}`); 
                     if (statEl) { 
+                        const oldPumpObj = (oldInsData.pumps && oldInsData.pumps[i]) ? oldInsData.pumps[i] : {};
+                        const oldItemData = oldPumpObj && oldPumpObj[idx] ? oldPumpObj[idx] : {};
+                        const oldStatus = oldItemData && oldItemData.status ? oldItemData.status : 'efficient';
+                        const oldDesc = oldItemData && oldItemData.desc ? oldItemData.desc : '';
+                        const oldModifiedAt = oldItemData && oldItemData.modifiedAt ? oldItemData.modifiedAt : '';
+                        const nextStatus = statEl.value;
+                        const nextDesc = descEl.value;
+                        const nextModifiedAt = (oldStatus !== nextStatus) ? nowStd.date : oldModifiedAt;
+                        if (oldStatus !== nextStatus || oldDesc !== nextDesc) hasInspectionChanges = true;
                         newInsData.pumps[i][idx] = { 
-                            status: statEl.value, 
-                            desc: descEl.value 
+                            status: nextStatus, 
+                            desc: nextDesc,
+                            modifiedAt: nextModifiedAt
                         }; 
                     } 
                 });
             }
-            
-            const nowStd = getStandardDateTime();
+
+            let didApproveAction = false;
+            let didUnapproveAction = false;
+
             const log = { 
                 date: nowStd.date, 
                 time: nowStd.time, 
                 station: sName, 
                 operator: appData.currentUser ? (appData.currentUser.username || appData.currentUser.name || 'مستخدم النظام') : 'مستخدم النظام',
-                details: `تحديث سجل الفحص الشامل` 
+                details: '' 
             };
             
             // Save Single Approval
             const approvalCheck = document.getElementById('approve_inspection_check');
             if (approvalCheck) {
                 if (approvalCheck.checked) {
+                    didApproveAction = !oldInsData.approval;
                     // If checked and not already approved (or overwriting), set new approval data
                     // We only update date/time if it's a new approval or re-approval action
                     const currentUser = appData.currentUser || {};
@@ -7946,9 +8030,10 @@ if (idx === 5) { // الرقم 5 يمثل "المضخه" في مصفوفة ال�
                     newInsData.approval = {
                         name: currentUser.username || currentUser.name || 'مستخدم',
                         role: userRole,
-                        date: `${nowStd.date} ${nowStd.time}`
+                        date: `${nowStd.date}`
                     };
                 } else {
+                    didUnapproveAction = !!oldInsData.approval;
                     // If unchecked, remove approval
                     newInsData.approval = null;
                 }
@@ -7957,9 +8042,15 @@ if (idx === 5) { // الرقم 5 يمثل "المضخه" في مصفوفة ال�
                 // Do nothing, newInsData is a copy of oldInsData so approval is preserved
             }
 
-            // حفظ معلومات التعديل داخل بيانات الفحص
-            newInsData.lastUpdate = nowStd.full;
-            newInsData.modifiedBy = log.operator;
+            if (hasInspectionChanges) {
+                newInsData.lastUpdate = nowStd.date;
+                newInsData.modifiedBy = log.operator;
+            }
+
+            if (hasInspectionChanges) log.details = 'تحديث سجل الفحص الشامل';
+            else if (didApproveAction) log.details = 'اعتماد الفحص';
+            else if (didUnapproveAction) log.details = 'إلغاء اعتماد الفحص';
+            else log.details = 'حفظ الفحص بدون تعديل';
             
             if (!appData.stations[sName].inspectionData) appData.stations[sName].inspectionData = {}; 
             appData.stations[sName].inspectionData = newInsData; 
