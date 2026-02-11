@@ -10907,7 +10907,7 @@ if(btnPerfBack) btnPerfBack.addEventListener('click', () => goBack());
         return new Date(2026, 1, 21, 0, 0, 0, 0).getTime();
     }
 
-    function calculateShiftPerformanceData(shiftType, targetYear, targetMonthIndex, stations, daysInMonth, eligibleDayLimit) {
+    function calculateShiftPerformanceData(shiftType, targetYear, targetMonthIndex, stations, daysInMonth, eligibleDayLimit, applyCutoff) {
         const stationShiftDays = {};
         stations.forEach(s => { stationShiftDays[s.name] = new Set(); });
         const allowedStations = new Set(stations.map(s => s.name));
@@ -10945,7 +10945,12 @@ if(btnPerfBack) btnPerfBack.addEventListener('click', () => goBack());
                 
                 if (!shiftDayDate) return;
                 if (shiftDayDate.getFullYear() !== targetYear || shiftDayDate.getMonth() !== targetMonthIndex) return;
-                if (shiftDayDate.getTime() < getSupervisorEvaluationCutoffMs()) return;
+                if (applyCutoff && shiftDayDate.getTime() < getSupervisorEvaluationCutoffMs()) return;
+                const ts = shiftDayDate.getTime();
+                if (appData.evalAssignmentPeriods && appData.evalAssignmentPeriods.length) {
+                    if (!isWithinActiveAssignmentForStation(ts, log.station)) return;
+                }
+                if (isWithinAnyVacation(ts)) return;
                 
                 const dayNum = shiftDayDate.getDate();
                 if (dayNum < 1 || dayNum > daysInMonth) return;
@@ -10968,7 +10973,7 @@ if(btnPerfBack) btnPerfBack.addEventListener('click', () => goBack());
         return dayOfWeek === 6 || dayOfWeek === 0 || dayOfWeek === 1 || dayOfWeek === 2;
     }
 
-    function calculateInspectionPerformanceData(targetYear, targetMonthIndex, stations) {
+    function calculateInspectionPerformanceData(targetYear, targetMonthIndex, stations, applyCutoff) {
         const stationBuckets = {};
         stations.forEach(s => { stationBuckets[s.name] = { 1: {has:false,onTime:false}, 2: {has:false,onTime:false}, 3: {has:false,onTime:false}, 4: {has:false,onTime:false} }; });
         const allowedStations = new Set(stations.map(s => s.name));
@@ -10982,7 +10987,12 @@ if(btnPerfBack) btnPerfBack.addEventListener('click', () => goBack());
                 const d = parseDateSimple(log.date);
                 if (!d) return;
                 if (d.getFullYear() !== targetYear || d.getMonth() !== targetMonthIndex) return;
-                if (d.getTime() < getSupervisorEvaluationCutoffMs()) return;
+                if (applyCutoff && d.getTime() < getSupervisorEvaluationCutoffMs()) return;
+                const ts = d.getTime();
+                if (appData.evalAssignmentPeriods && appData.evalAssignmentPeriods.length) {
+                    if (!isWithinActiveAssignmentForStation(ts, log.station)) return;
+                }
+                if (isWithinAnyVacation(ts)) return;
                 const bucket = Math.min(4, Math.ceil(d.getDate() / 7));
                 stationBuckets[log.station][bucket].has = true;
                 stationBuckets[log.station][bucket].onTime = stationBuckets[log.station][bucket].onTime || isInspectionOnTimeDayOfWeek(d.getDay());
@@ -11334,7 +11344,31 @@ if(btnPerfBack) btnPerfBack.addEventListener('click', () => goBack());
         if (!appData.supervisorStationsCache) appData.supervisorStationsCache = {};
         appData.supervisorStationsCache[username] = Object.keys(obj);
         if (typeof db === 'undefined' || !navigator.onLine) return Promise.reject(new Error('Offline'));
-        return db.ref('supervisorStations/' + username).set(obj);
+        // حفظ التعيين الحالي
+        const nowStd = getStandardDateTime();
+        const nowTs = Date.now();
+        const baseRef = db.ref('supervisorStations/' + username);
+        const histRef = db.ref('supervisorStationsHistory/' + username);
+        return baseRef.set(obj).then(() => {
+            // إغلاق أي فترة مفتوحة سابقة
+            return histRef.orderByChild('endTs').equalTo(null).once('value').then(snap => {
+                const closers = [];
+                snap.forEach(child => {
+                    closers.push(histRef.child(child.key).update({ endTs: nowTs, endDate: nowStd.date, endTime: nowStd.time }));
+                });
+                return Promise.all(closers);
+            }).then(() => {
+                // فتح فترة جديدة
+                const rec = {
+                    startTs: firebase.database.ServerValue.TIMESTAMP,
+                    startDate: nowStd.date,
+                    startTime: nowStd.time,
+                    endTs: null,
+                    stations: Object.keys(obj)
+                };
+                return histRef.push(rec);
+            });
+        });
     }
 
     function getSupervisorUsers() {
@@ -11342,7 +11376,7 @@ if(btnPerfBack) btnPerfBack.addEventListener('click', () => goBack());
         return Object.keys(users).filter(u => users[u] && users[u].type === 'supervisor' && users[u].active !== false).sort((a, b) => a.localeCompare(b, 'ar'));
     }
 
-    function calculateApprovalPerformanceData(targetYear, targetMonthIndex, stations) {
+    function calculateApprovalPerformanceData(targetYear, targetMonthIndex, stations, applyCutoff) {
         const result = [];
         stations.forEach(s => {
             const ins = s.inspectionData;
@@ -11354,6 +11388,10 @@ if(btnPerfBack) btnPerfBack.addEventListener('click', () => goBack());
                     if (ins.approval && ins.approval.date) {
                         const apprDt = (typeof parseCustomDate === 'function' ? parseCustomDate(ins.approval.date) : null) || parseCustomDate(ins.approval.date + '');
                         if (apprDt) {
+                            if (applyCutoff && (lastDt.getTime() < getSupervisorEvaluationCutoffMs() || apprDt.getTime() < getSupervisorEvaluationCutoffMs())) {
+                                result.push({ name: s.name, zone: s.zone, score: 0, details: 'قبل بداية التقييم' });
+                                return;
+                            }
                             let diffHrs = (apprDt.getTime() - lastDt.getTime()) / 3600000;
                             if (!isFinite(diffHrs) || diffHrs < 0) diffHrs = 0;
                             if (diffHrs <= 12) score = 100;
@@ -11374,6 +11412,69 @@ if(btnPerfBack) btnPerfBack.addEventListener('click', () => goBack());
 
     function getMonthKey(year, monthIndex) {
         return `${year}-${String(monthIndex + 1).padStart(2, '0')}`;
+    }
+
+    function loadSupervisorAssignmentsHistory(username) {
+        if (!username) return Promise.resolve([]);
+        if (!appData.supervisorStationsHistoryCache) appData.supervisorStationsHistoryCache = {};
+        if (typeof db === 'undefined' || !navigator.onLine) {
+            return Promise.resolve(appData.supervisorStationsHistoryCache[username] || []);
+        }
+        return db.ref('supervisorStationsHistory/' + username).once('value').then(snap => {
+            const items = [];
+            snap.forEach(child => {
+                const v = child.val() || {};
+                const startTs = Number(v.startTs || 0);
+                const endTs = (v.endTs === null || typeof v.endTs === 'undefined') ? null : Number(v.endTs);
+                const stations = Array.isArray(v.stations) ? v.stations : [];
+                items.push({ startTs, endTs, stations });
+            });
+            items.sort((a, b) => (a.startTs || 0) - (b.startTs || 0));
+            appData.supervisorStationsHistoryCache[username] = items;
+            return items;
+        }).catch(() => appData.supervisorStationsHistoryCache[username] || []);
+    }
+
+    function loadSupervisorVacations(username) {
+        if (!username) return Promise.resolve([]);
+        if (!appData.supervisorVacationsCache) appData.supervisorVacationsCache = {};
+        if (typeof db === 'undefined' || !navigator.onLine) {
+            return Promise.resolve(appData.supervisorVacationsCache[username] || []);
+        }
+        return db.ref('supervisorVacations/' + username).once('value').then(snap => {
+            const items = [];
+            snap.forEach(child => {
+                const v = child.val() || {};
+                const startTs = Number(v.startTs || 0);
+                const endTs = Number(v.endTs || 0);
+                items.push({ startTs, endTs });
+            });
+            items.sort((a, b) => (a.startTs || 0) - (b.startTs || 0));
+            appData.supervisorVacationsCache[username] = items;
+            return items;
+        }).catch(() => appData.supervisorVacationsCache[username] || []);
+    }
+
+    function isWithinAnyVacation(ts) {
+        const vacations = appData.evalVacationPeriods || [];
+        for (let i = 0; i < vacations.length; i++) {
+            const v = vacations[i];
+            if (isFinite(v.startTs) && isFinite(v.endTs) && ts >= v.startTs && ts <= v.endTs) return true;
+        }
+        return false;
+    }
+
+    function isWithinActiveAssignmentForStation(ts, stationName) {
+        const periods = appData.evalAssignmentPeriods || [];
+        for (let i = 0; i < periods.length; i++) {
+            const p = periods[i];
+            const st = p.stations || [];
+            if (!st.includes(stationName)) continue;
+            const startTs = isFinite(p.startTs) ? p.startTs : 0;
+            const endTs = (p.endTs === null || typeof p.endTs === 'undefined') ? Number.POSITIVE_INFINITY : Number(p.endTs);
+            if (ts >= startTs && ts <= endTs) return true;
+        }
+        return false;
     }
 
     function loadSupervisorAdminEvaluation(username, monthKey) {
@@ -11405,7 +11506,7 @@ if(btnPerfBack) btnPerfBack.addEventListener('click', () => goBack());
         return db.ref(`supervisorAdminEvaluation/${username}/${monthKey}`).set(val);
     }
 
-    function calculateApprovalByFridayPoints(targetYear, targetMonthIndex, stations) {
+    function calculateApprovalByFridayPoints(targetYear, targetMonthIndex, stations, applyCutoff) {
         const total = stations.length;
         if (!total) return { points: 0, approved: 0, total: 0, onTimeMap: {} };
         let approved = 0;
@@ -11420,7 +11521,13 @@ if(btnPerfBack) btnPerfBack.addEventListener('click', () => goBack());
             const apprDt = (typeof parseCustomDate === 'function' ? parseCustomDate(apprStr) : null) || parseDateSimple(apprStr);
             if (!lastDt || !apprDt) return;
             if (lastDt.getFullYear() !== targetYear || lastDt.getMonth() !== targetMonthIndex) return;
-            if (lastDt.getTime() < getSupervisorEvaluationCutoffMs() || apprDt.getTime() < getSupervisorEvaluationCutoffMs()) return;
+            if (applyCutoff && (lastDt.getTime() < getSupervisorEvaluationCutoffMs() || apprDt.getTime() < getSupervisorEvaluationCutoffMs())) return;
+            const lastMs = lastDt.getTime();
+            const apprMs = apprDt.getTime();
+            if (appData.evalAssignmentPeriods && appData.evalAssignmentPeriods.length) {
+                if (!isWithinActiveAssignmentForStation(lastMs, s.name) || !isWithinActiveAssignmentForStation(apprMs, s.name)) return;
+            }
+            if (isWithinAnyVacation(lastMs) || isWithinAnyVacation(apprMs)) return;
             const day = lastDt.getDay();
             const offsetToFriday = (5 - day + 7) % 7;
             const deadline = new Date(lastDt.getFullYear(), lastDt.getMonth(), lastDt.getDate());
@@ -11608,6 +11715,18 @@ if(btnPerfBack) btnPerfBack.addEventListener('click', () => goBack());
         }
         
         loadSupervisorStations(targetUser).then(stationNames => {
+            const { start, end } = getMonthTimestampRange(targetYear, targetMonthIndex);
+            Promise.all([loadSupervisorAssignmentsHistory(targetUser), loadSupervisorVacations(targetUser)]).then(([hist, vacations]) => {
+                appData.evalAssignmentPeriods = (hist || []).filter(p => {
+                    const s = Number(p.startTs || 0);
+                    const e = (p.endTs === null || typeof p.endTs === 'undefined') ? Number.POSITIVE_INFINITY : Number(p.endTs);
+                    return e >= start && s <= end;
+                });
+                appData.evalVacationPeriods = (vacations || []).filter(v => {
+                    const s = Number(v.startTs || 0);
+                    const e = Number(v.endTs || 0);
+                    return e >= start && s <= end;
+                });
             const selectedStations = (stationNames || []).map(n => appData.stations[n]).filter(Boolean);
             const scoreEl = document.getElementById('supervisor-score');
             const adminEl = document.getElementById('supervisor-admin-score');
@@ -11628,10 +11747,10 @@ if(btnPerfBack) btnPerfBack.addEventListener('click', () => goBack());
             const daysInMonth = new Date(targetYear, targetMonthIndex + 1, 0).getDate();
             const eligibleDay = getEligibleDayLimitForMonth('day', targetYear, targetMonthIndex);
             const eligibleNight = getEligibleDayLimitForMonth('night', targetYear, targetMonthIndex);
-            const dayData = calculateShiftPerformanceData('day', targetYear, targetMonthIndex, selectedStations, daysInMonth, eligibleDay);
-            const nightData = calculateShiftPerformanceData('night', targetYear, targetMonthIndex, selectedStations, daysInMonth, eligibleNight);
-            const inspData = calculateInspectionPerformanceData(targetYear, targetMonthIndex, selectedStations);
-            const approvalByFriday = calculateApprovalByFridayPoints(targetYear, targetMonthIndex, selectedStations);
+            const dayData = calculateShiftPerformanceData('day', targetYear, targetMonthIndex, selectedStations, daysInMonth, eligibleDay, true);
+            const nightData = calculateShiftPerformanceData('night', targetYear, targetMonthIndex, selectedStations, daysInMonth, eligibleNight, true);
+            const inspData = calculateInspectionPerformanceData(targetYear, targetMonthIndex, selectedStations, true);
+            const approvalByFriday = calculateApprovalByFridayPoints(targetYear, targetMonthIndex, selectedStations, true);
             
             const byName = (arr) => {
                 const m = {};
@@ -11652,7 +11771,7 @@ if(btnPerfBack) btnPerfBack.addEventListener('click', () => goBack());
             const stationAdhPercent = (avgShift + avgInspection) / 2;
             const stationAdhPoints = Math.round((stationAdhPercent * 10 / 100) * 10) / 10;
 
-            calculateFaultReportsSupervisorScore(targetYear, targetMonthIndex, stationNames || [], targetUser).then(fr => {
+            calculateFaultReportsSupervisorScore(targetYear, targetMonthIndex, stationNames || [], targetUser, true).then(fr => {
                 const avgFault = fr && fr.score !== null ? fr.score : null;
 
                 const faultPercent = avgFault === null ? 0 : avgFault;
@@ -11684,7 +11803,10 @@ if(btnPerfBack) btnPerfBack.addEventListener('click', () => goBack());
 
                     const adhPointsEff = preEval ? 10 : stationAdhPoints;
                     const supervisorScore = Math.round((adminPoints + approvalPoints + faultPoints + adhPointsEff) * 10) / 10;
-                    if (scoreEl) scoreEl.textContent = supervisorScore + '%';
+                    if (scoreEl) {
+                        scoreEl.textContent = supervisorScore + '%';
+                        scoreEl.title = preEval ? 'قبل بدء التقييم — تعرض العلامة الكاملة مؤقتاً' : '';
+                    }
                     
                     const stationRows = selectedStations.map(s => {
                         const d = dayMap[s.name] ? dayMap[s.name].score : 0;
@@ -11712,6 +11834,7 @@ if(btnPerfBack) btnPerfBack.addEventListener('click', () => goBack());
                     });
                     if (summaryEl) summaryEl.innerHTML = html || '<div style="text-align:center; padding:20px; color:#666;">لا توجد بيانات</div>';
                 });
+            });
             });
         });
     };
@@ -11882,37 +12005,51 @@ if(btnPerfBack) btnPerfBack.addEventListener('click', () => goBack());
         const selectedStations = (stationNames || []).map(n => appData.stations[n]).filter(Boolean);
         if (selectedStations.length === 0) return Promise.resolve({ score: null, details: 'لا توجد محطات' });
 
-        const daysInMonth = new Date(year, monthIndex + 1, 0).getDate();
-        const eligibleDay = getEligibleDayLimitForMonth('day', year, monthIndex);
-        const eligibleNight = getEligibleDayLimitForMonth('night', year, monthIndex);
-        const dayData = calculateShiftPerformanceData('day', year, monthIndex, selectedStations, daysInMonth, eligibleDay);
-        const nightData = calculateShiftPerformanceData('night', year, monthIndex, selectedStations, daysInMonth, eligibleNight);
-        const inspData = calculateInspectionPerformanceData(year, monthIndex, selectedStations);
-        const apprData = calculateApprovalPerformanceData(year, monthIndex, selectedStations);
-        const avg = (arr) => {
-            const v = (arr || []).map(x => Number(x.score)).filter(n => isFinite(n));
-            if (v.length === 0) return 0;
-            return v.reduce((a, b) => a + b, 0) / v.length;
-        };
-        const avgShift = (avg(dayData) + avg(nightData)) / 2;
-        const avgInspection = avg(inspData);
-        const avgApproval = avg(apprData);
-        const effScores = selectedStations.map(s => computeStationEfficiencyScore(s)).filter(v => v !== null);
-        const avgEfficiency = effScores.length ? (effScores.reduce((a, b) => a + b, 0) / effScores.length) : 0;
+        const { start, end } = getMonthTimestampRange(year, monthIndex);
+        return Promise.all([loadSupervisorAssignmentsHistory(targetUser), loadSupervisorVacations(targetUser)]).then(([hist, vacations]) => {
+            appData.evalAssignmentPeriods = (hist || []).filter(p => {
+                const s = Number(p.startTs || 0);
+                const e = (p.endTs === null || typeof p.endTs === 'undefined') ? Number.POSITIVE_INFINITY : Number(p.endTs);
+                return e >= start && s <= end;
+            });
+            appData.evalVacationPeriods = (vacations || []).filter(v => {
+                const s = Number(v.startTs || 0);
+                const e = Number(v.endTs || 0);
+                return e >= start && s <= end;
+            });
 
-        const wShift = 0.30;
-        const wInspection = 0.20;
-        const wApproval = 0.20;
-        const wEfficiency = 0.10;
-        const wFault = 0.20;
+            const daysInMonth = new Date(year, monthIndex + 1, 0).getDate();
+            const eligibleDay = getEligibleDayLimitForMonth('day', year, monthIndex);
+            const eligibleNight = getEligibleDayLimitForMonth('night', year, monthIndex);
+            const dayData = calculateShiftPerformanceData('day', year, monthIndex, selectedStations, daysInMonth, eligibleDay, true);
+            const nightData = calculateShiftPerformanceData('night', year, monthIndex, selectedStations, daysInMonth, eligibleNight, true);
+            const inspData = calculateInspectionPerformanceData(year, monthIndex, selectedStations, true);
+            const apprData = calculateApprovalPerformanceData(year, monthIndex, selectedStations, true);
+            const avg = (arr) => {
+                const v = (arr || []).map(x => Number(x.score)).filter(n => isFinite(n));
+                if (v.length === 0) return 0;
+                return v.reduce((a, b) => a + b, 0) / v.length;
+            };
+            const avgShift = (avg(dayData) + avg(nightData)) / 2;
+            const avgInspection = avg(inspData);
+            const avgApproval = avg(apprData);
+            const effScores = selectedStations.map(s => computeStationEfficiencyScore(s)).filter(v => v !== null);
+            const avgEfficiency = effScores.length ? (effScores.reduce((a, b) => a + b, 0) / effScores.length) : 0;
 
-        return calculateFaultReportsSupervisorScore(year, monthIndex, stationNames || [], targetUser).then(fr => {
-            const avgFault = fr && fr.score !== null ? fr.score : null;
-            const faultForScore = avgFault === null ? 0 : avgFault;
-            const score = Math.round(((avgShift * wShift) + (avgInspection * wInspection) + (avgApproval * wApproval) + (avgEfficiency * wEfficiency) + (faultForScore * wFault)) * 10) / 10;
-            const result = { score, parts: { shift: avgShift, inspection: avgInspection, approval: avgApproval, efficiency: avgEfficiency, faults: avgFault }, faultDetails: fr && fr.details ? fr.details : '' };
-            appData.supervisorHistoryMonthCache[targetUser][key] = result;
-            return result;
+            const wShift = 0.30;
+            const wInspection = 0.20;
+            const wApproval = 0.20;
+            const wEfficiency = 0.10;
+            const wFault = 0.20;
+
+            return calculateFaultReportsSupervisorScore(year, monthIndex, stationNames || [], targetUser, true).then(fr => {
+                const avgFault = fr && fr.score !== null ? fr.score : null;
+                const faultForScore = avgFault === null ? 0 : avgFault;
+                const score = Math.round(((avgShift * wShift) + (avgInspection * wInspection) + (avgApproval * wApproval) + (avgEfficiency * wEfficiency) + (faultForScore * wFault)) * 10) / 10;
+                const result = { score, parts: { shift: avgShift, inspection: avgInspection, approval: avgApproval, efficiency: avgEfficiency, faults: avgFault }, faultDetails: fr && fr.details ? fr.details : '' };
+                appData.supervisorHistoryMonthCache[targetUser][key] = result;
+                return result;
+            });
         });
     }
 
@@ -12006,7 +12143,7 @@ if(btnPerfBack) btnPerfBack.addEventListener('click', () => goBack());
                     `;
                 });
                 if (resultsEl) resultsEl.innerHTML = html || '<div style="text-align:center; padding:20px; color:#666;">لا توجد بيانات</div>';
-                if (statusEl) statusEl.textContent = `المشرف: ${targetUser}`;
+                if (statusEl) statusEl.textContent = `المشرف: ${targetUser} — السجل يعرض القيم الفعلية دون منح العلامة الكاملة قبل البدء`;
             }).catch(() => {
                 if (resultsEl) resultsEl.innerHTML = '<div style="text-align:center; padding:20px; color:#666;">فشل التحميل</div>';
             });
@@ -12290,7 +12427,7 @@ function parseReportActionAtMs(item) {
     return null;
 }
 
-function calculateFaultReportsSupervisorScore(targetYear, targetMonthIndex, stationNames, supervisorUsername) {
+function calculateFaultReportsSupervisorScore(targetYear, targetMonthIndex, stationNames, supervisorUsername, applyCutoff) {
     if (!stationNames || stationNames.length === 0 || !supervisorUsername) return Promise.resolve({ score: null, details: 'لا توجد محطات', total: 0, late: 0, onTime: 0 });
     if (typeof db === 'undefined' || !navigator.onLine) return Promise.resolve({ score: null, details: 'غير متصل', total: 0, late: 0, onTime: 0 });
     
@@ -12299,8 +12436,8 @@ function calculateFaultReportsSupervisorScore(targetYear, targetMonthIndex, stat
     const nowMs = Date.now();
     const deadlineMs = 2 * 24 * 60 * 60 * 1000;
     const cutoffStartMs = getSupervisorEvaluationCutoffMs();
-    const queryStart = Math.max(start, cutoffStartMs);
-    if (end < cutoffStartMs) {
+    const queryStart = applyCutoff ? Math.max(start, cutoffStartMs) : start;
+    if (applyCutoff && end < cutoffStartMs) {
         return Promise.resolve({ score: 100, details: 'لا توجد بلاغات', total: 0, late: 0, onTime: 0 });
     }
     
@@ -12314,7 +12451,11 @@ function calculateFaultReportsSupervisorScore(targetYear, targetMonthIndex, stat
             
             const createdAt = parseReportCreatedAtMs(item);
             if (!createdAt) return;
-            if (createdAt < cutoffStartMs) return;
+            if (applyCutoff && createdAt < cutoffStartMs) return;
+            if (appData.evalAssignmentPeriods && appData.evalAssignmentPeriods.length) {
+                if (!isWithinActiveAssignmentForStation(createdAt, item.station)) return;
+            }
+            if (isWithinAnyVacation(createdAt)) return;
             total++;
             
             const status = item.supervisorStatus || 'pending';
