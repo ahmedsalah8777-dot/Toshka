@@ -12503,7 +12503,8 @@ function updateMenuPermissions() {
         const canHistory = !!perms.view_history;
         const canExportInspection = !!perms.export_inspection;
         const canStatistics = !!perms.view_statistics;
-        reportsHubBtn.style.display = (canConsumptions || canHistory || canExportInspection || canStatistics) ? 'block' : 'none';
+        const allowHubByRole = (type === 'admin' || type === 'engineer' || type === 'supervisor');
+        reportsHubBtn.style.display = (allowHubByRole && (canConsumptions || canHistory || canExportInspection || canStatistics)) ? 'block' : 'none';
     }
     
     if (supervisorBtn) {
