@@ -4049,6 +4049,13 @@
                         <label>الشهر</label>
                         <input type="month" id="supervisor-month" style="width:100%; padding:10px; border:1px solid #ddd; border-radius:8px;">
                     </div>
+                    <div class="filter-item" id="supervisor-admin-eval-wrapper" style="display:none;">
+                        <label>تقييم الإدارة (0-100)</label>
+                        <div style="display:flex; gap:8px;">
+                            <input type="number" id="supervisor-admin-eval-input" min="0" max="100" value="0" style="flex:1; padding:10px; border:1px solid #ddd; border-radius:8px;">
+                            <button class="btn btn-success" id="supervisor-admin-eval-save" style="white-space:nowrap;">حفظ</button>
+                        </div>
+                    </div>
                     <div class="filter-item" style="display:flex; gap:10px;">
                         <button class="btn btn-primary" id="supervisor-refresh-btn" style="flex:1">تحديث</button>
                         <button class="btn btn-outline" id="supervisor-edit-stations-btn" style="flex:1">اختيار المحطات</button>
@@ -4058,11 +4065,10 @@
                 
                 <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap:15px; margin-bottom: 15px;">
                     <div class="detail-card"><div class="detail-title">تقييم المشرف</div><div class="detail-value" id="supervisor-score">-</div></div>
-                    <div class="detail-card"><div class="detail-title">كفاءة المحطات</div><div class="detail-value" id="supervisor-efficiency-score">-</div></div>
-                    <div class="detail-card"><div class="detail-title">التزام التمام</div><div class="detail-value" id="supervisor-shifts-score">-</div></div>
-                    <div class="detail-card"><div class="detail-title">تحديث الفحص</div><div class="detail-value" id="supervisor-inspection-score">-</div></div>
-                    <div class="detail-card"><div class="detail-title">اعتماد الفحص</div><div class="detail-value" id="supervisor-approval-score">-</div></div>
-                    <div class="detail-card"><div class="detail-title">بلاغات الأعطال</div><div class="detail-value" id="supervisor-faultreports-score">-</div></div>
+                    <div class="detail-card"><div class="detail-title">تقييم الإدارة (50%)</div><div class="detail-value" id="supervisor-admin-score">-</div></div>
+                    <div class="detail-card"><div class="detail-title">اعتماد الفحص (20%)</div><div class="detail-value" id="supervisor-approval-score">-</div></div>
+                    <div class="detail-card"><div class="detail-title">إجراء البلاغات (20%)</div><div class="detail-value" id="supervisor-faultreports-score">-</div></div>
+                    <div class="detail-card"><div class="detail-title">الالتزام بالمحطات (10%)</div><div class="detail-value" id="supervisor-stations-adherence-score">-</div></div>
                 </div>
                 
                 <div class="performance-card">
@@ -10897,6 +10903,9 @@ if(btnPerfBack) btnPerfBack.addEventListener('click', () => goBack());
         if(parts.length < 3) return null;
         return new Date(parseInt(parts[2]), parseInt(parts[1])-1, parseInt(parts[0]));
     }
+    function getSupervisorEvaluationCutoffMs() {
+        return new Date(2026, 1, 21, 0, 0, 0, 0).getTime();
+    }
 
     function calculateShiftPerformanceData(shiftType, targetYear, targetMonthIndex, stations, daysInMonth, eligibleDayLimit) {
         const stationShiftDays = {};
@@ -10936,6 +10945,7 @@ if(btnPerfBack) btnPerfBack.addEventListener('click', () => goBack());
                 
                 if (!shiftDayDate) return;
                 if (shiftDayDate.getFullYear() !== targetYear || shiftDayDate.getMonth() !== targetMonthIndex) return;
+                if (shiftDayDate.getTime() < getSupervisorEvaluationCutoffMs()) return;
                 
                 const dayNum = shiftDayDate.getDate();
                 if (dayNum < 1 || dayNum > daysInMonth) return;
@@ -10972,6 +10982,7 @@ if(btnPerfBack) btnPerfBack.addEventListener('click', () => goBack());
                 const d = parseDateSimple(log.date);
                 if (!d) return;
                 if (d.getFullYear() !== targetYear || d.getMonth() !== targetMonthIndex) return;
+                if (d.getTime() < getSupervisorEvaluationCutoffMs()) return;
                 const bucket = Math.min(4, Math.ceil(d.getDate() / 7));
                 stationBuckets[log.station][bucket].has = true;
                 stationBuckets[log.station][bucket].onTime = stationBuckets[log.station][bucket].onTime || isInspectionOnTimeDayOfWeek(d.getDay());
@@ -11361,6 +11372,69 @@ if(btnPerfBack) btnPerfBack.addEventListener('click', () => goBack());
         return result;
     }
 
+    function getMonthKey(year, monthIndex) {
+        return `${year}-${String(monthIndex + 1).padStart(2, '0')}`;
+    }
+
+    function loadSupervisorAdminEvaluation(username, monthKey) {
+        if (!username || !monthKey) return Promise.resolve(null);
+        if (!appData.supervisorAdminEvalCache) appData.supervisorAdminEvalCache = {};
+        const cacheKey = `${username}__${monthKey}`;
+        if (typeof db === 'undefined' || !navigator.onLine) {
+            return Promise.resolve((cacheKey in appData.supervisorAdminEvalCache) ? appData.supervisorAdminEvalCache[cacheKey] : null);
+        }
+        return db.ref(`supervisorAdminEvaluation/${username}/${monthKey}`).once('value').then(snap => {
+            const v = snap.val();
+            const n = (v === null || typeof v === 'undefined') ? null : Number(v);
+            const val = (n !== null && isFinite(n)) ? Math.max(0, Math.min(100, n)) : null;
+            appData.supervisorAdminEvalCache[cacheKey] = val;
+            return val;
+        }).catch(() => {
+            return (cacheKey in appData.supervisorAdminEvalCache) ? appData.supervisorAdminEvalCache[cacheKey] : null;
+        });
+    }
+
+    function saveSupervisorAdminEvaluation(username, monthKey, value0to100) {
+        if (!username || !monthKey) return Promise.reject(new Error('MissingParams'));
+        const n = Number(value0to100);
+        const val = isFinite(n) ? Math.max(0, Math.min(100, n)) : 0;
+        if (!appData.supervisorAdminEvalCache) appData.supervisorAdminEvalCache = {};
+        const cacheKey = `${username}__${monthKey}`;
+        appData.supervisorAdminEvalCache[cacheKey] = val;
+        if (typeof db === 'undefined' || !navigator.onLine) return Promise.reject(new Error('Offline'));
+        return db.ref(`supervisorAdminEvaluation/${username}/${monthKey}`).set(val);
+    }
+
+    function calculateApprovalByFridayPoints(targetYear, targetMonthIndex, stations) {
+        const total = stations.length;
+        if (!total) return { points: 0, approved: 0, total: 0, onTimeMap: {} };
+        let approved = 0;
+        const onTimeMap = {};
+        stations.forEach(s => {
+            const ins = s.inspectionData || {};
+            const lastStr = ins.lastUpdate;
+            const apprStr = ins.approval && ins.approval.date ? ins.approval.date : '';
+            onTimeMap[s.name] = false;
+            if (!lastStr || !apprStr) return;
+            const lastDt = (typeof parseCustomDate === 'function' ? parseCustomDate(lastStr) : null) || parseDateSimple(lastStr);
+            const apprDt = (typeof parseCustomDate === 'function' ? parseCustomDate(apprStr) : null) || parseDateSimple(apprStr);
+            if (!lastDt || !apprDt) return;
+            if (lastDt.getFullYear() !== targetYear || lastDt.getMonth() !== targetMonthIndex) return;
+            if (lastDt.getTime() < getSupervisorEvaluationCutoffMs() || apprDt.getTime() < getSupervisorEvaluationCutoffMs()) return;
+            const day = lastDt.getDay();
+            const offsetToFriday = (5 - day + 7) % 7;
+            const deadline = new Date(lastDt.getFullYear(), lastDt.getMonth(), lastDt.getDate());
+            deadline.setDate(deadline.getDate() + offsetToFriday);
+            const apprDateOnly = new Date(apprDt.getFullYear(), apprDt.getMonth(), apprDt.getDate());
+            if (apprDateOnly.getTime() <= deadline.getTime() && apprDateOnly.getTime() >= new Date(lastDt.getFullYear(), lastDt.getMonth(), lastDt.getDate()).getTime()) {
+                approved++;
+                onTimeMap[s.name] = true;
+            }
+        });
+        const points = Math.round(((approved * 20) / total) * 10) / 10;
+        return { points, approved, total, onTimeMap };
+    }
+
     function bindSupervisorHandlers() {
         if (appData.supervisorHandlersBound) return;
         appData.supervisorHandlersBound = true;
@@ -11379,6 +11453,28 @@ if(btnPerfBack) btnPerfBack.addEventListener('click', () => goBack());
         
         const monthInput = document.getElementById('supervisor-month');
         if (monthInput) monthInput.addEventListener('change', () => { if (typeof renderSupervisorDashboard === 'function') renderSupervisorDashboard(); });
+
+        const adminSave = document.getElementById('supervisor-admin-eval-save');
+        if (adminSave) adminSave.addEventListener('click', () => {
+            const current = appData.currentUser;
+            if (!current || current.type !== 'admin') return;
+            const targetUser = getSupervisorDashboardTarget();
+            const monthEl = document.getElementById('supervisor-month');
+            if (!targetUser || !monthEl || !monthEl.value) return;
+            const parts = monthEl.value.split('-');
+            const y = parseInt(parts[0]);
+            const m = parseInt(parts[1]) - 1;
+            const monthKey = getMonthKey(y, m);
+            const input = document.getElementById('supervisor-admin-eval-input');
+            const val = input ? input.value : '0';
+            adminSave.disabled = true;
+            saveSupervisorAdminEvaluation(targetUser, monthKey, val).then(() => {
+                alert('✅ تم حفظ تقييم الإدارة');
+                if (typeof renderSupervisorDashboard === 'function') renderSupervisorDashboard();
+            }).catch(() => alert('❌ فشل الاتصال بالسيرفر')).finally(() => {
+                adminSave.disabled = false;
+            });
+        });
         
         const assignSel = document.getElementById('supervisor-assign-select');
         if (assignSel) assignSel.addEventListener('change', () => { appData.supervisorAssignUser = assignSel.value; if (typeof renderSupervisorAssignmentsScreen === 'function') renderSupervisorAssignmentsScreen(); });
@@ -11469,6 +11565,9 @@ if(btnPerfBack) btnPerfBack.addEventListener('click', () => goBack());
 
         const historyBtn = document.getElementById('supervisor-history-btn');
         if (historyBtn) historyBtn.style.display = (current.type === 'admin' || current.type === 'engineer') ? 'inline-block' : 'none';
+
+        const adminEvalWrapper = document.getElementById('supervisor-admin-eval-wrapper');
+        if (adminEvalWrapper) adminEvalWrapper.style.display = (current.type === 'admin') ? 'block' : 'none';
         
         const monthInput = document.getElementById('supervisor-month');
         if (monthInput && !monthInput.value) {
@@ -11511,20 +11610,18 @@ if(btnPerfBack) btnPerfBack.addEventListener('click', () => goBack());
         loadSupervisorStations(targetUser).then(stationNames => {
             const selectedStations = (stationNames || []).map(n => appData.stations[n]).filter(Boolean);
             const scoreEl = document.getElementById('supervisor-score');
-            const effEl = document.getElementById('supervisor-efficiency-score');
-            const shiftsEl = document.getElementById('supervisor-shifts-score');
-            const inspEl = document.getElementById('supervisor-inspection-score');
+            const adminEl = document.getElementById('supervisor-admin-score');
             const apprEl = document.getElementById('supervisor-approval-score');
             const frEl = document.getElementById('supervisor-faultreports-score');
+            const adhEl = document.getElementById('supervisor-stations-adherence-score');
             
             if (selectedStations.length === 0) {
                 if (summaryEl) summaryEl.innerHTML = '<div style="text-align:center; padding:20px; color:#666;">لا توجد محطات محددة لهذا المشرف</div>';
                 if (scoreEl) scoreEl.textContent = '-';
-                if (effEl) effEl.textContent = '-';
-                if (shiftsEl) shiftsEl.textContent = '-';
-                if (inspEl) inspEl.textContent = '-';
+                if (adminEl) adminEl.textContent = '-';
                 if (apprEl) apprEl.textContent = '-';
                 if (frEl) frEl.textContent = '-';
+                if (adhEl) adhEl.textContent = '-';
                 return;
             }
             
@@ -11534,7 +11631,7 @@ if(btnPerfBack) btnPerfBack.addEventListener('click', () => goBack());
             const dayData = calculateShiftPerformanceData('day', targetYear, targetMonthIndex, selectedStations, daysInMonth, eligibleDay);
             const nightData = calculateShiftPerformanceData('night', targetYear, targetMonthIndex, selectedStations, daysInMonth, eligibleNight);
             const inspData = calculateInspectionPerformanceData(targetYear, targetMonthIndex, selectedStations);
-            const apprData = calculateApprovalPerformanceData(targetYear, targetMonthIndex, selectedStations);
+            const approvalByFriday = calculateApprovalByFridayPoints(targetYear, targetMonthIndex, selectedStations);
             
             const byName = (arr) => {
                 const m = {};
@@ -11544,7 +11641,6 @@ if(btnPerfBack) btnPerfBack.addEventListener('click', () => goBack());
             const dayMap = byName(dayData);
             const nightMap = byName(nightData);
             const inspMap = byName(inspData);
-            const apprMap = byName(apprData);
             
             const avg = (arr) => {
                 const v = (arr || []).map(x => Number(x.score)).filter(n => isFinite(n));
@@ -11553,59 +11649,69 @@ if(btnPerfBack) btnPerfBack.addEventListener('click', () => goBack());
             };
             const avgShift = (avg(dayData) + avg(nightData)) / 2;
             const avgInspection = avg(inspData);
-            const avgApproval = avg(apprData);
-            const effScores = selectedStations.map(s => computeStationEfficiencyScore(s)).filter(v => v !== null);
-            const avgEfficiency = effScores.length ? (effScores.reduce((a, b) => a + b, 0) / effScores.length) : 0;
+            const stationAdhPercent = (avgShift + avgInspection) / 2;
+            const stationAdhPoints = Math.round((stationAdhPercent * 10 / 100) * 10) / 10;
 
             calculateFaultReportsSupervisorScore(targetYear, targetMonthIndex, stationNames || [], targetUser).then(fr => {
                 const avgFault = fr && fr.score !== null ? fr.score : null;
-                
-                if (effEl) effEl.textContent = (Math.round(avgEfficiency * 10) / 10) + '%';
-                if (shiftsEl) shiftsEl.textContent = (Math.round(avgShift * 10) / 10) + '%';
-                if (inspEl) inspEl.textContent = (Math.round(avgInspection * 10) / 10) + '%';
-                if (apprEl) apprEl.textContent = (Math.round(avgApproval * 10) / 10) + '%';
+
+                const faultPercent = avgFault === null ? 0 : avgFault;
+                const faultPoints = Math.round((faultPercent * 20 / 100) * 10) / 10;
+                const preEval = Date.now() < getSupervisorEvaluationCutoffMs();
+                const approvalPoints = preEval ? 20 : approvalByFriday.points;
+                if (apprEl) {
+                    apprEl.textContent = `${approvalPoints} / 20`;
+                    apprEl.title = `تم اعتماد ${approvalByFriday.approved} من ${approvalByFriday.total} محطة بحد أقصى يوم الجمعة`;
+                }
                 if (frEl) {
-                    if (avgFault === null) frEl.textContent = (fr && fr.details ? fr.details : '-');
-                    else frEl.textContent = (Math.round(avgFault * 10) / 10) + '%';
+                    frEl.textContent = `${faultPoints} / 20`;
                     frEl.title = fr && fr.details ? fr.details : '';
                 }
-                
-                const wShift = 0.30;
-                const wInspection = 0.20;
-                const wApproval = 0.20;
-                const wEfficiency = 0.10;
-                const wFault = 0.20;
-                
-                const faultForScore = avgFault === null ? 0 : avgFault;
-                const supervisorScore = Math.round(((avgShift * wShift) + (avgInspection * wInspection) + (avgApproval * wApproval) + (avgEfficiency * wEfficiency) + (faultForScore * wFault)) * 10) / 10;
-                if (scoreEl) scoreEl.textContent = supervisorScore + '%';
-                
-                const stationRows = selectedStations.map(s => {
-                    const eff = computeStationEfficiencyScore(s);
-                    const d = dayMap[s.name] ? dayMap[s.name].score : 0;
-                    const n = nightMap[s.name] ? nightMap[s.name].score : 0;
-                    const i = inspMap[s.name] ? inspMap[s.name].score : 0;
-                    const a = apprMap[s.name] ? apprMap[s.name].score : 0;
-                    const e = eff === null ? 0 : eff;
-                    const composite = Math.round((((d + n) / 2) * wShift + i * wInspection + a * wApproval + e * wEfficiency + faultForScore * wFault) * 10) / 10;
-                    return { name: s.name, zone: s.zone, composite, details: `كفاءة ${e}% | نهاري ${d}% | مسائي ${n}% | فحص ${i}% | اعتماد ${a}%` };
-                }).sort((a, b) => b.composite - a.composite);
-                
-                let html = '';
-                stationRows.forEach((r, idx) => {
-                    const rankClass = idx < 3 ? `top-${idx + 1}` : '';
-                    html += `
-                        <li class="rank-item ${rankClass}">
-                            <div class="rank-number">${idx + 1}</div>
-                            <div class="rank-info">
-                                <div class="rank-name">${r.name}</div>
-                                <div class="rank-details">${r.zone} | ${r.details}</div>
-                            </div>
-                            <div class="rank-score">${r.composite}%</div>
-                        </li>
-                    `;
+
+                if (adhEl) {
+                    const adhPointsEff = preEval ? 10 : stationAdhPoints;
+                    adhEl.textContent = `${adhPointsEff} / 10`;
+                    adhEl.title = `التزام التمام ${(Math.round(avgShift * 10) / 10)}% | تحديث الفحص ${(Math.round(avgInspection * 10) / 10)}%`;
+                }
+
+                const monthKey = getMonthKey(targetYear, targetMonthIndex);
+                loadSupervisorAdminEvaluation(targetUser, monthKey).then(adminEvalPercent => {
+                    const adminPercent = (adminEvalPercent === null) ? 0 : adminEvalPercent;
+                    const adminPoints = Math.round((adminPercent * 50 / 100) * 10) / 10;
+                    if (adminEl) adminEl.textContent = `${adminPoints} / 50`;
+                    const adminInput = document.getElementById('supervisor-admin-eval-input');
+                    if (adminInput && current.type === 'admin') adminInput.value = String(adminPercent);
+
+                    const adhPointsEff = preEval ? 10 : stationAdhPoints;
+                    const supervisorScore = Math.round((adminPoints + approvalPoints + faultPoints + adhPointsEff) * 10) / 10;
+                    if (scoreEl) scoreEl.textContent = supervisorScore + '%';
+                    
+                    const stationRows = selectedStations.map(s => {
+                        const d = dayMap[s.name] ? dayMap[s.name].score : 0;
+                        const n = nightMap[s.name] ? nightMap[s.name].score : 0;
+                        const i = inspMap[s.name] ? inspMap[s.name].score : 0;
+                        const adh = Math.round((((d + n) / 2 + i) / 2) * 10) / 10;
+                        const onTime = approvalByFriday.onTimeMap && approvalByFriday.onTimeMap[s.name] ? true : false;
+                        const details = `التزام ${adh}% | اعتماد ${onTime ? '✅' : '⛔'}`;
+                        return { name: s.name, zone: s.zone, composite: adh, details };
+                    }).sort((a, b) => b.composite - a.composite);
+                    
+                    let html = '';
+                    stationRows.forEach((r, idx) => {
+                        const rankClass = idx < 3 ? `top-${idx + 1}` : '';
+                        html += `
+                            <li class="rank-item ${rankClass}">
+                                <div class="rank-number">${idx + 1}</div>
+                                <div class="rank-info">
+                                    <div class="rank-name">${r.name}</div>
+                                    <div class="rank-details">${r.zone} | ${r.details}</div>
+                                </div>
+                                <div class="rank-score">${r.composite}%</div>
+                            </li>
+                        `;
+                    });
+                    if (summaryEl) summaryEl.innerHTML = html || '<div style="text-align:center; padding:20px; color:#666;">لا توجد بيانات</div>';
                 });
-                if (summaryEl) summaryEl.innerHTML = html || '<div style="text-align:center; padding:20px; color:#666;">لا توجد بيانات</div>';
             });
         });
     };
@@ -12192,7 +12298,7 @@ function calculateFaultReportsSupervisorScore(targetYear, targetMonthIndex, stat
     const { start, end } = getMonthTimestampRange(targetYear, targetMonthIndex);
     const nowMs = Date.now();
     const deadlineMs = 2 * 24 * 60 * 60 * 1000;
-    const cutoffStartMs = new Date(2026, 1, 9, 0, 0, 0, 0).getTime();
+    const cutoffStartMs = getSupervisorEvaluationCutoffMs();
     const queryStart = Math.max(start, cutoffStartMs);
     if (end < cutoffStartMs) {
         return Promise.resolve({ score: 100, details: 'لا توجد بلاغات', total: 0, late: 0, onTime: 0 });
