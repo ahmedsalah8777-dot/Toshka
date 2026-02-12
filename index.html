@@ -7550,13 +7550,6 @@ function saveDataInternal(options = {}) {
             date: updateDate, time: updateTime, station: sName, operator: newOperator,
             details: finalLogDetails, startTime: newStartTime || oldData.startTime || '', stopTime: newStopTime || oldData.stopTime || ''
         };
-        const actionKey = [
-            sName, newOperator, currentStatus,
-            newStartTime || oldData.startTime || '', newStopTime || oldData.stopTime || '',
-            String(newPressure || ''), String(newFlow || ''), String(newVoltage || ''),
-            String(activeCount || ''), finalFault || '', finalFaultSec || '',
-            consTrans1 || '', consTrans2 || '', consWater || ''
-        ].map(v => (typeof toEnglishDigits === 'function' ? toEnglishDigits(String(v || '')) : String(v || ''))).join('|');
         const updates = {
             pressure: newPressure, waterFlow: newFlow, voltage: newVoltage,
             systemMode: newMode, operatorName: newOperator, comments: newComments,
@@ -7583,30 +7576,31 @@ function saveDataInternal(options = {}) {
 
         // عملية الحفظ في Firebase
         const savePromise = db.ref('stations/' + sName).update(updates).then(() => {
+            // حفظ السجلات الجانبية
             if (appData.operationHistory.length >= 200000) db.ref('history').orderByKey().limitToFirst(1).once('child_added', (snapshot) => { snapshot.ref.remove(); });
-            return safePushHistory(log, actionKey).then(() => {
-                if(consumptionLogData) db.ref('consumption_logs').push(consumptionLogData);
-                if (newFaultEntries.length > 0 || resolvedFaultEntries.length > 0) {
-                    db.ref('faults_log').once('value').then(snap => {
-                        let rawVal = snap.val(); 
-                        let logs = []; 
-                        if (rawVal) { if (Array.isArray(rawVal)) logs = rawVal; else logs = Object.values(rawVal); }
-                        newFaultEntries.forEach(newF => { 
-                            const exists = logs.some(existingF => existingF.active === true && existingF.station === newF.station && existingF.type === newF.type);
-                            if (!exists) logs.unshift(newF);
-                        });
-                        resolvedFaultEntries.forEach(rf => { 
-                            const index = logs.findIndex(f => f.station === sName && f.type === rf.type && f.active === true); 
-                            if (index !== -1) { 
-                                logs[index].active = false; logs[index].endTime = stationFullDateTime; 
-                            } else { logs.unshift(rf); } 
-                        });
-                        if (logs.length > 200000) logs = logs.slice(0, 200000); 
-                        db.ref('faults_log').set(logs);
+            db.ref('history').push(log);
+            if(consumptionLogData) db.ref('consumption_logs').push(consumptionLogData);
+            
+            if (newFaultEntries.length > 0 || resolvedFaultEntries.length > 0) {
+                 db.ref('faults_log').once('value').then(snap => {
+                    let rawVal = snap.val(); 
+                    let logs = []; 
+                    if (rawVal) { if (Array.isArray(rawVal)) logs = rawVal; else logs = Object.values(rawVal); }
+                    newFaultEntries.forEach(newF => { 
+                        const exists = logs.some(existingF => existingF.active === true && existingF.station === newF.station && existingF.type === newF.type);
+                        if (!exists) logs.unshift(newF);
                     });
-                }
-                return "Success";
-            });
+                    resolvedFaultEntries.forEach(rf => { 
+                        const index = logs.findIndex(f => f.station === sName && f.type === rf.type && f.active === true); 
+                        if (index !== -1) { 
+                            logs[index].active = false; logs[index].endTime = stationFullDateTime; 
+                        } else { logs.unshift(rf); } 
+                    });
+                    if (logs.length > 200000) logs = logs.slice(0, 200000); 
+                    db.ref('faults_log').set(logs);
+                });
+            }
+            return "Success";
         });
 
         // تنفيذ المحاولة
@@ -7651,28 +7645,6 @@ function saveDataInternal(options = {}) {
 
         function performOfflineSave(sName, updates, log, consumptionLogData, newFaultEntries, resolvedFaultEntries) {
              // DEPRECATED: Offline save functionality removed.
-        }
-
-        function normalizeText(s) {
-            return (typeof toEnglishDigits === 'function' ? toEnglishDigits(String(s || '')) : String(s || '')).replace(/\s+/g, ' ').trim();
-        }
-        function computeLogActionKey(log, extraKey) {
-            if (extraKey) return String(extraKey);
-            const parts = [normalizeText(log.station), normalizeText(log.operator), normalizeText(log.startTime), normalizeText(log.stopTime), normalizeText(log.details)];
-            return parts.join('|');
-        }
-        function generateHistoryHash(log) {
-            const base = computeLogActionKey(log);
-            return String(base).toLowerCase();
-        }
-        function safePushHistory(log, extraKey) {
-            const key = computeLogActionKey(log, extraKey);
-            const hash = generateHistoryHash(log);
-            const payload = Object.assign({}, log, { actionKey: key, hash: hash });
-            return db.ref('history').orderByChild('actionKey').equalTo(key).limitToFirst(1).once('value').then(function(snap){
-                if (snap && typeof snap.exists === 'function' && snap.exists()) return 'duplicate';
-                return db.ref('history').push(payload).then(function(){ return 'pushed'; });
-            });
         }
 
         function cleanHistoricalData() {
@@ -8392,7 +8364,8 @@ if (idx === 5) { // الرقم 5 يمثل "المضخه" في مصفوفة ال�
             });
 
             const savePromise = db.ref(`stations/${sName}/inspectionData`).update(newInsData).then(() => { 
-                return safePushHistory(log).then(() => "Success");
+                db.ref('history').push(log); 
+                return "Success";
             });
             
             Promise.race([savePromise, timeoutPromise]).then(() => {
@@ -9275,7 +9248,7 @@ if (idx === 5) { // الرقم 5 يمثل "المضخه" في مصفوفة ال�
                         operator: username,
                         details: `تحديث البيانات الشخصية للمستخدم: ${fullname}`
                     };
-                    safePushHistory(log);
+                    db.ref('history').push(log);
                     return "Success";
                 });
 
@@ -9323,7 +9296,7 @@ if (idx === 5) { // الرقم 5 يمثل "المضخه" في مصفوفة ال�
                             operator: currentUser.username,
                             details: `حذف البيانات الشخصية للمستخدم: ${username}`
                         };
-                        safePushHistory(log);
+                        db.ref('history').push(log);
                         return "Success";
                     });
 
@@ -10715,7 +10688,7 @@ function processOfflineQueue() {
             if (item.action === 'update_station') {
                 const d = item.data;
                 db.ref('stations/' + d.stationId).update(d.updates);
-                if(d.log) safePushHistory(d.log);
+                if(d.log) db.ref('history').push(d.log);
                 if(d.consLog) db.ref('consumption_logs').push(d.consLog);
                 // معالجة سجل الأعطال (newFaults / resolvedFaults)
                 var nf = (d.newFaults || []), rf = (d.resolvedFaults || []), sid = d.stationId, dt = (d.updates && d.updates.lastUpdate) || nowStd.full;
@@ -10740,20 +10713,20 @@ function processOfflineQueue() {
             else if (item.action === 'update_inspection') {
                 const d = item.data;
                 db.ref(`stations/${d.stationId}/inspectionData`).update(d.inspectionData);
-                if(d.log) safePushHistory(d.log);
+                if(d.log) db.ref('history').push(d.log);
             }
             else if (item.action === 'update_profile') {
                 const d = item.data;
                 db.ref('userProfiles/' + d.username).set(d.profileData).then(function() {
                     var log = { date: nowStd.date, time: nowStd.time, station: (d.profileData && d.profileData.station) || 'النظام', operator: d.username, details: 'تحديث البيانات الشخصية للمستخدم: ' + (d.profileData && d.profileData.fullname || d.username) };
-                    safePushHistory(log);
+                    db.ref('history').push(log);
                 });
             }
             else if (item.action === 'delete_profile') {
                 const d = item.data;
                 db.ref('userProfiles/' + d.username).remove().then(function() {
                     var log = { date: nowStd.date, time: nowStd.time, station: 'النظام', operator: d.deletedBy || 'admin', details: 'حذف البيانات الشخصية للمستخدم: ' + d.username };
-                    safePushHistory(log);
+                    db.ref('history').push(log);
                 });
             }
         } catch (e) { console.warn('processOfflineQueue item error:', e); }
