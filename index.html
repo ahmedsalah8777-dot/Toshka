@@ -1607,6 +1607,12 @@
             border: 1px solid #e9ecef; 
         }
         
+        .pump-status-icon {
+            font-size: 1.2rem;
+            vertical-align: middle;
+            margin-inline-start: 6px;
+        }
+        
         .alert { 
             padding: 15px; 
             border-radius: 6px; 
@@ -7267,11 +7273,17 @@ card.innerHTML = `
             updateFaultExclusions();
             const c = document.getElementById('pumps-form-container');
             let pumpsHtml = '';
+            const pumpHeaderStatus = (s.inspectionData && s.inspectionData.headerStatus && s.inspectionData.headerStatus.pumps) ? s.inspectionData.headerStatus.pumps : {};
             s.pumps.forEach(p => {
+                const header = pumpHeaderStatus[p.id] || computePumpHeaderStatus(((s.inspectionData || {}).pumps || {})[p.id] || {});
+                const inspIcon = header==='efficient'?'✅':header==='fault'?'⚠️':header==='broken'?'🛑':'⚪';
                 pumpsHtml += `
                     <div class="pump-control">
-                        <div style="display:flex; justify-content:space-between; margin-bottom:10px;">
-                            <b>مضخة ${p.id}</b>
+                        <div style="display:flex; justify-content:space-between; margin-bottom:10px; align-items:center;">
+                            <div style="display:inline-flex; align-items:center;">
+                                <b>مضخة ${p.id}</b>
+                                <span id="pump_status_icon_${p.id}" class="pump-status-icon">${inspIcon}</span>
+                            </div>
                             <select id="p_stat_${p.id}" onchange="togglePumpInputs(${p.id})">
                                 <option value="نشطة" ${p.status==='نشطة'?'selected':''}>نشطة</option>
                                 <option value="متوقفة" ${p.status==='متوقفة'?'selected':''}>متوقفة</option>
@@ -7289,12 +7301,25 @@ card.innerHTML = `
             showScreen('operator');
         });
         
+        window.updatePumpInspectionIcon = (id) => {
+            const sName = appData.currentStation;
+            const s = appData.stations[sName] || {};
+            const headerMap = (s.inspectionData && s.inspectionData.headerStatus && s.inspectionData.headerStatus.pumps) ? s.inspectionData.headerStatus.pumps : {};
+            const status = headerMap[id] || computePumpHeaderStatus(((s.inspectionData || {}).pumps || {})[id] || {});
+            const iconEl = document.getElementById(`pump_status_icon_${id}`);
+            if (iconEl) {
+                iconEl.textContent = status==='efficient'?'✅':status==='fault'?'⚠️':status==='broken'?'🛑':'⚪';
+            }
+        };
+
         window.togglePumpInputs = (id) => {
-            const active = document.getElementById(`p_stat_${id}`).value === 'نشطة';
+            const statusEl = document.getElementById(`p_stat_${id}`);
+            const active = statusEl.value === 'نشطة';
             document.querySelectorAll(`.p_inp_${id}`).forEach(i => {
                 i.disabled = !active;
                 if(!active) i.style.background = '#eee'; else i.style.background = '#fff';
             });
+            updatePumpInspectionIcon(id);
         };
         
         function updateFaultExclusions() {
