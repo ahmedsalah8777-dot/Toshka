@@ -159,18 +159,13 @@
         }
         
         .btn-loading::after {
-            content: "";
+            content: "⏳";
             position: absolute;
-            width: 16px;
-            height: 16px;
             top: 50%;
             left: 50%;
-            margin-left: -8px;
-            margin-top: -8px;
-            border: 2px solid rgba(255, 255, 255, 0.3);
-            border-radius: 50%;
-            border-top-color: white;
-            animation: btn-spin 0.8s linear infinite;
+            transform: translate(-50%, -50%);
+            font-size: 18px;
+            animation: spin 1s linear infinite;
         }
         
         @keyframes btn-spin {
@@ -8214,9 +8209,10 @@ if (idx === 5) { // الرقم 5 يمثل "المضخه" في مصفوفة ال�
             const sName = appData.currentStation; 
             if(!sName) return;
             
-            // تعطيل الزر فوراً لمنع التكرار
+            if (btn.disabled) return;
+            const originalHtml = btn.innerHTML;
             btn.disabled = true;
-            btn.innerHTML = 'جاري الحفظ... ⏳';
+            btn.innerHTML = '<span class="syncing">⏳</span> جاري الحفظ...';
 
             const oldInsData = (appData.stations[sName].inspectionData) || {}; 
             let newInsData = JSON.parse(JSON.stringify(oldInsData));
@@ -8394,19 +8390,14 @@ if (idx === 5) { // الرقم 5 يمثل "المضخه" في مصفوفة ال�
             });
             
             Promise.race([savePromise, timeoutPromise]).then(() => {
-                // Success
-                btn.disabled = false;
-                btn.innerHTML = 'حفظ الفحص';
-                alert("تم الارسال بنجاح ✅");
+                alert('✅ تم الحفظ بنجاح');
                 showStationDetails(sName);
             }).catch(err => {
-                 // Failure
                  console.warn("Save inspection failed:", err.message);
                  alert("❌ فشل الاتصال بالسيرفر");
                  
-                 // Re-enable to retry
                  btn.disabled = false;
-                 btn.innerHTML = 'حفظ الفحص';
+                btn.innerHTML = originalHtml || 'حفظ الفحص';
             });
         });
         
