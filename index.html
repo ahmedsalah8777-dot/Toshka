@@ -2089,50 +2089,30 @@
         /* Mobile optimization for tables */
         @media (max-width: 768px) {
             .users-profiles-table {
-                display: table;
+                display: block;
                 width: 100%;
-                table-layout: fixed;
-                overflow-x: hidden;
+                overflow-x: auto;
             }
             
             .users-profiles-table th,
             .users-profiles-table td {
-                padding: 6px 6px;
-                font-size: 0.85rem;
-                min-width: auto;
-                white-space: normal;
-                word-break: break-word;
+                padding: 8px 6px;
+                font-size: 0.8rem;
+                min-width: 100px;
             }
             
             .users-profiles-table th:first-child,
             .users-profiles-table td:first-child {
-                position: static;
-                left: auto;
-                background-color: transparent;
-                z-index: auto;
-                min-width: auto;
+                position: sticky;
+                left: 0;
+                background-color: white;
+                z-index: 5;
+                min-width: 120px;
             }
             
             .users-profiles-table tr:nth-child(even) td:first-child {
-                background-color: transparent;
+                background-color: #f9f9f9;
             }
-            
-            /* إخفاء أعمدة غير ضرورية على الموبايل لتصغير العرض */
-            .users-profiles-table th:nth-child(5),
-            .users-profiles-table td:nth-child(5), /* واتساب */
-            .users-profiles-table th:nth-child(7),
-            .users-profiles-table td:nth-child(7)  /* إجراءات */
-            {
-                display: none;
-            }
-        }
-        
-        @media (max-width: 768px) {
-            /* إبقاء الجدول بشكل صفوف طبيعية وإلغاء الكروت */
-            .users-profiles-table thead { display: table-header-group; }
-            .users-profiles-table tr { display: table-row; border: none; box-shadow: none; background: transparent; }
-            .users-profiles-table td { display: table-cell; border-bottom: 1px solid #eee; }
-            .users-profiles-table td::before { content: none !important; }
         }
         
         .profile-search-container {
