@@ -2004,6 +2004,39 @@
             border: 1px solid #eee;
         }
         
+        @media (max-width: 768px) {
+            .profile-container {
+                gap: 10px;
+                margin-top: 10px;
+            }
+            .profile-card {
+                padding: 12px;
+                border-radius: 8px;
+            }
+            .profile-form-grid {
+                gap: 10px;
+            }
+            .profile-form-grid input,
+            .profile-form-grid select,
+            #search-profile-input {
+                padding: 12px;
+                font-size: 1rem;
+            }
+            #save-profile-btn {
+                padding: 12px 16px;
+                font-size: 1.05rem;
+                position: sticky;
+                bottom: 8px;
+                z-index: 5;
+            }
+            .profile-search-container {
+                margin: 10px 0;
+            }
+            .profile-alert {
+                font-size: 0.9rem;
+            }
+        }
+        
         .profile-form-grid {
             display: grid;
             grid-template-columns: 1fr;
