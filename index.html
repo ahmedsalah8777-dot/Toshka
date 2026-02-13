@@ -2089,16 +2089,19 @@
         /* Mobile optimization for tables */
         @media (max-width: 768px) {
             .users-profiles-table {
-                display: block;
+                display: table;
                 width: 100%;
-                overflow-x: visible;
+                table-layout: fixed;
+                overflow-x: hidden;
             }
             
             .users-profiles-table th,
             .users-profiles-table td {
-                padding: 8px 6px;
-                font-size: 0.9rem;
+                padding: 6px 6px;
+                font-size: 0.85rem;
                 min-width: auto;
+                white-space: normal;
+                word-break: break-word;
             }
             
             .users-profiles-table th:first-child,
@@ -2113,44 +2116,23 @@
             .users-profiles-table tr:nth-child(even) td:first-child {
                 background-color: transparent;
             }
+            
+            /* إخفاء أعمدة غير ضرورية على الموبايل لتصغير العرض */
+            .users-profiles-table th:nth-child(5),
+            .users-profiles-table td:nth-child(5), /* واتساب */
+            .users-profiles-table th:nth-child(7),
+            .users-profiles-table td:nth-child(7)  /* إجراءات */
+            {
+                display: none;
+            }
         }
         
         @media (max-width: 768px) {
-            .users-profiles-table thead {
-                display: none;
-            }
-            .users-profiles-table tr {
-                display: block;
-                margin: 8px 0;
-                border: 1px solid #e9ecef;
-                border-radius: 10px;
-                background: #ffffff;
-                box-shadow: 0 2px 8px rgba(0,0,0,0.06);
-            }
-            .users-profiles-table td {
-                display: flex;
-                align-items: center;
-                justify-content: space-between;
-                gap: 10px;
-                padding: 10px 12px;
-                border-bottom: 1px solid #f3f4f6;
-            }
-            .users-profiles-table td:last-child {
-                border-bottom: none;
-            }
-            .users-profiles-table td::before {
-                content: attr(data-label);
-                color: #666;
-                font-weight: 600;
-                margin-inline-start: 0;
-            }
-            .users-profiles-table td:nth-child(1)::before { content: "المستخدم"; }
-            .users-profiles-table td:nth-child(2)::before { content: "المحطة"; }
-            .users-profiles-table td:nth-child(3)::before { content: "الاسم"; }
-            .users-profiles-table td:nth-child(4)::before { content: "الهاتف"; }
-            .users-profiles-table td:nth-child(5)::before { content: "واتساب"; }
-            .users-profiles-table td:nth-child(6)::before { content: "البريد"; }
-            .users-profiles-table td:nth-child(7)::before { content: "إجراءات"; }
+            /* إبقاء الجدول بشكل صفوف طبيعية وإلغاء الكروت */
+            .users-profiles-table thead { display: table-header-group; }
+            .users-profiles-table tr { display: table-row; border: none; box-shadow: none; background: transparent; }
+            .users-profiles-table td { display: table-cell; border-bottom: 1px solid #eee; }
+            .users-profiles-table td::before { content: none !important; }
         }
         
         .profile-search-container {
