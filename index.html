@@ -10452,6 +10452,9 @@ function addMachineCalc() {
             <span class="device-name">جهاز</span>
         </div>
         <div class="input-group">
+            <input type="number" class="device-count-input" placeholder="عدد الأجهزة" min="1" style="padding:8px; border:1px solid #ccc; border-radius:4px;">
+        </div>
+        <div class="input-group">
             <input type="number" class="tower-input" placeholder="عدد الأبراج" min="1" style="padding:8px; border:1px solid #ccc; border-radius:4px;">
         </div>
         <div class="single-result" style="display:none; background:#f0f0f0; padding:5px; font-size:0.8rem; margin:0 5px;"></div>
@@ -10473,29 +10476,34 @@ function renumberMachinesCalc() {
     const cards = document.querySelectorAll('#calculator-screen .machine-card');
     cards.forEach((card, index) => {
         const titleSpan = card.querySelector('.device-name');
-        titleSpan.innerText = `جهاز ${index + 1}`;
+        titleSpan.innerText = `رقم ${index + 1}`;
     });
 }
 
 function calculateAllCalc() {
     const spanLength = 55;
-    const waterPerFeddan = 32.5;
+    const waterPerFeddan = 60;
     let totalFed = 0, totalM3 = 0, count = 0;
     
     // تحديد المدخلات داخل شاشة الحاسبة فقط
-    const inputs = document.querySelectorAll('#calculator-screen .tower-input');
+    const rows = document.querySelectorAll('#calculator-screen .machine-card');
     
-    for (let input of inputs) {
-        const towers = parseFloat(input.value);
-        const resultDiv = input.closest('.machine-card').querySelector('.single-result');
+    for (let row of rows) {
+        const devicesInput = row.querySelector('.device-count-input');
+        const towersInput = row.querySelector('.tower-input');
+        const devices = parseFloat(devicesInput ? devicesInput.value : 0);
+        const towers = parseFloat(towersInput ? towersInput.value : 0);
+        const resultDiv = row.querySelector('.single-result');
 
-        if (towers > 0) {
-            count++;
+        if (devices > 0 && towers > 0) {
             const radius = towers * spanLength;
-            const areaFed = (Math.PI * Math.pow(radius, 2)) / 4200;
-            const dailyWater = areaFed * waterPerFeddan;
-            const m3h = dailyWater / 24;
+            const areaPerDevice = (Math.PI * Math.pow(radius, 2)) / 4200;
+            const dailyWaterPerDevice = areaPerDevice * waterPerFeddan;
+            const m3hPerDevice = dailyWaterPerDevice / 24;
+            const areaFed = areaPerDevice * devices;
+            const m3h = m3hPerDevice * devices;
 
+            count += devices;
             totalFed += areaFed;
             totalM3 += m3h;
             resultDiv.style.display = 'block';
