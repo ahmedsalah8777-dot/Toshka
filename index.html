@@ -111,6 +111,7 @@
             gap: 10px; 
             font-size: 24px; /* تكبير اللوجو */
             font-weight: bold; 
+            cursor: pointer;
         }
         
         /* Network Status Indicator */
@@ -5767,7 +5768,7 @@ function setupAdminControls() {
 // --- إعداد مستمعي الأحداث ---
 function setupEventListeners() {
     // رجوع للرئيسية
-    document.getElementById('back-to-stations-from-emergency').addEventListener('click', () => goBack());
+document.getElementById('back-to-stations-from-emergency').addEventListener('click', () => goBack());
     
     // تحميل الصورة
     document.getElementById('upload-emergency-image-btn').addEventListener('click', () => {
@@ -6526,16 +6527,22 @@ document.getElementById('emergency-image-modal').addEventListener('click', funct
 
         // دالة للعودة للشاشة السابقة (تستخدم في أزرار الرجوع)
         window.goBack = function() {
-            // التحقق من المكدس أولاً لضمان العودة للشاشة الصحيحة
             if (appData.screenStack && appData.screenStack.length > 1) {
-                appData.screenStack.pop(); // إزالة الشاشة الحالية
-                history.back(); // العودة للخلف في المتصفح
-            } else if (appData.navigationCount > 0) {
-                history.back();
-            } else {
-                // إذا لم يكن هناك سجل سابق، نعود للرئيسية
-                showScreen('stations');
+                appData.screenStack.pop();
+                const prevScreen = appData.screenStack[appData.screenStack.length - 1];
+                history.replaceState({ screen: prevScreen }, null, "#" + prevScreen);
+                showScreen(prevScreen, false);
+                return;
             }
+            history.replaceState({ screen: 'stations' }, null, "#stations");
+            showScreen('stations', false);
+        };
+
+        window.goToStationsRoot = function() {
+            appData.screenStack = ['stations'];
+            appData.navigationCount = 1;
+            history.replaceState({ screen: 'stations' }, null, "#stations");
+            showScreen('stations', false);
         };
 
         // معالجة زر الرجوع في المتصفح والموبايل
@@ -6565,16 +6572,17 @@ document.getElementById('emergency-image-modal').addEventListener('click', funct
         function showScreen(screenId, addToHistory = true) {
             // إضافة الحالة للتاريخ إذا لم يكن استدعاء من زر الرجوع
             if (addToHistory) {
-                history.pushState({ screen: screenId }, null, "#" + screenId);
-                // زيادة عداد التنقلات
-                if (typeof appData.navigationCount === 'number') {
-                    appData.navigationCount++;
-                } else {
-                    appData.navigationCount = 1;
-                }
-                
                 if (!appData.screenStack) appData.screenStack = [];
-                appData.screenStack.push(screenId);
+                const lastScreen = appData.screenStack[appData.screenStack.length - 1];
+                if (lastScreen !== screenId) {
+                    history.pushState({ screen: screenId }, null, "#" + screenId);
+                    if (typeof appData.navigationCount === 'number') {
+                        appData.navigationCount++;
+                    } else {
+                        appData.navigationCount = 1;
+                    }
+                    appData.screenStack.push(screenId);
+                }
             }
 
             // إعادة تعيين الأزرار
@@ -6816,6 +6824,15 @@ document.getElementById('emergency-image-modal').addEventListener('click', funct
         
         const reportsHubBtn = document.getElementById('reports-hub-btn');
         if (reportsHubBtn) reportsHubBtn.addEventListener('click', () => showScreen('reports-hub'));
+
+        const logoEl = document.querySelector('header .logo');
+        if (logoEl) {
+            logoEl.addEventListener('click', () => {
+                const loginScreen = document.getElementById('login-screen');
+                if (loginScreen && loginScreen.classList.contains('active')) return;
+                showScreen('stations');
+            });
+        }
 
         document.getElementById('alarm-btn').addEventListener('click', () => showScreen('faults-log'));
         document.getElementById('supervisor-btn').addEventListener('click', () => showScreen('supervisor-dashboard'));
@@ -7157,7 +7174,7 @@ card.innerHTML = `
 };
 
         // --- STATION DETAILS ---
-        function showStationDetails(stationId) {
+        function showStationDetails(stationId, addToHistory = true) {
             const s = appData.stations[stationId];
             if (!s) return;
             appData.currentStation = stationId;
@@ -7230,7 +7247,7 @@ card.innerHTML = `
             document.getElementById('edit-station-btn').style.display = canEdit ? 'block' : 'none';
             
             // نستخدم showScreen بدلاً من التلاعب المباشر بالـ CSS لضمان عمل سجل التاريخ بشكل صحيح
-            showScreen('station');
+            showScreen('station', addToHistory);
         }
 
         // --- EDIT MODE & FAULT RESOLUTION ---
@@ -14748,7 +14765,7 @@ window.addEventListener('offline', function() {
         const backStatsBtn = document.getElementById('back-from-statistics');
         if (backStatsBtn) {
             backStatsBtn.addEventListener('click', function() {
-                goBack(); // العودة للشاشة السابقة
+                goBack();
             });
         }
 
