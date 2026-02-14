@@ -3451,6 +3451,7 @@
                 <div class="detail-card" style="grid-column: 1 / -1; background-color: #fffde7;">
                     <div class="detail-title">ملاحظات التشغيل</div>
                     <div class="detail-value" id="station-comments-value" style="font-weight: normal; font-size: 1rem;">-</div>
+                    <div style="text-align:left; font-size:0.8rem; color:#888; margin-top:6px;">تاريخ آخر تعديل: <span id="station-comments-last-update">-</span></div>
                 </div>
             </div>
             <h3>المضخات</h3>
@@ -6506,6 +6507,7 @@ document.getElementById('emergency-image-modal').addEventListener('click', funct
                         operatorName: 'النظام',
                         lastUpdate: nowStd.full, 
                         comments: '',
+                        commentsLastUpdate: '',
                         startTime: '', 
                         stopTime: '',
                         currentFault: null, 
@@ -7194,6 +7196,7 @@ card.innerHTML = `
             
             document.getElementById('last-update-value').textContent = s.lastUpdate;
             document.getElementById('station-comments-value').textContent = s.comments || 'لا يوجد ملاحظات';
+            document.getElementById('station-comments-last-update').textContent = s.commentsLastUpdate || 'غير مسجل';
 
             const cons = s.consumption || {};
             document.getElementById('view-cons-t1').textContent = cons.t1 || '-';
@@ -7620,9 +7623,14 @@ function saveDataInternal(options = {}) {
             date: updateDate, time: updateTime, station: sName, operator: newOperator,
             details: finalLogDetails, startTime: newStartTime || oldData.startTime || '', stopTime: newStopTime || oldData.stopTime || ''
         };
+        const safeOldComments = oldData.comments || '';
+        const safeNewComments = newComments || '';
+        const commentsChanged = safeNewComments !== safeOldComments;
+        const commentsLastUpdate = commentsChanged ? stationFullDateTime : (oldData.commentsLastUpdate || '');
         const updates = {
             pressure: newPressure, waterFlow: newFlow, voltage: newVoltage,
-            systemMode: newMode, operatorName: newOperator, comments: newComments,
+            systemMode: newMode, operatorName: newOperator, comments: safeNewComments,
+            commentsLastUpdate: commentsLastUpdate,
             lastUpdate: stationFullDateTime, startTime: newStartTime, stopTime: newStopTime, 
             activePumps: activeCount, status: currentStatus, 
             currentFault: finalFault, fault1Desc: finalFaultDesc,
@@ -13902,6 +13910,7 @@ function addStationInSelectedZone() {
         operatorName: 'النظام',
         lastUpdate: nowStd.full,
         comments: '',
+        commentsLastUpdate: '',
         startTime: '',
         stopTime: '',
         currentFault: null,
@@ -14090,6 +14099,7 @@ function addStationFromSettings() {
         operatorName: 'النظام',
         lastUpdate: nowStd.full,
         comments: '',
+        commentsLastUpdate: '',
         startTime: '',
         stopTime: '',
         currentFault: null,
