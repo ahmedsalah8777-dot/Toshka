@@ -5241,6 +5241,8 @@ document.querySelectorAll('.menu-item').forEach(item => {
             operationHistory: [], 
             faultsLog: [], 
             consumptionLog: [],
+            evaluationAggregates: {},
+            evalAggLoadedMonths: {},
             // Pagination limits
             historyLimit: 100,
             faultsLimit: 100,
@@ -7658,6 +7660,7 @@ function saveDataInternal(options = {}) {
             // حفظ السجلات الجانبية
             if (appData.operationHistory.length >= 200000) db.ref('history').orderByKey().limitToFirst(1).once('child_added', (snapshot) => { snapshot.ref.remove(); });
             db.ref('history').push(log);
+            updateEvaluationAggregates(log);
             if(consumptionLogData) db.ref('consumption_logs').push(consumptionLogData);
             
             if (newFaultEntries.length > 0 || resolvedFaultEntries.length > 0) {
@@ -8445,6 +8448,7 @@ if (idx === 5) { // الرقم 5 يمثل "المضخه" في مصفوفة ال�
 
             const savePromise = db.ref(`stations/${sName}/inspectionData`).update(newInsData).then(() => { 
                 db.ref('history').push(log); 
+                updateEvaluationAggregates(log);
                 return "Success";
             });
             
@@ -10771,7 +10775,7 @@ function processOfflineQueue() {
             if (item.action === 'update_station') {
                 const d = item.data;
                 db.ref('stations/' + d.stationId).update(d.updates);
-                if(d.log) db.ref('history').push(d.log);
+                if(d.log) { db.ref('history').push(d.log); updateEvaluationAggregates(d.log); }
                 if(d.consLog) db.ref('consumption_logs').push(d.consLog);
                 // معالجة سجل الأعطال (newFaults / resolvedFaults)
                 var nf = (d.newFaults || []), rf = (d.resolvedFaults || []), sid = d.stationId, dt = (d.updates && d.updates.lastUpdate) || nowStd.full;
@@ -10796,7 +10800,7 @@ function processOfflineQueue() {
             else if (item.action === 'update_inspection') {
                 const d = item.data;
                 db.ref(`stations/${d.stationId}/inspectionData`).update(d.inspectionData);
-                if(d.log) db.ref('history').push(d.log);
+                if(d.log) { db.ref('history').push(d.log); updateEvaluationAggregates(d.log); }
             }
             else if (item.action === 'update_profile') {
                 const d = item.data;
@@ -10952,6 +10956,12 @@ if(btnPerfBack) btnPerfBack.addEventListener('click', () => goBack());
             loadHistory(function() { appData.performanceHistoryLoaded = true; switchPerformanceTab(tabName); });
             return;
         }
+        const nowEval = new Date();
+        const nowMonthKey = getMonthKey(nowEval.getFullYear(), nowEval.getMonth());
+        if (!appData.evalAggLoadedMonths || !appData.evalAggLoadedMonths[nowMonthKey]) {
+            loadEvaluationAggregates(nowMonthKey).then(() => switchPerformanceTab(tabName));
+            return;
+        }
         // Update Tabs UI
         document.querySelectorAll('.eval-tab').forEach(t => t.classList.remove('active'));
         document.querySelector(`.eval-tab[data-tab="${tabName}"]`).classList.add('active');
@@ -10994,52 +11004,58 @@ if(btnPerfBack) btnPerfBack.addEventListener('click', () => goBack());
         const stationShiftDays = {};
         stations.forEach(s => { stationShiftDays[s.name] = new Set(); });
         const allowedStations = new Set(stations.map(s => s.name));
-        
-        const history = appData.operationHistory || [];
-        history.forEach(log => {
-            try {
-                if (!log || !allowedStations.has(log.station)) return;
-                if (!log.date || !log.time) return;
-                
-                const d = parseDateSimple(log.date);
-                if (!d) return;
-                
-                const timeStr = toEnglishDigits(log.time);
-                const timeParts = timeStr.split(':');
-                if (timeParts.length < 2) return;
-                const hour = parseInt(timeParts[0]);
-                const min = parseInt(timeParts[1]);
-                const sec = timeParts[2] ? parseInt(timeParts[2]) : 0;
-                if (isNaN(hour) || isNaN(min) || isNaN(sec)) return;
-                
-                const dt = new Date(d.getFullYear(), d.getMonth(), d.getDate(), hour, min, sec);
-                
-                let shiftDayDate = null;
-                if (shiftType === 'day') {
-                    if (dt.getHours() >= 6 && dt.getHours() < 18) shiftDayDate = dt;
-                } else {
-                    if (dt.getHours() >= 18) {
-                        shiftDayDate = dt;
-                    } else if (dt.getHours() < 6) {
-                        shiftDayDate = new Date(dt);
-                        shiftDayDate.setDate(shiftDayDate.getDate() - 1);
+        const monthKey = getMonthKey(targetYear, targetMonthIndex);
+        const evalAgg = appData.evaluationAggregates && appData.evaluationAggregates[monthKey];
+        if (evalAgg) {
+            stations.forEach(s => {
+                const stAgg = evalAgg[s.name] || {};
+                const obj = shiftType === 'day' ? (stAgg.day || {}) : (stAgg.night || {});
+                Object.keys(obj).forEach(k => {
+                    const n = parseInt(k);
+                    if (!isNaN(n) && n >= 1 && n <= daysInMonth) stationShiftDays[s.name].add(n);
+                });
+            });
+        } else {
+            const history = appData.operationHistory || [];
+            history.forEach(log => {
+                try {
+                    if (!log || !allowedStations.has(log.station)) return;
+                    if (!log.date || !log.time) return;
+                    const d = parseDateSimple(log.date);
+                    if (!d) return;
+                    const timeStr = toEnglishDigits(log.time);
+                    const timeParts = timeStr.split(':');
+                    if (timeParts.length < 2) return;
+                    const hour = parseInt(timeParts[0]);
+                    const min = parseInt(timeParts[1]);
+                    const sec = timeParts[2] ? parseInt(timeParts[2]) : 0;
+                    if (isNaN(hour) || isNaN(min) || isNaN(sec)) return;
+                    const dt = new Date(d.getFullYear(), d.getMonth(), d.getDate(), hour, min, sec);
+                    let shiftDayDate = null;
+                    if (shiftType === 'day') {
+                        if (dt.getHours() >= 6 && dt.getHours() < 18) shiftDayDate = dt;
+                    } else {
+                        if (dt.getHours() >= 18) {
+                            shiftDayDate = dt;
+                        } else if (dt.getHours() < 6) {
+                            shiftDayDate = new Date(dt);
+                            shiftDayDate.setDate(shiftDayDate.getDate() - 1);
+                        }
                     }
-                }
-                
-                if (!shiftDayDate) return;
-                if (shiftDayDate.getFullYear() !== targetYear || shiftDayDate.getMonth() !== targetMonthIndex) return;
-                if (applyCutoff && shiftDayDate.getTime() < getSupervisorEvaluationCutoffMs()) return;
-                const ts = shiftDayDate.getTime();
-                if (appData.evalAssignmentPeriods && appData.evalAssignmentPeriods.length) {
-                    if (!isWithinActiveAssignmentForStation(ts, log.station)) return;
-                }
-                if (isWithinAnyVacation(ts)) return;
-                
-                const dayNum = shiftDayDate.getDate();
-                if (dayNum < 1 || dayNum > daysInMonth) return;
-                stationShiftDays[log.station].add(dayNum);
-            } catch (e) {}
-        });
+                    if (!shiftDayDate) return;
+                    if (shiftDayDate.getFullYear() !== targetYear || shiftDayDate.getMonth() !== targetMonthIndex) return;
+                    if (applyCutoff && shiftDayDate.getTime() < getSupervisorEvaluationCutoffMs()) return;
+                    const ts = shiftDayDate.getTime();
+                    if (appData.evalAssignmentPeriods && appData.evalAssignmentPeriods.length) {
+                        if (!isWithinActiveAssignmentForStation(ts, log.station)) return;
+                    }
+                    if (isWithinAnyVacation(ts)) return;
+                    const dayNum = shiftDayDate.getDate();
+                    if (dayNum < 1 || dayNum > daysInMonth) return;
+                    stationShiftDays[log.station].add(dayNum);
+                } catch (e) {}
+            });
+        }
         
         return stations.map(s => {
             const daysSet = stationShiftDays[s.name] || new Set();
@@ -11060,27 +11076,43 @@ if(btnPerfBack) btnPerfBack.addEventListener('click', () => goBack());
         const stationBuckets = {};
         stations.forEach(s => { stationBuckets[s.name] = { 1: {has:false,onTime:false}, 2: {has:false,onTime:false}, 3: {has:false,onTime:false}, 4: {has:false,onTime:false} }; });
         const allowedStations = new Set(stations.map(s => s.name));
-
-        const history = appData.operationHistory || [];
-        history.forEach(log => {
-            try {
-                if (!log || !allowedStations.has(log.station)) return;
-                if (!log.date) return;
-                if (!log.details || !log.details.includes('تحديث سجل الفحص')) return;
-                const d = parseDateSimple(log.date);
-                if (!d) return;
-                if (d.getFullYear() !== targetYear || d.getMonth() !== targetMonthIndex) return;
-                if (applyCutoff && d.getTime() < getSupervisorEvaluationCutoffMs()) return;
-                const ts = d.getTime();
-                if (appData.evalAssignmentPeriods && appData.evalAssignmentPeriods.length) {
-                    if (!isWithinActiveAssignmentForStation(ts, log.station)) return;
-                }
-                if (isWithinAnyVacation(ts)) return;
-                const bucket = Math.min(4, Math.ceil(d.getDate() / 7));
-                stationBuckets[log.station][bucket].has = true;
-                stationBuckets[log.station][bucket].onTime = stationBuckets[log.station][bucket].onTime || isInspectionOnTimeDayOfWeek(d.getDay());
-            } catch (e) {}
-        });
+        const monthKey = getMonthKey(targetYear, targetMonthIndex);
+        const evalAgg = appData.evaluationAggregates && appData.evaluationAggregates[monthKey];
+        if (evalAgg) {
+            stations.forEach(s => {
+                const stAgg = evalAgg[s.name] || {};
+                const insp = stAgg.inspection || {};
+                Object.keys(insp).forEach(k => {
+                    const b = parseInt(k);
+                    if (!isNaN(b) && b >= 1 && b <= 4) {
+                        const v = insp[k] || {};
+                        stationBuckets[s.name][b].has = !!v.has;
+                        stationBuckets[s.name][b].onTime = stationBuckets[s.name][b].onTime || !!v.onTime;
+                    }
+                });
+            });
+        } else {
+            const history = appData.operationHistory || [];
+            history.forEach(log => {
+                try {
+                    if (!log || !allowedStations.has(log.station)) return;
+                    if (!log.date) return;
+                    if (!log.details || !log.details.includes('تحديث سجل الفحص')) return;
+                    const d = parseDateSimple(log.date);
+                    if (!d) return;
+                    if (d.getFullYear() !== targetYear || d.getMonth() !== targetMonthIndex) return;
+                    if (applyCutoff && d.getTime() < getSupervisorEvaluationCutoffMs()) return;
+                    const ts = d.getTime();
+                    if (appData.evalAssignmentPeriods && appData.evalAssignmentPeriods.length) {
+                        if (!isWithinActiveAssignmentForStation(ts, log.station)) return;
+                    }
+                    if (isWithinAnyVacation(ts)) return;
+                    const bucket = Math.min(4, Math.ceil(d.getDate() / 7));
+                    stationBuckets[log.station][bucket].has = true;
+                    stationBuckets[log.station][bucket].onTime = stationBuckets[log.station][bucket].onTime || isInspectionOnTimeDayOfWeek(d.getDay());
+                } catch (e) {}
+            });
+        }
 
         return stations.map(s => {
             const buckets = stationBuckets[s.name] || {};
@@ -11211,12 +11243,17 @@ if(btnPerfBack) btnPerfBack.addEventListener('click', () => goBack());
             selectedMonthIndex = now.getMonth();
         }
         monthKey = `${selectedYear}-${String(selectedMonthIndex + 1).padStart(2, '0')}`;
-        
-        const dayTop = calculateAndRenderShiftPerformanceToTarget('day', 'top20-day-list', 20, selectedYear, selectedMonthIndex);
-        const nightTop = calculateAndRenderShiftPerformanceToTarget('night', 'top20-night-list', 20, selectedYear, selectedMonthIndex);
-        const inspTop = calculateAndRenderInspectionPerformanceToTarget('top20-inspection-list', 20, selectedYear, selectedMonthIndex);
-        
-        saveTop20Results(monthKey, dayTop, nightTop, inspTop);
+        const proceed = () => {
+            const dayTop = calculateAndRenderShiftPerformanceToTarget('day', 'top20-day-list', 20, selectedYear, selectedMonthIndex);
+            const nightTop = calculateAndRenderShiftPerformanceToTarget('night', 'top20-night-list', 20, selectedYear, selectedMonthIndex);
+            const inspTop = calculateAndRenderInspectionPerformanceToTarget('top20-inspection-list', 20, selectedYear, selectedMonthIndex);
+            saveTop20Results(monthKey, dayTop, nightTop, inspTop);
+        };
+        if (!appData.evalAggLoadedMonths || !appData.evalAggLoadedMonths[monthKey]) {
+            loadEvaluationAggregates(monthKey).then(proceed);
+        } else {
+            proceed();
+        }
     }
     
     function saveTop20Results(monthKey, dayTop, nightTop, inspTop) {
@@ -11495,6 +11532,64 @@ if(btnPerfBack) btnPerfBack.addEventListener('click', () => goBack());
 
     function getMonthKey(year, monthIndex) {
         return `${year}-${String(monthIndex + 1).padStart(2, '0')}`;
+    }
+    function safeKey(v) {
+        return String(v || 'all').replace(/[.#$\[\]]/g, '_');
+    }
+    function loadEvaluationAggregates(monthKey) {
+        if (!monthKey) return Promise.resolve();
+        if (!appData.evaluationAggregates) appData.evaluationAggregates = {};
+        if (!appData.evalAggLoadedMonths) appData.evalAggLoadedMonths = {};
+        if (appData.evalAggLoadedMonths[monthKey]) return Promise.resolve();
+        if (typeof db === 'undefined' || !navigator.onLine) {
+            appData.evaluationAggregates[monthKey] = appData.evaluationAggregates[monthKey] || {};
+            appData.evalAggLoadedMonths[monthKey] = true;
+            return Promise.resolve();
+        }
+        return db.ref('evaluation_logs').child(safeKey(monthKey)).once('value').then(snap => {
+            const res = {};
+            snap.forEach(child => {
+                const st = child.key;
+                res[st] = child.val() || {};
+            });
+            appData.evaluationAggregates[monthKey] = res;
+            appData.evalAggLoadedMonths[monthKey] = true;
+        }).catch(() => {
+            appData.evaluationAggregates[monthKey] = appData.evaluationAggregates[monthKey] || {};
+            appData.evalAggLoadedMonths[monthKey] = true;
+        });
+    }
+    function updateEvaluationAggregates(log) {
+        try {
+            if (!log || !log.station) return;
+            const d = parseDateSimple(log.date || '');
+            const t = toEnglishDigits(log.time || '');
+            if (!d || !t) return;
+            const parts = t.split(':');
+            if (parts.length < 2) return;
+            const hour = parseInt(parts[0]);
+            const min = parseInt(parts[1]);
+            const sec = parts[2] ? parseInt(parts[2]) : 0;
+            if (isNaN(hour) || isNaN(min) || isNaN(sec)) return;
+            const dt = new Date(d.getFullYear(), d.getMonth(), d.getDate(), hour, min, sec);
+            const monthKey = getMonthKey(dt.getFullYear(), dt.getMonth());
+            const stationKey = safeKey(log.station);
+            if (dt.getHours() >= 6 && dt.getHours() < 18) {
+                const dayNum = dt.getDate();
+                db.ref('evaluation_logs').child(safeKey(monthKey)).child(stationKey).child('day').child(String(dayNum)).set(true);
+            } else {
+                const adj = new Date(dt);
+                if (adj.getHours() < 6) adj.setDate(adj.getDate() - 1);
+                const dayNum = adj.getDate();
+                db.ref('evaluation_logs').child(safeKey(monthKey)).child(stationKey).child('night').child(String(dayNum)).set(true);
+            }
+            if (log.details && String(log.details).includes('تحديث سجل الفحص')) {
+                const bucket = Math.min(4, Math.ceil(d.getDate() / 7));
+                const onTime = [6,0,1,2].includes(d.getDay());
+                const ref = db.ref('evaluation_logs').child(safeKey(monthKey)).child(stationKey).child('inspection').child(String(bucket));
+                if (onTime) ref.update({ has: true, onTime: true }); else ref.update({ has: true });
+            }
+        } catch (_) {}
     }
 
     function loadSupervisorAssignmentsHistory(username) {
