@@ -10665,6 +10665,11 @@ function exportHistoryLog() {
         let cleanDetails = log.details || "";
         cleanDetails = cleanDetails.replace(/<[^>]*>?/gm, ''); 
         cleanDetails = cleanDetails.replace(/&nbsp;/g, ' ');
+        const notes = (log.opNotes || '').toString().trim();
+        if (notes) {
+            const cleanNotes = notes.replace(/<[^>]*>?/gm, '').replace(/&nbsp;/g, ' ');
+            cleanDetails = cleanDetails ? (cleanDetails + " | ملاحظات التشغيل: " + cleanNotes) : ("ملاحظات التشغيل: " + cleanNotes);
+        }
 
         return {
             "التاريخ": log.date,
