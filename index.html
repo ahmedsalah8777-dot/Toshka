@@ -7621,15 +7621,16 @@ function saveDataInternal(options = {}) {
         if (newStartTime && oldData.startTime !== newStartTime) logDetails.push(`وقت التشغيل: ${oldData.startTime || 'غير محدد'} -> ${newStartTime}`);
         if (newStopTime && oldData.stopTime !== newStopTime) logDetails.push(`وقت الإيقاف: ${oldData.stopTime || 'غير محدد'} -> ${newStopTime}`);
         const finalLogDetails = logDetails.length > 0 ? logDetails.join(', ') : "تحديث دوري";
-        
-        const log = { 
-            date: updateDate, time: updateTime, station: sName, operator: newOperator,
-            details: finalLogDetails, startTime: newStartTime || oldData.startTime || '', stopTime: newStopTime || oldData.stopTime || ''
-        };
         const safeOldComments = oldData.comments || '';
         const safeNewComments = newComments || '';
         const commentsChanged = safeNewComments !== safeOldComments;
         const commentsLastUpdate = commentsChanged ? stationFullDateTime : (oldData.commentsLastUpdate || '');
+        
+        const log = { 
+            date: updateDate, time: updateTime, station: sName, operator: newOperator,
+            details: finalLogDetails, startTime: newStartTime || oldData.startTime || '', stopTime: newStopTime || oldData.stopTime || '',
+            opNotes: safeNewComments
+        };
         const updates = {
             pressure: newPressure, waterFlow: newFlow, voltage: newVoltage,
             systemMode: newMode, operatorName: newOperator, comments: safeNewComments,
@@ -10201,6 +10202,9 @@ window.exportConsumptionsToExcel = function() {
                     `<div style="color:#c0392b; font-weight:bold;">${log.stopTime}</div>` : 
                     '<div style="color:#888; font-size:0.9rem;">-</div>';
                 
+                const opNotesHtml = (log.opNotes && String(log.opNotes).trim() !== '')
+                    ? `<div style="margin-top:4px; color:#555; font-size:0.9rem;">📝 ملاحظات التشغيل: ${log.opNotes}</div>`
+                    : '';
                 tbody.innerHTML += `<tr class="${rowClass}">
                     <td>
                         <div style="font-weight:bold">${log.date}</div>
@@ -10210,7 +10214,7 @@ window.exportConsumptionsToExcel = function() {
                     <td>${log.operator}</td>
                     <td>${startTimeHtml}</td>
                     <td>${stopTimeHtml}</td>
-                    <td>${statusChangeHtml}${log.details}</td>
+                    <td>${statusChangeHtml}${log.details}${opNotesHtml}</td>
                 </tr>`;
             });
             
