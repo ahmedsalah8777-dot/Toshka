@@ -12476,22 +12476,29 @@ document.getElementById('btn-send-report').addEventListener('click', () => {
 // --- دالة عرض جدول البلاغات (المصححة) ---
 function renderFaultReportsTable() {
     const tbody = document.getElementById('fault-reports-body');
-    // لا تقم بمسح الجدول هنا فوراً لتجنب الوميض، انتظر البيانات
-    
-    db.ref('fault_reports').orderByChild('timestamp').limitToLast(100).once('value', (snap) => {
+    const filterZone = document.getElementById('filter-report-zone').value;
+    const filterStatus = document.getElementById('filter-report-status').value;
+    const userType = appData.currentUser ? appData.currentUser.type : 'guest';
+    let query = null;
+    if (filterZone !== 'all') {
+        query = db.ref('fault_reports').orderByChild('zone').equalTo(filterZone);
+    } else {
+        query = db.ref('fault_reports').orderByChild('timestamp').limitToLast(500);
+    }
+    query.once('value', (snap) => {
         const data = [];
-        snap.forEach(child => { data.unshift({key: child.key, ...child.val()}); }); // الأحدث أولاً
+        snap.forEach(child => { data.push({key: child.key, ...child.val()}); });
+        data.sort((a, b) => {
+            const am = parseReportCreatedAtMs(a);
+            const bm = parseReportCreatedAtMs(b);
+            return (bm || 0) - (am || 0);
+        });
         
-        const filterZone = document.getElementById('filter-report-zone').value;
-        const filterStatus = document.getElementById('filter-report-status').value;
-        const userType = appData.currentUser ? appData.currentUser.type : 'guest';
-        
-        // --- الصلاحيات ---
         const canConfirm = ['supervisor', 'engineer', 'admin'].includes(userType);
         const canAdminAction = ['engineer', 'admin'].includes(userType);
         const canEditDesc = ['admin', 'engineer', 'supervisor'].includes(userType);
         
-        let rowsHtml = ''; // متغير لتجميع كود HTML
+        let rowsHtml = '';
 
         data.forEach(item => {
             // تجاهل ما تم تحويله لأمر شغل
