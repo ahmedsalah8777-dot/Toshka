@@ -653,6 +653,27 @@
             animation: pulse-red 2s infinite; 
             vertical-align: middle; 
         }
+        .shift-check-icon {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            font-size: 14px;
+            font-weight: bold;
+            margin-right: 5px;
+            box-shadow: none;
+            vertical-align: middle;
+        }
+        .shift-check-on {
+            background-color: transparent;
+            color: #2ecc71;
+        }
+        .shift-check-late {
+            background-color: transparent;
+            color: #f1c40f;
+        }
         
         @keyframes pulse-red { 
             0% { 
@@ -3295,6 +3316,14 @@
         .status-red { color: var(--danger-color); }
         .status-yellow { color: var(--warning-color); }
         .status-gray { color: #ccc; }
+        .legend-bar { display: flex; gap: 8px; flex-wrap: wrap; background: #f8f9fa; padding: 8px 12px; border: 1px solid #eee; border-radius: 8px; margin-bottom: 10px; align-items: center; }
+        .legend-item { display: inline-flex; align-items: center; gap: 6px; padding: 4px 6px; background: #fff; border: 1px solid #eee; border-radius: 6px; font-size: 0.9rem; }
+        .legend-icon { font-weight: bold; }
+        .legend-green .legend-icon { color: var(--success-color); }
+        .legend-yellow .legend-icon { color: var(--warning-color); }
+        .legend-red .legend-icon { color: var(--danger-color); }
+        .legend-gray .legend-icon { color: #bbb; }
+        .legend-note { font-size: 0.85rem; color: #666; margin: 6px 0 12px 0; }
         .region-separator {
             background-color: #e9ecef;
             font-weight: bold;
@@ -3984,6 +4013,13 @@
                 <h2>📊 تقييم أداء المحطات</h2>
                 <button class="btn btn-outline" id="back-to-stations-from-performance">عودة للرئيسية</button>
             </div>
+            <div class="legend-bar">
+                <div class="legend-item legend-green"><span class="legend-icon">✔</span><span>تمام في الموعد</span></div>
+                <div class="legend-item legend-yellow"><span class="legend-icon">✔</span><span>تأخير ساعتين (خصم 50%)</span></div>
+                <div class="legend-item legend-red"><span class="legend-icon">✖</span><span>غير منجز</span></div>
+                <div class="legend-item legend-gray"><span class="legend-icon">-</span><span>قبل موعد الشيفت</span></div>
+            </div>
+            <div class="legend-note">النهاري/الليلي: نقطة في الموعد، نصف نقطة عند تأخير ساعتين. الفحص: 100% في الموعد، 50% متأخر حتى الثلاثاء، 0% غير منجز.</div>
             
             <div class="container">
                 <div class="filters-container" style="background: #f9f9f9; padding: 15px; border-radius: 8px; border: 1px solid #eee; margin-bottom: 15px; display: grid; gap: 10px; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));">
@@ -4061,6 +4097,13 @@
                 <h2>📈 جدول نسب الإتمام</h2>
                 <button class="btn btn-outline" id="back-to-performance-from-completion">عودة</button>
             </div>
+            <div class="legend-bar">
+                <div class="legend-item legend-green"><span class="legend-icon">✔</span><span>تمام في الموعد</span></div>
+                <div class="legend-item legend-yellow"><span class="legend-icon">✔</span><span>تأخير ساعتين (خصم 50%)</span></div>
+                <div class="legend-item legend-red"><span class="legend-icon">✖</span><span>غير منجز</span></div>
+                <div class="legend-item legend-gray"><span class="legend-icon">-</span><span>قبل الموعد</span></div>
+            </div>
+            <div class="legend-note">النهاري/الليلي = مجموع النقاط ÷ الأيام المؤهلة. الفحص = متوسط نقاط الأسابيع المؤهلة (100% في الموعد، 50% متأخر، 0% غير منجز).</div>
             <div class="container">
                 <div class="filters-container" style="background: #f9f9f9; padding: 15px; border-radius: 8px; border: 1px solid #eee; margin-bottom: 15px; display: grid; gap: 10px; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));">
                     <div class="filter-item">
@@ -6936,6 +6979,26 @@ document.getElementById('emergency-image-modal').addEventListener('click', funct
                 else { shiftStart.setDate(shiftStart.getDate() - 1); shiftStart.setHours(18); }
                 return lastUpdate < shiftStart;
             }
+        }
+        function computeShiftStatus(lastUpdateStr) {
+            if (!lastUpdateStr) return { status: 'missed', delayH: null };
+            const lastUpdate = parseCustomDate(lastUpdateStr);
+            if (!lastUpdate || isNaN(lastUpdate.getTime())) return { status: 'missed', delayH: null };
+            const now = new Date();
+            const currentHour = now.getHours();
+            let shiftStart = new Date(now);
+            shiftStart.setMinutes(0); shiftStart.setSeconds(0); shiftStart.setMilliseconds(0);
+            if (currentHour >= 6 && currentHour < 18) {
+                shiftStart.setHours(6);
+            } else {
+                if (currentHour >= 18) { shiftStart.setHours(18); }
+                else { shiftStart.setDate(shiftStart.getDate() - 1); shiftStart.setHours(18); }
+            }
+            if (lastUpdate < shiftStart) return { status: 'missed', delayH: null };
+            const delayMs = lastUpdate.getTime() - shiftStart.getTime();
+            const delayH = delayMs / 3600000;
+            if (delayH >= 2) return { status: 'late', delayH };
+            return { status: 'onTime', delayH };
         }
 
         // دالة التحقق من تحديث الفحص (يظهر التنبيه إذا مر أسبوع كامل دون تحديث، أو جاء موعد التحديث الجديد)
@@ -11039,6 +11102,35 @@ if(btnPerfBack) btnPerfBack.addEventListener('click', () => showScreen('stations
         return new Date(2026, 1, 21, 0, 0, 0, 0).getTime();
     }
 
+    function getFirstUpdateTimeForShift(stationName, shiftType, year, monthIndex, dayNum) {
+        const history = appData.operationHistory || [];
+        let start, end;
+        if (shiftType === 'day') {
+            start = new Date(year, monthIndex, dayNum, 6, 0, 0, 0);
+            end = new Date(year, monthIndex, dayNum, 18, 0, 0, 0);
+        } else {
+            start = new Date(year, monthIndex, dayNum, 18, 0, 0, 0);
+            end = new Date(year, monthIndex, dayNum + 1, 6, 0, 0, 0);
+        }
+        let first = null;
+        for (let i = 0; i < history.length; i++) {
+            const log = history[i];
+            if (!log || log.station !== stationName) continue;
+            if (!log.date || !log.time) continue;
+            const d = parseDateSimple(log.date);
+            if (!d) continue;
+            const timeStr = toEnglishDigits(log.time);
+            const parts = timeStr.split(':');
+            if (parts.length < 2) continue;
+            const h = parseInt(parts[0]), m = parseInt(parts[1]), s = parts[2] ? parseInt(parts[2]) : 0;
+            if (!isFinite(h) || !isFinite(m) || !isFinite(s)) continue;
+            const dt = new Date(d.getFullYear(), d.getMonth(), d.getDate(), h, m, s);
+            if (dt >= start && dt < end) {
+                if (!first || dt.getTime() < first.getTime()) first = dt;
+            }
+        }
+        return first;
+    }
     function calculateShiftPerformanceData(shiftType, targetYear, targetMonthIndex, stations, daysInMonth, eligibleDayLimit, applyCutoff) {
         const stationShiftDays = {};
         stations.forEach(s => { stationShiftDays[s.name] = new Set(); });
@@ -11098,11 +11190,25 @@ if(btnPerfBack) btnPerfBack.addEventListener('click', () => showScreen('stations
         
         return stations.map(s => {
             const daysSet = stationShiftDays[s.name] || new Set();
-            let eligibleUpdates = 0;
-            daysSet.forEach(dayNum => { if (dayNum <= eligibleDayLimit) eligibleUpdates++; });
-            const successfulUpdates = daysSet.size;
+            let eligibleCredits = 0;
+            let successfulUpdates = 0;
+            daysSet.forEach(dayNum => {
+                if (dayNum <= eligibleDayLimit) {
+                    let credit = 1;
+                    const first = getFirstUpdateTimeForShift(s.name, shiftType, targetYear, targetMonthIndex, dayNum);
+                    if (first) {
+                        let shiftStart;
+                        if (shiftType === 'day') shiftStart = new Date(targetYear, targetMonthIndex, dayNum, 6, 0, 0, 0);
+                        else shiftStart = new Date(targetYear, targetMonthIndex, dayNum, 18, 0, 0, 0);
+                        const delayH = (first.getTime() - shiftStart.getTime()) / 3600000;
+                        if (delayH >= 2) credit = 0.5;
+                    }
+                    eligibleCredits += credit;
+                }
+                successfulUpdates++;
+            });
             const totalShifts = daysInMonth;
-            const score = eligibleDayLimit > 0 ? Math.round((eligibleUpdates / eligibleDayLimit) * 100) : 0;
+            const score = eligibleDayLimit > 0 ? Math.round((eligibleCredits / eligibleDayLimit) * 100) : 0;
             return { name: s.name, zone: s.zone, totalShifts, successfulUpdates, score };
         }).sort((a, b) => b.score - a.score);
     }
@@ -16274,22 +16380,48 @@ window.addEventListener('offline', function() {
         const daysInMonth = new Date(year, monthIndex + 1, 0).getDate();
         const eligibleDays = isCurrent ? Math.max(0, Math.min(daysInMonth, now.getDate() - 1)) : daysInMonth;
         const map = buildMonthlyLogMap(year, monthIndex);
-        const lastWeek = findLastCompletedWeekInCurrentMonth(year, monthIndex);
+        const allWeeks = getWeeksInMonth(year, monthIndex) || [];
+        const eligibleWeeks = allWeeks.filter(w => {
+            if (!w || !w.start || !w.end) return false;
+            if (!isCurrent) return true;
+            const end = new Date(w.end);
+            end.setHours(23,59,59,999);
+            return end <= now;
+        });
         const rows = [];
         stations.forEach(st => {
-            let dayCount = 0;
-            let nightCount = 0;
+            let dayCredits = 0;
+            let nightCredits = 0;
+            let inspCredits = 0;
+            let weekCount = 0;
             for (let d = 1; d <= eligibleDays; d++) {
-                if (map[`${st.name}-${d}-day`]) dayCount++;
-                if (map[`${st.name}-${d}-night`]) nightCount++;
+                if (map[`${st.name}-${d}-day`]) {
+                    const first = getFirstLogInShift(st.name, new Date(year, monthIndex, d), 'day');
+                    if (first) {
+                        const shiftStart = new Date(year, monthIndex, d, 6, 0, 0, 0);
+                        const delayH = (first.getTime() - shiftStart.getTime()) / 3600000;
+                        dayCredits += (delayH >= 2) ? 0.5 : 1;
+                    } else {
+                        dayCredits += 1;
+                    }
+                }
+                if (map[`${st.name}-${d}-night`]) {
+                    const firstN = getFirstLogInShift(st.name, new Date(year, monthIndex, d), 'night');
+                    if (firstN) {
+                        const shiftStartN = new Date(year, monthIndex, d, 18, 0, 0, 0);
+                        const delayHn = (firstN.getTime() - shiftStartN.getTime()) / 3600000;
+                        nightCredits += (delayHn >= 2) ? 0.5 : 1;
+                    } else {
+                        nightCredits += 1;
+                    }
+                }
             }
-            const dayPct = eligibleDays > 0 ? Math.round((dayCount / eligibleDays) * 1000) / 10 : 0;
-            const nightPct = eligibleDays > 0 ? Math.round((nightCount / eligibleDays) * 1000) / 10 : 0;
-            let inspPct = 0;
-            if (lastWeek) {
+            const dayPct = eligibleDays > 0 ? Math.round((dayCredits / eligibleDays) * 1000) / 10 : 0;
+            const nightPct = eligibleDays > 0 ? Math.round((nightCredits / eligibleDays) * 1000) / 10 : 0;
+            eligibleWeeks.forEach(w => {
                 let found = false;
                 let isLate = false;
-                const cur = new Date(lastWeek.start);
+                const cur = new Date(w.start);
                 for (let i = 0; i < 7; i++) {
                     const dateKey = `${cur.getFullYear()}-${cur.getMonth()}-${cur.getDate()}`;
                     const k = `${st.name}-${dateKey}-inspection`;
@@ -16299,8 +16431,11 @@ window.addEventListener('offline', function() {
                     }
                     cur.setDate(cur.getDate() + 1);
                 }
-                inspPct = found ? (isLate ? 50 : 100) : 0;
-            }
+                if (found) inspCredits += isLate ? 0.5 : 1;
+                else inspCredits += 0;
+                weekCount++;
+            });
+            const inspPct = weekCount > 0 ? Math.round(((inspCredits / weekCount) * 100) * 10) / 10 : 0;
             const total = Math.round(((dayPct + nightPct + inspPct) / 3) * 10) / 10;
             rows.push({ name: st.name, dayPct, nightPct, inspPct, total });
         });
@@ -16462,20 +16597,60 @@ window.addEventListener('offline', function() {
         }
     }
 
-    function getShiftStatus(stationName, date, shift, now) {
-        let shiftEnd;
+    function getFirstLogInShift(stationName, date, shift) {
+        const history = appData.operationHistory || [];
+        let start, end;
         if (shift === 'day') {
-            shiftEnd = new Date(date);
-            shiftEnd.setHours(18, 0, 0, 0);
+            start = new Date(date); start.setHours(6,0,0,0);
+            end = new Date(date); end.setHours(18,0,0,0);
         } else {
-            shiftEnd = new Date(date);
-            shiftEnd.setDate(shiftEnd.getDate() + 1);
-            shiftEnd.setHours(6, 0, 0, 0);
+            start = new Date(date); start.setHours(18,0,0,0);
+            end = new Date(date); end.setDate(end.getDate() + 1); end.setHours(6,0,0,0);
+        }
+        let first = null;
+        for (let i = 0; i < history.length; i++) {
+            const log = history[i];
+            if (!log || log.station !== stationName) continue;
+            if (!log.date || !log.time) continue;
+            const d = parseDateSimple(log.date);
+            if (!d) continue;
+            const timeStr = toEnglishDigits(log.time);
+            const parts = timeStr.split(':');
+            if (parts.length < 2) continue;
+            const h = parseInt(parts[0]), m = parseInt(parts[1]), s = parts[2] ? parseInt(parts[2]) : 0;
+            if (!isFinite(h) || !isFinite(m) || !isFinite(s)) continue;
+            const dt = new Date(d.getFullYear(), d.getMonth(), d.getDate(), h, m, s);
+            // Map to the correct shift date for night early hours
+            let inShift = false;
+            if (shift === 'day') {
+                inShift = dt >= start && dt < end;
+            } else {
+                inShift = dt >= start && dt < end;
+            }
+            if (inShift) {
+                if (!first || dt.getTime() < first.getTime()) first = dt;
+            }
+        }
+        return first;
+    }
+
+    function getShiftStatus(stationName, date, shift, now) {
+        let shiftStart, shiftEnd;
+        if (shift === 'day') {
+            shiftStart = new Date(date); shiftStart.setHours(6,0,0,0);
+            shiftEnd = new Date(date); shiftEnd.setHours(18, 0, 0, 0);
+        } else {
+            shiftStart = new Date(date); shiftStart.setHours(18,0,0,0);
+            shiftEnd = new Date(date); shiftEnd.setDate(shiftEnd.getDate() + 1); shiftEnd.setHours(6, 0, 0, 0);
         }
         
         const hasData = checkLogInMemory(stationName, date, shift);
-        
         if (hasData) {
+            const first = getFirstLogInShift(stationName, date, shift);
+            if (first) {
+                const delayH = (first.getTime() - shiftStart.getTime()) / 3600000;
+                if (delayH >= 2) return 'delayed';
+            }
             return 'complete';
         } else {
             if (now > shiftEnd) {
@@ -16693,14 +16868,32 @@ window.addEventListener('offline', function() {
             const dim = new Date(year, month, 0).getDate();
             const eligibleDays = isCurrent ? Math.max(0, Math.min(dim, new Date().getDate() - 1)) : dim;
             stations.forEach(st => {
-                let dayCount = 0;
-                let nightCount = 0;
+                let dayCredits = 0;
+                let nightCredits = 0;
                 for (let d = 1; d <= eligibleDays; d++) {
-                    if (m[`${st.name}-${d}-day`]) dayCount++;
-                    if (m[`${st.name}-${d}-night`]) nightCount++;
+                    if (m[`${st.name}-${d}-day`]) {
+                        const first = getFirstLogInShift(st.name, new Date(year, month - 1, d), 'day');
+                        if (first) {
+                            const shiftStart = new Date(year, month - 1, d, 6, 0, 0, 0);
+                            const delayH = (first.getTime() - shiftStart.getTime()) / 3600000;
+                            dayCredits += (delayH >= 2) ? 0.5 : 1;
+                        } else {
+                            dayCredits += 1;
+                        }
+                    }
+                    if (m[`${st.name}-${d}-night`]) {
+                        const firstN = getFirstLogInShift(st.name, new Date(year, month - 1, d), 'night');
+                        if (firstN) {
+                            const shiftStartN = new Date(year, month - 1, d, 18, 0, 0, 0);
+                            const delayHn = (firstN.getTime() - shiftStartN.getTime()) / 3600000;
+                            nightCredits += (delayHn >= 2) ? 0.5 : 1;
+                        } else {
+                            nightCredits += 1;
+                        }
+                    }
                 }
-                const dayPct = eligibleDays > 0 ? Math.round((dayCount / eligibleDays) * 1000) / 10 : 0;
-                const nightPct = eligibleDays > 0 ? Math.round((nightCount / eligibleDays) * 1000) / 10 : 0;
+                const dayPct = eligibleDays > 0 ? Math.round((dayCredits / eligibleDays) * 1000) / 10 : 0;
+                const nightPct = eligibleDays > 0 ? Math.round((nightCredits / eligibleDays) * 1000) / 10 : 0;
                 let inspPct = 0;
                 if (lastWeek) {
                     let found = false;
