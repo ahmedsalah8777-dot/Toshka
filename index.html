@@ -3284,6 +3284,24 @@
                 font-size: 0.85rem;
             }
         }
+/* Performance Table Styles */
+        .performance-table th, .performance-table td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            white-space: nowrap;
+        }
+        .perf-status-icon { font-size: 1.4rem; font-weight: bold; }
+        .status-green { color: var(--success-color); }
+        .status-red { color: var(--danger-color); }
+        .status-yellow { color: var(--warning-color); }
+        .status-gray { color: #ccc; }
+        .region-separator {
+            background-color: #e9ecef;
+            font-weight: bold;
+            text-align: right;
+            padding: 10px;
+            color: var(--primary-color);
+        }
     </style>
 </head>
 <body>
@@ -3971,99 +3989,62 @@
                 <div class="filters-container" style="background: #f9f9f9; padding: 15px; border-radius: 8px; border: 1px solid #eee; margin-bottom: 15px; display: grid; gap: 10px; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));">
                     <div class="filter-item">
                         <label>المنطقة</label>
-                        <select id="perf-filter-zone" onchange="updatePerfStationFilter(); refreshPerformanceTab();">
+                        <select id="perf-filter-zone" onchange="updatePerfStationFilter(); renderPerformanceTable();">
                             <option value="all">كل المناطق</option>
                         </select>
                     </div>
                     <div class="filter-item">
                         <label>المحطة</label>
-                        <select id="perf-filter-station" onchange="refreshPerformanceTab();">
+                        <select id="perf-filter-station" onchange="renderPerformanceTable();">
                             <option value="all">كل المحطات</option>
                         </select>
                     </div>
-                </div>
-                <div class="evaluation-tabs">
-                    <div class="eval-tab active" data-tab="day-shift">☀️ التمام النهاري</div>
-                    <div class="eval-tab" data-tab="night-shift">🌙 التمام المسائي</div>
-                    <div class="eval-tab" data-tab="inspection-adherence">🔧 تحديث الفحص</div>
-                    <div class="eval-tab" data-tab="top-results" style="color: gold; border-color: gold;">🏆 سجل النتائج (أفضل 20)</div>
-                </div>
-
-                <div id="tab-day-shift" class="eval-content">
-                    <div class="performance-card">
-                        <div class="performance-header">
-                            <div class="performance-title">📋 تقييم الالتزام بالتمام النهاري (6:00 ص - 6:00 م)</div>
-                            <div class="score-badge">الشهر الحالي</div>
-                        </div>
-                        <div id="day-shift-list" class="rank-list">
-                            <div style="text-align:center; padding:20px; color:#777;">جاري التحميل...</div>
-                        </div>
+                    <div class="filter-item">
+                        <label>الشهر</label>
+                        <input type="month" id="perf-filter-month" onchange="updateWeekOptions(); renderPerformanceTable();">
+                    </div>
+                    <div class="filter-item">
+                        <label>الأسبوع</label>
+                        <select id="perf-filter-week" onchange="renderPerformanceTable();">
+                            <!-- Options populated by JS -->
+                        </select>
+                    </div>
+                    <div class="filter-item" style="display:flex; align-items:flex-end;">
+                        <button id="btn-export-performance" class="btn btn-excel" style="width:100%; display:none;" onclick="exportPerformanceToExcel()">
+                            📥 تصدير الشهر
+                        </button>
                     </div>
                 </div>
 
-                <div id="tab-night-shift" class="eval-content" style="display:none;">
-                    <div class="performance-card">
-                        <div class="performance-header">
-                            <div class="performance-title">📋 تقييم الالتزام بالتمام المسائي (6:00 م - 6:00 ص)</div>
-                            <div class="score-badge">الشهر الحالي</div>
-                        </div>
-                        <div id="night-shift-list" class="rank-list">
-                        </div>
-                    </div>
+                <div class="table-responsive" style="overflow-x: auto;">
+                    <table class="performance-table" style="width: 100%; border-collapse: collapse; text-align: center;">
+                        <thead id="perf-table-head">
+                            <tr style="background-color: var(--primary-color); color: white;">
+                                <th rowspan="2" style="padding: 10px; border: 1px solid #ddd; min-width: 150px;">المحطة</th>
+                                <th colspan="2" id="th-day-0">السبت</th>
+                                <th colspan="2" id="th-day-1">الأحد</th>
+                                <th colspan="2" id="th-day-2">الاثنين</th>
+                                <th colspan="2" id="th-day-3">الثلاثاء</th>
+                                <th colspan="2" id="th-day-4">الأربعاء</th>
+                                <th colspan="2" id="th-day-5">الخميس</th>
+                                <th colspan="2" id="th-day-6">الجمعة</th>
+                                <th rowspan="2" style="padding: 10px; border: 1px solid #ddd; min-width: 100px;">تمام فحص المحطة</th>
+                            </tr>
+                            <tr style="background-color: var(--secondary-color); color: white;">
+                                <th>نهاري</th><th>ليلي</th>
+                                <th>نهاري</th><th>ليلي</th>
+                                <th>نهاري</th><th>ليلي</th>
+                                <th>نهاري</th><th>ليلي</th>
+                                <th>نهاري</th><th>ليلي</th>
+                                <th>نهاري</th><th>ليلي</th>
+                                <th>نهاري</th><th>ليلي</th>
+                            </tr>
+                        </thead>
+                        <tbody id="performance-table-body">
+                            <!-- Rows generated by JS -->
+                        </tbody>
+                    </table>
                 </div>
-
-                <div id="tab-inspection-adherence" class="eval-content" style="display:none;">
-                    <div class="performance-card">
-                        <div class="performance-header">
-                            <div class="performance-title">📋 تقييم تحديث سجل الفحص (أسبوعياً)</div>
-                            <div class="score-badge">الشهر الحالي</div>
-                        </div>
-                        <div class="alert-box info" style="margin-bottom:15px;">
-                            <span class="icon">ℹ️</span>
-                            يتم احتساب النقاط بناءً على التحديث في الموعد (السبت-الثلاثاء) واعتماد الفحص.
-                        </div>
-                        <div id="inspection-rank-list" class="rank-list">
-                        </div>
-                    </div>
-                </div>
-
-                <div id="tab-top-results" class="eval-content" style="display:none;">
-                    <div class="filters-container" style="background: #f9f9f9; padding: 15px; border-radius: 8px; border: 1px solid #eee; margin-bottom: 15px; display: grid; gap: 10px; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); align-items: end;">
-                        <div class="filter-item">
-                            <label>الشهر</label>
-                            <input type="month" id="perf-top-month" style="width:100%; padding:10px; border:1px solid #ddd; border-radius:8px;">
-                        </div>
-                        <div class="filter-item" style="display:flex; gap:10px; align-items:flex-end;">
-                            <button class="btn btn-primary" onclick="renderTopResults()">بحث</button>
-                            <div id="top-results-save-status" style="font-size:0.9rem; color:#666; padding:10px 0;"></div>
-                        </div>
-                    </div>
-                    <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap:20px;">
-                        
-                        <div class="performance-card">
-                            <div class="performance-header">
-                                <div class="performance-title">☀️ أفضل 20 - تمام نهاري</div>
-                            </div>
-                            <div id="top20-day-list" class="rank-list"></div>
-                        </div>
-
-                        <div class="performance-card">
-                            <div class="performance-header">
-                                <div class="performance-title">🌙 أفضل 20 - تمام مسائي</div>
-                            </div>
-                            <div id="top20-night-list" class="rank-list"></div>
-                        </div>
-
-                        <div class="performance-card">
-                            <div class="performance-header">
-                                <div class="performance-title">🔧 أفضل 20 - فحص دوري</div>
-                            </div>
-                            <div id="top20-inspection-list" class="rank-list"></div>
-                        </div>
-
-                    </div>
-                </div>
-
             </div>
         </div>
 
@@ -4373,6 +4354,9 @@
                 </thead>
                 <tbody id="fault-reports-body"></tbody>
             </table>
+        </div>
+        <div class="pagination-controls" style="text-align:center; margin-top: 10px;">
+            <button id="load-more-fault-reports-btn" class="btn btn-primary" style="display: none; width: 220px; margin: 0 auto;">⬇️ عرض 100 بلاغ إضافي</button>
         </div>
     </div>
 </div>
@@ -5246,6 +5230,7 @@ document.querySelectorAll('.menu-item').forEach(item => {
             // Pagination limits
             historyLimit: 100,
             faultsLimit: 100,
+            faultReportsLimit: 100,
             usersLimit: 100,
             usersDataLimit: 100,
             profilesLimit: 100,
@@ -12499,29 +12484,24 @@ function renderFaultReportsTable() {
         const canEditDesc = ['admin', 'engineer', 'supervisor'].includes(userType);
         
         let rowsHtml = '';
-
+        const filtered = [];
         data.forEach(item => {
-            // تجاهل ما تم تحويله لأمر شغل
             if (item.status === 'work_order' || item.status === 'archived') return;
-            
-            // الفلاتر
             if (filterZone !== 'all' && item.zone !== filterZone) return;
             if (filterStatus === 'pending' && item.supervisorStatus !== 'pending') return;
             if (filterStatus === 'confirmed' && item.supervisorStatus !== 'confirmed') return;
-            
-            // تحديد حالة الصف
+            filtered.push(item);
+        });
+        const viewData = filtered.slice(0, appData.faultReportsLimit);
+        viewData.forEach(item => {
             let statusBadge = '<span class="status-inactive">انتظار</span>';
             if(item.supervisorStatus === 'confirmed') statusBadge = '<span class="status-active">مؤكد</span>';
             if(item.supervisorStatus === 'cancelled') statusBadge = '<span style="color:red">ملغي</span>';
-let descHtml = item.description || '';
-
-// استخدام encodeURIComponent لحماية النص من أي رموز تكسر الكود (مثل " أو ' أو سطر جديد)
-const safeDescForEdit = encodeURIComponent(item.description || '');
-
-if (canEditDesc) {
-    // نفك التشفير decodeURIComponent عند الضغط
-    descHtml += ` <span style="cursor:pointer; color:#2980b9; font-size:1.2em; margin-right:5px;" title="تعديل الوصف" onclick="editReportDescription('${item.key}', decodeURIComponent('${safeDescForEdit}'))">✎</span>`;
-}
+            let descHtml = item.description || '';
+            const safeDescForEdit = encodeURIComponent(item.description || '');
+            if (canEditDesc) {
+                descHtml += ` <span style="cursor:pointer; color:#2980b9; font-size:1.2em; margin-right:5px;" title="تعديل الوصف" onclick="editReportDescription('${item.key}', decodeURIComponent('${safeDescForEdit}'))">✎</span>`;
+            }
             let supBtns = '-';
             if (canConfirm && item.supervisorStatus === 'pending') {
                 supBtns = `
@@ -12538,8 +12518,6 @@ if (canEditDesc) {
                     <div style="font-size: 0.85rem; color: #555; margin-top: 4px;"> 👤 ${supervisorName} </div>
                 `;
             }
-            
-            // أزرار الإدارة
             let adminBtns = '-';
             if (canAdminAction) {
                 if (item.supervisorStatus === 'confirmed') {
@@ -12553,8 +12531,6 @@ if (canEditDesc) {
                     `;
                 }
             }
-            
-            // تجميع الصف
             rowsHtml += `
                 <tr>
                     <td>${item.date}<br>${item.time}</td>
@@ -12568,9 +12544,13 @@ if (canEditDesc) {
                 </tr>
             `;
         });
-        
-        // تحديث الجدول مرة واحدة فقط في النهاية
         tbody.innerHTML = rowsHtml;
+        const loadMoreBtn = document.getElementById('load-more-fault-reports-btn');
+        if (viewData.length < filtered.length) {
+            loadMoreBtn.style.display = 'inline-block';
+        } else {
+            loadMoreBtn.style.display = 'none';
+        }
     });
 }
 // 5. إجراءات الجدول (تأكيد / تحويل)
@@ -12590,6 +12570,11 @@ window.confirmReport = function(key, isConfirmed) {
         alert("حدث خطأ: " + err.message);
     });
 };
+// زر عرض المزيد لجدول البلاغات
+document.getElementById('load-more-fault-reports-btn').addEventListener('click', function() {
+    appData.faultReportsLimit += 100;
+    renderFaultReportsTable();
+});
 
 function getMonthTimestampRange(year, monthIndex) {
     const start = new Date(year, monthIndex, 1, 0, 0, 0, 0).getTime();
@@ -15993,5 +15978,498 @@ window.addEventListener('offline', function() {
     });
 
     </script>
+<script>
+    // --- Performance Evaluation Module (New) ---
+
+    // Initialize the performance screen when the document is ready
+    document.addEventListener('DOMContentLoaded', function() {
+        const perfMonthInput = document.getElementById('perf-filter-month');
+        if (perfMonthInput) {
+            const today = new Date();
+            const yyyy = today.getFullYear();
+            const mm = String(today.getMonth() + 1).padStart(2, '0');
+            perfMonthInput.value = `${yyyy}-${mm}`;
+            // Trigger initial population
+            if (typeof updateWeekOptions === 'function') updateWeekOptions();
+        }
+    });
+
+    // Override the existing refreshPerformanceTab to hook into our new logic
+    window.refreshPerformanceTab = function() {
+        if (document.getElementById('performance-table-body')) {
+            // New logic
+            const weekSelect = document.getElementById('perf-filter-week');
+            if (weekSelect && weekSelect.options.length === 0) {
+                updateWeekOptions();
+            } else {
+                renderPerformanceTable();
+            }
+        } else {
+            console.warn("Performance table not found - running old logic if exists");
+        }
+    };
+
+    window.updateWeekOptions = function() {
+        const monthInput = document.getElementById('perf-filter-month');
+        const weekSelect = document.getElementById('perf-filter-week');
+        if (!monthInput || !weekSelect) return;
+        
+        const [year, month] = monthInput.value.split('-').map(Number);
+        const weeks = getWeeksInMonth(year, month - 1);
+        
+        weekSelect.innerHTML = '';
+        
+        const now = new Date();
+        let selectedIndex = 0;
+        
+        weeks.forEach((week, index) => {
+            const option = document.createElement('option');
+            option.value = index;
+            const startStr = formatDateSimpleForWeek(week.start);
+            const endStr = formatDateSimpleForWeek(week.end);
+            option.textContent = `الأسبوع ${index + 1} (${startStr} - ${endStr})`;
+            weekSelect.appendChild(option);
+            
+            // Select current week if in current month
+            const n = new Date(now); n.setHours(0,0,0,0);
+            const s = new Date(week.start); s.setHours(0,0,0,0);
+            const e = new Date(week.end); e.setHours(23,59,59,999);
+            
+            if (n >= s && n <= e) {
+                selectedIndex = index;
+            }
+        });
+        
+        weekSelect.value = selectedIndex;
+        renderPerformanceTable();
+    };
+
+    function getWeeksInMonth(year, month) {
+        const weeks = [];
+        const firstDayOfMonth = new Date(year, month, 1);
+        const lastDayOfMonth = new Date(year, month + 1, 0);
+        
+        let currentStart = new Date(firstDayOfMonth);
+        const dayOfWeek = currentStart.getDay(); // 0-6 (Sun-Sat)
+        // Adjust to previous Saturday
+        const daysFromSat = (dayOfWeek + 1) % 7;
+        currentStart.setDate(currentStart.getDate() - daysFromSat);
+        
+        while (true) {
+            const weekStart = new Date(currentStart);
+            const weekEnd = new Date(currentStart);
+            weekEnd.setDate(weekEnd.getDate() + 6);
+            
+            if (weekStart > lastDayOfMonth) break;
+            
+            weeks.push({
+                start: weekStart,
+                end: weekEnd
+            });
+            
+            currentStart.setDate(currentStart.getDate() + 7);
+        }
+        return weeks;
+    }
+
+    function formatDateSimpleForWeek(date) {
+        return `${date.getDate()}/${date.getMonth() + 1}`;
+    }
+
+    let perfLogMap = {};
+
+    function buildPerfLogMap(weekStart, weekEnd) {
+        perfLogMap = {};
+        const history = appData.operationHistory || [];
+        // Buffer
+        const queryStart = new Date(weekStart); queryStart.setDate(queryStart.getDate() - 1);
+        const queryEnd = new Date(weekEnd); queryEnd.setDate(queryEnd.getDate() + 1);
+
+        history.forEach(log => {
+            if (!log.date || !log.time) return;
+            const d = parseDateSimple(log.date); 
+            if (!d) return;
+            
+            if (d < queryStart || d > queryEnd) return;
+
+            const timeStr = toEnglishDigits(log.time); 
+            const [h, m] = timeStr.split(':').map(Number);
+            
+            let shiftDate = new Date(d);
+            let shiftType = '';
+
+            if (h >= 6 && h < 18) {
+                shiftType = 'day';
+            } else {
+                shiftType = 'night';
+                if (h < 6) {
+                    shiftDate.setDate(shiftDate.getDate() - 1);
+                }
+            }
+            
+            const dateKey = `${shiftDate.getFullYear()}-${shiftDate.getMonth()}-${shiftDate.getDate()}`;
+            const k = `${log.station}-${dateKey}-${shiftType}`;
+            perfLogMap[k] = true;
+            
+            if (log.details && log.details.includes('تحديث سجل الفحص')) {
+                const inspKey = `${log.station}-${d.getFullYear()}-${d.getMonth()}-${d.getDate()}-inspection`;
+                perfLogMap[inspKey] = true;
+            }
+        });
+    }
+
+    window.renderPerformanceTable = function() {
+        const tbody = document.getElementById('performance-table-body');
+        if (!tbody) return;
+        tbody.innerHTML = '<tr><td colspan="16" style="padding:20px;">جاري التحميل...</td></tr>';
+        
+        const zoneFilter = document.getElementById('perf-filter-zone').value;
+        const stationFilter = document.getElementById('perf-filter-station').value;
+        const monthInput = document.getElementById('perf-filter-month').value;
+        const weekSelect = document.getElementById('perf-filter-week');
+        
+        if (!weekSelect.value) {
+             tbody.innerHTML = '<tr><td colspan="16" style="padding:20px;">يرجى اختيار أسبوع</td></tr>';
+             return;
+        }
+        
+        const weekIndex = parseInt(weekSelect.value);
+        const [year, month] = monthInput.split('-').map(Number);
+        const weeks = getWeeksInMonth(year, month - 1);
+        const selectedWeek = weeks[weekIndex];
+        
+        if (!selectedWeek) {
+            tbody.innerHTML = '<tr><td colspan="16">يرجى اختيار أسبوع صحيح</td></tr>';
+            return;
+        }
+
+        // Update Header Dates
+        const dayNames = ['السبت', 'الأحد', 'الاثنين', 'الثلاثاء', 'الأربعاء', 'الخميس', 'الجمعة'];
+        const headerDate = new Date(selectedWeek.start);
+        for (let i = 0; i < 7; i++) {
+            const el = document.getElementById(`th-day-${i}`);
+            if (el) {
+                el.textContent = `${dayNames[i]} (${headerDate.getDate()}/${headerDate.getMonth() + 1})`;
+            }
+            headerDate.setDate(headerDate.getDate() + 1);
+        }
+        
+        if (!appData.stations || Object.keys(appData.stations).length === 0) {
+            if (typeof loadStations === 'function') {
+                loadStations(function() { renderPerformanceTable(); });
+            }
+            return;
+        }
+        
+        if (!appData.operationHistory || appData.operationHistory.length === 0) {
+             if (typeof loadHistory === 'function') {
+                loadHistory(function() { renderPerformanceTable(); });
+             }
+             return;
+        }
+        
+        buildPerfLogMap(selectedWeek.start, selectedWeek.end);
+        
+        let stations = Object.values(appData.stations).filter(s => s && s.name);
+        
+        stations = stations.filter(s => {
+            if (zoneFilter !== 'all' && s.zone !== zoneFilter) return false;
+            if (stationFilter !== 'all' && s.name !== stationFilter) return false;
+            return true;
+        });
+        
+        const stationsByZone = {};
+        stations.forEach(s => {
+            if (!stationsByZone[s.zone]) stationsByZone[s.zone] = [];
+            stationsByZone[s.zone].push(s);
+        });
+        
+        tbody.innerHTML = '';
+        const sortedZones = Object.keys(stationsByZone).sort();
+        
+        if (sortedZones.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="16" style="padding:20px;">لا توجد محطات مطابقة</td></tr>';
+            return;
+        }
+        
+        const now = new Date();
+        
+        sortedZones.forEach(zone => {
+            const zoneRow = document.createElement('tr');
+            zoneRow.innerHTML = `<td colspan="16" class="region-separator">${zone}</td>`;
+            tbody.appendChild(zoneRow);
+            
+            stationsByZone[zone].forEach(station => {
+                const tr = document.createElement('tr');
+                let rowHtml = `<td style="font-weight:bold; text-align:right;">${station.name}</td>`;
+                
+                const currentDay = new Date(selectedWeek.start);
+                for (let i = 0; i < 7; i++) {
+                    const dayStatus = getShiftStatus(station.name, currentDay, 'day', now);
+                    rowHtml += `<td>${getStatusIcon(dayStatus)}</td>`;
+                    
+                    const nightStatus = getShiftStatus(station.name, currentDay, 'night', now);
+                    rowHtml += `<td>${getStatusIcon(nightStatus)}</td>`;
+                    
+                    currentDay.setDate(currentDay.getDate() + 1);
+                }
+                
+                const inspStatus = getInspectionStatus(station.name, selectedWeek, now);
+                rowHtml += `<td>${getStatusIcon(inspStatus)}</td>`;
+                
+                tr.innerHTML = rowHtml;
+                tbody.appendChild(tr);
+            });
+        });
+    };
+
+    function getStatusIcon(status) {
+        switch (status) {
+            case 'complete': return '<span class="perf-status-icon status-green">✔</span>'; 
+            case 'delayed': return '<span class="perf-status-icon status-yellow">✔</span>'; 
+            case 'incomplete': return '<span class="perf-status-icon status-red">✖</span>'; 
+            case 'future': return '<span class="perf-status-icon status-gray">-</span>'; 
+            default: return '<span class="perf-status-icon status-gray">-</span>';
+        }
+    }
+
+    function getShiftStatus(stationName, date, shift, now) {
+        let shiftEnd;
+        if (shift === 'day') {
+            shiftEnd = new Date(date);
+            shiftEnd.setHours(18, 0, 0, 0);
+        } else {
+            shiftEnd = new Date(date);
+            shiftEnd.setDate(shiftEnd.getDate() + 1);
+            shiftEnd.setHours(6, 0, 0, 0);
+        }
+        
+        const hasData = checkLogInMemory(stationName, date, shift);
+        
+        if (hasData) {
+            return 'complete';
+        } else {
+            if (now > shiftEnd) {
+                return 'incomplete';
+            } else {
+                return 'future';
+            }
+        }
+    }
+
+    function checkLogInMemory(stationName, date, shift) {
+        const dateKey = `${date.getFullYear()}-${date.getMonth()}-${date.getDate()}`;
+        const k = `${stationName}-${dateKey}-${shift}`;
+        return !!perfLogMap[k];
+    }
+
+    function getInspectionStatus(stationName, week, now) {
+        let found = false;
+        let isLate = false;
+        
+        const current = new Date(week.start);
+        for (let i = 0; i < 7; i++) {
+            const dateKey = `${current.getFullYear()}-${current.getMonth()}-${current.getDate()}`;
+            const k = `${stationName}-${dateKey}-inspection`;
+            
+            if (perfLogMap[k]) {
+                found = true;
+                if (i > 3) isLate = true;
+            }
+            current.setDate(current.getDate() + 1);
+        }
+        
+        if (found) {
+            return isLate ? 'delayed' : 'complete';
+        }
+        
+        const tuesday = new Date(week.start);
+        tuesday.setDate(tuesday.getDate() + 3);
+        tuesday.setHours(23, 59, 59, 999);
+        
+        if (now > tuesday) {
+            return 'incomplete';
+        }
+        
+        return 'future';
+    }
+
+    // --- Export Performance Logic ---
+    window.exportPerformanceToExcel = function() {
+        // 1. Check Permissions
+        const user = appData.currentUser;
+        if (!user || (user.type !== 'admin' && user.type !== 'engineer')) {
+            alert('عذراً، هذه الخاصية متاحة للمدير والمهندس فقط.');
+            return;
+        }
+
+        // 2. Gather Filters
+        const zoneFilter = document.getElementById('perf-filter-zone').value;
+        const stationFilter = document.getElementById('perf-filter-station').value;
+        const monthInput = document.getElementById('perf-filter-month').value;
+        
+        if (!monthInput) {
+            alert('يرجى اختيار الشهر');
+            return;
+        }
+        
+        const btn = document.getElementById('btn-export-performance');
+        const originalText = btn.innerHTML;
+        btn.disabled = true;
+        btn.innerHTML = 'جاري التصدير...';
+
+        // 3. Prepare Data
+        // We need to fetch data for the whole month
+        const [year, month] = monthInput.split('-').map(Number);
+        const daysInMonth = new Date(year, month, 0).getDate();
+        
+        // Ensure stations loaded
+        if (!appData.stations || Object.keys(appData.stations).length === 0) {
+            loadStations(function() { exportPerformanceToExcel(); });
+            return;
+        }
+        
+        // Filter Stations
+        let stations = Object.values(appData.stations).filter(s => s && s.name);
+        stations = stations.filter(s => {
+            if (zoneFilter !== 'all' && s.zone !== zoneFilter) return false;
+            if (stationFilter !== 'all' && s.name !== stationFilter) return false;
+            return true;
+        });
+        
+        // Sort by Zone then Name
+        stations.sort((a, b) => {
+            if (a.zone === b.zone) return String(a.name).localeCompare(String(b.name), 'ar');
+            return String(a.zone).localeCompare(String(b.zone), 'ar');
+        });
+
+        // Ensure history loaded (we might need to load more if not full history)
+        // Ideally we should query specifically for the month range.
+        // For simplicity, we assume appData.operationHistory contains enough data or we rely on what's loaded.
+        // If history is huge, this might be slow.
+        // Let's assume operationHistory is loaded. If empty, try load.
+        if (!appData.operationHistory || appData.operationHistory.length === 0) {
+             loadHistory(function() { 
+                 btn.disabled = false; btn.innerHTML = originalText;
+                 exportPerformanceToExcel(); 
+             });
+             return;
+        }
+
+        // Build a map for the WHOLE MONTH
+        const monthStart = new Date(year, month - 1, 1);
+        const monthEnd = new Date(year, month, 0, 23, 59, 59);
+        
+        // Use existing buildPerfLogMap logic but for whole month?
+        // buildPerfLogMap clears the map. We should create a local map.
+        const localLogMap = {};
+        const history = appData.operationHistory || [];
+        
+        // Optimize: filter history by date range first
+        const qStart = new Date(monthStart); qStart.setDate(qStart.getDate() - 1);
+        const qEnd = new Date(monthEnd); qEnd.setDate(qEnd.getDate() + 1);
+        
+        history.forEach(log => {
+            if (!log.date || !log.time) return;
+            const d = parseDateSimple(log.date);
+            if (!d) return;
+            if (d < qStart || d > qEnd) return;
+            
+            const timeStr = toEnglishDigits(log.time);
+            const [h, m] = timeStr.split(':').map(Number);
+            
+            let shiftDate = new Date(d);
+            let shiftType = '';
+            
+            if (h >= 6 && h < 18) {
+                shiftType = 'day';
+            } else {
+                shiftType = 'night';
+                if (h < 6) shiftDate.setDate(shiftDate.getDate() - 1);
+            }
+            
+            // Only add if within target month
+            if (shiftDate.getMonth() !== (month - 1) || shiftDate.getFullYear() !== year) return;
+            
+            const dateKey = `${shiftDate.getDate()}`; // Just day number is enough since we filtered month
+            const k = `${log.station}-${dateKey}-${shiftType}`;
+            localLogMap[k] = true;
+        });
+
+        // 4. Build Excel Data Array (AOA)
+        const wb = XLSX.utils.book_new();
+        const wsData = [];
+        
+        // Header Row 1: Station Info
+        const header1 = ["المحطة", "المنطقة"];
+        const header2 = ["", ""];
+        
+        for (let d = 1; d <= daysInMonth; d++) {
+            const dateObj = new Date(year, month - 1, d);
+            const dayName = dateObj.toLocaleDateString('ar-EG', { weekday: 'short' });
+            header1.push(`${d}/${month} ${dayName}`);
+            header1.push(""); // Placeholder for merge
+            header2.push("نهاري");
+            header2.push("ليلي");
+        }
+        
+        wsData.push(header1);
+        wsData.push(header2);
+        
+        // Data Rows
+        stations.forEach(st => {
+            const row = [st.name, st.zone];
+            for (let d = 1; d <= daysInMonth; d++) {
+                const kDay = `${st.name}-${d}-day`;
+                const kNight = `${st.name}-${d}-night`;
+                
+                row.push(localLogMap[kDay] ? "✔" : "✖");
+                row.push(localLogMap[kNight] ? "✔" : "✖");
+                
+                // Future check logic could be added here (replace ✖ with - if future)
+                // But simple check/cross is fine for export
+            }
+            wsData.push(row);
+        });
+        
+        // Create Sheet
+        const ws = XLSX.utils.aoa_to_sheet(wsData);
+        
+        // Merges for Header 1
+        const merges = [];
+        // Columns 0, 1 are single
+        // Columns 2+ are paired (Day/Night)
+        for (let i = 0; i < daysInMonth; i++) {
+            const colIndex = 2 + (i * 2);
+            merges.push({ s: { r: 0, c: colIndex }, e: { r: 0, c: colIndex + 1 } });
+        }
+        ws['!merges'] = merges;
+        
+        // Append Sheet
+        XLSX.utils.book_append_sheet(wb, ws, "تقرير الأداء");
+        
+        // Download
+        XLSX.writeFile(wb, `Performance_Report_${year}_${month}.xlsx`);
+        
+        btn.disabled = false;
+        btn.innerHTML = originalText;
+    };
+
+    // Update button visibility when rendering table (or anywhere appropriate)
+    const _oldRenderPerformanceTable = window.renderPerformanceTable;
+    window.renderPerformanceTable = function() {
+        _oldRenderPerformanceTable();
+        // Check permission and toggle button
+        const btn = document.getElementById('btn-export-performance');
+        if (btn && appData.currentUser) {
+            if (appData.currentUser.type === 'admin' || appData.currentUser.type === 'engineer') {
+                btn.style.display = 'block';
+            } else {
+                btn.style.display = 'none';
+            }
+        }
+    };
+
+</script>
 </body>
 </html>
