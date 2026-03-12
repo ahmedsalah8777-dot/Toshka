@@ -16471,20 +16471,15 @@ window.addEventListener('offline', function() {
             const dayPct = eligibleDays > 0 ? Math.round((dayCredits / eligibleDays) * 1000) / 10 : 0;
             const nightPct = eligibleDays > 0 ? Math.round((nightCredits / eligibleDays) * 1000) / 10 : 0;
             eligibleWeeks.forEach(w => {
-                let found = false;
-                let isLate = false;
-                const cur = new Date(w.start);
-                for (let i = 0; i < 7; i++) {
-                    const dateKey = `${cur.getFullYear()}-${cur.getMonth()}-${cur.getDate()}`;
-                    const k = `${st.name}-${dateKey}-inspection`;
-                    if (map[k]) {
-                        found = true;
-                        if (i > 3) isLate = true;
-                    }
-                    cur.setDate(cur.getDate() + 1);
+                const dt = getFirstInspectionDateInWeek(st.name, w);
+                if (dt) {
+                    const t9 = new Date(w.start);
+                    t9.setDate(t9.getDate() + 3);
+                    t9.setHours(9, 0, 0, 0);
+                    inspCredits += dt.getTime() > t9.getTime() ? 0.5 : 1;
+                } else {
+                    inspCredits += 0;
                 }
-                if (found) inspCredits += isLate ? 0.5 : 1;
-                else inspCredits += 0;
                 weekCount++;
             });
             const inspPct = weekCount > 0 ? Math.round(((inspCredits / weekCount) * 100) * 10) / 10 : 0;
@@ -16649,6 +16644,34 @@ window.addEventListener('offline', function() {
         }
     }
 
+    function getFirstInspectionDateInWeek(stationName, week) {
+        const history = appData.operationHistory || [];
+        const start = new Date(week.start);
+        start.setHours(0, 0, 0, 0);
+        const end = new Date(week.end);
+        end.setHours(23, 59, 59, 999);
+        let earliest = null;
+        for (let i = 0; i < history.length; i++) {
+            const log = history[i];
+            if (!log || log.station !== stationName) continue;
+            if (!log.date || !log.time) continue;
+            const det = (log.details || '');
+            const isInspection = det.includes('تحديث سجل الفحص') || det.includes('حفظ الفحص');
+            if (!isInspection) continue;
+            const d = parseDateSimple(log.date);
+            if (!d) continue;
+            const timeStr = toEnglishDigits(log.time);
+            const parts = timeStr.split(':');
+            if (parts.length < 2) continue;
+            const h = parseInt(parts[0]), m = parseInt(parts[1]), s = parts[2] ? parseInt(parts[2]) : 0;
+            if (!isFinite(h) || !isFinite(m) || !isFinite(s)) continue;
+            const dt = new Date(d.getFullYear(), d.getMonth(), d.getDate(), h, m, s);
+            if (dt < start || dt > end) continue;
+            if (!earliest || dt.getTime() < earliest.getTime()) earliest = dt;
+        }
+        return earliest;
+    }
+
     function getFirstLogInShift(stationName, date, shift) {
         const history = appData.operationHistory || [];
         let start, end;
@@ -16720,33 +16743,16 @@ window.addEventListener('offline', function() {
     }
 
     function getInspectionStatus(stationName, week, now) {
-        let found = false;
-        let isLate = false;
-        
-        const current = new Date(week.start);
-        for (let i = 0; i < 7; i++) {
-            const dateKey = `${current.getFullYear()}-${current.getMonth()}-${current.getDate()}`;
-            const k = `${stationName}-${dateKey}-inspection`;
-            
-            if (perfLogMap[k]) {
-                found = true;
-                if (i > 3) isLate = true;
-            }
-            current.setDate(current.getDate() + 1);
+        const dt = getFirstInspectionDateInWeek(stationName, week);
+        if (dt) {
+            const t9 = new Date(week.start);
+            t9.setDate(t9.getDate() + 3);
+            t9.setHours(9, 0, 0, 0);
+            return dt.getTime() > t9.getTime() ? 'delayed' : 'complete';
         }
-        
-        if (found) {
-            return isLate ? 'delayed' : 'complete';
-        }
-        
-        const tuesday = new Date(week.start);
-        tuesday.setDate(tuesday.getDate() + 3);
-        tuesday.setHours(23, 59, 59, 999);
-        
-        if (now > tuesday) {
-            return 'incomplete';
-        }
-        
+        const weekEnd = new Date(week.end);
+        weekEnd.setHours(23, 59, 59, 999);
+        if (now > weekEnd) return 'incomplete';
         return 'future';
     }
 
