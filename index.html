@@ -4455,7 +4455,9 @@
             <select id="wo-filter-zone" class="form-control">
                 <option value="">كل المناطق</option>
             </select>
-            <input type="text" id="wo-filter-fault" placeholder="بحث في العطل/الوصف">
+                        <select id="wo-filter-station" class="form-control">
+                <option value="">كل المحطات</option>
+            </select>
             <select id="wo-filter-dept" class="form-control">
                 <option value="">كل الأقسام</option>
                 <option value="ميكانيكا">ميكانيكا</option>
@@ -6760,6 +6762,39 @@ document.getElementById('emergency-image-modal').addEventListener('click', funct
                 loadAppConfig(function() {
                     var z = document.getElementById('wo-filter-zone');
                     if (z && z.options.length <= 1) { appData.zones.forEach(function(zone){ z.innerHTML += '<option value="'+zone+'">'+zone+'</option>'; }); }
+
+                    // Update stations dropdown on zone change
+                    z.addEventListener('change', function() {
+                        var stationDropdown = document.getElementById('wo-filter-station');
+                        stationDropdown.innerHTML = '<option value="">كل المحطات</option>'; // Reset
+                        if (this.value) {
+                            db.ref('stations').orderByChild('zone').equalTo(this.value).once('value', function(snapshot) {
+                                snapshot.forEach(function(childSnapshot) {
+                                    var station = childSnapshot.val();
+                                    stationDropdown.innerHTML += '<option value="'+station.name+'">'+station.name+'</option>';
+                                });
+                            });
+                        } else {
+                            // If no zone is selected, load all stations
+                            db.ref('stations').once('value', function(snapshot) {
+                                snapshot.forEach(function(childSnapshot) {
+                                    var station = childSnapshot.val();
+                                    stationDropdown.innerHTML += '<option value="'+station.name+'">'+station.name+'</option>';
+                                });
+                            });
+                        }
+                        renderWorkOrdersTables(); // Re-render tables on change
+                    });
+
+                    // Initial load of all stations
+                    db.ref('stations').once('value', function(snapshot) {
+                        var stationDropdown = document.getElementById('wo-filter-station');
+                        snapshot.forEach(function(childSnapshot) {
+                            var station = childSnapshot.val();
+                            stationDropdown.innerHTML += '<option value="'+station.name+'">'+station.name+'</option>';
+                        });
+                    });
+
                     if (typeof resetActiveLimit === 'function') resetActiveLimit();
                     if (typeof resetArchiveLimit === 'function') resetArchiveLimit();
                     if (typeof renderWorkOrdersTables === 'function') renderWorkOrdersTables();
@@ -13162,8 +13197,8 @@ function renderWorkOrdersTables() {
     const fZoneElement = document.getElementById('wo-filter-zone');
     const fZone = fZoneElement ? fZoneElement.value : '';
     
-    const fFaultElement = document.getElementById('wo-filter-fault');
-    const fFault = fFaultElement ? fFaultElement.value.toLowerCase() : '';
+    const fStationElement = document.getElementById('wo-filter-station');
+    const fStation = fStationElement ? fStationElement.value : '';
     
     const fDeptElement = document.getElementById('wo-filter-dept');
     const fDept = fDeptElement ? fDeptElement.value : '';
@@ -13216,8 +13251,7 @@ function renderWorkOrdersTables() {
                 let match = true;
                 if (fZone && fZone !== 'all' && order.zone !== fZone) match = false;
                 if (fDept && order.departments && !order.departments.includes(fDept)) match = false;
-                if (fFault && !((order.component || '').toLowerCase().includes(fFault) ||
-                    (order.description || '').toLowerCase().includes(fFault))) match = false;
+                if (fStation && order.station !== fStation) match = false;
                 if (fDuration > 0 && diffDays < fDuration) match = false;
 
                 if (match) activeOrders.push({...order, diffDays});
@@ -13370,7 +13404,7 @@ function exportActiveWorkOrders() {
             let match = true;
             if (fZone && fZone !== 'all' && o.zone !== fZone) match = false;
             if (fDept && o.departments && !o.departments.includes(fDept)) match = false;
-            if (fFault && !((o.component || '').toLowerCase().includes(fFault) || (o.description || '').toLowerCase().includes(fFault))) match = false;
+            if (fStation && o.station !== fStation) match = false;
             if (fDuration > 0 && diffDays < fDuration) match = false;
 
             if (match) {
