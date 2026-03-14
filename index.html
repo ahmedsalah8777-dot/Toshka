@@ -3783,9 +3783,10 @@
                 <h3 style="margin-bottom:10px; margin-top:30px;">أرشيف الأعطال السابقة</h3>
                 <div style="margin-bottom: 15px; display: flex; gap: 10px; align-items: center; flex-wrap: wrap; background: #fff3cd; padding: 10px; border-radius: 6px; border: 1px solid #ffeeba;">
                     <label style="margin:0; font-weight:bold;">🔍 تصفية الأرشيف:</label>
-                    <select id="fault-archive-station-filter" style="flex:1; max-width:300px;" onchange="appData.faultsLimit=100; renderFaultsLog();">
+                    <select id="fault-archive-station-filter" style="flex:1; max-width:300px;">
                         <option value="all">-- عرض كافة المحطات --</option>
                     </select>
+                    <button class="btn btn-primary" id="fault-archive-search-btn" style="white-space: nowrap;">بحث 🔍</button>
                     <button class="btn btn-excel" onclick="exportFaultsArchive()" title="تصدير أرشيف الأعطال إلى ملف Excel" style="white-space: nowrap;">
                         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-left: 6px;">
                             <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
@@ -6754,6 +6755,7 @@ document.getElementById('emergency-image-modal').addEventListener('click', funct
                 }
             }
             if(screenId === 'faults-log') {
+                appData.archiveSearchTriggered = false; // Reset archive trigger
                 if (appData.currentUser && appData.currentUser.type === 'operator') {
                     appData.faultsLimit = 100; renderFaultsLog();
                 } else {
@@ -7068,6 +7070,15 @@ document.getElementById('emergency-image-modal').addEventListener('click', funct
                 } else {
                     loadStations(function() { loadHistory(function() { renderHistoryTable(true); }); });
                 }
+            });
+        }
+
+        const faultArchiveSearchBtn = document.getElementById('fault-archive-search-btn');
+        if (faultArchiveSearchBtn) {
+            faultArchiveSearchBtn.addEventListener('click', () => {
+                appData.archiveSearchTriggered = true;
+                appData.faultsLimit = 100;
+                renderFaultsLog();
             });
         }
         document.getElementById('back-from-inspection').addEventListener('click', () => goBack());
@@ -10592,6 +10603,21 @@ function renderFaultsLog() {
     }
 
     // --- ثانياً: عرض الأرشيف (السجل التاريخي) ---
+    // لا يتم عرض الأرشيف إلا عند الضغط على زر البحث
+    if (!appData.archiveSearchTriggered) {
+        historyBody.innerHTML = '<tr><td colspan="5" style="text-align:center; color:#777; padding:20px;">يرجى تحديد المحطة والضغط على "بحث" لعرض الأرشيف</td></tr>';
+        document.getElementById('faults-status-text').textContent = '';
+        loadMoreBtn.style.display = 'none';
+        
+        // تعبئة قائمة المحطات إذا كانت فارغة
+        const filterSel = document.getElementById('fault-archive-station-filter');
+        if (filterSel.options.length <= 1) {
+            const sorted = Object.values(appData.stations).sort((a,b) => a.name.localeCompare(b.name));
+            sorted.forEach(s => filterSel.innerHTML += `<option value="${s.name}">${s.name}</option>`);
+        }
+        return;
+    }
+
     let histFaults = appData.faultsLog.filter(f => !f.active);
     if (fStation !== 'all') histFaults = histFaults.filter(f => f.station === fStation);
     
@@ -10628,12 +10654,6 @@ function renderFaultsLog() {
     if (appData.currentUser && appData.currentUser.type === 'operator' && (!appData.faultsLog || appData.faultsLog.length === 0)) {
         loadMoreBtn.style.display = 'block';
         loadMoreBtn.textContent = 'تحميل السجل';
-    }
-    
-    const filterSel = document.getElementById('fault-archive-station-filter');
-    if (filterSel.options.length <= 1) {
-        const sorted = Object.values(appData.stations).sort((a,b) => a.name.localeCompare(b.name));
-        sorted.forEach(s => filterSel.innerHTML += `<option value="${s.name}">${s.name}</option>`);
     }
 }
         
