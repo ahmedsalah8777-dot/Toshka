@@ -3721,7 +3721,10 @@
 
         <div id="consumptions-report-screen" class="screen">
             <h2 style="color: var(--consumption-color);">تقرير معدلات الاستهلاك</h2>
-            <button id="back-to-stations-from-cons" class="btn btn-outline">عودة</button>
+            <div style="display: flex; gap: 10px; margin-bottom: 10px;">
+                <button id="back-to-stations-from-cons" class="btn btn-outline">عودة</button>
+                <button id="cons-refresh-btn" class="btn btn-primary">تحديث البيانات 🔄</button>
+            </div>
             <div style="font-size:0.9rem; color:#666; margin-top:5px;">يقوم التقرير بحساب الاستهلاك بطرح (أول قراءة في فترة "إلى" - أول قراءة في فترة "من").</div>
             <div class="filters-container" style="background: #f9f9f9; padding: 15px; border-radius: 8px; border: 1px solid #eee; margin-bottom: 20px; margin-top:10px; display: grid; gap: 10px; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));">
     <div class="filter-item">
@@ -4268,7 +4271,10 @@
 
         <div id="history-screen" class="screen">
             <h2>سجل العمليات العام</h2>
-            <button id="back-to-stations-from-history" class="btn btn-outline">عودة</button>
+            <div style="display: flex; gap: 10px; margin-bottom: 10px;">
+                <button id="back-to-stations-from-history" class="btn btn-outline">عودة</button>
+                <button id="history-refresh-btn" class="btn btn-primary">تحديث السجل 🔄</button>
+            </div>
             <div class="filters-container" style="background: #f9f9f9; padding: 15px; border-radius: 8px; border: 1px solid #eee; margin-bottom: 20px; display: grid; gap: 10px; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));">
     <div class="filter-item"><label>المنطقة</label><select id="filter-zone" onchange="updateStationFilter()"><option value="all">كل المناطق</option></select></div>
     <div class="filter-item"><label>المحطة</label><select id="filter-station"><option value="all">كل المحطات</option></select></div>
@@ -4445,6 +4451,7 @@
     
     <div style="display: flex; gap: 10px; flex-wrap: wrap;">
         <button id="back-to-stations-from-orders" class="btn btn-outline">عودة للرئيسية</button>
+        <button id="wo-refresh-btn" class="btn btn-primary">تحديث القائمة 🔄</button>
         <button id="btn-go-to-archive" class="btn btn-success">📂 أرشيف الإصلاحات</button>
     </div>
 
@@ -4944,7 +4951,10 @@
     <div class="user-data-card">
         <div class="user-data-header">
             <h2 class="user-data-title">📈 الإحصائيات الشاملة</h2>
-            <button id="back-from-statistics" class="btn btn-outline">عودة للرئيسية</button>
+            <div style="display: flex; gap: 10px;">
+                <button id="back-from-statistics" class="btn btn-outline">عودة للرئيسية</button>
+                <button id="stats-refresh-btn" class="btn btn-primary">تحديث الإحصائيات 🔄</button>
+            </div>
         </div>
         
         <div class="section-card" style="margin-bottom: 20px;">
@@ -6531,6 +6541,14 @@ document.getElementById('emergency-image-modal').addEventListener('click', funct
                 if (cb) cb();
             }).catch(function(){ if (cb) cb(); });
         }
+        function loadHistoryLimited(limit, cb) {
+            db.ref('history').limitToLast(limit || 1000).once('value').then(function(snap) {
+                var v = snap.val();
+                appData.operationHistory = v ? Object.values(v).reverse() : [];
+                cleanHistoricalData();
+                if (cb) cb();
+            }).catch(function(){ if (cb) cb(); });
+        }
         function loadFaultsLog(cb) {
             db.ref('faults_log').once('value').then(function(snap) {
                 var v = snap.val();
@@ -6545,6 +6563,38 @@ document.getElementById('emergency-image-modal').addEventListener('click', funct
                 if (cb) cb();
             }).catch(function(){ if (cb) cb(); });
         }
+        function startAutoRefresh(screenId) {
+            if (appData.refreshTimer) { clearInterval(appData.refreshTimer); appData.refreshTimer = null; }
+            var t = appData.currentUser && appData.currentUser.type;
+            var ok = t && t !== 'operator';
+            if (screenId === 'history' && ok) {
+                appData.refreshTimer = setInterval(function(){ loadHistoryLimited(2000, function(){ renderHistoryTable(true); }); }, 60000);
+            } else if (screenId === 'faults-log' && ok) {
+                appData.refreshTimer = setInterval(function(){ loadFaultsLog(function(){ renderFaultsLog(); }); }, 60000);
+            }
+        }
+        function stopAutoRefresh() {
+            if (appData.refreshTimer) { clearInterval(appData.refreshTimer); appData.refreshTimer = null; }
+        }
+        window.attachStationsLive = function() {
+            if (!appData.listeners) appData.listeners = {};
+            if (appData.listeners.stationsRef) return;
+            var ref = db.ref('stations');
+            appData.listeners.stationsRef = ref;
+            ref.on('value', function(snap) {
+                var d = snap.val();
+                appData.stations = d || {};
+                localStorage.setItem('toshka_stations_cache', JSON.stringify(appData.stations));
+                renderZonesTabs();
+                var at = document.querySelector('.nav-tab.active');
+                renderStations(at ? at.dataset.zone : 'all');
+            });
+        };
+        window.detachStationsLive = function() {
+            var ref = appData.listeners && appData.listeners.stationsRef;
+            if (ref) ref.off();
+            if (appData.listeners) appData.listeners.stationsRef = null;
+        };
 
         function forceRepairStations() {
             let updates = {};
@@ -6680,11 +6730,14 @@ document.getElementById('emergency-image-modal').addEventListener('click', funct
             document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
             document.getElementById(`${screenId}-screen`).classList.add('active');
             window.scrollTo(0, 0);
+            stopAutoRefresh();
+            detachStationsLive();
             
             const userInfoDiv = document.getElementById('header-user-info');
             userInfoDiv.style.display = (screenId === 'login') ? 'none' : 'flex';
             if(screenId === 'stations') {
                 loadAppConfig(function() { loadStations(function() { renderZonesTabs(); var at = document.querySelector('.nav-tab.active'); renderStations(at ? at.dataset.zone : 'all'); }); });
+                attachStationsLive();
             }
             if(screenId === 'users') {
                 loadUserProfiles(function() { appData.currentUsersPage = 0; renderUsersManagement(); });
@@ -6693,10 +6746,20 @@ document.getElementById('emergency-image-modal').addEventListener('click', funct
                 loadUserProfiles(function() { appData.currentUsersDataPage = 0; renderUsersDataManagement(); });
             }
             if(screenId === 'history') {
-                loadStations(function() { loadHistory(function() { renderHistoryTable(true); }); });
+                if (appData.currentUser && appData.currentUser.type === 'operator') {
+                    loadStations(function() { renderHistoryTable(false); });
+                } else {
+                    loadStations(function() { loadHistory(function() { renderHistoryTable(true); }); });
+                    // startAutoRefresh('history'); // Removed auto-update
+                }
             }
             if(screenId === 'faults-log') {
-                loadFaultsLog(function() { appData.faultsLimit = 100; renderFaultsLog(); });
+                if (appData.currentUser && appData.currentUser.type === 'operator') {
+                    appData.faultsLimit = 100; renderFaultsLog();
+                } else {
+                    loadFaultsLog(function() { appData.faultsLimit = 100; renderFaultsLog(); });
+                    startAutoRefresh('faults-log');
+                }
             }
             if(screenId === 'user-profile') {
                 loadUserProfiles(function() { appData.currentProfilesPage = 0; renderUserProfileForm(); renderUsersProfilesList(); });
@@ -6741,9 +6804,12 @@ document.getElementById('emergency-image-modal').addEventListener('click', funct
                         if (dateFromElem && !dateFromElem.value) dateFromElem.valueAsDate = firstDayLastMonth;
 
                         if (typeof updateConsStationFilter === 'function') updateConsStationFilter();
-                        loadConsumptionLogs(function() {
-                            if (typeof renderConsumptionsTable === 'function') renderConsumptionsTable();
-                        });
+                        
+                        if (!(appData.currentUser && appData.currentUser.type === 'operator')) {
+                            loadConsumptionLogs(function() {
+                                if (typeof renderConsumptionsTable === 'function') renderConsumptionsTable();
+                            });
+                        }
                     });
                 });
             }
@@ -6804,20 +6870,25 @@ document.getElementById('emergency-image-modal').addEventListener('click', funct
                 loadStations(function() { 
                     loadHistory(function() { 
                         if (typeof renderSupervisorDashboard === 'function') renderSupervisorDashboard(); 
-                    }); 
+                    });
                 });
             }
             if(screenId === 'supervisor-stations') {
                 loadStations(function() { 
-                    if (typeof renderSupervisorAssignmentsScreen === 'function') renderSupervisorAssignmentsScreen(); 
+                    if (typeof renderSupervisorAssignmentsScreen === 'function') renderSupervisorAssignmentsScreen();
                 });
             }
             if(screenId === 'supervisor-history') {
                 loadStations(function() { 
                     loadHistory(function() { 
-                        if (typeof renderSupervisorHistory === 'function') renderSupervisorHistory(); 
-                    }); 
+                        if (typeof renderSupervisorHistory === 'function') renderSupervisorHistory();
+                    });
                 });
+            }
+            if(screenId === 'performance-evaluation') {
+                if(typeof renderPerformanceScreen === 'function') {
+                    renderPerformanceScreen();
+                }
             }
         }
 
@@ -6955,6 +7026,50 @@ document.getElementById('emergency-image-modal').addEventListener('click', funct
         document.getElementById('back-to-stations-from-history').addEventListener('click', () => goBack());
         document.getElementById('back-to-stations-from-faults').addEventListener('click', () => goBack());
         document.getElementById('back-to-stations-from-cons').addEventListener('click', () => goBack());
+        
+        // معالجات أزرار التحديث الجديدة
+        const consRefreshBtn = document.getElementById('cons-refresh-btn');
+        if (consRefreshBtn) {
+            consRefreshBtn.addEventListener('click', () => {
+                loadStations(() => {
+                    loadConsumptionLogs(() => {
+                        if (typeof renderConsumptionsTable === 'function') renderConsumptionsTable();
+                    });
+                });
+            });
+        }
+        
+        const statsRefreshBtn = document.getElementById('stats-refresh-btn');
+        if (statsRefreshBtn) {
+            statsRefreshBtn.addEventListener('click', () => {
+                loadStations(() => {
+                    if (typeof initStatisticsFilters === 'function') initStatisticsFilters();
+                    if (typeof updateStatistics === 'function') updateStatistics();
+                });
+            });
+        }
+        
+        const woRefreshBtn = document.getElementById('wo-refresh-btn');
+        if (woRefreshBtn) {
+            woRefreshBtn.addEventListener('click', () => {
+                loadAppConfig(() => {
+                    if (typeof resetActiveLimit === 'function') resetActiveLimit();
+                    if (typeof resetArchiveLimit === 'function') resetArchiveLimit();
+                    if (typeof renderWorkOrdersTables === 'function') renderWorkOrdersTables();
+                });
+            });
+        }
+        
+        const historyRefreshBtn = document.getElementById('history-refresh-btn');
+        if (historyRefreshBtn) {
+            historyRefreshBtn.addEventListener('click', () => {
+                if (appData.currentUser && appData.currentUser.type === 'operator') {
+                    loadStations(function() { renderHistoryTable(false); });
+                } else {
+                    loadStations(function() { loadHistory(function() { renderHistoryTable(true); }); });
+                }
+            });
+        }
         document.getElementById('back-from-inspection').addEventListener('click', () => goBack());
         document.getElementById('back-from-inspection-status-log').addEventListener('click', () => goBack());
         document.getElementById('back-from-settings').addEventListener('click', () => goBack());
@@ -10066,6 +10181,10 @@ window.updateConsStationFilter = function() {
 };
 
 window.renderConsumptionsTable = function() {
+    if (appData.currentUser && appData.currentUser.type === 'operator' && (!appData.consumptionLog || appData.consumptionLog.length === 0)) {
+        loadConsumptionLogs(function() { window.renderConsumptionsTable(); });
+        return;
+    }
     // 1. جلب قيم الفلاتر
     const zoneFilter = document.getElementById('cons-filter-zone').value; // تم إضافة هذا السطر
     const stationFilter = document.getElementById('cons-filter-station').value;
@@ -10262,6 +10381,10 @@ window.exportConsumptionsToExcel = function() {
             const tbody = document.getElementById('history-table-body');
             tbody.innerHTML = '';
             let data = [...appData.operationHistory];
+            if (appData.currentUser && appData.currentUser.type === 'operator' && applyFilters && (!data || data.length === 0)) {
+                loadHistory(function() { renderHistoryTable(true); });
+                return;
+            }
             
             if (applyFilters) {
                 const fZone = document.getElementById('filter-zone').value;
@@ -10497,11 +10620,14 @@ function renderFaultsLog() {
     
     if (displayedFaults.length < totalFaults) {
         loadMoreBtn.style.display = 'block';
-        // ✅ تحسين الرسالة لتوضيح عدد الأعطال المتبقية
         const remaining = totalFaults - appData.faultsLimit;
         loadMoreBtn.textContent = `⬇️ عرض المزيد (${Math.max(0, remaining)} متبقي)`;
     } else {
         loadMoreBtn.style.display = 'none';
+    }
+    if (appData.currentUser && appData.currentUser.type === 'operator' && (!appData.faultsLog || appData.faultsLog.length === 0)) {
+        loadMoreBtn.style.display = 'block';
+        loadMoreBtn.textContent = 'تحميل السجل';
     }
     
     const filterSel = document.getElementById('fault-archive-station-filter');
@@ -10513,6 +10639,10 @@ function renderFaultsLog() {
         
 // ✅ دالة تحميل المزيد من الأعطال السابقة
 function loadMoreFaults() {
+    if (appData.currentUser && appData.currentUser.type === 'operator' && (!appData.faultsLog || appData.faultsLog.length === 0)) {
+        loadFaultsLog(function() { appData.faultsLimit = 100; renderFaultsLog(); });
+        return;
+    }
     appData.faultsLimit += 100;
     renderFaultsLog();
 }
@@ -10762,6 +10892,10 @@ document.getElementById('btn-export-history').addEventListener('click', function
 });
 
 function exportHistoryLog() {
+    if (appData.currentUser && appData.currentUser.type === 'operator' && (!appData.operationHistory || appData.operationHistory.length === 0)) {
+        loadHistory(function() { exportHistoryLog(); });
+        return;
+    }
     // 1. تحديد نوع الملف
     const format = document.getElementById('history-export-format').value;
     
