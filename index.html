@@ -6517,7 +6517,16 @@ document.getElementById('emergency-image-modal').addEventListener('click', funct
         // --- تحميل عند استدعاء الشاشة فقط (Lazy) ---
         function loadStations(cb) {
             var cache = localStorage.getItem('toshka_stations_cache');
-            if (cache) { try { appData.stations = JSON.parse(cache); if (cb) cb(); } catch(e){} }
+            if (cache && !appData.stations) { 
+                try { appData.stations = JSON.parse(cache); } catch(e){} 
+            }
+            
+            // تحسين: إذا كانت البيانات موجودة بالفعل ومستمع التحديثات يعمل، لا داعي للتحميل الكامل مرة أخرى
+            if (appData.stations && Object.keys(appData.stations).length > 0 && appData.listeners && appData.listeners.stationsRef) {
+                if (cb) cb();
+                return;
+            }
+
             db.ref('stations').once('value').then(function(snap) {
                 var d = snap.val();
                 appData.stations = d || {};
@@ -6535,7 +6544,8 @@ document.getElementById('emergency-image-modal').addEventListener('click', funct
             }).catch(function(){ if (cb) cb(); });
         }
         function loadHistory(cb) {
-            db.ref('history').limitToLast(200000).once('value').then(function(snap) {
+            // تحسين: تقليل عدد السجلات المسترجعة من 200,000 إلى 5,000 لتقليل استهلاك البيانات
+            db.ref('history').limitToLast(5000).once('value').then(function(snap) {
                 var v = snap.val();
                 appData.operationHistory = v ? Object.values(v).reverse() : [];
                 cleanHistoricalData();
@@ -6551,14 +6561,16 @@ document.getElementById('emergency-image-modal').addEventListener('click', funct
             }).catch(function(){ if (cb) cb(); });
         }
         function loadFaultsLog(cb) {
-            db.ref('faults_log').once('value').then(function(snap) {
+            // تحسين: إضافة حد أقصى للسجلات لتقليل استهلاك البيانات
+            db.ref('faults_log').limitToLast(2000).once('value').then(function(snap) {
                 var v = snap.val();
                 appData.faultsLog = (v && (Array.isArray(v) ? v : Object.values(v))) || [];
                 if (cb) cb();
             }).catch(function(){ if (cb) cb(); });
         }
         function loadConsumptionLogs(cb) {
-            db.ref('consumption_logs').once('value').then(function(snap) {
+            // تحسين: إضافة حد أقصى للسجلات لتقليل استهلاك البيانات
+            db.ref('consumption_logs').limitToLast(3000).once('value').then(function(snap) {
                 var v = snap.val();
                 appData.consumptionLog = v ? Object.values(v) : [];
                 if (cb) cb();
@@ -6582,7 +6594,25 @@ document.getElementById('emergency-image-modal').addEventListener('click', funct
             if (appData.listeners.stationsRef) return;
             var ref = db.ref('stations');
             appData.listeners.stationsRef = ref;
-            ref.on('value', function(snap) {
+            
+            // تحسين: استخدام child_changed بدلاً من value لتقليل استهلاك البيانات
+            ref.on('child_changed', function(snap) {
+                var stationData = snap.val();
+                if (stationData && stationData.name) {
+                    appData.stations[stationData.name] = stationData;
+                    localStorage.setItem('toshka_stations_cache', JSON.stringify(appData.stations));
+                    
+                    // تحديث الواجهة فقط إذا كنا في الشاشة الرئيسية
+                    var stationsScreen = document.getElementById('stations-screen');
+                    if (stationsScreen && stationsScreen.classList.contains('active')) {
+                        var at = document.querySelector('.nav-tab.active');
+                        renderStations(at ? at.dataset.zone : 'all');
+                    }
+                }
+            });
+
+            // تحميل أولي للبيانات
+            ref.once('value').then(function(snap) {
                 var d = snap.val();
                 appData.stations = d || {};
                 localStorage.setItem('toshka_stations_cache', JSON.stringify(appData.stations));
@@ -6732,7 +6762,11 @@ document.getElementById('emergency-image-modal').addEventListener('click', funct
             document.getElementById(`${screenId}-screen`).classList.add('active');
             window.scrollTo(0, 0);
             stopAutoRefresh();
-            detachStationsLive();
+            
+            // تحسين: لا يتم فصل مستمع المحطات إلا عند تسجيل الخروج لتقليل عمليات التحميل الكاملة
+            if (screenId === 'login') {
+                detachStationsLive();
+            }
             
             const userInfoDiv = document.getElementById('header-user-info');
             userInfoDiv.style.display = (screenId === 'login') ? 'none' : 'flex';
