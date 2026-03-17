@@ -6763,8 +6763,7 @@ document.getElementById('emergency-image-modal').addEventListener('click', funct
             window.scrollTo(0, 0);
             stopAutoRefresh();
             
-            // تحسين: لا يتم فصل مستمع المحطات إلا عند تسجيل الخروج لتقليل عمليات التحميل الكاملة
-            if (screenId === 'login') {
+            if (screenId !== 'stations') {
                 detachStationsLive();
             }
             
