@@ -11047,7 +11047,7 @@ document.getElementById('btn-export-history').addEventListener('click', function
     exportHistoryLog();
 });
 
-function exportHistoryLog() {
+function exportHistoryLog(forceLoaded) {
     if (appData.currentUser && appData.currentUser.type === 'operator' && (!appData.operationHistory || appData.operationHistory.length === 0)) {
         loadHistory(function() { exportHistoryLog(); });
         return;
@@ -11062,6 +11062,26 @@ function exportHistoryLog() {
     const fStation = document.getElementById('filter-station').value;
     const fDateFrom = document.getElementById('filter-date-from').value;
     const fDateTo = document.getElementById('filter-date-to').value;
+    if (!forceLoaded) {
+        let startDate = null;
+        if (fDateFrom) {
+            const d = new Date(fDateFrom);
+            if (!isNaN(d.getTime())) startDate = d;
+        }
+        if (!startDate && fDateTo) {
+            const d2 = new Date(fDateTo);
+            if (!isNaN(d2.getTime())) {
+                startDate = new Date(d2.getFullYear(), d2.getMonth(), 1);
+            }
+        }
+        if (startDate) {
+            const oldest = getOldestHistoryDate();
+            if (oldest && startDate < oldest && !appData.historyFullyLoaded) {
+                ensureHistoryCoversDateRange(startDate, null, function() { exportHistoryLog(true); });
+                return;
+            }
+        }
+    }
 
     // فلترة المنطقة
     if (fZone !== 'all') {
