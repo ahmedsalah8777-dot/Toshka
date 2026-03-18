@@ -5321,6 +5321,9 @@ document.querySelectorAll('.menu-item').forEach(item => {
             evalAggLoadedMonths: {},
             // Pagination limits
             historyLimit: 100,
+            historyPageSize: 5000,
+            historyOldestKey: null,
+            historyFullyLoaded: false,
             faultsLimit: 100,
             faultReportsLimit: 100,
             usersLimit: 100,
@@ -6543,22 +6546,102 @@ document.getElementById('emergency-image-modal').addEventListener('click', funct
                 if (cb) cb();
             }).catch(function(){ if (cb) cb(); });
         }
-        function loadHistory(cb) {
-            // تحسين: تقليل عدد السجلات المسترجعة من 200,000 إلى 5,000 لتقليل استهلاك البيانات
-            db.ref('history').limitToLast(5000).once('value').then(function(snap) {
-                var v = snap.val();
-                appData.operationHistory = v ? Object.values(v).reverse() : [];
+        function normalizeHistorySnapshot(snap) {
+            var v = snap.val();
+            if (!v) return [];
+            if (Array.isArray(v)) {
+                return v.map(function(item, idx) {
+                    if (item && typeof item === 'object') return Object.assign({ _key: String(idx) }, item);
+                    return { _key: String(idx), value: item };
+                });
+            }
+            var keys = Object.keys(v).sort();
+            return keys.map(function(k) {
+                var item = v[k];
+                if (item && typeof item === 'object') return Object.assign({ _key: k }, item);
+                return { _key: k, value: item };
+            });
+        }
+        function updateHistoryOldestKey() {
+            if (!appData.operationHistory || appData.operationHistory.length === 0) {
+                appData.historyOldestKey = null;
+                return;
+            }
+            var last = appData.operationHistory[appData.operationHistory.length - 1];
+            appData.historyOldestKey = last && last._key ? last._key : null;
+        }
+        function loadHistory(cb, options) {
+            var opts = options || {};
+            var limit = opts.limit || appData.historyPageSize || 5000;
+            var beforeKey = opts.beforeKey;
+            var appendOlder = !!opts.appendOlder;
+            var ref = db.ref('history').orderByKey();
+            if (beforeKey) {
+                ref = ref.endAt(beforeKey).limitToLast(limit + 1);
+            } else {
+                ref = ref.limitToLast(limit);
+            }
+            ref.once('value').then(function(snap) {
+                var list = normalizeHistorySnapshot(snap).reverse();
+                if (appendOlder) {
+                    var existingKeys = new Set((appData.operationHistory || []).map(function(x){ return x && x._key; }).filter(Boolean));
+                    var filtered = list.filter(function(x){ return !existingKeys.has(x._key); });
+                    appData.operationHistory = (appData.operationHistory || []).concat(filtered);
+                    if (filtered.length < limit) appData.historyFullyLoaded = true;
+                } else {
+                    appData.operationHistory = list;
+                    appData.historyFullyLoaded = list.length < limit;
+                }
+                updateHistoryOldestKey();
                 cleanHistoricalData();
                 if (cb) cb();
             }).catch(function(){ if (cb) cb(); });
         }
         function loadHistoryLimited(limit, cb) {
-            db.ref('history').limitToLast(limit || 1000).once('value').then(function(snap) {
-                var v = snap.val();
-                appData.operationHistory = v ? Object.values(v).reverse() : [];
+            db.ref('history').orderByKey().limitToLast(limit || 1000).once('value').then(function(snap) {
+                var list = normalizeHistorySnapshot(snap).reverse();
+                appData.operationHistory = list;
+                appData.historyFullyLoaded = list.length < (limit || 1000);
+                updateHistoryOldestKey();
                 cleanHistoricalData();
                 if (cb) cb();
             }).catch(function(){ if (cb) cb(); });
+        }
+        function getOldestHistoryDate() {
+            var history = appData.operationHistory || [];
+            if (history.length === 0) return null;
+            for (var i = history.length - 1; i >= 0; i--) {
+                var log = history[i];
+                if (!log || !log.date || !log.time) continue;
+                var dt = parseCustomDate(log.date + ' ' + log.time);
+                if (dt) return dt;
+            }
+            for (var j = 0; j < history.length; j++) {
+                var log2 = history[j];
+                if (!log2 || !log2.date || !log2.time) continue;
+                var dt2 = parseCustomDate(log2.date + ' ' + log2.time);
+                if (dt2) return dt2;
+            }
+            return null;
+        }
+        function loadMoreHistoryFromDb(cb) {
+            if (appData.historyFullyLoaded) { if (cb) cb(); return; }
+            var beforeKey = appData.historyOldestKey;
+            if (!beforeKey) { loadHistory(cb); return; }
+            loadHistory(function(){ if (cb) cb(); }, { appendOlder: true, beforeKey: beforeKey });
+        }
+        function ensureHistoryCoversDateRange(startDate, endDate, cb, attempts) {
+            var tries = attempts || 0;
+            if (!startDate || isNaN(startDate.getTime())) { if (cb) cb(); return; }
+            if (appData.historyFullyLoaded) { if (cb) cb(); return; }
+            if (!appData.operationHistory || appData.operationHistory.length === 0) {
+                loadHistory(function(){ ensureHistoryCoversDateRange(startDate, endDate, cb, tries + 1); });
+                return;
+            }
+            var oldest = getOldestHistoryDate();
+            if (oldest && oldest <= startDate) { if (cb) cb(); return; }
+            if (tries > 8) { if (cb) cb(); return; }
+            loadMoreHistoryFromDb(function(){ ensureHistoryCoversDateRange(startDate, endDate, cb, tries + 1); });
         }
         function loadFaultsLog(cb) {
             // تحسين: إضافة حد أقصى للسجلات لتقليل استهلاك البيانات
@@ -10435,6 +10518,14 @@ window.exportConsumptionsToExcel = function() {
                 const fStation = document.getElementById('filter-station').value;
                 const fDateFrom = document.getElementById('filter-date-from').value;
                 const fDateTo = document.getElementById('filter-date-to').value;
+                if (fDateFrom) {
+                    const startDate = new Date(fDateFrom);
+                    const oldest = getOldestHistoryDate();
+                    if (oldest && startDate < oldest && !appData.historyFullyLoaded) {
+                        ensureHistoryCoversDateRange(startDate, null, function() { renderHistoryTable(true); });
+                        return;
+                    }
+                }
               
                 
                 // Filter by zone
@@ -10543,6 +10634,18 @@ window.exportConsumptionsToExcel = function() {
         
         // Load more history button handler
         document.getElementById('load-more-history-btn').addEventListener('click', function() {
+            if (appData.operationHistory && appData.historyLimit < appData.operationHistory.length) {
+                appData.historyLimit += 100;
+                renderHistoryTable(true);
+                return;
+            }
+            if (!appData.historyFullyLoaded) {
+                loadMoreHistoryFromDb(function() {
+                    appData.historyLimit += 100;
+                    renderHistoryTable(true);
+                });
+                return;
+            }
             appData.historyLimit += 100;
             renderHistoryTable(true);
         });
@@ -16700,6 +16803,12 @@ window.addEventListener('offline', function() {
         const parts = monthInput.value.split('-');
         const year = parseInt(parts[0]);
         const monthIndex = parseInt(parts[1]) - 1;
+        const startDate = new Date(year, monthIndex, 1);
+        const oldest = getOldestHistoryDate();
+        if (oldest && startDate < oldest && !appData.historyFullyLoaded) {
+            ensureHistoryCoversDateRange(startDate, null, function() { renderCompletionTable(); });
+            return;
+        }
         const data = computeCompletionRows(year, monthIndex);
         if (!data || data.length === 0) {
             tbody.innerHTML = '<tr><td colspan="5" style="padding:15px; color:#666;">لا توجد بيانات مطابقة</td></tr>';
@@ -16764,6 +16873,12 @@ window.addEventListener('offline', function() {
                 loadHistory(function() { renderPerformanceTable(); });
              }
              return;
+        }
+        const perfStart = new Date(selectedWeek.start);
+        const perfOldest = getOldestHistoryDate();
+        if (perfOldest && perfStart < perfOldest && !appData.historyFullyLoaded) {
+            ensureHistoryCoversDateRange(perfStart, selectedWeek.end, function() { renderPerformanceTable(); });
+            return;
         }
         
         buildPerfLogMap(selectedWeek.start, selectedWeek.end);
