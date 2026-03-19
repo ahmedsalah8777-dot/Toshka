@@ -3513,6 +3513,7 @@
                 <button id="edit-inspection-btn" class="btn btn-info">📋 شاشة الفحص</button>
             </div>
             <div id="operator-alert" class="alert"></div>
+            <div style="font-size:0.85rem; color:#666; margin-bottom:10px;">آخر تحديث محفوظ: <span id="operator-last-update-value">-</span></div>
 
             <div id="active-fault-control" style="background: #fff3cd; border: 1px solid #ffeeba; padding: 15px; border-radius: 6px; margin-bottom: 20px; display: none;">
                 <h4 style="color: #856404; margin-bottom: 10px;">🛑 تنبيه: أعطال نشطة</h4>
@@ -6518,14 +6519,22 @@ document.getElementById('emergency-image-modal').addEventListener('click', funct
         }
 
         // --- تحميل عند استدعاء الشاشة فقط (Lazy) ---
-        function loadStations(cb) {
+        function loadStations(cb, options) {
+            var opts = options || {};
+            var forceReload = !!opts.forceReload;
             var cache = localStorage.getItem('toshka_stations_cache');
             if (cache && !appData.stations) { 
                 try { appData.stations = JSON.parse(cache); } catch(e){} 
             }
             
+            var isOperator = appData.currentUser && appData.currentUser.type === 'operator';
+            if (!forceReload && isOperator && appData.stations && Object.keys(appData.stations).length > 0) {
+                if (cb) cb();
+                return;
+            }
+            
             // تحسين: إذا كانت البيانات موجودة بالفعل ومستمع التحديثات يعمل، لا داعي للتحميل الكامل مرة أخرى
-            if (appData.stations && Object.keys(appData.stations).length > 0 && appData.listeners && appData.listeners.stationsRef) {
+            if (!forceReload && appData.stations && Object.keys(appData.stations).length > 0 && appData.listeners && appData.listeners.stationsRef) {
                 if (cb) cb();
                 return;
             }
@@ -6673,6 +6682,7 @@ document.getElementById('emergency-image-modal').addEventListener('click', funct
             if (appData.refreshTimer) { clearInterval(appData.refreshTimer); appData.refreshTimer = null; }
         }
         window.attachStationsLive = function() {
+            if (appData.currentUser && appData.currentUser.type === 'operator') return;
             if (!appData.listeners) appData.listeners = {};
             if (appData.listeners.stationsRef) return;
             var ref = db.ref('stations');
@@ -6853,7 +6863,8 @@ document.getElementById('emergency-image-modal').addEventListener('click', funct
             const userInfoDiv = document.getElementById('header-user-info');
             userInfoDiv.style.display = (screenId === 'login') ? 'none' : 'flex';
             if(screenId === 'stations') {
-                loadAppConfig(function() { loadStations(function() { renderZonesTabs(); var at = document.querySelector('.nav-tab.active'); renderStations(at ? at.dataset.zone : 'all'); }); });
+                const isOperator = appData.currentUser && appData.currentUser.type === 'operator';
+                loadAppConfig(function() { loadStations(function() { renderZonesTabs(); var at = document.querySelector('.nav-tab.active'); renderStations(at ? at.dataset.zone : 'all'); }, { forceReload: isOperator }); });
                 attachStationsLive();
             }
             if(screenId === 'users') {
@@ -7336,7 +7347,12 @@ window.handleTabClick = (zone, btn) => {
     // حفظ المنطقة في الذاكرة
     appData.currentZone = zone;
     // عرض المحطات
-    renderStations(zone);
+    const isOperator = appData.currentUser && appData.currentUser.type === 'operator';
+    if (isOperator) {
+        loadStations(function() { renderStations(zone); }, { forceReload: true });
+    } else {
+        renderStations(zone);
+    }
 };
         
         window.renderStations = (zoneFilter = 'all') => {
@@ -7642,6 +7658,7 @@ card.innerHTML = `
                                      'غير معرّف';
             }
             document.getElementById('operator-name').value = currentOperatorName;
+            document.getElementById('operator-last-update-value').textContent = s.lastUpdate || '-';
             
             const now = new Date();
             const timeString = now.getHours().toString().padStart(2, '0') + ':' + now.getMinutes().toString().padStart(2, '0');
@@ -8068,7 +8085,7 @@ function saveDataInternal(options = {}) {
                 Object.assign(appData.stations[sName], updates);
                 // تم إزالة الحفظ المحلي localStorage
                 
-                showSuccessFeedback(sName); 
+                showSuccessFeedback(sName, stationFullDateTime); 
             })
             .catch(err => {
                 // فشل الاتصال
@@ -8088,9 +8105,12 @@ function saveDataInternal(options = {}) {
     }
 }
 
-        function showSuccessFeedback(sName) {
+        function showSuccessFeedback(sName, savedAt) {
             const alertDiv = document.getElementById('operator-alert');
-            alertDiv.textContent = 'تم الارسال بنجاح ✅';
+            const lastUpdateEl = document.getElementById('operator-last-update-value');
+            const finalSavedAt = savedAt || (appData.stations[sName] && appData.stations[sName].lastUpdate) || '';
+            if (lastUpdateEl) lastUpdateEl.textContent = finalSavedAt || '-';
+            alertDiv.textContent = finalSavedAt ? `تم الارسال بنجاح ✅ - آخر تحديث: ${finalSavedAt}` : 'تم الارسال بنجاح ✅';
             alertDiv.className = 'alert alert-success';
             alertDiv.style.display = 'block';
             setTimeout(() => { 
