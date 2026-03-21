@@ -124,6 +124,22 @@
             gap: 5px; 
         }
         
+        .network-status-wrap {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 2px;
+            position: absolute;
+            left: 50%;
+            transform: translateX(-50%);
+        }
+        
+        .last-update-indicator {
+            font-size: 0.7rem;
+            color: #000;
+            padding: 0 4px;
+        }
+        
         .net-online { 
             background: #d4edda; 
             color: #155724; 
@@ -1148,16 +1164,13 @@
         header .header-content {
             position: relative;
         }
-
+        
         #network-status-indicator {
-            position: absolute;
-            left: 50%;
-            transform: translateX(-50%);
             white-space: nowrap;
         }
         
         @media (max-width: 768px) {
-             #network-status-indicator {
+             .network-status-wrap {
                 position: static;
                 transform: none;
                 margin: 0 auto;
@@ -3334,8 +3347,11 @@
                 <i>💧</i> <span>نظام المياه الذكي (Toshka)</span>
             </div>
             
-            <div id="network-status-indicator" class="network-status net-online">
-                <span id="net-icon">🟢</span> <span id="net-text">متصل</span>
+            <div class="network-status-wrap">
+                <div id="network-status-indicator" class="network-status net-online">
+                    <span id="net-icon">🟢</span> <span id="net-text">متصل</span>
+                </div>
+                <div id="last-update-indicator" class="last-update-indicator">آخر تحديث: غير متاح</div>
             </div>
             
             <div class="pending-changes-badge" id="pendingChangesBadge">
@@ -5320,6 +5336,7 @@ document.querySelectorAll('.menu-item').forEach(item => {
             consumptionLog: [],
             evaluationAggregates: {},
             evalAggLoadedMonths: {},
+            lastStationsUpdate: '',
             // Pagination limits
             historyLimit: 100,
             historyPageSize: 5000,
@@ -5401,6 +5418,86 @@ document.querySelectorAll('.menu-item').forEach(item => {
             const sec = timeParts[2] ? parseInt(timeParts[2]) : 0;
             if (isNaN(year) || isNaN(month) || isNaN(day)) return null;
             return new Date(year, month, day, hour, min, sec);
+        }
+        const CACHE_TTL = {
+            stations: 2 * 60 * 1000,
+            faultsLog: 60 * 1000
+        };
+        function readCache(key, tsKey) {
+            var raw = localStorage.getItem(key);
+            if (!raw) return { data: null, ts: 0 };
+            var data = null;
+            try { data = JSON.parse(raw); } catch(e) { data = null; }
+            var ts = parseInt(localStorage.getItem(tsKey) || '0', 10) || 0;
+            return { data: data, ts: ts };
+        }
+        function isCacheFresh(ts, maxAgeMs) {
+            if (!ts) return false;
+            return (Date.now() - ts) <= maxAgeMs;
+        }
+        function setCache(key, tsKey, data) {
+            localStorage.setItem(key, JSON.stringify(data));
+            localStorage.setItem(tsKey, String(Date.now()));
+        }
+        function setStationsCache(data) {
+            setCache('toshka_stations_cache', 'toshka_stations_cache_ts', data || {});
+        }
+        function setFaultsLogCache(data) {
+            setCache('toshka_faults_log_cache', 'toshka_faults_log_cache_ts', data || []);
+        }
+        function formatLastUpdateText(tsStr) {
+            if (!tsStr) return 'آخر تحديث: غير متاح';
+            var d = parseCustomDate(tsStr);
+            if (!d) return 'آخر تحديث: ' + tsStr;
+            var now = new Date();
+            var diffMs = now - d;
+            if (diffMs < 0) diffMs = 0;
+            var diffMinutes = Math.floor(diffMs / 60000);
+            if (diffMinutes < 1440) {
+                if (diffMinutes < 1) return 'آخر تحديث منذ أقل من دقيقة';
+                var hours = Math.floor(diffMinutes / 60);
+                var minutes = diffMinutes % 60;
+                if (hours > 0 && minutes > 0) return 'آخر تحديث منذ ' + hours + ' س ' + minutes + ' د';
+                if (hours > 0) return 'آخر تحديث منذ ' + hours + ' س';
+                return 'آخر تحديث منذ ' + minutes + ' د';
+            }
+            return 'آخر تحديث: ' + tsStr;
+        }
+        function setLastUpdateLabel(tsStr) {
+            var el = document.getElementById('last-update-indicator');
+            if (!el) return;
+            el.textContent = formatLastUpdateText(tsStr);
+        }
+        function computeLatestStationsUpdate() {
+            var list = Object.values(appData.stations || {});
+            var latestDate = null;
+            var latestText = '';
+            list.forEach(function(s) {
+                var t = s && s.lastUpdate ? s.lastUpdate : '';
+                var d = parseCustomDate(t);
+                if (d && (!latestDate || d > latestDate)) {
+                    latestDate = d;
+                    latestText = t;
+                }
+            });
+            return latestText;
+        }
+        function refreshStationsLastUpdate() {
+            var latest = computeLatestStationsUpdate();
+            appData.lastStationsUpdate = latest || '';
+            setLastUpdateLabel(appData.lastStationsUpdate);
+        }
+        function applyStationsUpdateTime(tsStr) {
+            if (!tsStr) {
+                if (!appData.lastStationsUpdate) refreshStationsLastUpdate();
+                return;
+            }
+            var newDate = parseCustomDate(tsStr);
+            var oldDate = parseCustomDate(appData.lastStationsUpdate);
+            if (!oldDate || (newDate && newDate > oldDate)) {
+                appData.lastStationsUpdate = tsStr;
+                setLastUpdateLabel(tsStr);
+            }
         }
 // مراقبة الشبكة
 let isFirebaseConnected = false;
@@ -6522,28 +6619,37 @@ document.getElementById('emergency-image-modal').addEventListener('click', funct
         function loadStations(cb, options) {
             var opts = options || {};
             var forceReload = !!opts.forceReload;
-            var cache = localStorage.getItem('toshka_stations_cache');
-            if (cache && !appData.stations) { 
-                try { appData.stations = JSON.parse(cache); } catch(e){} 
+            var cacheObj = readCache('toshka_stations_cache', 'toshka_stations_cache_ts');
+            if (cacheObj.data && (!appData.stations || Object.keys(appData.stations).length === 0)) {
+                appData.stations = cacheObj.data;
             }
+            var cacheFresh = isCacheFresh(cacheObj.ts, CACHE_TTL.stations);
+            var hasStations = appData.stations && Object.keys(appData.stations).length > 0;
+            if (hasStations) refreshStationsLastUpdate();
+            if (hasStations && cb) { cb(); }
             
             var isOperator = appData.currentUser && appData.currentUser.type === 'operator';
-            if (!forceReload && isOperator && appData.stations && Object.keys(appData.stations).length > 0) {
-                if (cb) cb();
-                return;
+            if (!forceReload && isOperator && hasStations) {
+                if (cacheFresh) return;
             }
             
             // تحسين: إذا كانت البيانات موجودة بالفعل ومستمع التحديثات يعمل، لا داعي للتحميل الكامل مرة أخرى
-            if (!forceReload && appData.stations && Object.keys(appData.stations).length > 0 && appData.listeners && appData.listeners.stationsRef) {
-                if (cb) cb();
+            if (!forceReload && hasStations && appData.listeners && appData.listeners.stationsRef) {
+                if (cacheFresh) return;
+            }
+            if (!forceReload && hasStations && cacheFresh) {
+                return;
+            }
+            if (!navigator.onLine && hasStations) {
                 return;
             }
 
             db.ref('stations').once('value').then(function(snap) {
                 var d = snap.val();
                 appData.stations = d || {};
-                localStorage.setItem('toshka_stations_cache', JSON.stringify(appData.stations));
+                setStationsCache(appData.stations);
                 forceRepairStations();
+                refreshStationsLastUpdate();
                 if (cb) cb();
             }).catch(function(){ if (cb) cb(); });
         }
@@ -6654,9 +6760,20 @@ document.getElementById('emergency-image-modal').addEventListener('click', funct
         }
         function loadFaultsLog(cb) {
             // تحسين: إضافة حد أقصى للسجلات لتقليل استهلاك البيانات
+            var cacheObj = readCache('toshka_faults_log_cache', 'toshka_faults_log_cache_ts');
+            var cacheFresh = isCacheFresh(cacheObj.ts, CACHE_TTL.faultsLog);
+            var hasFaults = appData.faultsLog && appData.faultsLog.length > 0;
+            if (cacheObj.data && !hasFaults) {
+                appData.faultsLog = cacheObj.data;
+                hasFaults = true;
+            }
+            if (hasFaults && cb) cb();
+            if (!navigator.onLine && hasFaults) return;
+            if (hasFaults && cacheFresh) return;
             db.ref('faults_log').limitToLast(2000).once('value').then(function(snap) {
                 var v = snap.val();
                 appData.faultsLog = (v && (Array.isArray(v) ? v : Object.values(v))) || [];
+                setFaultsLogCache(appData.faultsLog);
                 if (cb) cb();
             }).catch(function(){ if (cb) cb(); });
         }
@@ -6687,13 +6804,23 @@ document.getElementById('emergency-image-modal').addEventListener('click', funct
             if (appData.listeners.stationsRef) return;
             var ref = db.ref('stations');
             appData.listeners.stationsRef = ref;
+            var cacheObj = readCache('toshka_stations_cache', 'toshka_stations_cache_ts');
+            var cacheFresh = isCacheFresh(cacheObj.ts, CACHE_TTL.stations);
+            var hasStations = appData.stations && Object.keys(appData.stations).length > 0;
+            if (!hasStations && cacheObj.data) {
+                appData.stations = cacheObj.data;
+            }
+            if (appData.stations && Object.keys(appData.stations).length > 0) {
+                refreshStationsLastUpdate();
+            }
             
             // تحسين: استخدام child_changed بدلاً من value لتقليل استهلاك البيانات
             ref.on('child_changed', function(snap) {
                 var stationData = snap.val();
                 if (stationData && stationData.name) {
                     appData.stations[stationData.name] = stationData;
-                    localStorage.setItem('toshka_stations_cache', JSON.stringify(appData.stations));
+                    setStationsCache(appData.stations);
+                    applyStationsUpdateTime(stationData.lastUpdate);
                     
                     // تحديث الواجهة فقط إذا كنا في الشاشة الرئيسية
                     var stationsScreen = document.getElementById('stations-screen');
@@ -6705,14 +6832,17 @@ document.getElementById('emergency-image-modal').addEventListener('click', funct
             });
 
             // تحميل أولي للبيانات
-            ref.once('value').then(function(snap) {
-                var d = snap.val();
-                appData.stations = d || {};
-                localStorage.setItem('toshka_stations_cache', JSON.stringify(appData.stations));
-                renderZonesTabs();
-                var at = document.querySelector('.nav-tab.active');
-                renderStations(at ? at.dataset.zone : 'all');
-            });
+            if (!cacheFresh || !hasStations) {
+                ref.once('value').then(function(snap) {
+                    var d = snap.val();
+                    appData.stations = d || {};
+                    setStationsCache(appData.stations);
+                    refreshStationsLastUpdate();
+                    renderZonesTabs();
+                    var at = document.querySelector('.nav-tab.active');
+                    renderStations(at ? at.dataset.zone : 'all');
+                });
+            }
         };
         window.detachStationsLive = function() {
             var ref = appData.listeners && appData.listeners.stationsRef;
@@ -14558,7 +14688,7 @@ function addStationInSelectedZone() {
     db.ref('stations/' + sName).set(stationObj).then(() => {
         if (!appData.stations) appData.stations = {};
         appData.stations[sName] = stationObj;
-        localStorage.setItem('toshka_stations_cache', JSON.stringify(appData.stations || {}));
+        setStationsCache(appData.stations);
         if (nameInput) nameInput.value = '';
         if (pumpsInput) pumpsInput.value = '4';
         renderSettingsScreen();
@@ -14615,7 +14745,7 @@ function editStationInSelectedZone() {
         if (newName !== oldName) delete appData.stations[oldName];
         appData.stations[newName] = updatedStation;
         if (appData.currentStation === oldName) appData.currentStation = newName;
-        localStorage.setItem('toshka_stations_cache', JSON.stringify(appData.stations || {}));
+        setStationsCache(appData.stations);
         renderSettingsScreen();
         setSettingsUiOpen(true);
         setSettingsAction('edit');
@@ -14635,7 +14765,7 @@ function moveStationToZone() {
     if (zone === targetZone) return;
     db.ref('stations/' + sName + '/zone').set(targetZone).then(() => {
         appData.stations[sName].zone = targetZone;
-        localStorage.setItem('toshka_stations_cache', JSON.stringify(appData.stations || {}));
+        setStationsCache(appData.stations);
         renderSettingsScreen();
         setSettingsUiOpen(true);
         setSettingsAction('move');
@@ -14652,7 +14782,7 @@ function deleteStationInSelectedZone() {
     if (!confirm(`هل أنت متأكد من حذف المحطة: ${sName} ؟`)) return;
     db.ref('stations/' + sName).remove().then(() => {
         if (appData.stations && appData.stations[sName]) delete appData.stations[sName];
-        localStorage.setItem('toshka_stations_cache', JSON.stringify(appData.stations || {}));
+        setStationsCache(appData.stations);
         if (appData.currentStation === sName) {
             appData.currentStation = null;
             showScreen('stations');
@@ -14747,7 +14877,7 @@ function addStationFromSettings() {
     db.ref('stations/' + sName).set(stationObj).then(() => {
         if (!appData.stations) appData.stations = {};
         appData.stations[sName] = stationObj;
-        localStorage.setItem('toshka_stations_cache', JSON.stringify(appData.stations));
+        setStationsCache(appData.stations);
         if (nameInput) nameInput.value = '';
         if (pumpsInput) pumpsInput.value = '4';
         renderSettingsScreen();
@@ -14767,7 +14897,7 @@ function deleteStationFromSettings() {
     if (!confirm(`هل أنت متأكد من حذف المحطة: ${sName} ؟`)) return;
     db.ref('stations/' + sName).remove().then(() => {
         if (appData.stations && appData.stations[sName]) delete appData.stations[sName];
-        localStorage.setItem('toshka_stations_cache', JSON.stringify(appData.stations || {}));
+        setStationsCache(appData.stations);
         if (appData.currentStation === sName) {
             appData.currentStation = null;
             showScreen('stations');
@@ -14867,7 +14997,7 @@ function updateStationFromSettings() {
         if (newName !== oldName) delete appData.stations[oldName];
         appData.stations[newName] = updatedStation;
         if (appData.currentStation === oldName) appData.currentStation = newName;
-        localStorage.setItem('toshka_stations_cache', JSON.stringify(appData.stations || {}));
+        setStationsCache(appData.stations);
         renderSettingsScreen();
         if (document.getElementById('stations-screen').classList.contains('active')) {
             renderZonesTabs();
