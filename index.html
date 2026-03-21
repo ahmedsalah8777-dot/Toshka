@@ -3806,9 +3806,19 @@
                 <h3 style="margin-bottom:10px; margin-top:30px;">أرشيف الأعطال السابقة</h3>
                 <div style="margin-bottom: 15px; display: flex; gap: 10px; align-items: center; flex-wrap: wrap; background: #fff3cd; padding: 10px; border-radius: 6px; border: 1px solid #ffeeba;">
                     <label style="margin:0; font-weight:bold;">🔍 تصفية الأرشيف:</label>
-                    <select id="fault-archive-station-filter" style="flex:1; max-width:300px;">
-                        <option value="all">-- عرض كافة المحطات --</option>
+                    <select id="fault-archive-zone-filter" style="flex:1; max-width:220px;">
+                        <option value="all">كل المناطق</option>
                     </select>
+                    <select id="fault-archive-station-filter" style="flex:1; max-width:240px;">
+                        <option value="all">-- كل المحطات --</option>
+                    </select>
+                    <select id="fault-archive-type-filter" style="flex:1; max-width:220px;">
+                        <option value="all">كل الأعطال</option>
+                    </select>
+                    <span style="font-weight:bold;">من</span>
+                    <input id="fault-archive-date-from" type="date" style="flex:1; max-width:180px;">
+                    <span style="font-weight:bold;">إلى</span>
+                    <input id="fault-archive-date-to" type="date" style="flex:1; max-width:180px;">
                     <button class="btn btn-primary" id="fault-archive-search-btn" style="white-space: nowrap;">بحث 🔍</button>
                     <button class="btn btn-excel" onclick="exportFaultsArchive()" title="تصدير أرشيف الأعطال إلى ملف Excel" style="white-space: nowrap;">
                         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-left: 6px;">
@@ -7356,6 +7366,12 @@ document.getElementById('emergency-image-modal').addEventListener('click', funct
                 renderFaultsLog();
             });
         }
+        const faultArchiveZoneFilter = document.getElementById('fault-archive-zone-filter');
+        if (faultArchiveZoneFilter) {
+            faultArchiveZoneFilter.addEventListener('change', () => {
+                updateFaultArchiveStationOptions();
+            });
+        }
         document.getElementById('back-from-inspection').addEventListener('click', () => goBack());
         document.getElementById('back-from-inspection-status-log').addEventListener('click', () => goBack());
         document.getElementById('back-from-settings').addEventListener('click', () => goBack());
@@ -10849,14 +10865,81 @@ function calculateFaultDuration(startTimeStr) {
     return result.trim();
 }
         
+function formatDateForInput(d) {
+    if (!d || isNaN(d.getTime())) return '';
+    var y = d.getFullYear();
+    var m = String(d.getMonth() + 1).padStart(2, '0');
+    var day = String(d.getDate()).padStart(2, '0');
+    return y + '-' + m + '-' + day;
+}
+function normalizeDate(d) {
+    if (!d || isNaN(d.getTime())) return null;
+    return new Date(d.getFullYear(), d.getMonth(), d.getDate());
+}
+function getStationZoneMap() {
+    var map = {};
+    Object.values(appData.stations || {}).forEach(function(s) {
+        if (s && s.name) map[s.name] = s.zone || '';
+    });
+    return map;
+}
+function updateFaultArchiveZoneOptions() {
+    var zoneSel = document.getElementById('fault-archive-zone-filter');
+    if (!zoneSel) return;
+    if (zoneSel.options.length <= 1) {
+        zoneSel.innerHTML = '<option value="all">كل المناطق</option>';
+        (appData.zones || []).forEach(function(z) {
+            zoneSel.innerHTML += '<option value="' + z + '">' + z + '</option>';
+        });
+    }
+}
+function updateFaultArchiveStationOptions() {
+    var zoneSel = document.getElementById('fault-archive-zone-filter');
+    var stationSel = document.getElementById('fault-archive-station-filter');
+    if (!stationSel) return;
+    var prev = stationSel.value || 'all';
+    stationSel.innerHTML = '<option value="all">-- كل المحطات --</option>';
+    var stationsList = Object.values(appData.stations || {});
+    if (zoneSel && zoneSel.value !== 'all') {
+        stationsList = stationsList.filter(function(s) { return s.zone === zoneSel.value; });
+    }
+    stationsList.sort(function(a, b) { return a.name.localeCompare(b.name); }).forEach(function(s) {
+        stationSel.innerHTML += '<option value="' + s.name + '">' + s.name + '</option>';
+    });
+    var opt = Array.from(stationSel.options).some(function(o) { return o.value === prev; });
+    if (opt) stationSel.value = prev;
+}
+function updateFaultArchiveTypeOptions() {
+    var typeSel = document.getElementById('fault-archive-type-filter');
+    if (!typeSel) return;
+    if (typeSel.options.length > 1) return;
+    var set = new Set();
+    (appData.faultsLog || []).forEach(function(f) {
+        if (f && f.type) set.add(f.type);
+    });
+    var types = Array.from(set).sort(function(a, b) { return a.localeCompare(b); });
+    typeSel.innerHTML = '<option value="all">كل الأعطال</option>';
+    types.forEach(function(t) {
+        typeSel.innerHTML += '<option value="' + t + '">' + t + '</option>';
+    });
+}
 function renderFaultsLog() {
     const activeBody = document.getElementById('active-faults-body');
     const historyBody = document.getElementById('history-faults-body');
-    const fStation = document.getElementById('fault-archive-station-filter').value;
     const loadMoreBtn = document.getElementById('load-more-faults-btn');
     
     activeBody.innerHTML = '';
     historyBody.innerHTML = '';
+    
+    updateFaultArchiveZoneOptions();
+    updateFaultArchiveStationOptions();
+    updateFaultArchiveTypeOptions();
+
+    const fZone = document.getElementById('fault-archive-zone-filter').value;
+    const fStation = document.getElementById('fault-archive-station-filter').value;
+    const fType = document.getElementById('fault-archive-type-filter').value;
+    const fDateFrom = document.getElementById('fault-archive-date-from').value;
+    const fDateTo = document.getElementById('fault-archive-date-to').value;
 
     // --- أولاً: عرض الأعطال النشطة ---
     const stationsList = Object.values(appData.stations);
@@ -10909,21 +10992,38 @@ function renderFaultsLog() {
     // --- ثانياً: عرض الأرشيف (السجل التاريخي) ---
     // لا يتم عرض الأرشيف إلا عند الضغط على زر البحث
     if (!appData.archiveSearchTriggered) {
-        historyBody.innerHTML = '<tr><td colspan="5" style="text-align:center; color:#777; padding:20px;">يرجى تحديد المحطة والضغط على "بحث" لعرض الأرشيف</td></tr>';
+        historyBody.innerHTML = '<tr><td colspan="5" style="text-align:center; color:#777; padding:20px;">يرجى ضبط الفلاتر والضغط على "بحث" لعرض الأرشيف</td></tr>';
         document.getElementById('faults-status-text').textContent = '';
         loadMoreBtn.style.display = 'none';
         
-        // تعبئة قائمة المحطات إذا كانت فارغة
-        const filterSel = document.getElementById('fault-archive-station-filter');
-        if (filterSel.options.length <= 1) {
-            const sorted = Object.values(appData.stations).sort((a,b) => a.name.localeCompare(b.name));
-            sorted.forEach(s => filterSel.innerHTML += `<option value="${s.name}">${s.name}</option>`);
-        }
+        updateFaultArchiveZoneOptions();
+        updateFaultArchiveStationOptions();
+        updateFaultArchiveTypeOptions();
         return;
     }
 
     let histFaults = appData.faultsLog.filter(f => !f.active);
+    var stationZoneMap = getStationZoneMap();
+    if (fZone !== 'all') {
+        histFaults = histFaults.filter(function(f) {
+            return stationZoneMap[f.station] === fZone;
+        });
+    }
     if (fStation !== 'all') histFaults = histFaults.filter(f => f.station === fStation);
+    if (fType !== 'all') histFaults = histFaults.filter(f => f.type === fType);
+    if (fDateFrom || fDateTo) {
+        var fromDate = fDateFrom ? normalizeDate(new Date(fDateFrom)) : null;
+        var toDate = fDateTo ? normalizeDate(new Date(fDateTo)) : null;
+        histFaults = histFaults.filter(function(f) {
+            var t = f.endTime || f.startTime || '';
+            var d = parseCustomDate(t);
+            var day = normalizeDate(d);
+            if (!day) return false;
+            if (fromDate && day < fromDate) return false;
+            if (toDate && day > toDate) return false;
+            return true;
+        });
+    }
     
     // ترتيب تنازلي (الأحدث أولاً)
     histFaults.sort((a, b) => {
