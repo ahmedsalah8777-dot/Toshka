@@ -5461,6 +5461,13 @@ document.querySelectorAll('.menu-item').forEach(item => {
         function setFaultsLogCache(data) {
             setCache('toshka_faults_log_cache', 'toshka_faults_log_cache_ts', data || []);
         }
+        function getStoredFirebaseUpdate() {
+            return localStorage.getItem('toshka_last_firebase_update') || '';
+        }
+        function setStoredFirebaseUpdate(tsStr) {
+            if (!tsStr) return;
+            localStorage.setItem('toshka_last_firebase_update', tsStr);
+        }
         function formatLastUpdateText(tsStr) {
             if (!tsStr) return 'آخر تحديث: غير متاح';
             var d = parseCustomDate(tsStr);
@@ -5482,6 +5489,10 @@ document.querySelectorAll('.menu-item').forEach(item => {
         function setLastUpdateLabel(tsStr) {
             var el = document.getElementById('last-update-indicator');
             if (!el) return;
+            if (navigator.onLine && isFirebaseConnected) {
+                el.textContent = 'آخر تحديث منذ 0 د';
+                return;
+            }
             el.textContent = formatLastUpdateText(tsStr);
         }
         function computeLatestStationsUpdate() {
@@ -5499,21 +5510,16 @@ document.querySelectorAll('.menu-item').forEach(item => {
             return latestText;
         }
         function refreshStationsLastUpdate() {
-            var latest = computeLatestStationsUpdate();
-            appData.lastStationsUpdate = latest || '';
+            var nowStd = getStandardDateTime();
+            appData.lastStationsUpdate = nowStd.full;
             setLastUpdateLabel(appData.lastStationsUpdate);
+            setStoredFirebaseUpdate(appData.lastStationsUpdate);
         }
         function applyStationsUpdateTime(tsStr) {
-            if (!tsStr) {
-                if (!appData.lastStationsUpdate) refreshStationsLastUpdate();
-                return;
-            }
-            var newDate = parseCustomDate(tsStr);
-            var oldDate = parseCustomDate(appData.lastStationsUpdate);
-            if (!oldDate || (newDate && newDate > oldDate)) {
-                appData.lastStationsUpdate = tsStr;
-                setLastUpdateLabel(tsStr);
-            }
+            var nowStd = getStandardDateTime();
+            appData.lastStationsUpdate = nowStd.full;
+            setLastUpdateLabel(appData.lastStationsUpdate);
+            setStoredFirebaseUpdate(appData.lastStationsUpdate);
         }
 // مراقبة الشبكة
 let isFirebaseConnected = false;
@@ -6641,7 +6647,7 @@ document.getElementById('emergency-image-modal').addEventListener('click', funct
             }
             var cacheFresh = isCacheFresh(cacheObj.ts, CACHE_TTL.stations);
             var hasStations = appData.stations && Object.keys(appData.stations).length > 0;
-            if (hasStations) refreshStationsLastUpdate();
+            if (hasStations) setLastUpdateLabel(getStoredFirebaseUpdate());
             if (hasStations && cb) { cb(); }
             
             var isOperator = appData.currentUser && appData.currentUser.type === 'operator';
@@ -6827,7 +6833,7 @@ document.getElementById('emergency-image-modal').addEventListener('click', funct
                 appData.stations = cacheObj.data;
             }
             if (appData.stations && Object.keys(appData.stations).length > 0) {
-                refreshStationsLastUpdate();
+                setLastUpdateLabel(getStoredFirebaseUpdate());
             }
             
             // تحسين: استخدام child_changed بدلاً من value لتقليل استهلاك البيانات
