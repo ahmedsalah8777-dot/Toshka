@@ -88,9 +88,6 @@
                 font-size: 18px;
             }
             
-            .last-update-indicator {
-                font-size: 0.6rem;
-            }
         }
 
         /* الهيدر */
@@ -148,12 +145,6 @@
             position: absolute;
             left: 50%;
             transform: translateX(-50%);
-        }
-        
-        .last-update-indicator {
-            font-size: 0.7rem;
-            color: #000;
-            padding: 0 4px;
         }
         
         .net-online { 
@@ -3367,7 +3358,6 @@
                 <div id="network-status-indicator" class="network-status net-online">
                     <span id="net-icon">🟢</span> <span id="net-text">متصل</span>
                 </div>
-                <div id="last-update-indicator" class="last-update-indicator">آخر تحديث: غير متاح</div>
             </div>
             
             <div class="pending-changes-badge" id="pendingChangesBadge">
@@ -5490,10 +5480,16 @@ document.querySelectorAll('.menu-item').forEach(item => {
             var el = document.getElementById('last-update-indicator');
             if (!el) return;
             if (navigator.onLine && isFirebaseConnected) {
-                el.textContent = 'آخر تحديث منذ 0 د';
+                var liveText = 'آخر تحديث منذ 0 د';
+                el.textContent = liveText;
+                el.title = liveText;
+                el.setAttribute('data-full', liveText);
                 return;
             }
-            el.textContent = formatLastUpdateText(tsStr);
+            var fullText = formatLastUpdateText(tsStr);
+            el.textContent = fullText;
+            el.title = fullText;
+            el.setAttribute('data-full', fullText);
         }
         function computeLatestStationsUpdate() {
             var list = Object.values(appData.stations || {});
@@ -11046,6 +11042,7 @@ window.addEventListener('popstate', function(event) {
                 window.history.replaceState(null, null, ' ');
             }
         });
+        
 // شاشة الحاسبة
 document.getElementById('calculator-btn').addEventListener('click', () => {
     showScreen('calculator');
