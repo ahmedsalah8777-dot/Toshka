@@ -2708,8 +2708,30 @@
 }
 
 @media (max-width: 600px) {
-    .filter-group {
-        min-width: 100%;
+    .filter-row.mobile-two-cols {
+        display: flex;
+        flex-direction: row !important;
+        gap: 8px;
+    }
+    .filter-row.mobile-two-cols .filter-group {
+        min-width: calc(50% - 4px);
+        flex: 1;
+    }
+    .filter-row.mobile-three-cols {
+        display: flex;
+        flex-direction: row !important;
+        gap: 6px;
+    }
+    .filter-row.mobile-three-cols .filter-group {
+        min-width: calc(33.33% - 4px);
+        flex: 1;
+    }
+    .filter-group label {
+        font-size: 0.75rem;
+    }
+    .filter-group select, .filter-group input {
+        font-size: 0.8rem;
+        padding: 6px;
     }
     .filter-actions button {
         flex: 1;
@@ -3885,7 +3907,7 @@
                 <h3 style="margin-bottom:10px; margin-top:30px;">أرشيف الأعطال السابقة</h3>
                 <div class="archive-filter-container">
                     <div class="filter-header">🔍 تصفية الأرشيف:</div>
-                    <div class="filter-row">
+                    <div class="filter-row mobile-two-cols">
                         <div class="filter-group">
                             <label for="fault-archive-zone-filter">المنطقة:</label>
                             <select id="fault-archive-zone-filter">
@@ -3898,14 +3920,14 @@
                                 <option value="all">-- كل المحطات --</option>
                             </select>
                         </div>
+                    </div>
+                    <div class="filter-row mobile-three-cols">
                         <div class="filter-group">
                             <label for="fault-archive-type-filter">نوع العطل:</label>
                             <select id="fault-archive-type-filter">
                                 <option value="all">كل الأعطال</option>
                             </select>
                         </div>
-                    </div>
-                    <div class="filter-row">
                         <div class="filter-group">
                             <label for="fault-archive-date-from">من تاريخ:</label>
                             <input id="fault-archive-date-from" type="date">
@@ -3914,17 +3936,17 @@
                             <label for="fault-archive-date-to">إلى تاريخ:</label>
                             <input id="fault-archive-date-to" type="date">
                         </div>
-                        <div class="filter-actions">
-                            <button class="btn btn-primary" id="fault-archive-search-btn" style="white-space: nowrap;">بحث 🔍</button>
-                            <button class="btn btn-excel" onclick="exportFaultsArchive()" title="تصدير أرشيف الأعطال إلى ملف Excel" style="white-space: nowrap;">
-                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-left: 6px;">
-                                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
-                                    <polyline points="7 10 12 15 17 10"></polyline>
-                                    <line x1="12" y1="15" x2="12" y2="3"></line>
-                                </svg>
-                                تصدير Excel
-                            </button>
-                        </div>
+                    </div>
+                    <div class="filter-actions">
+                        <button class="btn btn-primary" id="fault-archive-search-btn" style="white-space: nowrap;">بحث 🔍</button>
+                        <button class="btn btn-excel" onclick="exportFaultsArchive()" title="تصدير أرشيف الأعطال إلى ملف Excel" style="white-space: nowrap;">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-left: 6px;">
+                                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                                <polyline points="7 10 12 15 17 10"></polyline>
+                                <line x1="12" y1="15" x2="12" y2="3"></line>
+                            </svg>
+                            تصدير Excel
+                        </button>
                     </div>
                 </div>
 
