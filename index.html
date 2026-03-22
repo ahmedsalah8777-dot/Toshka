@@ -3451,7 +3451,7 @@
                     🔔 <span id="alarm-count" class="alarm-count" style="display:none">0</span>
                 </button>
 
-                <button id="refresh-btn" class="refresh-btn" title="تحديث الصفحة" onclick="location.reload()">🔄</button>
+                <button id="refresh-btn" class="refresh-btn" title="تحديث الصفحة" onclick="handleGlobalRefresh()">🔄</button>
                 
                 <div class="user-badge" id="current-user">مرحباً</div>
             </div>
@@ -7069,6 +7069,20 @@ document.getElementById('emergency-image-modal').addEventListener('click', funct
                 }
             }
         };
+
+        function handleGlobalRefresh() {
+            const activeScreen = document.querySelector('.screen.active');
+            if (!activeScreen) return;
+            const screenId = activeScreen.id.replace('-screen', '');
+            
+            if (typeof showToast === 'function') {
+                showToast('info', 'تحديث البيانات', 'جاري تحديث بيانات الشاشة الحالية... 🔄', 3000);
+            }
+            
+            if (typeof showScreen === 'function') {
+                showScreen(screenId, false);
+            }
+        }
 
         function showScreen(screenId, addToHistory = true) {
             // إضافة الحالة للتاريخ إذا لم يكن استدعاء من زر الرجوع
