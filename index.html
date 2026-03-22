@@ -2730,8 +2730,18 @@
         font-size: 0.75rem;
     }
     .filter-group select, .filter-group input {
-        font-size: 0.8rem;
-        padding: 6px;
+        font-size: 0.75rem; /* تصغير الخط قليلاً ليتناسب مع العرض المحدود */
+        padding: 5px 2px;
+        text-align: center; /* توسيط النص والتاريخ */
+        height: 35px; /* توحيد الارتفاع */
+    }
+    /* تحسين ظهور حقول التاريخ في الموبايل */
+    .filter-group input[type="date"] {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding-inline-start: 0;
+        padding-inline-end: 0;
     }
     .filter-actions button {
         flex: 1;
