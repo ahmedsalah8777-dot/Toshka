@@ -3914,8 +3914,9 @@
                     </table>
                 </div>
                 
-                <h3 style="margin-bottom:10px; margin-top:30px;">أرشيف الأعطال السابقة</h3>
-                <div class="archive-filter-container">
+                <div id="faults-archive-section">
+                    <h3 style="margin-bottom:10px; margin-top:30px;">أرشيف الأعطال السابقة</h3>
+                    <div class="archive-filter-container">
                     <div class="filter-header">🔍 تصفية الأرشيف:</div>
                     <div class="filter-row mobile-two-cols">
                         <div class="filter-group">
@@ -3973,6 +3974,8 @@
                 </div>
             </div>
         </div>
+    </div>
+</div>
 
         <!-- شاشة بيانات المستخدم الجديدة -->
         <div id="user-profile-screen" class="screen">
@@ -6917,6 +6920,11 @@ document.getElementById('emergency-image-modal').addEventListener('click', funct
             loadMoreHistoryFromDb(function(){ ensureHistoryCoversDateRange(startDate, endDate, cb, tries + 1); });
         }
         function loadFaultsLog(cb) {
+            // منع التحميل للمشغلين لتوفير البيانات
+            if (appData.currentUser && appData.currentUser.type === 'operator') {
+                if (cb) cb();
+                return;
+            }
             // تحسين: إضافة حد أقصى للسجلات لتقليل استهلاك البيانات
             var cacheObj = readCache('toshka_faults_log_cache', 'toshka_faults_log_cache_ts');
             var cacheFresh = isCacheFresh(cacheObj.ts, CACHE_TTL.faultsLog);
@@ -6928,7 +6936,7 @@ document.getElementById('emergency-image-modal').addEventListener('click', funct
             if (hasFaults && cb) cb();
             if (!navigator.onLine && hasFaults) return;
             if (hasFaults && cacheFresh) return;
-            db.ref('faults_log').limitToLast(2000).once('value').then(function(snap) {
+            db.ref('faults_log').limitToLast(10000).once('value').then(function(snap) {
                 var v = snap.val();
                 appData.faultsLog = (v && (Array.isArray(v) ? v : Object.values(v))) || [];
                 setFaultsLogCache(appData.faultsLog);
@@ -7185,10 +7193,10 @@ document.getElementById('emergency-image-modal').addEventListener('click', funct
             }
             if(screenId === 'faults-log') {
                 appData.archiveSearchTriggered = false; // Reset archive trigger
-                if (appData.currentUser && appData.currentUser.type === 'operator') {
-                    appData.faultsLimit = 100; renderFaultsLog();
-                } else {
-                    loadFaultsLog(function() { appData.faultsLimit = 100; renderFaultsLog(); });
+                appData.faultsLimit = 100;
+                renderFaultsLog();
+                if (appData.currentUser && appData.currentUser.type !== 'operator') {
+                    loadFaultsLog(function() { renderFaultsLog(); });
                     startAutoRefresh('faults-log');
                 }
             }
@@ -7505,9 +7513,26 @@ document.getElementById('emergency-image-modal').addEventListener('click', funct
         const faultArchiveSearchBtn = document.getElementById('fault-archive-search-btn');
         if (faultArchiveSearchBtn) {
             faultArchiveSearchBtn.addEventListener('click', () => {
+                const isOperator = appData.currentUser && appData.currentUser.type === 'operator';
+                if (isOperator) return; // لا يتم التحميل للمشغلين
+                
                 appData.archiveSearchTriggered = true;
                 appData.faultsLimit = 100;
-                renderFaultsLog();
+                
+                // التأكد من تحميل البيانات إذا لم تكن موجودة
+                if (!appData.faultsLog || appData.faultsLog.length === 0) {
+                    const originalText = faultArchiveSearchBtn.innerHTML;
+                    faultArchiveSearchBtn.disabled = true;
+                    faultArchiveSearchBtn.innerHTML = 'جاري التحميل... ⏳';
+                    
+                    loadFaultsLog(function() {
+                        faultArchiveSearchBtn.disabled = false;
+                        faultArchiveSearchBtn.innerHTML = originalText;
+                        renderFaultsLog();
+                    });
+                } else {
+                    renderFaultsLog();
+                }
             });
         }
         const faultArchiveZoneFilter = document.getElementById('fault-archive-zone-filter');
@@ -8369,15 +8394,15 @@ function saveDataInternal(options = {}) {
                     if (rawVal) { if (Array.isArray(rawVal)) logs = rawVal; else logs = Object.values(rawVal); }
                     newFaultEntries.forEach(newF => { 
                         const exists = logs.some(existingF => existingF.active === true && existingF.station === newF.station && existingF.type === newF.type);
-                        if (!exists) logs.unshift(newF);
+                        if (!exists) logs.push(newF);
                     });
                     resolvedFaultEntries.forEach(rf => { 
                         const index = logs.findIndex(f => f.station === sName && f.type === rf.type && f.active === true); 
                         if (index !== -1) { 
                             logs[index].active = false; logs[index].endTime = stationFullDateTime; 
-                        } else { logs.unshift(rf); } 
+                        } else { logs.push(rf); } 
                     });
-                    if (logs.length > 200000) logs = logs.slice(0, 200000); 
+                    if (logs.length > 200000) logs = logs.slice(-200000); 
                     db.ref('faults_log').set(logs);
                 });
             }
@@ -11071,9 +11096,16 @@ function renderFaultsLog() {
     const activeBody = document.getElementById('active-faults-body');
     const historyBody = document.getElementById('history-faults-body');
     const loadMoreBtn = document.getElementById('load-more-faults-btn');
+    const archiveSection = document.getElementById('faults-archive-section');
     
+    // إخفاء الأرشيف للمشغلين لتوفير البيانات
+    const isOperator = appData.currentUser && appData.currentUser.type === 'operator';
+    if (archiveSection) {
+        archiveSection.style.display = isOperator ? 'none' : 'block';
+    }
+
     activeBody.innerHTML = '';
-    historyBody.innerHTML = '';
+    if (historyBody) historyBody.innerHTML = '';
     
     updateFaultArchiveZoneOptions();
     updateFaultArchiveStationOptions();
@@ -11663,14 +11695,14 @@ function processOfflineQueue() {
                         if (rawVal) { logs = Array.isArray(rawVal) ? rawVal : Object.values(rawVal); }
                         nf.forEach(function(newF) {
                             var ex = logs.some(function(f){ return f.active === true && f.station === newF.station && f.type === newF.type; });
-                            if (!ex) logs.unshift(newF);
+                            if (!ex) logs.push(newF);
                         });
                         rf.forEach(function(resF) {
                             var idx = logs.findIndex(function(f){ return f.station === sid && f.type === resF.type && f.active === true; });
                             if (idx !== -1) { logs[idx].active = false; logs[idx].endTime = dt; }
-                            else { logs.unshift(resF); }
+                            else { logs.push(resF); }
                         });
-                        if (logs.length > 200000) logs = logs.slice(0, 200000);
+                        if (logs.length > 200000) logs = logs.slice(-200000);
                         db.ref('faults_log').set(logs);
                     });
                 }
