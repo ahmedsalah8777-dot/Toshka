@@ -6944,8 +6944,8 @@ document.getElementById('emergency-image-modal').addEventListener('click', funct
             }).catch(function(){ if (cb) cb(); });
         }
         function loadConsumptionLogs(cb) {
-            // تحسين: إضافة حد أقصى للسجلات لتقليل استهلاك البيانات
-            db.ref('consumption_logs').limitToLast(3000).once('value').then(function(snap) {
+            // تحسين: زيادة حد السجلات بناء على طلب المستخدم لضمان التقارير طويلة المدى
+            db.ref('consumption_logs').limitToLast(250000).once('value').then(function(snap) {
                 var v = snap.val();
                 appData.consumptionLog = v ? Object.values(v) : [];
                 if (cb) cb();
@@ -7244,11 +7244,7 @@ document.getElementById('emergency-image-modal').addEventListener('click', funct
 
                         if (typeof updateConsStationFilter === 'function') updateConsStationFilter();
                         
-                        if (!(appData.currentUser && appData.currentUser.type === 'operator')) {
-                            loadConsumptionLogs(function() {
-                                if (typeof renderConsumptionsTable === 'function') renderConsumptionsTable();
-                            });
-                        }
+                        // تم إلغاء التحميل التلقائي هنا بناء على طلب المستخدم - يتم التحميل عند الضغط على زر "حساب" فقط
                     });
                 });
             }
@@ -7470,6 +7466,8 @@ document.getElementById('emergency-image-modal').addEventListener('click', funct
         const consRefreshBtn = document.getElementById('cons-refresh-btn');
         if (consRefreshBtn) {
             consRefreshBtn.addEventListener('click', () => {
+                // مسح البيانات المحلية لضمان جلب 250 ألف سجل جديدة عند الضغط على زر التحديث
+                appData.consumptionLog = []; 
                 loadStations(() => {
                     loadConsumptionLogs(() => {
                         if (typeof renderConsumptionsTable === 'function') renderConsumptionsTable();
@@ -10661,19 +10659,32 @@ window.updateConsStationFilter = function() {
 };
 
 window.renderConsumptionsTable = function() {
-    if (appData.currentUser && appData.currentUser.type === 'operator' && (!appData.consumptionLog || appData.consumptionLog.length === 0)) {
-        loadConsumptionLogs(function() { window.renderConsumptionsTable(); });
-        return;
-    }
+    const tbody = document.getElementById('consumptions-table-body');
+    if (!tbody) return;
+
     // 1. جلب قيم الفلاتر
-    const zoneFilter = document.getElementById('cons-filter-zone').value; // تم إضافة هذا السطر
+    const zoneFilter = document.getElementById('cons-filter-zone').value;
     const stationFilter = document.getElementById('cons-filter-station').value;
     const dateFrom = document.getElementById('cons-filter-date-from').value;
     const dateTo = document.getElementById('cons-filter-date-to').value;
-    const tbody = document.getElementById('consumptions-table-body');
     
     if (!dateFrom || !dateTo) {
         alert('يرجى اختيار تاريخ البداية والنهاية');
+        return;
+    }
+
+    // 2. التحقق من وجود البيانات أو الحاجة لتحميلها
+    // إذا كانت البيانات فارغة أو إذا طلب المستخدم تحديثاً (عن طريق مسح البيانات محلياً)
+    if (!appData.consumptionLog || appData.consumptionLog.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="4" style="text-align:center; padding:30px;">
+            <div class="syncing" style="font-size: 2rem; margin-bottom: 10px;">🔄</div>
+            <div>جاري جلب البيانات من السيرفر (حد أقصى 250,000 سجل)...</div>
+            <div style="font-size: 0.8rem; color: #888; margin-top: 5px;">قد يستغرق هذا بضع ثوانٍ نظراً لحجم البيانات المطلوب</div>
+        </td></tr>`;
+        
+        loadConsumptionLogs(function() { 
+            window.renderConsumptionsTable(); 
+        });
         return;
     }
     
@@ -10681,34 +10692,36 @@ window.renderConsumptionsTable = function() {
     
     let filteredConsumptions = appData.consumptionLog || [];
     
-    // 2. تصفية حسب التاريخ (موجود مسبقاً)
+    // 3. تصفية حسب التاريخ (باستخدام parseCustomDate لضمان الدقة)
+    const startDate = new Date(dateFrom);
+    startDate.setHours(0, 0, 0, 0);
+    const endDate = new Date(dateTo);
+    endDate.setHours(23, 59, 59, 999);
+
     filteredConsumptions = filteredConsumptions.filter(c => {
-        const logDate = c.date; // التنسيق: DD/MM/YYYY
-        const [d, m, y] = logDate.split('/');
-        const logDateISO = `${y}-${m.padStart(2, '0')}-${d.padStart(2, '0')}`;
-        return logDateISO >= dateFrom && logDateISO <= dateTo;
+        const logDateObj = parseCustomDate(`${c.date} ${c.time || '00:00:00'}`);
+        return logDateObj && logDateObj >= startDate && logDateObj <= endDate;
     });
 
-    // 3. (تصحيح هام) تصفية حسب المنطقة - كان مفقوداً
+    // 4. تصفية حسب المنطقة
     if (zoneFilter !== 'all') {
         filteredConsumptions = filteredConsumptions.filter(c => {
             const sData = appData.stations[c.station];
-            // التأكد من أن المحطة موجودة وتنتمي للمنطقة المختارة
             return sData && sData.zone === zoneFilter;
         });
     }
 
-    // 4. تصفية حسب المحطة (موجود مسبقاً)
+    // 5. تصفية حسب المحطة
     if (stationFilter !== 'all') {
         filteredConsumptions = filteredConsumptions.filter(c => c.station === stationFilter);
     }
     
     if (filteredConsumptions.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="7" style="text-align:center; padding:20px;">لا توجد بيانات استهلاك مطابقة للفلاتر المحددة</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="4" style="text-align:center; padding:20px;">لا توجد بيانات استهلاك مطابقة للفلاتر المحددة في الفترة المختارة</td></tr>';
         return;
     }
     
-    // 5. تجميع البيانات حسب المحطة
+    // 6. تجميع البيانات حسب المحطة
     const stationsData = {};
     filteredConsumptions.forEach(log => {
         if (!stationsData[log.station]) {
@@ -10717,7 +10730,7 @@ window.renderConsumptionsTable = function() {
         stationsData[log.station].push(log);
     });
 
-    // 6. معالجة كل محطة وعرضها
+    // 7. معالجة كل محطة وعرضها
     Object.keys(stationsData).forEach(stationName => {
         const stationLogs = stationsData[stationName];
         
@@ -10728,7 +10741,7 @@ window.renderConsumptionsTable = function() {
             return dateA - dateB;
         });
         
-        // مطابقة منطق الإكسيل: أول قراءة في الفترة وآخر قراءة في الفترة
+        // أول قراءة في الفترة وآخر قراءة في الفترة
         const fromReading = stationLogs[0];
         const toReading = stationLogs[stationLogs.length - 1];
         
@@ -10802,14 +10815,27 @@ window.exportConsumptionsToExcel = function() {
     
     if (!dateFrom || !dateTo) { alert('يرجى اختيار التواريخ'); return; }
 
+    // التحقق من وجود البيانات
+    if (!appData.consumptionLog || appData.consumptionLog.length === 0) {
+        alert('جاري جلب البيانات، يرجى الانتظار ثانية ثم المحاولة مرة أخرى...');
+        loadConsumptionLogs();
+        return;
+    }
+
     let filtered = appData.consumptionLog || [];
 
+    // 1. تصفية حسب التاريخ
+    const startDate = new Date(dateFrom);
+    startDate.setHours(0, 0, 0, 0);
+    const endDate = new Date(dateTo);
+    endDate.setHours(23, 59, 59, 999);
+
     filtered = filtered.filter(c => {
-        const [d, m, y] = c.date.split('/');
-        const iso = `${y}-${m.padStart(2, '0')}-${d.padStart(2, '0')}`;
-        return iso >= dateFrom && iso <= dateTo;
+        const logDateObj = parseCustomDate(`${c.date} ${c.time || '00:00:00'}`);
+        return logDateObj && logDateObj >= startDate && logDateObj <= endDate;
     });
 
+    // 2. تصفية حسب المنطقة والمحطة
     filtered = filtered.filter(c => {
         const sData = appData.stations[c.station];
         const sZone = sData ? sData.zone : '';
@@ -10818,9 +10844,12 @@ window.exportConsumptionsToExcel = function() {
         return true;
     });
 
-    if (filtered.length === 0) { alert('لا توجد بيانات للتصدير'); return; }
+    if (filtered.length === 0) { alert('لا توجد بيانات مطابقة للفلاتر للتصدير'); return; }
 
     const dataRows = [];
+    dataRows.push(["تقرير استهلاكات محطات المياه - توشكى"]);
+    dataRows.push([`الفترة من: ${dateFrom} إلى: ${dateTo}`]);
+    dataRows.push([]); // صف فارغ
     dataRows.push(["المنطقة", "المحطة", "نوع البيان", "القراءة السابقة", "تاريخ السابق", "القراءة الحالية", "تاريخ الحالي", "قيمة الاستهلاك", "الوحدة"]);
 
     const stationsData = {};
@@ -10841,20 +10870,20 @@ window.exportConsumptionsToExcel = function() {
         const t2 = (parseFloat(last.t2)||0) - (parseFloat(first.t2)||0);
         const m3 = (parseFloat(last.m3)||0) - (parseFloat(first.m3)||0);
 
-        dataRows.push([zone, stName, "محول 1", parseFloat(first.t1), first.date, parseFloat(last.t1), last.date, t1, "KW"]);
-        dataRows.push([zone, stName, "محول 2", parseFloat(first.t2), first.date, parseFloat(last.t2), last.date, t2, "KW"]);
-        dataRows.push([zone, stName, "مياه (M3)", parseFloat(first.m3), first.date, parseFloat(last.m3), last.date, m3, "M3"]);
+        dataRows.push([zone, stName, "محول 1", parseFloat(first.t1), first.date, parseFloat(last.t1), last.date, t1.toFixed(2), "KW"]);
+        dataRows.push([zone, stName, "محول 2", parseFloat(first.t2), first.date, parseFloat(last.t2), last.date, t2.toFixed(2), "KW"]);
+        dataRows.push([zone, stName, "مياه (M3)", parseFloat(first.m3), first.date, parseFloat(last.m3), last.date, m3.toFixed(2), "M3"]);
         dataRows.push([]); 
     });
 
     const ws = XLSX.utils.aoa_to_sheet(dataRows);
     ws['!cols'] = [
-        { wch: 15 }, { wch: 20 }, { wch: 15 }, { wch: 12 }, { wch: 12 }, { wch: 12 }, { wch: 12 }, { wch: 15 }, { wch: 10 }
+        { wch: 15 }, { wch: 20 }, { wch: 15 }, { wch: 15 }, { wch: 15 }, { wch: 15 }, { wch: 15 }, { wch: 15 }, { wch: 10 }
     ];
 
     const wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, ws, "تقرير الاستهلاكات");
-    XLSX.writeFile(wb, `Consumptions_${dateFrom}_${dateTo}.xlsx`);
+    XLSX.writeFile(wb, `Consumptions_Report_${dateFrom}_to_${dateTo}.xlsx`);
 };
         // --- FAULTS & HISTORY LOGIC ---
         function renderHistoryTable(applyFilters = false) {
