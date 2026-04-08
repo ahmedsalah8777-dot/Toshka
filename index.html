@@ -7184,12 +7184,14 @@ document.getElementById('emergency-image-modal').addEventListener('click', funct
                 loadUserProfiles(function() { appData.currentUsersDataPage = 0; renderUsersDataManagement(); });
             }
             if(screenId === 'history') {
-                if (appData.currentUser && appData.currentUser.type === 'operator') {
-                    loadStations(function() { renderHistoryTable(false); });
-                } else {
-                    loadStations(function() { loadHistory(function() { renderHistoryTable(true); }); });
-                    // startAutoRefresh('history'); // Removed auto-update
-                }
+                loadStations(function() { 
+                    const tbody = document.getElementById('history-table-body');
+                    if (tbody) {
+                        tbody.innerHTML = '<tr><td colspan="6" style="text-align:center; padding:20px; color:#777;">يرجى ضبط الفلاتر والضغط على \"تحديث السجل\" لعرض النتائج</td></tr>';
+                    }
+                    if (typeof renderHistoryTable === 'function') renderHistoryTable(false);
+                    // لا يتم تحميل بيانات السجل العام تلقائياً - التحميل يتم عند الطلب فقط
+                });
             }
             if(screenId === 'faults-log') {
                 appData.archiveSearchTriggered = false; // Reset archive trigger
@@ -7500,11 +7502,16 @@ document.getElementById('emergency-image-modal').addEventListener('click', funct
         const historyRefreshBtn = document.getElementById('history-refresh-btn');
         if (historyRefreshBtn) {
             historyRefreshBtn.addEventListener('click', () => {
-                if (appData.currentUser && appData.currentUser.type === 'operator') {
-                    loadStations(function() { renderHistoryTable(false); });
-                } else {
-                    loadStations(function() { loadHistory(function() { renderHistoryTable(true); }); });
-                }
+                const original = historyRefreshBtn.innerHTML;
+                historyRefreshBtn.disabled = true;
+                historyRefreshBtn.innerHTML = 'جاري التحميل... ⏳';
+                loadStations(function() { 
+                    loadHistory(function() { 
+                        historyRefreshBtn.disabled = false;
+                        historyRefreshBtn.innerHTML = original;
+                        renderHistoryTable(true); 
+                    }); 
+                });
             });
         }
 
@@ -10890,7 +10897,7 @@ window.exportConsumptionsToExcel = function() {
             const tbody = document.getElementById('history-table-body');
             tbody.innerHTML = '';
             let data = [...appData.operationHistory];
-            if (appData.currentUser && appData.currentUser.type === 'operator' && applyFilters && (!data || data.length === 0)) {
+            if (applyFilters && (!data || data.length === 0)) {
                 loadHistory(function() { renderHistoryTable(true); });
                 return;
             }
@@ -11522,7 +11529,7 @@ document.getElementById('btn-export-history').addEventListener('click', function
 });
 
 function exportHistoryLog(forceLoaded) {
-    if (appData.currentUser && appData.currentUser.type === 'operator' && (!appData.operationHistory || appData.operationHistory.length === 0)) {
+    if (!appData.operationHistory || appData.operationHistory.length === 0) {
         loadHistory(function() { exportHistoryLog(); });
         return;
     }
