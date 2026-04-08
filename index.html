@@ -4279,6 +4279,11 @@
                         <label>الشهر</label>
                         <input type="month" id="completion-filter-month">
                     </div>
+                    <div class="filter-item" style="display:flex; align-items:flex-end;">
+                        <button id="btn-export-completion" class="btn btn-excel" style="width:100%;" onclick="exportPerformanceToExcel('completion')">
+                            📥 تصدير التقييم (Excel)
+                        </button>
+                    </div>
                 </div>
                 <div class="table-responsive" style="overflow-x:auto;">
                     <table class="performance-table" style="width:100%; border-collapse:collapse; text-align:center;">
@@ -17559,8 +17564,41 @@ window.addEventListener('offline', function() {
         return 'future';
     }
 
+    function saveMonthlyEvaluationToDb(year, monthIndex, stations, completionRows, localLogMap) {
+        const ym = year + '-' + String(monthIndex + 1).padStart(2, '0');
+        const daysInMonth = new Date(year, monthIndex + 1, 0).getDate();
+        const nowStd = typeof getStandardDateTime === 'function' ? getStandardDateTime() : (function(){
+            const n=new Date(), dd=String(n.getDate()).padStart(2,'0'), mm=String(n.getMonth()+1).padStart(2,'0'), yy=n.getFullYear();
+            const hh=String(n.getHours()).padStart(2,'0'), mi=String(n.getMinutes()).padStart(2,'0'), ss=String(n.getSeconds()).padStart(2,'0');
+            return {date: dd+'/'+mm+'/'+yy, time: hh+':'+mi+':'+ss, full: dd+'/'+mm+'/'+yy+' '+hh+':'+mi+':'+ss};
+        })();
+        const user = appData.currentUser || {};
+        const by = user.username || user.name || user.type || 'system';
+        const updates = {};
+        stations.forEach(st => {
+            const comp = completionRows.find(r => r.name === st.name) || { dayPct: 0, nightPct: 0, inspPct: 0, total: 0 };
+            const attendance = [];
+            for (let d = 1; d <= daysInMonth; d++) {
+                const kDay = st.name + '-' + d + '-day';
+                const kNight = st.name + '-' + d + '-night';
+                attendance.push({ d: d, day: !!localLogMap[kDay], night: !!localLogMap[kNight] });
+            }
+            updates[st.name] = {
+                zone: st.zone || '',
+                dayPct: comp.dayPct,
+                nightPct: comp.nightPct,
+                inspPct: comp.inspPct,
+                totalPct: comp.total,
+                attendance: attendance,
+                generatedAt: nowStd.full,
+                generatedBy: by
+            };
+        });
+        db.ref('station_evaluations/' + ym).update(updates);
+    }
+
     // --- Export Performance Logic ---
-    window.exportPerformanceToExcel = function() {
+    window.exportPerformanceToExcel = function(source) {
         // 1. Check Permissions
         const user = appData.currentUser;
         if (!user || (user.type !== 'admin' && user.type !== 'engineer')) {
@@ -17569,28 +17607,42 @@ window.addEventListener('offline', function() {
         }
 
         // 2. Gather Filters
-        const zoneFilter = document.getElementById('perf-filter-zone').value;
-        const stationFilter = document.getElementById('perf-filter-station').value;
-        const monthInput = document.getElementById('perf-filter-month').value;
+        const prefix = source === 'completion' ? 'completion' : 'perf';
+        const zoneFilter = document.getElementById(prefix + '-filter-zone').value;
+        const stationFilter = (source === 'completion') ? document.getElementById('completion-filter-station').value : document.getElementById('perf-filter-station').value;
+        const monthInput = document.getElementById(prefix + '-filter-month').value;
         
         if (!monthInput) {
             alert('يرجى اختيار الشهر');
             return;
         }
         
-        const btn = document.getElementById('btn-export-performance');
+        const btnId = source === 'completion' ? 'btn-export-completion' : 'btn-export-performance';
+        const btn = document.getElementById(btnId);
         const originalText = btn.innerHTML;
         btn.disabled = true;
-        btn.innerHTML = 'جاري التصدير...';
+        btn.innerHTML = 'جاري التصدير... ⏳';
 
         // 3. Prepare Data
-        // We need to fetch data for the whole month
         const [year, month] = monthInput.split('-').map(Number);
+        const monthIndex = month - 1;
         const daysInMonth = new Date(year, month, 0).getDate();
+        const monthStart = new Date(year, monthIndex, 1);
         
         // Ensure stations loaded
         if (!appData.stations || Object.keys(appData.stations).length === 0) {
-            loadStations(function() { exportPerformanceToExcel(); });
+            loadStations(function() { exportPerformanceToExcel(source); });
+            return;
+        }
+
+        // --- تحميل كافة البيانات المطلوبة للشهر بالكامل ---
+        // نستخدم محاولة مكثفة لضمان تغطية الشهر بالكامل
+        const oldestLoaded = getOldestHistoryDate();
+        if (!appData.historyFullyLoaded && (!oldestLoaded || monthStart < oldestLoaded)) {
+            btn.innerHTML = 'جاري تحميل السجلات... 📂';
+            ensureHistoryCoversDateRange(monthStart, null, function() {
+                exportPerformanceToExcel(source);
+            }, 0); // سنقوم بزيادة عدد المحاولات داخلياً إذا لزم الأمر
             return;
         }
         
@@ -17608,194 +17660,118 @@ window.addEventListener('offline', function() {
             return String(a.zone).localeCompare(String(b.zone), 'ar');
         });
 
-        // Ensure history loaded (we might need to load more if not full history)
-        // Ideally we should query specifically for the month range.
-        // For simplicity, we assume appData.operationHistory contains enough data or we rely on what's loaded.
-        // If history is huge, this might be slow.
-        // Let's assume operationHistory is loaded. If empty, try load.
-        if (!appData.operationHistory || appData.operationHistory.length === 0) {
-             loadHistory(function() { 
-                 btn.disabled = false; btn.innerHTML = originalText;
-                 exportPerformanceToExcel(); 
-             });
-             return;
-        }
+        const localLogMap = buildMonthlyLogMap(year, monthIndex);
+        const completionRows = computeCompletionRows(year, monthIndex);
+        
+        // ربط نتائج التقييم بالمحطات المفلترة
+        const filteredCompletionRows = completionRows.filter(r => stations.some(s => s.name === r.name));
 
-        // Build a map for the WHOLE MONTH
-        const monthStart = new Date(year, month - 1, 1);
-        const monthEnd = new Date(year, month, 0, 23, 59, 59);
-        
-        // Use existing buildPerfLogMap logic but for whole month?
-        // buildPerfLogMap clears the map. We should create a local map.
-        const localLogMap = {};
-        const history = appData.operationHistory || [];
-        
-        // Optimize: filter history by date range first
-        const qStart = new Date(monthStart); qStart.setDate(qStart.getDate() - 1);
-        const qEnd = new Date(monthEnd); qEnd.setDate(qEnd.getDate() + 1);
-        
-        history.forEach(log => {
-            if (!log.date || !log.time) return;
-            const d = parseDateSimple(log.date);
-            if (!d) return;
-            if (d < qStart || d > qEnd) return;
-            
-            const timeStr = toEnglishDigits(log.time);
-            const [h, m] = timeStr.split(':').map(Number);
-            
-            let shiftDate = new Date(d);
-            let shiftType = '';
-            
-            if (h >= 6 && h < 18) {
-                shiftType = 'day';
-            } else {
-                shiftType = 'night';
-                if (h < 6) shiftDate.setDate(shiftDate.getDate() - 1);
-            }
-            
-            // Only add if within target month
-            if (shiftDate.getMonth() !== (month - 1) || shiftDate.getFullYear() !== year) return;
-            
-            const dateKey = `${shiftDate.getDate()}`; // Just day number is enough since we filtered month
-            const k = `${log.station}-${dateKey}-${shiftType}`;
-            localLogMap[k] = true;
-        });
+        saveMonthlyEvaluationToDb(year, monthIndex, stations, filteredCompletionRows, localLogMap);
 
         // 4. Build Excel Data Array (AOA)
         const wb = XLSX.utils.book_new();
-        const wsData = [];
-        
-        // Header Row 1: Station Info
+
+        // --- Sheet 1: ملخص نسب الإتمام ---
+        const summaryData = [
+            ["تقرير تقييم أداء محطات المياه - توشكى"],
+            [`عن شهر: ${month}/${year}`],
+            [], // صف فارغ
+            ["اسم المحطة", "تمام نهاري", "تمام ليلي", "تمام الفحص", "الإجمالي"]
+        ];
+
+        filteredCompletionRows.forEach(r => {
+            summaryData.push([r.name, r.dayPct + "%", r.nightPct + "%", r.inspPct + "%", r.total + "%"]);
+        });
+
+        const wsSummary = XLSX.utils.aoa_to_sheet(summaryData);
+        wsSummary['!cols'] = [{ wch: 25 }, { wch: 15 }, { wch: 15 }, { wch: 15 }, { wch: 15 }];
+        XLSX.utils.book_append_sheet(wb, wsSummary, "ملخص نسب الإتمام");
+
+        // --- Sheet 2: تفاصيل التواجد اليومي ---
+        const attendanceData = [];
+        attendanceData.push(["تفاصيل التواجد اليومي للشيفتات"]);
+        attendanceData.push([`الشهر: ${month}/${year}`]);
+        attendanceData.push([]);
+
+        // Header Rows for Attendance
         const header1 = ["المحطة", "المنطقة"];
         const header2 = ["", ""];
         
+        const now = new Date();
+        const isCurrentMonth = now.getFullYear() === year && now.getMonth() === monthIndex;
+        const currentDay = now.getDate();
+
         for (let d = 1; d <= daysInMonth; d++) {
-            const dateObj = new Date(year, month - 1, d);
+            const dateObj = new Date(year, monthIndex, d);
             const dayName = dateObj.toLocaleDateString('ar-EG', { weekday: 'short' });
-            header1.push(`${d}/${month} ${dayName}`);
-            header1.push(""); // Placeholder for merge
+            header1.push(`${d}/${month} (${dayName})`);
+            header1.push(""); // Merge cell
             header2.push("نهاري");
             header2.push("ليلي");
         }
         
-        wsData.push(header1);
-        wsData.push(header2);
+        attendanceData.push(header1);
+        attendanceData.push(header2);
         
-        // Data Rows
         stations.forEach(st => {
             const row = [st.name, st.zone];
             for (let d = 1; d <= daysInMonth; d++) {
-                const kDay = `${st.name}-${d}-day`;
-                const kNight = `${st.name}-${d}-night`;
-                
-                row.push(localLogMap[kDay] ? "✔" : "✖");
-                row.push(localLogMap[kNight] ? "✔" : "✖");
-                
-                // Future check logic could be added here (replace ✖ with - if future)
-                // But simple check/cross is fine for export
+                // إذا كان تاريخاً مستقبلياً، نضع "-"
+                if (isCurrentMonth && d > currentDay) {
+                    row.push("-");
+                    row.push("-");
+                } else {
+                    const kDay = `${st.name}-${d}-day`;
+                    const kNight = `${st.name}-${d}-night`;
+                    row.push(localLogMap[kDay] ? "✔" : "✖");
+                    row.push(localLogMap[kNight] ? "✔" : "✖");
+                }
             }
-            wsData.push(row);
+            attendanceData.push(row);
         });
         
-        // Create Sheet
-        const ws = XLSX.utils.aoa_to_sheet(wsData);
+        const wsAttendance = XLSX.utils.aoa_to_sheet(attendanceData);
         
-        // Merges for Header 1
+        // Merges for Attendance Header
         const merges = [];
-        // Columns 0, 1 are single
-        // Columns 2+ are paired (Day/Night)
         for (let i = 0; i < daysInMonth; i++) {
             const colIndex = 2 + (i * 2);
-            merges.push({ s: { r: 0, c: colIndex }, e: { r: 0, c: colIndex + 1 } });
+            merges.push({ s: { r: 3, c: colIndex }, e: { r: 3, c: colIndex + 1 } });
         }
-        ws['!merges'] = merges;
+        wsAttendance['!merges'] = merges;
         
-        // Append Sheet
-        XLSX.utils.book_append_sheet(wb, ws, "تقرير الأداء");
-        
-        const summaryAoA = [];
-        summaryAoA.push(['اسم المحطة','تمام نهاري','تمام ليلي','تمام الفحص','الإجمالي']);
-        (function(){
-            const m = buildMonthlyLogMap(year, month - 1);
-            const weeks = getWeeksInMonth(year, month - 1);
-            let lastWeek = null;
-            const now = new Date();
-            for (let i = weeks.length - 1; i >= 0; i--) {
-                const w = weeks[i];
-                const e = new Date(w.end); e.setHours(23,59,59,999);
-                if (e < now && e.getMonth() === (month - 1) && e.getFullYear() === year) { lastWeek = w; break; }
-            }
-            const isCurrent = (new Date().getFullYear() === year && (new Date().getMonth() === (month - 1)));
-            const dim = new Date(year, month, 0).getDate();
-            const eligibleDays = isCurrent ? Math.max(0, Math.min(dim, new Date().getDate() - 1)) : dim;
-            stations.forEach(st => {
-                let dayCredits = 0;
-                let nightCredits = 0;
-                for (let d = 1; d <= eligibleDays; d++) {
-                    if (m[`${st.name}-${d}-day`]) {
-                        const first = getFirstLogInShift(st.name, new Date(year, month - 1, d), 'day');
-                        if (first) {
-                            const shiftStart = new Date(year, month - 1, d, 6, 0, 0, 0);
-                            const delayH = (first.getTime() - shiftStart.getTime()) / 3600000;
-                            dayCredits += (delayH >= 2) ? 0.5 : 1;
-                        } else {
-                            dayCredits += 1;
-                        }
-                    }
-                    if (m[`${st.name}-${d}-night`]) {
-                        const firstN = getFirstLogInShift(st.name, new Date(year, month - 1, d), 'night');
-                        if (firstN) {
-                            const shiftStartN = new Date(year, month - 1, d, 18, 0, 0, 0);
-                            const delayHn = (firstN.getTime() - shiftStartN.getTime()) / 3600000;
-                            nightCredits += (delayHn >= 2) ? 0.5 : 1;
-                        } else {
-                            nightCredits += 1;
-                        }
-                    }
-                }
-                const dayPct = eligibleDays > 0 ? Math.round((dayCredits / eligibleDays) * 1000) / 10 : 0;
-                const nightPct = eligibleDays > 0 ? Math.round((nightCredits / eligibleDays) * 1000) / 10 : 0;
-                let inspPct = 0;
-                if (lastWeek) {
-                    let found = false;
-                    let isLate = false;
-                    const cur = new Date(lastWeek.start);
-                    for (let i = 0; i < 7; i++) {
-                        const k = `${st.name}-${cur.getFullYear()}-${cur.getMonth()}-${cur.getDate()}-inspection`;
-                        if (m[k]) {
-                            found = true;
-                            if (i > 3) isLate = true;
-                        }
-                        cur.setDate(cur.getDate() + 1);
-                    }
-                    inspPct = found ? (isLate ? 50 : 100) : 0;
-                }
-                const total = Math.round(((dayPct + nightPct + inspPct) / 3) * 10) / 10;
-                summaryAoA.push([st.name, `${dayPct}%`, `${nightPct}%`, `${inspPct}%`, `${total}%`]);
-            });
-        })();
-        const ws2 = XLSX.utils.aoa_to_sheet(summaryAoA);
-        XLSX.utils.book_append_sheet(wb, ws2, "نسب الإتمام");
+        // Column Widths for Attendance
+        const attCols = [{ wch: 20 }, { wch: 15 }];
+        for (let i = 0; i < daysInMonth * 2; i++) attCols.push({ wch: 6 });
+        wsAttendance['!cols'] = attCols;
+
+        XLSX.utils.book_append_sheet(wb, wsAttendance, "تفاصيل التواجد");
         
         // Download
-        XLSX.writeFile(wb, `MonthlyCapture_${year}_${month}.xlsx`);
+        XLSX.writeFile(wb, `Station_Evaluation_${year}_${month}.xlsx`);
         
         btn.disabled = false;
         btn.innerHTML = originalText;
     };
 
-    // Update button visibility when rendering table (or anywhere appropriate)
+    // Update button visibility when rendering table
     const _oldRenderPerformanceTable = window.renderPerformanceTable;
     window.renderPerformanceTable = function() {
         _oldRenderPerformanceTable();
-        // Check permission and toggle button
         const btn = document.getElementById('btn-export-performance');
         if (btn && appData.currentUser) {
-            if (appData.currentUser.type === 'admin' || appData.currentUser.type === 'engineer') {
-                btn.style.display = 'block';
-            } else {
-                btn.style.display = 'none';
-            }
+            const canExport = appData.currentUser.type === 'admin' || appData.currentUser.type === 'engineer';
+            btn.style.display = canExport ? 'block' : 'none';
+        }
+    };
+
+    const _oldRenderCompletionTable = window.renderCompletionTable;
+    window.renderCompletionTable = function() {
+        _oldRenderCompletionTable();
+        const btn = document.getElementById('btn-export-completion');
+        if (btn && appData.currentUser) {
+            const canExport = appData.currentUser.type === 'admin' || appData.currentUser.type === 'engineer';
+            btn.style.display = canExport ? 'block' : 'none';
         }
     };
 
