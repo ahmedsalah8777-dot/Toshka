@@ -14180,10 +14180,17 @@ function renderWorkOrdersTables() {
 // --- دالة تصدير أوامر الشغل الجارية (المفلترة) ---
 function exportActiveWorkOrders() {
     // نستخدم نفس منطق الفلترة للحصول على البيانات
-    const fZone = document.getElementById('wo-filter-zone').value;
-    const fFault = document.getElementById('wo-filter-fault').value.toLowerCase();
-    const fDept = document.getElementById('wo-filter-dept').value;
-    const fDuration = parseInt(document.getElementById('wo-filter-duration').value) || 0;
+    const fZoneElement = document.getElementById('wo-filter-zone');
+    const fZone = fZoneElement ? fZoneElement.value : '';
+
+    const fStationElement = document.getElementById('wo-filter-station');
+    const fStation = fStationElement ? fStationElement.value : '';
+
+    const fDeptElement = document.getElementById('wo-filter-dept');
+    const fDept = fDeptElement ? fDeptElement.value : '';
+
+    const fDurationElement = document.getElementById('wo-filter-duration');
+    const fDuration = fDurationElement ? (parseInt(fDurationElement.value) || 0) : 0;
     const now = Date.now();
 
     db.ref('work_orders').orderByChild('status').equalTo('active').once('value', (snap) => {
