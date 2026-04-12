@@ -7143,8 +7143,38 @@ document.getElementById('emergency-image-modal').addEventListener('click', funct
 
             const screenId = activeScreen.id.replace('-screen', '');
 
+            if (screenId === 'stations') {
+                loadAppConfig(function() {
+                    loadStations(function() {
+                        renderZonesTabs();
+                        var at = document.querySelector('.nav-tab.active');
+                        renderStations(at ? at.dataset.zone : 'all');
+                        finishRefresh();
+                    }, { forceReload: true });
+                });
+                return;
+            }
+
+            if (screenId === 'station') {
+                loadStations(function() {
+                    if (appData.currentStation && typeof showStationDetails === 'function') {
+                        showStationDetails(appData.currentStation, false);
+                    }
+                    finishRefresh();
+                }, { forceReload: true });
+                return;
+            }
+
+            if (screenId === 'faults-log') {
+                loadFaultsLog(function() {
+                    if (typeof renderFaultsLog === 'function') renderFaultsLog();
+                    finishRefresh();
+                }, { forceReload: true });
+                return;
+            }
+
             if (screenId === 'work-orders' || screenId === 'archive-work-orders') {
-                loadAppConfig(() => {
+                loadAppConfig(function() {
                     if (typeof resetActiveLimit === 'function') resetActiveLimit();
                     if (typeof resetArchiveLimit === 'function') resetArchiveLimit();
                     if (typeof renderWorkOrdersTables === 'function') renderWorkOrdersTables();
@@ -7153,21 +7183,163 @@ document.getElementById('emergency-image-modal').addEventListener('click', funct
                 return;
             }
 
-            if (screenId === 'faults-log') {
-                loadFaultsLog(() => {
-                    if (typeof renderFaultsLog === 'function') renderFaultsLog();
-                    finishRefresh();
-                }, { forceReload: true });
-                return;
-            }
-
             if (screenId === 'station-logs') {
-                loadStations(() => {
+                loadStations(function() {
                     if (appData.currentStation && typeof renderStationSpecificLogs === 'function') {
                         renderStationSpecificLogs(appData.currentStation);
                     }
                     finishRefresh();
                 }, { forceReload: true });
+                return;
+            }
+
+            if (screenId === 'consumptions-report') {
+                appData.consumptionLog = [];
+                loadAppConfig(function() {
+                    loadStations(function() {
+                        if (typeof updateConsStationFilter === 'function') updateConsStationFilter();
+                        loadConsumptionLogs(function() {
+                            if (typeof renderConsumptionsTable === 'function') renderConsumptionsTable();
+                            finishRefresh();
+                        });
+                    }, { forceReload: true });
+                });
+                return;
+            }
+
+            if (screenId === 'statistics') {
+                loadAppConfig(function() {
+                    loadStations(function() {
+                        if (typeof initStatisticsFilters === 'function') initStatisticsFilters();
+                        if (typeof updateStatistics === 'function') updateStatistics();
+                        finishRefresh();
+                    }, { forceReload: true });
+                });
+                return;
+            }
+
+            if (screenId === 'history') {
+                loadStations(function() {
+                    loadHistory(function() {
+                        if (typeof renderHistoryTable === 'function') renderHistoryTable(true);
+                        finishRefresh();
+                    });
+                }, { forceReload: true });
+                return;
+            }
+
+            if (screenId === 'fault-reporting') {
+                loadStations(function() {
+                    if (typeof initFaultReportingScreen === 'function') initFaultReportingScreen();
+                    if (typeof renderFaultReportsTable === 'function') renderFaultReportsTable();
+                    finishRefresh();
+                }, { forceReload: true });
+                return;
+            }
+
+            if (screenId === 'users') {
+                loadUserProfiles(function() {
+                    appData.currentUsersPage = 0;
+                    if (typeof renderUsersManagement === 'function') renderUsersManagement();
+                    finishRefresh();
+                });
+                return;
+            }
+
+            if (screenId === 'users-data') {
+                loadUserProfiles(function() {
+                    appData.currentUsersDataPage = 0;
+                    if (typeof renderUsersDataManagement === 'function') renderUsersDataManagement();
+                    finishRefresh();
+                });
+                return;
+            }
+
+            if (screenId === 'user-profile') {
+                loadUserProfiles(function() {
+                    appData.currentProfilesPage = 0;
+                    if (typeof renderUserProfileForm === 'function') renderUserProfileForm();
+                    if (typeof renderUsersProfilesList === 'function') renderUsersProfilesList();
+                    finishRefresh();
+                });
+                return;
+            }
+
+            if (screenId === 'inspection-export') {
+                loadAppConfig(function() {
+                    loadStations(function() {
+                        if (typeof updateExportFilters === 'function') updateExportFilters();
+                        finishRefresh();
+                    }, { forceReload: true });
+                });
+                return;
+            }
+
+            if (screenId === 'inspection-status-log') {
+                if (typeof renderInspectionStatusLog === 'function') renderInspectionStatusLog();
+                setTimeout(finishRefresh, 200);
+                return;
+            }
+
+            if (screenId === 'reports-hub') {
+                loadAppConfig(function() {
+                    loadStations(function() {
+                        if (typeof renderReportsHub === 'function') renderReportsHub();
+                        finishRefresh();
+                    }, { forceReload: true });
+                });
+                return;
+            }
+
+            if (screenId === 'settings') {
+                loadAppConfig(function() {
+                    loadStations(function() {
+                        if (typeof loadAnnouncementSettings === 'function') loadAnnouncementSettings();
+                        if (typeof renderSettingsScreen === 'function') renderSettingsScreen();
+                        finishRefresh();
+                    }, { forceReload: true });
+                });
+                return;
+            }
+
+            if (screenId === 'emergency-info') {
+                if (typeof loadEmergencyData === 'function') loadEmergencyData();
+                setTimeout(finishRefresh, 200);
+                return;
+            }
+
+            if (screenId === 'supervisor-dashboard') {
+                loadStations(function() {
+                    loadHistory(function() {
+                        if (typeof renderSupervisorDashboard === 'function') renderSupervisorDashboard();
+                        finishRefresh();
+                    });
+                }, { forceReload: true });
+                return;
+            }
+
+            if (screenId === 'supervisor-stations') {
+                loadStations(function() {
+                    if (typeof renderSupervisorAssignmentsScreen === 'function') renderSupervisorAssignmentsScreen();
+                    finishRefresh();
+                }, { forceReload: true });
+                return;
+            }
+
+            if (screenId === 'supervisor-history') {
+                loadStations(function() {
+                    loadHistory(function() {
+                        if (typeof renderSupervisorHistory === 'function') renderSupervisorHistory();
+                        finishRefresh();
+                    });
+                }, { forceReload: true });
+                return;
+            }
+
+            if (screenId === 'performance-evaluation') {
+                if (typeof renderPerformanceScreen === 'function') renderPerformanceScreen();
+                if (typeof refreshPerformanceTab === 'function') refreshPerformanceTab();
+                setTimeout(finishRefresh, 200);
                 return;
             }
 
