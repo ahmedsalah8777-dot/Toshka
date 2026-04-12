@@ -7117,16 +7117,38 @@ document.getElementById('emergency-image-modal').addEventListener('click', funct
 
         function handleGlobalRefresh() {
             const activeScreen = document.querySelector('.screen.active');
-            if (!activeScreen) return;
-            const screenId = activeScreen.id.replace('-screen', '');
+            const refreshBtn = document.getElementById('refresh-btn');
+            if (refreshBtn) {
+                refreshBtn.disabled = true;
+                refreshBtn.classList.add('syncing');
+            }
             
             if (typeof showToast === 'function') {
                 showToast('info', 'تحديث البيانات', 'جاري تحديث بيانات الشاشة الحالية... 🔄', 3000);
             }
-            
+
+            if (!activeScreen) {
+                window.location.reload();
+                return;
+            }
+
+            const screenId = activeScreen.id.replace('-screen', '');
+
+            if (screenId === 'work-orders' || screenId === 'archive-work-orders') {
+                loadAppConfig(() => {
+                    if (typeof resetActiveLimit === 'function') resetActiveLimit();
+                    if (typeof resetArchiveLimit === 'function') resetArchiveLimit();
+                    if (typeof renderWorkOrdersTables === 'function') renderWorkOrdersTables();
+                    setTimeout(() => window.location.reload(), 200);
+                });
+                return;
+            }
+
             if (typeof showScreen === 'function') {
                 showScreen(screenId, false);
             }
+
+            setTimeout(() => window.location.reload(), 200);
         }
 
         function showScreen(screenId, addToHistory = true) {
