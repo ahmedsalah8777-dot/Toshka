@@ -6924,7 +6924,9 @@ document.getElementById('emergency-image-modal').addEventListener('click', funct
             if (tries > 8) { if (cb) cb(); return; }
             loadMoreHistoryFromDb(function(){ ensureHistoryCoversDateRange(startDate, endDate, cb, tries + 1); });
         }
-        function loadFaultsLog(cb) {
+        function loadFaultsLog(cb, options) {
+            var opts = options || {};
+            var forceReload = !!opts.forceReload;
             // منع التحميل للمشغلين لتوفير البيانات
             if (appData.currentUser && appData.currentUser.type === 'operator') {
                 if (cb) cb();
@@ -6940,7 +6942,7 @@ document.getElementById('emergency-image-modal').addEventListener('click', funct
             }
             if (hasFaults && cb) cb();
             if (!navigator.onLine && hasFaults) return;
-            if (hasFaults && cacheFresh) return;
+            if (!forceReload && hasFaults && cacheFresh) return;
             db.ref('faults_log').limitToLast(10000).once('value').then(function(snap) {
                 var v = snap.val();
                 appData.faultsLog = (v && (Array.isArray(v) ? v : Object.values(v))) || [];
@@ -7148,6 +7150,24 @@ document.getElementById('emergency-image-modal').addEventListener('click', funct
                     if (typeof renderWorkOrdersTables === 'function') renderWorkOrdersTables();
                     finishRefresh();
                 });
+                return;
+            }
+
+            if (screenId === 'faults-log') {
+                loadFaultsLog(() => {
+                    if (typeof renderFaultsLog === 'function') renderFaultsLog();
+                    finishRefresh();
+                }, { forceReload: true });
+                return;
+            }
+
+            if (screenId === 'station-logs') {
+                loadStations(() => {
+                    if (appData.currentStation && typeof renderStationSpecificLogs === 'function') {
+                        renderStationSpecificLogs(appData.currentStation);
+                    }
+                    finishRefresh();
+                }, { forceReload: true });
                 return;
             }
 
