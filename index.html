@@ -7118,6 +7118,13 @@ document.getElementById('emergency-image-modal').addEventListener('click', funct
         function handleGlobalRefresh() {
             const activeScreen = document.querySelector('.screen.active');
             const refreshBtn = document.getElementById('refresh-btn');
+            const finishRefresh = () => {
+                if (refreshBtn) {
+                    refreshBtn.disabled = false;
+                    refreshBtn.classList.remove('syncing');
+                }
+            };
+
             if (refreshBtn) {
                 refreshBtn.disabled = true;
                 refreshBtn.classList.add('syncing');
@@ -7128,7 +7135,7 @@ document.getElementById('emergency-image-modal').addEventListener('click', funct
             }
 
             if (!activeScreen) {
-                window.location.reload();
+                finishRefresh();
                 return;
             }
 
@@ -7139,7 +7146,7 @@ document.getElementById('emergency-image-modal').addEventListener('click', funct
                     if (typeof resetActiveLimit === 'function') resetActiveLimit();
                     if (typeof resetArchiveLimit === 'function') resetArchiveLimit();
                     if (typeof renderWorkOrdersTables === 'function') renderWorkOrdersTables();
-                    setTimeout(() => window.location.reload(), 200);
+                    finishRefresh();
                 });
                 return;
             }
@@ -7147,8 +7154,7 @@ document.getElementById('emergency-image-modal').addEventListener('click', funct
             if (typeof showScreen === 'function') {
                 showScreen(screenId, false);
             }
-
-            setTimeout(() => window.location.reload(), 200);
+            setTimeout(finishRefresh, 300);
         }
 
         function showScreen(screenId, addToHistory = true) {
