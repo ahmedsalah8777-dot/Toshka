@@ -4703,6 +4703,12 @@
             <label class="dept-option"><input type="checkbox" value="تكييف"> تكييف ❄️</label>
             <label class="dept-option"><input type="checkbox" value="تجهيزات"> تجهيزات 🏗️</label>
         </div>
+        <div style="margin: 15px 0; padding: 10px; background: #fff3cd; border: 1px solid #ffeeba; border-radius: 5px; text-align: right;">
+            <label style="color: #c0392b; font-weight: bold; cursor: pointer; display: flex; align-items: center; gap: 8px;">
+                <input type="checkbox" id="urgent-work-order" style="width: 20px; height: 20px;">
+                🚨 بلاغ طارئ (عاجل جداً)
+            </label>
+        </div>
         <button id="btn-confirm-work-order" class="btn btn-primary" style="width: 100%;">إصدار أمر الشغل</button>
     </div>
 </div>
@@ -6758,9 +6764,9 @@ document.getElementById('emergency-image-modal').addEventListener('click', funct
             });
         }
 
-        function loadAppConfig(cb) {
+        function loadAppConfig(cb, forceReload) {
             var cache = localStorage.getItem('toshka_app_config_cache');
-            if (cache) {
+            if (cache && !forceReload) {
                 try {
                     var c = JSON.parse(cache);
                     if (c && Array.isArray(c.zones) && c.zones.length > 0) {
@@ -6792,7 +6798,7 @@ document.getElementById('emergency-image-modal').addEventListener('click', funct
             var cacheFresh = isCacheFresh(cacheObj.ts, CACHE_TTL.stations);
             var hasStations = appData.stations && Object.keys(appData.stations).length > 0;
             if (hasStations) setLastUpdateLabel(getStoredFirebaseUpdate());
-            if (hasStations && cb) { cb(); }
+            if (hasStations && cb && !forceReload) { cb(); }
             
             var isOperator = appData.currentUser && appData.currentUser.type === 'operator';
             if (!forceReload && isOperator && hasStations) {
@@ -7151,7 +7157,7 @@ document.getElementById('emergency-image-modal').addEventListener('click', funct
                         renderStations(at ? at.dataset.zone : 'all');
                         finishRefresh();
                     }, { forceReload: true });
-                });
+                }, true);
                 return;
             }
 
@@ -13918,6 +13924,8 @@ window.openWorkOrderModal = function(key) {
     document.getElementById('modal-dept-select').classList.add('show');
     // تصفير الاختيارات
     document.querySelectorAll('.dept-checkbox-group input').forEach(c => c.checked = false);
+    const urgentCb = document.getElementById('urgent-work-order');
+    if (urgentCb) urgentCb.checked = false;
 };
 
 window.closeModal = function(id) {
@@ -13969,6 +13977,7 @@ document.getElementById('btn-confirm-work-order').addEventListener('click', () =
             component: report.component,
             description: report.description,
             departments: selectedDepts,
+            isUrgent: document.getElementById('urgent-work-order') ? document.getElementById('urgent-work-order').checked : false,
             status: 'active',
             issuedBy: appData.currentUser.username
         };
@@ -14248,10 +14257,13 @@ function renderWorkOrdersTables() {
             // إضافتها للمصفوفة للمعالجة
             allOrders.push({key: key, ...val}); 
         });
-
-        // ترتيب: الأحدث أولاً
-        allOrders.sort((a, b) => (b.startTimestamp || 0) - (a.startTimestamp || 0));
-
+        // ترتيب: الطارئ أولاً ثم الأحدث
+        allOrders.sort((a, b) => {
+            const uA = a.isUrgent ? 1 : 0;
+            const uB = b.isUrgent ? 1 : 0;
+            if (uA !== uB) return uB - uA;
+            return (b.startTimestamp || 0) - (a.startTimestamp || 0);
+        });
         // فصل البيانات وتطبيق الفلاتر
         let activeOrders = [];
         let archiveOrders = [];
@@ -14308,9 +14320,15 @@ function renderWorkOrdersTables() {
                 // --- منطق الأزرار وحالة التجميد ---
                 let actionButtons = '';
                 let rowStyle = '';
+                let urgentBadge = '';
+
+                if (order.isUrgent) {
+                    rowStyle = 'background-color: #ffeaea; border-right: 4px solid #c0392b;';
+                    urgentBadge = '<br><span style="display: inline-block; margin-top: 5px; padding: 2px 6px; background: #c0392b; color: white; border-radius: 4px; font-size: 0.8rem; font-weight: bold;">🚨 طارئ</span>';
+                }
 
                 if (order.isFrozen) {
-                    // حالة التجميد
+                    // حالة التجميد تغطي على الطارئ من حيث لون الخلفية لتوضيح التجميد
                     rowStyle = 'background-color: #fff8e1; border-right: 4px solid #f39c12;'; 
                     actionButtons = `
                         <button class="btn btn-warning btn-sm" onclick="openFreezeModal('${order.key}')" title="عرض سبب التجميد / تعديل" style="width:100%">
@@ -14329,7 +14347,7 @@ function renderWorkOrdersTables() {
 
                 activeBody.innerHTML += `
                     <tr style="${rowStyle}">
-                        <td>${order.startDate || '-'}</td>
+                        <td>${order.startDate || '-'}${urgentBadge}</td>
                         <td>${order.zone || ''}<br><b>${order.station || ''}</b></td>
                         <td>${deptsHtml}</td>
                         <td>${order.component || ''}</td>
