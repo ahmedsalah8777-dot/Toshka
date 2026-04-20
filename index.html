@@ -6996,8 +6996,10 @@ document.getElementById('emergency-image-modal').addEventListener('click', funct
             // تحسين: استخدام child_changed بدلاً من value لتقليل استهلاك البيانات
             ref.on('child_changed', function(snap) {
                 var stationData = snap.val();
-                if (stationData && stationData.name) {
-                    appData.stations[stationData.name] = stationData;
+                // إصلاح: استخدام snap.key بدلاً من stationData.name لضمان دقة المفتاح
+                var stationKey = snap.key;
+                if (stationData && stationKey) {
+                    appData.stations[stationKey] = stationData;
                     setStationsCache(appData.stations);
                     applyStationsUpdateTime(stationData.lastUpdate);
                     
@@ -7076,7 +7078,11 @@ document.getElementById('emergency-image-modal').addEventListener('click', funct
                     repairCount++;
                 }
             });
-            if (repairCount > 0 && navigator.onLine) db.ref('stations').update(updates);
+            if (repairCount > 0 && navigator.onLine) {
+                // تم تعطيل الكتابة التلقائية لتجنب استبدال بيانات المحطات الحقيقية
+                // db.ref('stations').update(updates);
+                console.warn('[forceRepairStations] تم اكتشاف ' + repairCount + ' محطة غير موجودة في appData - تم تعطيل الكتابة التلقائية');
+            }
         }
 
         // دالة للعودة للشاشة السابقة (تستخدم في أزرار الرجوع)
@@ -8624,22 +8630,22 @@ function saveDataInternal(options = {}) {
             if(consumptionLogData) db.ref('consumption_logs').push(consumptionLogData);
             
             if (newFaultEntries.length > 0 || resolvedFaultEntries.length > 0) {
-                 db.ref('faults_log').once('value').then(snap => {
-                    let rawVal = snap.val(); 
-                    let logs = []; 
-                    if (rawVal) { if (Array.isArray(rawVal)) logs = rawVal; else logs = Object.values(rawVal); }
-                    newFaultEntries.forEach(newF => { 
+                // إصلاح: استخدام transaction لتجنب تعارض الكتابة عند الضغط العالي
+                db.ref('faults_log').transaction(function(currentLogs) {
+                    let logs = [];
+                    if (currentLogs) { logs = Array.isArray(currentLogs) ? currentLogs : Object.values(currentLogs); }
+                    newFaultEntries.forEach(newF => {
                         const exists = logs.some(existingF => existingF.active === true && existingF.station === newF.station && existingF.type === newF.type);
                         if (!exists) logs.push(newF);
                     });
-                    resolvedFaultEntries.forEach(rf => { 
-                        const index = logs.findIndex(f => f.station === sName && f.type === rf.type && f.active === true); 
-                        if (index !== -1) { 
-                            logs[index].active = false; logs[index].endTime = stationFullDateTime; 
-                        } else { logs.push(rf); } 
+                    resolvedFaultEntries.forEach(rf => {
+                        const index = logs.findIndex(f => f.station === sName && f.type === rf.type && f.active === true);
+                        if (index !== -1) {
+                            logs[index].active = false; logs[index].endTime = stationFullDateTime;
+                        } else { logs.push(rf); }
                     });
-                    if (logs.length > 200000) logs = logs.slice(-200000); 
-                    db.ref('faults_log').set(logs);
+                    if (logs.length > 200000) logs = logs.slice(-200000);
+                    return logs;
                 });
             }
             return "Success";
@@ -11957,9 +11963,10 @@ function processOfflineQueue() {
                 // معالجة سجل الأعطال (newFaults / resolvedFaults)
                 var nf = (d.newFaults || []), rf = (d.resolvedFaults || []), sid = d.stationId, dt = (d.updates && d.updates.lastUpdate) || nowStd.full;
                 if (nf.length > 0 || rf.length > 0) {
-                    db.ref('faults_log').once('value').then(function(snap) {
-                        var rawVal = snap.val(), logs = [];
-                        if (rawVal) { logs = Array.isArray(rawVal) ? rawVal : Object.values(rawVal); }
+                    // إصلاح: استخدام transaction لتجنب تعارض الكتابة عند الضغط العالي
+                    db.ref('faults_log').transaction(function(currentLogs) {
+                        var logs = [];
+                        if (currentLogs) { logs = Array.isArray(currentLogs) ? currentLogs : Object.values(currentLogs); }
                         nf.forEach(function(newF) {
                             var ex = logs.some(function(f){ return f.active === true && f.station === newF.station && f.type === newF.type; });
                             if (!ex) logs.push(newF);
@@ -11970,7 +11977,7 @@ function processOfflineQueue() {
                             else { logs.push(resF); }
                         });
                         if (logs.length > 200000) logs = logs.slice(-200000);
-                        db.ref('faults_log').set(logs);
+                        return logs;
                     });
                 }
             }
