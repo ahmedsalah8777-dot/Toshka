@@ -2845,6 +2845,24 @@
 /* --- تنسيقات شاشة البلاغات وأوامر الشغل (جديد) --- */
 .fault-reporting-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 15px; margin-bottom: 20px; }
 .work-order-badge { padding: 4px 8px; border-radius: 4px; font-size: 0.8rem; font-weight: bold; color: white; display: inline-block; margin: 1px; }
+.firebase-record-id {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    margin-top: 4px;
+    padding: 2px 6px;
+    border: 1px dashed #bfc9d1;
+    border-radius: 999px;
+    background: #f8f9fa;
+    color: #566573;
+    font-size: 0.7rem;
+    direction: ltr;
+    cursor: text;
+    user-select: text;
+}
+.firebase-record-id-label {
+    font-weight: bold;
+}
 .dept-mech { background-color: #e67e22; } /* ميكانيكا */
 .dept-elec { background-color: #f1c40f; color: #333; } /* كهرباء */
 .dept-ic { background-color: #9b59b6; } /* I&C */
@@ -4693,8 +4711,8 @@
 </div>
 <div id="modal-dept-select" class="custom-modal">
     <div class="modal-content">
-        <div class="modal-header"><span>تحويل لأمر شغل</span><span class="close-modal" onclick="closeModal('modal-dept-select')">&times;</span></div>
-        <p>يرجى تحديد الأقسام المختصة بهذا العطل:</p>
+        <div class="modal-header"><span id="dept-modal-title">تحويل لأمر شغل</span><span class="close-modal" onclick="closeModal('modal-dept-select')">&times;</span></div>
+        <p id="dept-modal-description">يرجى تحديد الأقسام المختصة بهذا العطل:</p>
         <div class="dept-checkbox-group">
             <label class="dept-option"><input type="checkbox" value="ميكانيكا"> ميكانيكا ⚙️</label>
             <label class="dept-option"><input type="checkbox" value="كهرباء"> كهرباء ⚡</label>
@@ -4703,7 +4721,7 @@
             <label class="dept-option"><input type="checkbox" value="تكييف"> تكييف ❄️</label>
             <label class="dept-option"><input type="checkbox" value="تجهيزات"> تجهيزات 🏗️</label>
         </div>
-        <div style="margin: 15px 0; padding: 10px; background: #fff3cd; border: 1px solid #ffeeba; border-radius: 5px; text-align: right;">
+        <div id="urgent-work-order-wrapper" style="margin: 15px 0; padding: 10px; background: #fff3cd; border: 1px solid #ffeeba; border-radius: 5px; text-align: right;">
             <label style="color: #c0392b; font-weight: bold; cursor: pointer; display: flex; align-items: center; gap: 8px;">
                 <input type="checkbox" id="urgent-work-order" style="width: 20px; height: 20px;">
                 🚨 بلاغ طارئ (عاجل جداً)
@@ -12005,6 +12023,8 @@ function processOfflineQueue() {
 }
 // شاشات البلاغات وأوامر الشغل
 let currentReportId = null;
+let currentWorkOrderDeptEditId = null;
+let workOrderDeptModalMode = 'create';
 
 document.getElementById('fault-reporting-btn').addEventListener('click', () => {
     showScreen('fault-reporting');
@@ -13928,11 +13948,50 @@ window.editReportDescription = function(key, currentDesc) {
 // Modal Handling
 window.openWorkOrderModal = function(key) {
     currentReportId = key;
+    currentWorkOrderDeptEditId = null;
+    workOrderDeptModalMode = 'create';
+    const titleEl = document.getElementById('dept-modal-title');
+    const descEl = document.getElementById('dept-modal-description');
+    const urgentWrap = document.getElementById('urgent-work-order-wrapper');
+    const confirmBtn = document.getElementById('btn-confirm-work-order');
+    if (titleEl) titleEl.textContent = 'تحويل لأمر شغل';
+    if (descEl) descEl.textContent = 'يرجى تحديد الأقسام المختصة بهذا العطل:';
+    if (urgentWrap) urgentWrap.style.display = 'block';
+    if (confirmBtn) confirmBtn.innerHTML = 'إصدار أمر الشغل';
     document.getElementById('modal-dept-select').classList.add('show');
     // تصفير الاختيارات
     document.querySelectorAll('.dept-checkbox-group input').forEach(c => c.checked = false);
     const urgentCb = document.getElementById('urgent-work-order');
     if (urgentCb) urgentCb.checked = false;
+};
+
+window.openEditWorkOrderDepartmentsModal = function(orderId) {
+    if (!appData.currentUser || appData.currentUser.type !== 'admin') {
+        alert('هذه الصلاحية متاحة للمدير فقط');
+        return;
+    }
+    const order = (appData.workOrders && appData.workOrders[orderId]) || null;
+    if (!order) {
+        alert('تعذر تحميل بيانات أمر الشغل');
+        return;
+    }
+    currentReportId = null;
+    currentWorkOrderDeptEditId = orderId;
+    workOrderDeptModalMode = 'edit';
+    const titleEl = document.getElementById('dept-modal-title');
+    const descEl = document.getElementById('dept-modal-description');
+    const urgentWrap = document.getElementById('urgent-work-order-wrapper');
+    const confirmBtn = document.getElementById('btn-confirm-work-order');
+    if (titleEl) titleEl.textContent = 'تعديل الأقسام المختصة';
+    if (descEl) descEl.textContent = 'اختر الأقسام المختصة لأمر الشغل الحالي:';
+    if (urgentWrap) urgentWrap.style.display = 'none';
+    if (confirmBtn) confirmBtn.innerHTML = 'حفظ التعديل';
+    document.querySelectorAll('.dept-checkbox-group input').forEach(c => {
+        c.checked = Array.isArray(order.departments) ? order.departments.includes(c.value) : false;
+    });
+    const urgentCb = document.getElementById('urgent-work-order');
+    if (urgentCb) urgentCb.checked = !!order.isUrgent;
+    document.getElementById('modal-dept-select').classList.add('show');
 };
 
 window.closeModal = function(id) {
@@ -13944,7 +14003,7 @@ window.closeModal = function(id) {
 document.getElementById('btn-confirm-work-order').addEventListener('click', () => {
     const btn = document.getElementById('btn-confirm-work-order');
     if (btn.disabled) return;
-    if(!currentReportId) return;
+    if (!currentReportId && !currentWorkOrderDeptEditId) return;
     
     // جمع الأقسام المختارة
     const selectedDepts = [];
@@ -13959,7 +14018,9 @@ document.getElementById('btn-confirm-work-order').addEventListener('click', () =
 
     const originalHtml = btn.innerHTML;
     btn.disabled = true;
-    btn.innerHTML = '<span class="syncing">⏳</span> جاري الإصدار...';
+    btn.innerHTML = workOrderDeptModalMode === 'edit'
+        ? '<span class="syncing">⏳</span> جاري الحفظ...'
+        : '<span class="syncing">⏳</span> جاري الإصدار...';
 
     const timeoutDuration = 25000;
     const timeoutPromise = new Promise((_, reject) => {
@@ -13969,39 +14030,48 @@ document.getElementById('btn-confirm-work-order').addEventListener('click', () =
         }, timeoutDuration);
     });
 
-    const issuePromise = db.ref(`fault_reports/${currentReportId}`).once('value').then((snap) => {
-        const report = snap.val();
-        if (!report) throw new Error("NoReport");
-        const nowStd = getStandardDateTime();
+    const savePromise = workOrderDeptModalMode === 'edit'
+        ? db.ref(`work_orders/${currentWorkOrderDeptEditId}`).update({ departments: selectedDepts })
+        : db.ref(`fault_reports/${currentReportId}`).once('value').then((snap) => {
+            const report = snap.val();
+            if (!report) throw new Error("NoReport");
+            const nowStd = getStandardDateTime();
 
-        const workOrder = {
-            reportId: currentReportId,
-            startTimestamp: firebase.database.ServerValue.TIMESTAMP,
-            startDate: nowStd.date,
-            startTime: nowStd.time,
-            zone: report.zone,
-            station: report.station,
-            component: report.component,
-            description: report.description,
-            departments: selectedDepts,
-            isUrgent: document.getElementById('urgent-work-order') ? document.getElementById('urgent-work-order').checked : false,
-            status: 'active',
-            issuedBy: appData.currentUser.username
-        };
+            const workOrder = {
+                reportId: currentReportId,
+                startTimestamp: firebase.database.ServerValue.TIMESTAMP,
+                startDate: nowStd.date,
+                startTime: nowStd.time,
+                zone: report.zone,
+                station: report.station,
+                component: report.component,
+                description: report.description,
+                departments: selectedDepts,
+                isUrgent: document.getElementById('urgent-work-order') ? document.getElementById('urgent-work-order').checked : false,
+                status: 'active',
+                issuedBy: appData.currentUser.username
+            };
 
-        return db.ref('work_orders').push(workOrder)
-            .then(() => db.ref(`fault_reports/${currentReportId}`).update({ status: 'work_order' }));
-    });
+            return db.ref('work_orders').push(workOrder)
+                .then(() => db.ref(`fault_reports/${currentReportId}`).update({ status: 'work_order' }));
+        });
 
-    Promise.race([issuePromise, timeoutPromise]).then(() => {
+    Promise.race([savePromise, timeoutPromise]).then(() => {
         closeModal('modal-dept-select');
-        alert("تم إصدار أمر الشغل بنجاح وتحويله للقسم المختص 🛠️");
+        if (workOrderDeptModalMode === 'edit') {
+            alert("تم تحديث الأقسام المختصة بنجاح");
+        } else {
+            alert("تم إصدار أمر الشغل بنجاح وتحويله للقسم المختص 🛠️");
+        }
+        currentReportId = null;
+        currentWorkOrderDeptEditId = null;
+        workOrderDeptModalMode = 'create';
         btn.disabled = false;
         btn.innerHTML = originalHtml || 'إصدار أمر الشغل';
         renderFaultReportsTable();
         renderWorkOrdersTables();
     }).catch(err => {
-        console.warn('Work order issue failed:', err && err.message);
+        console.warn('Work order save failed:', err && err.message);
         alert("❌ فشل الاتصال بالسيرفر");
         btn.disabled = false;
         btn.innerHTML = originalHtml || 'إصدار أمر الشغل';
@@ -14221,6 +14291,7 @@ document.getElementById('work-orders-btn').addEventListener('click', () => {
 function renderWorkOrdersTables() {
     const activeBody = document.getElementById('active-work-orders-body');
     const archiveBody = document.getElementById('archive-work-orders-body');
+    const isAdmin = !!(appData.currentUser && appData.currentUser.type === 'admin');
     
     // التأكد من وجود العناصر قبل البدء لتجنب الأخطاء
     if (!activeBody || !archiveBody) return;
@@ -14323,6 +14394,9 @@ function renderWorkOrdersTables() {
                         deptsHtml += `<span class="work-order-badge ${cls}">${d}</span>`;
                     });
                 } else { deptsHtml = '<span style="color:#999; font-size:0.8rem;">عام</span>'; }
+                const deptEditIcon = isAdmin
+                    ? `<span onclick="openEditWorkOrderDepartmentsModal('${order.key}')" title="تعديل الأقسام المختصة" style="display:inline-flex; align-items:center; justify-content:center; margin-right:6px; color:#2980b9; cursor:pointer; font-size:0.95rem; vertical-align:middle;">✎</span>`
+                    : '';
 
                 // --- منطق الأزرار وحالة التجميد ---
                 let actionButtons = '';
@@ -14338,9 +14412,11 @@ function renderWorkOrdersTables() {
                     // حالة التجميد تغطي على الطارئ من حيث لون الخلفية لتوضيح التجميد
                     rowStyle = 'background-color: #fff8e1; border-right: 4px solid #f39c12;'; 
                     actionButtons = `
-                        <button class="btn btn-warning btn-sm" onclick="openFreezeModal('${order.key}')" title="عرض سبب التجميد / تعديل" style="width:100%">
-                            ❄️ مجمد (عرض السبب)
-                        </button>
+                        <div style="display:flex; gap:5px;">
+                            <button class="btn btn-warning btn-sm" onclick="openFreezeModal('${order.key}')" title="عرض سبب التجميد / تعديل" style="flex:1">
+                                ❄️ مجمد
+                            </button>
+                        </div>
                     `;
                 } else {
                     // الحالة العادية
@@ -14356,9 +14432,15 @@ function renderWorkOrdersTables() {
                     <tr style="${rowStyle}">
                         <td>${order.startDate || '-'}${urgentBadge}</td>
                         <td>${order.zone || ''}<br><b>${order.station || ''}</b></td>
-                        <td>${deptsHtml}</td>
+                        <td>${deptsHtml}${deptEditIcon}</td>
                         <td>${order.component || ''}</td>
-                        <td>${order.description || ''}</td>
+                        <td>
+                            ${order.description || ''}
+                            <div class="firebase-record-id">
+                                <span class="firebase-record-id-label">ID</span>
+                                <span>${order.key}</span>
+                            </div>
+                        </td>
                         <td>${order.issuedBy || '-'}</td>
                         <td style="color:${order.isFrozen ? '#e67e22' : 'red'}; font-weight:bold">${order.diffDays} يوم</td>
                         <td>${actionButtons}</td>
@@ -14400,7 +14482,14 @@ function renderWorkOrdersTables() {
                         <td>${order.durationDays || 0} يوم</td>
                         <td>${order.station || ''}</td>
                         <td>${deptsHtml}</td>
-                        <td>${order.component || ''}<br><span style="color:#666;font-size:0.8rem">${order.description || ''}</span></td>
+                        <td>
+                            ${order.component || ''}<br>
+                            <span style="color:#666;font-size:0.8rem">${order.description || ''}</span>
+                            <div class="firebase-record-id">
+                                <span class="firebase-record-id-label">ID</span>
+                                <span>${order.key}</span>
+                            </div>
+                        </td>
                         <td>
                             <div>${order.fixDescription || ''}</div>
                             ${order.spareParts ? `<div style="color:#e67e22;font-size:0.8rem">🛒 ${order.spareParts}</div>` : ''}
@@ -14712,7 +14801,13 @@ window.renderStationSpecificLogs = function(stationId) {
                         <td>${item.displayDate}</td>
                         <td>${item.issuer}</td>
                         <td>${item.component}</td>
-                        <td>${item.description}</td>
+                        <td>
+                            ${item.description}
+                            <div class="firebase-record-id">
+                                <span class="firebase-record-id-label">ID</span>
+                                <span>${item.key}</span>
+                            </div>
+                        </td>
                         <td><span class="status-active">جاري العمل</span></td>
                     </tr>
                 `;
