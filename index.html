@@ -8592,10 +8592,16 @@ function saveDataInternal(options = {}) {
         
         let consumptionLogData = null;
         const oldCons = oldData.consumption || {};
+        let consChanged = false;
         if (consTrans1 || consTrans2 || consWater) {
-            if (consTrans1 != oldCons.t1 || consTrans2 != oldCons.t2 || consWater != oldCons.m3) changesDetails.push('تم تحديث الاستهلاكات');
-            consumptionLogData = { date: updateDate, time: updateTime, station: sName, t1: consTrans1, t2: consTrans2, m3: consWater, operator: newOperator };
+            if (consTrans1 != oldCons.t1 || consTrans2 != oldCons.t2 || consWater != oldCons.m3) {
+                consChanged = true;
+                changesDetails.push('تم تحديث الاستهلاكات');
+                consumptionLogData = { date: updateDate, time: updateTime, station: sName, t1: consTrans1, t2: consTrans2, m3: consWater, operator: newOperator };
+            }
         }
+        const finalConsLastUpdate = consChanged ? stationFullDateTime : (oldCons.lastUpdate || '');
+        
         if (oldData.operatorName !== newOperator) changesDetails.push(`المشغل: ${oldData.operatorName || 'غير معرّف'} -> ${newOperator}`);
         
         const changesString = changesDetails.length > 0 ? changesDetails.join(', ') : "تحديث دوري";
@@ -8624,7 +8630,7 @@ function saveDataInternal(options = {}) {
             secondaryFault: finalFaultSec, fault2Desc: finalFaultSecDesc,
             faultStartTime: faultStartTime, pumps: updatedPumps,
             maxPressure: newMaxPressure, 
-            consumption: { t1: consTrans1, t2: consTrans2, m3: consWater, lastUpdate: stationFullDateTime }
+            consumption: { t1: consTrans1, t2: consTrans2, m3: consWater, lastUpdate: finalConsLastUpdate }
         };
 
         // --- محاولة الحفظ المباشر على Firebase (بدون تخزين محلي) ---
@@ -10952,60 +10958,82 @@ window.renderConsumptionsTable = function() {
     
     tbody.innerHTML = '';
     
-    let filteredConsumptions = appData.consumptionLog || [];
+    let targetConsumptions = appData.consumptionLog || [];
     
-    // 3. تصفية حسب التاريخ (باستخدام parseCustomDate لضمان الدقة)
-    const startDate = new Date(dateFrom);
-    startDate.setHours(0, 0, 0, 0);
-    const endDate = new Date(dateTo);
-    endDate.setHours(23, 59, 59, 999);
-
-    filteredConsumptions = filteredConsumptions.filter(c => {
-        const logDateObj = parseCustomDate(`${c.date} ${c.time || '00:00:00'}`);
-        return logDateObj && logDateObj >= startDate && logDateObj <= endDate;
-    });
-
-    // 4. تصفية حسب المنطقة
+    // 1. تصفية حسب المنطقة
     if (zoneFilter !== 'all') {
-        filteredConsumptions = filteredConsumptions.filter(c => {
+        targetConsumptions = targetConsumptions.filter(c => {
             const sData = appData.stations[c.station];
             return sData && sData.zone === zoneFilter;
         });
     }
 
-    // 5. تصفية حسب المحطة
+    // 2. تصفية حسب المحطة
     if (stationFilter !== 'all') {
-        filteredConsumptions = filteredConsumptions.filter(c => c.station === stationFilter);
+        targetConsumptions = targetConsumptions.filter(c => c.station === stationFilter);
     }
     
-    if (filteredConsumptions.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="4" style="text-align:center; padding:20px;">لا توجد بيانات استهلاك مطابقة للفلاتر المحددة في الفترة المختارة</td></tr>';
+    if (targetConsumptions.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="4" style="text-align:center; padding:20px;">لا توجد بيانات للمحطات المحددة</td></tr>';
         return;
     }
     
-    // 6. تجميع البيانات حسب المحطة
+    // 3. تجميع البيانات حسب المحطة
     const stationsData = {};
-    filteredConsumptions.forEach(log => {
+    targetConsumptions.forEach(log => {
         if (!stationsData[log.station]) {
             stationsData[log.station] = [];
         }
         stationsData[log.station].push(log);
     });
 
-    // 7. معالجة كل محطة وعرضها
+    const fromDateEnd = new Date(dateFrom);
+    fromDateEnd.setHours(23, 59, 59, 999);
+    
+    const toDateEnd = new Date(dateTo);
+    toDateEnd.setHours(23, 59, 59, 999);
+
+    let rowsAdded = 0;
+
+    // 4. معالجة كل محطة وعرضها
     Object.keys(stationsData).forEach(stationName => {
         const stationLogs = stationsData[stationName];
         
         // ترتيب البيانات حسب التاريخ والوقت تصاعدياً
         stationLogs.sort((a, b) => {
-            const dateA = parseCustomDate(`${a.date} ${a.time}`);
-            const dateB = parseCustomDate(`${b.date} ${b.time}`);
+            const dateA = parseCustomDate(`${a.date} ${a.time || '00:00:00'}`);
+            const dateB = parseCustomDate(`${b.date} ${b.time || '00:00:00'}`);
             return dateA - dateB;
         });
         
-        // أول قراءة في الفترة وآخر قراءة في الفترة
-        const fromReading = stationLogs[0];
-        const toReading = stationLogs[stationLogs.length - 1];
+        let fromReading = null;
+        let toReading = null;
+
+        // البحث عن قراءة النهاية (آخر قراءة في أو قبل toDate)
+        for (let i = stationLogs.length - 1; i >= 0; i--) {
+            const logDate = parseCustomDate(`${stationLogs[i].date} ${stationLogs[i].time || '00:00:00'}`);
+            if (logDate && logDate <= toDateEnd) {
+                toReading = stationLogs[i];
+                break;
+            }
+        }
+
+        // البحث عن قراءة البداية (آخر قراءة في أو قبل fromDate)
+        for (let i = stationLogs.length - 1; i >= 0; i--) {
+            const logDate = parseCustomDate(`${stationLogs[i].date} ${stationLogs[i].time || '00:00:00'}`);
+            if (logDate && logDate <= fromDateEnd) {
+                fromReading = stationLogs[i];
+                break;
+            }
+        }
+
+        if (!fromReading && stationLogs.length > 0) {
+            fromReading = stationLogs[0];
+        }
+
+        if (!fromReading || !toReading) return;
+        
+        rowsAdded++;
         
         // حساب الاستهلاك (الأخير - الأول)
         const consumptionT1 = (parseFloat(toReading.t1) || 0) - (parseFloat(fromReading.t1) || 0);
@@ -11084,21 +11112,10 @@ window.exportConsumptionsToExcel = function() {
         return;
     }
 
-    let filtered = appData.consumptionLog || [];
+    let targetConsumptions = appData.consumptionLog || [];
 
-    // 1. تصفية حسب التاريخ
-    const startDate = new Date(dateFrom);
-    startDate.setHours(0, 0, 0, 0);
-    const endDate = new Date(dateTo);
-    endDate.setHours(23, 59, 59, 999);
-
-    filtered = filtered.filter(c => {
-        const logDateObj = parseCustomDate(`${c.date} ${c.time || '00:00:00'}`);
-        return logDateObj && logDateObj >= startDate && logDateObj <= endDate;
-    });
-
-    // 2. تصفية حسب المنطقة والمحطة
-    filtered = filtered.filter(c => {
+    // 1. تصفية حسب المنطقة والمحطة
+    targetConsumptions = targetConsumptions.filter(c => {
         const sData = appData.stations[c.station];
         const sZone = sData ? sData.zone : '';
         if (zoneFilter !== 'all' && sZone !== zoneFilter) return false;
@@ -11106,7 +11123,7 @@ window.exportConsumptionsToExcel = function() {
         return true;
     });
 
-    if (filtered.length === 0) { alert('لا توجد بيانات مطابقة للفلاتر للتصدير'); return; }
+    if (targetConsumptions.length === 0) { alert('لا توجد بيانات مطابقة للفلاتر للتصدير'); return; }
 
     const dataRows = [];
     dataRows.push(["تقرير استهلاكات محطات المياه - توشكى"]);
@@ -11115,17 +11132,46 @@ window.exportConsumptionsToExcel = function() {
     dataRows.push(["المنطقة", "المحطة", "نوع البيان", "القراءة السابقة", "تاريخ السابق", "القراءة الحالية", "تاريخ الحالي", "قيمة الاستهلاك", "الوحدة"]);
 
     const stationsData = {};
-    filtered.forEach(log => {
+    targetConsumptions.forEach(log => {
         if (!stationsData[log.station]) stationsData[log.station] = [];
         stationsData[log.station].push(log);
     });
 
+    const fromDateEnd = new Date(dateFrom);
+    fromDateEnd.setHours(23, 59, 59, 999);
+    
+    const toDateEnd = new Date(dateTo);
+    toDateEnd.setHours(23, 59, 59, 999);
+
+    let hasDataToExport = false;
+
     Object.keys(stationsData).forEach(stName => {
         const logs = stationsData[stName];
-        logs.sort((a, b) => parseCustomDate(`${a.date} ${a.time}`) - parseCustomDate(`${b.date} ${b.time}`));
+        logs.sort((a, b) => parseCustomDate(`${a.date} ${a.time || '00:00:00'}`) - parseCustomDate(`${b.date} ${b.time || '00:00:00'}`));
         
-        const first = logs[0];
-        const last = logs[logs.length - 1];
+        let first = null;
+        let last = null;
+
+        for (let i = logs.length - 1; i >= 0; i--) {
+            const logDate = parseCustomDate(`${logs[i].date} ${logs[i].time || '00:00:00'}`);
+            if (logDate && logDate <= toDateEnd) {
+                last = logs[i];
+                break;
+            }
+        }
+
+        for (let i = logs.length - 1; i >= 0; i--) {
+            const logDate = parseCustomDate(`${logs[i].date} ${logs[i].time || '00:00:00'}`);
+            if (logDate && logDate <= fromDateEnd) {
+                first = logs[i];
+                break;
+            }
+        }
+
+        if (!first && logs.length > 0) first = logs[0];
+        if (!first || !last) return;
+        
+        hasDataToExport = true;
         const zone = appData.stations[stName]?.zone || 'غير محدد';
 
         const t1 = (parseFloat(last.t1)||0) - (parseFloat(first.t1)||0);
@@ -11137,6 +11183,11 @@ window.exportConsumptionsToExcel = function() {
         dataRows.push([zone, stName, "مياه (M3)", parseFloat(first.m3), first.date, parseFloat(last.m3), last.date, m3.toFixed(2), "M3"]);
         dataRows.push([]); 
     });
+
+    if (!hasDataToExport) {
+        alert('لا توجد بيانات ضمن التواريخ المحددة للتصدير');
+        return;
+    }
 
     const ws = XLSX.utils.aoa_to_sheet(dataRows);
     ws['!cols'] = [
