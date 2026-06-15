@@ -3871,6 +3871,41 @@
             </div>
         </div>
 
+        <!-- شاشة جديدة: سجل المستخدمين -->
+        <div id="users-login-log-screen" class="screen">
+            <div class="user-data-card">
+                <div class="user-data-header">
+                    <h2 class="user-data-title">👤 سجل المستخدمين</h2>
+                    <button id="back-from-users-login-log" class="btn btn-outline">عودة</button>
+                </div>
+                <div style="color:#666; font-size:0.95rem; margin-bottom:12px;">
+                    يعرض آخر دخول لكل مستخدم، وفترة عدم تسجيل الدخول بالأيام. تظهر أيقونة الحذف عند تجاوز 30 يوم.
+                </div>
+                <div style="display:flex; justify-content:space-between; align-items:center; gap:10px; flex-wrap:wrap; margin-bottom:12px;">
+                    <button id="toggle-users-login-log-deletable-btn" class="btn btn-warning">إظهار المستخدمين القابلين للحذف فقط</button>
+                    <div id="users-login-log-filter-status" style="color:#666; font-size:0.9rem;">عرض كل المستخدمين</div>
+                </div>
+                <div class="table-responsive">
+                    <table class="users-data-table">
+                        <thead>
+                            <tr>
+                                <th>اسم المستخدم</th>
+                                <th>نوع المستخدم</th>
+                                <th>آخر تاريخ دخول</th>
+                                <th>فترة عدم تسجيل الدخول</th>
+                                <th class="action-cell">حذف</th>
+                            </tr>
+                        </thead>
+                        <tbody id="users-login-log-table-body"></tbody>
+                    </table>
+                </div>
+                <div id="no-users-login-log-message" class="no-users-message" style="display:none;">
+                    <div style="font-size: 2rem; margin-bottom: 10px;">👥</div>
+                    <div>لا توجد بيانات مستخدمين</div>
+                </div>
+            </div>
+        </div>
+
         <div id="consumptions-report-screen" class="screen">
             <h2 style="color: var(--consumption-color);">تقرير معدلات الاستهلاك</h2>
             <div style="display: flex; gap: 10px; margin-bottom: 10px;">
@@ -5528,6 +5563,7 @@ document.querySelectorAll('.menu-item').forEach(item => {
             currentUsersPage: 0,
             currentUsersDataPage: 0,
             currentProfilesPage: 0,
+            usersLoginLogShowDeletableOnly: false,
             navigationCount: 0, // تتبع عدد التنقلات
             screenStack: [] // تتبع تسلسل الشاشات
         };
@@ -6765,7 +6801,13 @@ document.getElementById('emergency-image-modal').addEventListener('click', funct
             db.ref('users').once('value').then(function(snap) {
                 var d = snap.val();
                 if (!d) {
-                    var defaultUsers = { admin: { type: 'admin', password: 'admin123', active: true }, engineer1: { type: 'engineer', password: 'eng123', active: true }, supervisor1: { type: 'supervisor', password: 'sup123', active: true }, operator1: { type: 'operator', password: 'op123', active: true } };
+                    var nowStd = (typeof getStandardDateTime === 'function') ? getStandardDateTime().full : '';
+                    var defaultUsers = {
+                        admin: { type: 'admin', password: 'admin123', active: true, createdAt: nowStd, lastLogin: '' },
+                        engineer1: { type: 'engineer', password: 'eng123', active: true, createdAt: nowStd, lastLogin: '' },
+                        supervisor1: { type: 'supervisor', password: 'sup123', active: true, createdAt: nowStd, lastLogin: '' },
+                        operator1: { type: 'operator', password: 'op123', active: true, createdAt: nowStd, lastLogin: '' }
+                    };
                     db.ref('users').set(defaultUsers);
                     appData.users = defaultUsers;
                 } else { appData.users = d; }
@@ -7258,6 +7300,14 @@ document.getElementById('emergency-image-modal').addEventListener('click', funct
                 return;
             }
 
+            if (screenId === 'users-login-log') {
+                loadUsersOnly(function() {
+                    if (typeof renderUsersLoginLog === 'function') renderUsersLoginLog();
+                    finishRefresh();
+                });
+                return;
+            }
+
             if (screenId === 'fault-reporting') {
                 loadStations(function() {
                     if (typeof initFaultReportingScreen === 'function') initFaultReportingScreen();
@@ -7380,6 +7430,13 @@ document.getElementById('emergency-image-modal').addEventListener('click', funct
         }
 
         function showScreen(screenId, addToHistory = true) {
+            // صلاحية شاشة سجل المستخدمين للمدير فقط
+            if (screenId === 'users-login-log') {
+                if (!appData.currentUser || appData.currentUser.type !== 'admin') {
+                    alert('ليس لديك صلاحية للوصول إلى سجل المستخدمين');
+                    return;
+                }
+            }
             // إضافة الحالة للتاريخ إذا لم يكن استدعاء من زر الرجوع
             if (addToHistory) {
                 if (!appData.screenStack) appData.screenStack = [];
@@ -7471,6 +7528,11 @@ document.getElementById('emergency-image-modal').addEventListener('click', funct
                     loadStations(function() {
                         renderReportsHub();
                     });
+                });
+            }
+            if (screenId === 'users-login-log') {
+                loadUsersOnly(function() {
+                    if (typeof renderUsersLoginLog === 'function') renderUsersLoginLog();
                 });
             }
             if(screenId === 'settings') {
@@ -7639,6 +7701,18 @@ document.getElementById('emergency-image-modal').addEventListener('click', funct
                     type: user.type,
                     permissions: appData.userTypes[user.type].permissions
                 };
+
+                // تحديث آخر تاريخ دخول للمستخدم (محلياً + على Firebase)
+                try {
+                    const nowStd = getStandardDateTime().full;
+                    if (appData.users && appData.users[u]) {
+                        appData.users[u].lastLogin = nowStd;
+                        if (!appData.users[u].createdAt) appData.users[u].createdAt = nowStd;
+                        localStorage.setItem('toshka_users_cache', JSON.stringify(appData.users));
+                    }
+                    db.ref('users/' + u + '/lastLogin').set(nowStd).catch(function(){});
+                    if (!user.createdAt) db.ref('users/' + u + '/createdAt').set(nowStd).catch(function(){});
+                } catch(e) {}
                 
                 document.getElementById('current-user').textContent = `${appData.userTypes[user.type].name}: ${u}`;
                 
@@ -7805,12 +7879,20 @@ document.getElementById('emergency-image-modal').addEventListener('click', funct
         document.getElementById('back-from-inspection-status-log').addEventListener('click', () => goBack());
         document.getElementById('back-from-settings').addEventListener('click', () => goBack());
         document.getElementById('back-from-reports-hub').addEventListener('click', () => goBack());
+        document.getElementById('back-from-users-login-log').addEventListener('click', () => goBack());
         document.getElementById('back-to-stations-from-profile').addEventListener('click', () => goBack());
         document.getElementById('back-to-stations-from-users-data').addEventListener('click', () => goBack());
         document.getElementById('back-to-stations-from-export').addEventListener('click', () => goBack());
         document.getElementById('back-to-stations-from-supervisor').addEventListener('click', () => goBack());
         document.getElementById('back-to-supervisor-dashboard').addEventListener('click', () => goBack());
         document.getElementById('back-to-supervisor-dashboard-from-history').addEventListener('click', () => goBack());
+        const toggleUsersLoginLogBtn = document.getElementById('toggle-users-login-log-deletable-btn');
+        if (toggleUsersLoginLogBtn) {
+            toggleUsersLoginLogBtn.addEventListener('click', () => {
+                appData.usersLoginLogShowDeletableOnly = !appData.usersLoginLogShowDeletableOnly;
+                if (typeof renderUsersLoginLog === 'function') renderUsersLoginLog();
+            });
+        }
 
         const settingsAddZoneBtn = document.getElementById('settings-add-zone-btn');
         if (settingsAddZoneBtn) settingsAddZoneBtn.addEventListener('click', () => addZone());
@@ -10858,14 +10940,18 @@ if (idx === 5) { // الرقم 5 يمثل "المضخه" في مصفوفة ال�
             db.ref('users/' + name).set({
                 type: type,
                 password: pass,
-                active: true
+                active: true,
+                createdAt: getStandardDateTime().full,
+                lastLogin: ''
             }).then(() => {
                 alert('✅ تمت إضافة المستخدم بنجاح');
                 // تحديث الذاكرة المحلية (appData.users) فوراً
                 appData.users[name] = {
                     type: type,
                     password: pass,
-                    active: true
+                    active: true,
+                    createdAt: getStandardDateTime().full,
+                    lastLogin: ''
                 };
                 
                 document.getElementById('user-form-container').style.display = 'none';
@@ -14306,8 +14392,9 @@ function updateMenuPermissions() {
         const canHistory = !!perms.view_history;
         const canExportInspection = !!perms.export_inspection;
         const canStatistics = !!perms.view_statistics;
+        const canUsersLog = (type === 'admin');
         const allowHubByRole = (type === 'admin' || type === 'engineer' || type === 'supervisor');
-        reportsHubBtn.style.display = (allowHubByRole && (canConsumptions || canHistory || canExportInspection || canStatistics)) ? 'block' : 'none';
+        reportsHubBtn.style.display = (allowHubByRole && (canConsumptions || canHistory || canExportInspection || canStatistics || canUsersLog)) ? 'block' : 'none';
     }
     
     if (supervisorBtn) {
@@ -15297,6 +15384,7 @@ function renderReportsHub() {
     const canHistory = !!perms.view_history;
     const canExportInspection = !!perms.export_inspection;
     const canStatistics = !!perms.view_statistics;
+    const canUsersLog = (type === 'admin');
 
     const subtitle = document.getElementById('reports-hub-subtitle');
     if (subtitle) subtitle.textContent = 'اختر نوع التقرير/السجل المطلوب من البطاقات التالية.';
@@ -15318,6 +15406,13 @@ function renderReportsHub() {
             title: '📜 السجل العام',
             desc: 'عرض سجل العمليات العام والبحث والتصفية.',
             action: () => showScreen('history')
+        },
+        {
+            id: 'reports-card-users-log',
+            show: canUsersLog,
+            title: '👤 سجل المستخدمين',
+            desc: 'عرض آخر دخول للمستخدمين وفترة عدم تسجيل الدخول مع إظهار الحذف بعد 30 يوم.',
+            action: () => showScreen('users-login-log')
         },
         {
             id: 'reports-card-export',
@@ -15361,6 +15456,101 @@ function renderReportsHub() {
         if (el) el.onclick = c.action;
     });
 }
+
+function renderUsersLoginLog() {
+    const tbody = document.getElementById('users-login-log-table-body');
+    const noMsg = document.getElementById('no-users-login-log-message');
+    const toggleBtn = document.getElementById('toggle-users-login-log-deletable-btn');
+    const filterStatus = document.getElementById('users-login-log-filter-status');
+    if (!tbody) return;
+    tbody.innerHTML = '';
+
+    const currentUser = appData.currentUser || {};
+    const perms = (currentUser && currentUser.permissions) ? currentUser.permissions : {};
+    const showDeletableOnly = !!appData.usersLoginLogShowDeletableOnly;
+
+    if (toggleBtn) {
+        toggleBtn.textContent = showDeletableOnly ? 'إظهار كل المستخدمين' : 'إظهار المستخدمين القابلين للحذف فقط';
+    }
+    if (filterStatus) {
+        filterStatus.textContent = showDeletableOnly ? 'جاري عرض المستخدمين الذين بجانبهم أيقونة حذف فقط' : 'عرض كل المستخدمين';
+    }
+
+    const usersObj = appData.users || {};
+    const names = Object.keys(usersObj || {}).sort((a, b) => a.localeCompare(b));
+    if (!names.length) {
+        if (noMsg) noMsg.style.display = 'block';
+        return;
+    }
+    if (noMsg) noMsg.style.display = 'none';
+
+    const now = Date.now();
+
+    names.forEach(username => {
+        const u = usersObj[username] || {};
+        const typeKey = u.type || '';
+        const typeName = (appData.userTypes && appData.userTypes[typeKey]) ? appData.userTypes[typeKey].name : (typeKey || '-');
+        const lastLoginStr = (u.lastLogin || '').trim();
+        const createdAtStr = (u.createdAt || '').trim();
+
+        const baseStr = lastLoginStr || createdAtStr;
+        const baseDate = baseStr ? parseCustomDate(baseStr) : null;
+        const inactiveDays = (baseDate && !isNaN(baseDate.getTime())) ? Math.floor((now - baseDate.getTime()) / (1000 * 60 * 60 * 24)) : null;
+
+        const lastLoginDisplay = lastLoginStr ? lastLoginStr : 'لم يسجل بعد';
+        const inactiveDisplay = (inactiveDays === null) ? '-' : `${Math.max(0, inactiveDays)} يوم`;
+
+        const isCurrent = !!(currentUser && currentUser.username === username);
+        const canDeleteByPerm = !!(perms.delete_users && perms.can_delete_types && perms.can_delete_types.includes(typeKey));
+        const canDeleteByRule = (inactiveDays !== null && inactiveDays > 30);
+        const canDelete = canDeleteByPerm && canDeleteByRule && !isCurrent && (username !== 'admin');
+
+        if (showDeletableOnly && !canDelete) return;
+
+        const typeClass = `type-${typeKey}`;
+
+        tbody.innerHTML += `
+            <tr>
+                <td style="font-weight:bold;">
+                    ${username}
+                    ${isCurrent ? ' <span style="color:#1976d2; font-size:0.8rem;">(أنت)</span>' : ''}
+                </td>
+                <td><span class="user-type-badge ${typeClass}">${typeName}</span></td>
+                <td style="white-space:nowrap;">${lastLoginDisplay}</td>
+                <td style="white-space:nowrap;">${inactiveDisplay}</td>
+                <td class="action-cell">
+                    ${canDelete ? `<button class="delete-user-btn" onclick="deleteUserFromUsersLoginLog('${username}')" title="حذف المستخدم">🗑️</button>` : '<span style="color:#888; font-size:0.8rem;">-</span>'}
+                </td>
+            </tr>
+        `;
+    });
+
+    if (!tbody.innerHTML.trim()) {
+        if (noMsg) {
+            noMsg.style.display = 'block';
+            noMsg.innerHTML = showDeletableOnly ? `
+                <div style="font-size: 2rem; margin-bottom: 10px;">🗑️</div>
+                <div>لا يوجد حالياً مستخدمون تظهر بجانبهم أيقونة الحذف</div>
+            ` : `
+                <div style="font-size: 2rem; margin-bottom: 10px;">👥</div>
+                <div>لا توجد بيانات مستخدمين</div>
+            `;
+        }
+        return;
+    }
+    if (noMsg) noMsg.style.display = 'none';
+}
+
+window.deleteUserFromUsersLoginLog = function(username) {
+    // إعادة استخدام نفس منطق الحذف الموجود بالفعل
+    if (typeof window.deleteUser === 'function') {
+        window.deleteUser(username);
+    }
+    // إعادة رسم الجدول بعد الحذف (في حالة نجاح الحذف المحلي)
+    setTimeout(function() {
+        if (typeof renderUsersLoginLog === 'function') renderUsersLoginLog();
+    }, 200);
+};
 
 function populateEditFieldsFromStation() {
     const zone = getSettingsSelectedZone();
