@@ -4889,22 +4889,22 @@
 <div id="modal-freeze" class="custom-modal">
     <div class="modal-content">
         <div class="modal-header">
-            <span id="freeze-modal-title">❄️ تجميد أمر الشغل</span>
+            <span id="freeze-modal-title">⏳ انتظار أمر الشغل</span>
             <span class="close-modal" onclick="closeModal('modal-freeze')">&times;</span>
         </div>
         
         <div class="form-group">
-            <label>سبب تجميد عملية الإصلاح <span style="color:red">*</span></label>
-            <textarea id="freeze-reason-input" rows="3" class="input-field" placeholder="اكتب سبب توقف/تجميد العمل..."></textarea>
+            <label>سبب تعليق عملية الإصلاح <span style="color:red">*</span></label>
+            <textarea id="freeze-reason-input" rows="3" class="input-field" placeholder="اكتب سبب توقف/تعليق العمل..."></textarea>
         </div>
         
         <div class="form-group">
-            <label>قام بالتجميد</label>
+            <label>القائم بالتعليق</label>
             <input type="text" id="freeze-user-input" readonly style="background: #eee; font-weight: bold;">
         </div>
 
         <div style="display: flex; gap: 10px; margin-top: 15px;">
-            <button id="btn-save-freeze" class="btn btn-warning" style="flex: 1;">💾 حفظ التجميد</button>
+            <button id="btn-save-freeze" class="btn btn-warning" style="flex: 1;">💾 حفظ الانتظار</button>
             <button id="btn-resolve-from-freeze" class="btn btn-success" style="flex: 1; display: none;">✅ تم الإصلاح</button>
         </div>
     </div>
@@ -14232,14 +14232,15 @@ document.getElementById('btn-confirm-fix').addEventListener('click', () => {
 
     if(!fixDesc) { alert("يجب كتابة وصف للإصلاح"); return; }
 
-    // جلب الأمر لحساب المدة
+    // جلب الأمر لحساب المدة الفعلية مع استبعاد فترة الانتظار
     db.ref(`work_orders/${currentReportId}`).once('value', (snap) => {
         const order = snap.val();
         const nowStd = getStandardDateTime();
         const nowTs = Date.now();
         
-        const diffTime = Math.abs(nowTs - (order.startTimestamp || nowTs));
-        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+        const pausedDurationMs = getWorkOrderPausedDurationMs(order, nowTs);
+        const diffTime = Math.max(0, nowTs - (order.startTimestamp || nowTs) - pausedDurationMs);
+        const diffDays = diffTime > 0 ? Math.ceil(diffTime / WORK_ORDER_DAY_MS) : 0;
 
         const updateData = {
             status: 'fixed',
@@ -14248,7 +14249,10 @@ document.getElementById('btn-confirm-fix').addEventListener('click', () => {
             fixDescription: fixDesc,
             spareParts: fixParts,
             fixedBy: appData.currentUser.username,
-            durationDays: diffDays
+            durationDays: diffDays,
+            totalFrozenDurationMs: pausedDurationMs,
+            isFrozen: false,
+            freezeStartTimestamp: null
         };
 
         db.ref(`work_orders/${currentReportId}`).update(updateData).then(() => {
@@ -14409,6 +14413,45 @@ appData.archiveOrdersLimit = 100;
 function resetActiveLimit() { appData.activeOrdersLimit = 100; }
 function resetArchiveLimit() { appData.archiveOrdersLimit = 100; }
 
+const WORK_ORDER_DAY_MS = 1000 * 60 * 60 * 24;
+
+function getWorkOrderFreezeStartMs(order) {
+    if (!order) return 0;
+
+    if (typeof order.freezeStartTimestamp === 'number' && order.freezeStartTimestamp > 0) {
+        return order.freezeStartTimestamp;
+    }
+
+    const numericFreezeStart = Number(order.freezeStartTimestamp);
+    if (!Number.isNaN(numericFreezeStart) && numericFreezeStart > 0) {
+        return numericFreezeStart;
+    }
+
+    const frozenAtDate = order.frozenAt ? parseCustomDate(order.frozenAt) : null;
+    return frozenAtDate ? frozenAtDate.getTime() : 0;
+}
+
+function getWorkOrderPausedDurationMs(order, nowTs = Date.now()) {
+    if (!order) return 0;
+
+    const accumulatedPauseMs = Math.max(0, Number(order.totalFrozenDurationMs || 0));
+    if (!order.isFrozen) return accumulatedPauseMs;
+
+    const freezeStartMs = getWorkOrderFreezeStartMs(order);
+    if (!freezeStartMs) return accumulatedPauseMs;
+
+    return accumulatedPauseMs + Math.max(0, nowTs - freezeStartMs);
+}
+
+function getWorkOrderActiveDurationDays(order, nowTs = Date.now()) {
+    if (!order) return 0;
+
+    const startTs = Number(order.startTimestamp || nowTs);
+    const activeDurationMs = Math.max(0, nowTs - startTs - getWorkOrderPausedDurationMs(order, nowTs));
+
+    return activeDurationMs > 0 ? Math.ceil(activeDurationMs / WORK_ORDER_DAY_MS) : 0;
+}
+
 function loadMoreActiveOrders() {
     appData.activeOrdersLimit += 100;
     renderWorkOrdersTables();
@@ -14485,10 +14528,8 @@ function renderWorkOrdersTables() {
         let archiveOrders = [];
 
         allOrders.forEach(order => {
-            // حساب المدة
-            const startTs = order.startTimestamp || now;
-            const diffTime = Math.abs(now - startTs);
-            const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)); 
+            // حساب المدة الفعلية مع استبعاد فترة الانتظار
+            const diffDays = getWorkOrderActiveDurationDays(order, now);
 
             // 1. منطق التصفية للأوامر الجارية (Active)
             if (order.status === 'active') {
@@ -14547,12 +14588,12 @@ function renderWorkOrdersTables() {
                 }
 
                 if (order.isFrozen) {
-                    // حالة التجميد تغطي على الطارئ من حيث لون الخلفية لتوضيح التجميد
+                    // حالة الانتظار تغطي على الطارئ من حيث لون الخلفية لتوضيح التعليق
                     rowStyle = 'background-color: #fff8e1; border-right: 4px solid #f39c12;'; 
                     actionButtons = `
                         <div style="display:flex; gap:5px;">
-                            <button class="btn btn-warning btn-sm" onclick="openFreezeModal('${order.key}')" title="عرض سبب التجميد / تعديل" style="flex:1">
-                                ❄️ مجمد
+                            <button class="btn btn-warning btn-sm" onclick="openFreezeModal('${order.key}')" title="عرض سبب الانتظار / تعديل" style="flex:1">
+                                ⏳ قيد الانتظار
                             </button>
                         </div>
                     `;
@@ -14560,7 +14601,7 @@ function renderWorkOrdersTables() {
                     // الحالة العادية
                     actionButtons = `
                         <div style="display:flex; gap:5px;">
-                            <button class="btn btn-warning btn-sm" onclick="openFreezeModal('${order.key}')" title="تجميد العمل" style="flex:1">❄️ تجميد</button>
+                            <button class="btn btn-warning btn-sm" onclick="openFreezeModal('${order.key}')" title="تحويل العمل إلى انتظار" style="flex:1">⏳ انتظار</button>
                             <button class="btn btn-success btn-sm" onclick="openFixModal('${order.key}')" title="تم الإصلاح" style="flex:1">✅ تم</button>
                         </div>
                     `;
@@ -14668,13 +14709,11 @@ function exportActiveWorkOrders() {
     db.ref('work_orders').orderByChild('status').equalTo('active').once('value', (snap) => {
         let data = [];
         // العناوين
-        data.push(["تاريخ البدء", "المنطقة", "المحطة", "الأقسام", "العطل", "الوصف", "الصادر عنه", "المدة الحالية (يوم)", "هل مجمد؟", "سبب التجميد", "القائم بالتجميد"]);
+        data.push(["تاريخ البدء", "المنطقة", "المحطة", "الأقسام", "العطل", "الوصف", "الصادر عنه", "المدة الحالية (يوم)", "هل قيد الانتظار؟", "سبب الانتظار", "القائم بالتعليق"]);
 
         snap.forEach(child => {
             const o = child.val();
-            const startTs = o.startTimestamp || now;
-            const diffTime = Math.abs(now - startTs);
-            const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)); 
+            const diffDays = getWorkOrderActiveDurationDays(o, now);
 
             let match = true;
             if (fZone && fZone !== 'all' && o.zone !== fZone) match = false;
@@ -14745,10 +14784,10 @@ function openFreezeModal(orderId) {
     // عرض النافذة
     modal.classList.add('show');
 
-    // === التحقق من حالة الأمر (هل هو مجمد حالياً أم جديد؟) ===
+    // === التحقق من حالة الأمر (هل هو في انتظار حالياً أم جديد؟) ===
     if (order.isFrozen) {
-        // --- السيناريو 1: الأمر مجمد بالفعل (عرض/تعديل السبب + زر إصلاح) ---
-        title.textContent = "❄️ تفاصيل التجميد (تعديل)";
+        // --- السيناريو 1: الأمر في انتظار بالفعل (عرض/تعديل السبب + زر إصلاح) ---
+        title.textContent = "⏳ تفاصيل الانتظار";
         reasonInput.value = order.freezeReason || ''; // عرض السبب القديم
         userInput.value = order.frozenBy || currentUser;
         
@@ -14768,15 +14807,15 @@ function openFreezeModal(orderId) {
         };
 
     } else {
-        // --- السيناريو 2: تجميد لأول مرة ---
-        title.textContent = "❄️ تجميد أمر الشغل";
+        // --- السيناريو 2: تحويل الأمر إلى انتظار لأول مرة ---
+        title.textContent = "⏳ انتظار أمر الشغل";
         reasonInput.value = ''; // تفريغ الحقل للكتابة الجديدة
         userInput.value = currentUser;
         
-        saveBtn.textContent = "❄️ حفظ وتجميد";
+        saveBtn.textContent = "⏳ حفظ وانتظار";
         saveBtn.className = "btn btn-warning";
         
-        // إخفاء زر "تم الإصلاح" (لأنه يجب تجميده أولاً)
+        // إخفاء زر "تم الإصلاح" (لأنه يجب تحويله إلى انتظار أولاً)
         resolveBtn.style.display = "none";
     }
 
@@ -14785,18 +14824,27 @@ function openFreezeModal(orderId) {
         const reason = reasonInput.value.trim();
         
         if (!reason) {
-            alert("⚠️ يجب كتابة سبب تجميد العمل!");
+            alert("⚠️ يجب كتابة سبب تعليق العمل!");
             reasonInput.focus();
             return;
         }
 
         // تجهيز البيانات للتحديث في Firebase
         const updates = {
-            isFrozen: true,            // علامة أن الأمر مجمد
-            freezeReason: reason,      // سبب التجميد
-            frozenBy: userInput.value, // من قام بالتجميد
-            frozenAt: getStandardDateTime().full // توقيت التجميد
+            isFrozen: true,
+            freezeReason: reason,
+            frozenBy: userInput.value
         };
+
+        if (order.isFrozen) {
+            if (!order.freezeStartTimestamp) {
+                const freezeStartMs = getWorkOrderFreezeStartMs(order);
+                if (freezeStartMs) updates.freezeStartTimestamp = freezeStartMs;
+            }
+        } else {
+            updates.frozenAt = getStandardDateTime().full;
+            updates.freezeStartTimestamp = firebase.database.ServerValue.TIMESTAMP;
+        }
 
         // الحفظ في قاعدة البيانات
         const timeoutDuration = 25000;
