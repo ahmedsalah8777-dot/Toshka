@@ -4744,6 +4744,18 @@
         <button id="load-more-archive-wo" class="btn btn-outline btn-sm" style="width: 100%; margin-top: 10px; display: none;" onclick="loadMoreArchiveOrders()">⬇️ عرض 100 صف إضافي</button>
     </div>
 </div>
+
+<div id="modal-desc-edit" class="custom-modal">
+    <div class="modal-content">
+        <div class="modal-header"><span>تعديل وصف العطل</span><span class="close-modal" onclick="closeModal('modal-desc-edit')">&times;</span></div>
+        <div class="form-group">
+            <label>وصف العطل الجديد <span style="color:red">*</span></label>
+            <textarea id="edit-fault-desc-input" rows="3" class="input-field"></textarea>
+        </div>
+        <button id="btn-save-desc-edit" class="btn btn-primary" style="width: 100%;">حفظ التعديل</button>
+    </div>
+</div>
+
 <div id="modal-dept-select" class="custom-modal">
     <div class="modal-content">
         <div class="modal-header"><span id="dept-modal-title">تحويل لأمر شغل</span><span class="close-modal" onclick="closeModal('modal-dept-select')">&times;</span></div>
@@ -13882,6 +13894,31 @@ function renderFaultReportsTable() {
             if (filterStatus === 'confirmed' && item.supervisorStatus !== 'confirmed') return;
             filtered.push(item);
         });
+
+        // حساب جميع الأعطال النشطة (بلاغات قيد الانتظار/مؤكدة + أوامر شغل جارية)
+        const faultReportsDuplicateCounts = {};
+        
+        // 1. إضافة البلاغات النشطة
+        data.forEach(item => {
+            if (item.status === 'work_order' || item.status === 'archived' || item.supervisorStatus === 'cancelled') return;
+            if (item.station && item.component) {
+                const key = String(item.station).trim() + '|||' + String(item.component).trim();
+                faultReportsDuplicateCounts[key] = (faultReportsDuplicateCounts[key] || 0) + 1;
+            }
+        });
+
+        // 2. إضافة أوامر الشغل الجارية
+        if (appData.workOrders) {
+            Object.values(appData.workOrders).forEach(wo => {
+                if (wo.status === 'active') {
+                    if (wo.station && wo.component) {
+                        const key = String(wo.station).trim() + '|||' + String(wo.component).trim();
+                        faultReportsDuplicateCounts[key] = (faultReportsDuplicateCounts[key] || 0) + 1;
+                    }
+                }
+            });
+        }
+
         const viewData = filtered.slice(0, appData.faultReportsLimit);
         viewData.forEach(item => {
             let statusBadge = '<span class="status-inactive">انتظار</span>';
@@ -13921,12 +13958,20 @@ function renderFaultReportsTable() {
                     `;
                 }
             }
+            let duplicateBadge = '';
+            if (item.station && item.component) {
+                const key = String(item.station).trim() + '|||' + String(item.component).trim();
+                if (faultReportsDuplicateCounts[key] > 1) {
+                    duplicateBadge = '&nbsp;<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="16" height="16" style="vertical-align: middle; fill: #e67e22;" title="هذا العطل متكرر في نفس الموقع (تم الإبلاغ عنه أو العمل عليه مسبقاً)"><path d="M105.1 202.6c7.7-21.8 20.2-42.3 37.8-59.8c62.5-62.5 163.8-62.5 226.3 0L386.3 160 352 160c-17.7 0-32 14.3-32 32s14.3 32 32 32l112 0c17.7 0 32-14.3 32-32l0-112c0-17.7-14.3-32-32-32s-32 14.3-32 32l0 34.3L414.9 95.2c-83.3-83.3-218.4-83.3-301.7 0c-25 25-44.5 53.6-58 84.1c-6 13.5 1.5 29.5 15.1 35.6s29.5-1.5 35.6-15.1zM399.9 317.1c-13.5-6-29.5 1.5-35.6 15.1c-7.7 21.8-20.2 42.3-37.8 59.8c-62.5 62.5-163.8 62.5-226.3 0L82.7 352 117 352c17.7 0 32-14.3 32-32s-14.3-32-32-32l-112 0c-17.7 0-32 14.3-32 32l0 112c0 17.7 14.3 32 32 32s32-14.3 32-32l0-34.3L64.1 424.8c83.3 83.3 218.4 83.3 301.7 0c25-25 44.5-53.6 58-84.1c6-13.5-1.5-29.5-15.1-35.6z"/></svg>';
+                }
+            }
+
             rowsHtml += `
                 <tr>
                     <td>${item.date}<br>${item.time}</td>
                     <td>${item.zone}<br><b>${item.station}</b></td>
                     <td>${item.reporter}</td>
-                    <td>${item.component}</td>
+                    <td>${item.component}${duplicateBadge}</td>
                     <td>${descHtml}</td>
                     <td>${statusBadge}</td>
                     <td>${supBtns}</td>
@@ -14130,6 +14175,65 @@ window.openEditWorkOrderDepartmentsModal = function(orderId) {
     if (urgentCb) urgentCb.checked = !!order.isUrgent;
     document.getElementById('modal-dept-select').classList.add('show');
 };
+
+let currentWorkOrderDescEditId = null;
+
+window.openEditWorkOrderDescModal = function(orderId) {
+    if (!appData.currentUser || appData.currentUser.type !== 'admin') {
+        alert('هذه الصلاحية متاحة للمدير فقط');
+        return;
+    }
+    const order = (appData.workOrders && appData.workOrders[orderId]) || null;
+    if (!order) {
+        alert('تعذر تحميل بيانات أمر الشغل');
+        return;
+    }
+    currentWorkOrderDescEditId = orderId;
+    document.getElementById('edit-fault-desc-input').value = order.description || '';
+    document.getElementById('modal-desc-edit').classList.add('show');
+};
+
+document.getElementById('btn-save-desc-edit').addEventListener('click', () => {
+    const btn = document.getElementById('btn-save-desc-edit');
+    if (btn.disabled) return;
+    if (!currentWorkOrderDescEditId) return;
+    
+    const newDesc = document.getElementById('edit-fault-desc-input').value.trim();
+    if (!newDesc) {
+        alert("يجب إدخال وصف العطل");
+        return;
+    }
+
+    const originalHtml = btn.innerHTML;
+    btn.disabled = true;
+    btn.innerHTML = '<span class="syncing">⏳</span> جاري الحفظ...';
+
+    const timeoutDuration = 25000;
+    const timeoutPromise = new Promise((_, reject) => {
+        const id = setTimeout(() => {
+            clearTimeout(id);
+            reject(new Error("NetworkTimeout"));
+        }, timeoutDuration);
+    });
+
+    const savePromise = db.ref(`work_orders/${currentWorkOrderDescEditId}`).update({ description: newDesc });
+
+    Promise.race([savePromise, timeoutPromise]).then(() => {
+        closeModal('modal-desc-edit');
+        alert("تم تحديث وصف العطل بنجاح");
+    }).catch((err) => {
+        if (err.message === "NetworkTimeout") {
+            alert("انتهى وقت الاتصال. تأكد من اتصالك بالإنترنت.");
+        } else {
+            console.error("Error saving desc:", err);
+            alert("حدث خطأ أثناء الحفظ. تأكد من اتصالك بالإنترنت.");
+        }
+    }).finally(() => {
+        btn.disabled = false;
+        btn.innerHTML = originalHtml || 'حفظ التعديل';
+        currentWorkOrderDescEditId = null;
+    });
+});
 
 window.closeModal = function(id) {
     document.getElementById(id).classList.remove('show');
@@ -14577,6 +14681,10 @@ function renderWorkOrdersTables() {
                     ? `<span onclick="openEditWorkOrderDepartmentsModal('${order.key}')" title="تعديل الأقسام المختصة" style="display:inline-flex; align-items:center; justify-content:center; margin-right:6px; color:#2980b9; cursor:pointer; font-size:0.95rem; vertical-align:middle;">✎</span>`
                     : '';
 
+                const descEditIcon = isAdmin
+                    ? `<span onclick="openEditWorkOrderDescModal('${order.key}')" title="تعديل وصف العطل" style="display:inline-flex; align-items:center; justify-content:center; margin-right:6px; color:#2980b9; cursor:pointer; font-size:0.95rem; vertical-align:middle;">✎</span>`
+                    : '';
+
                 // --- منطق الأزرار وحالة التجميد ---
                 let actionButtons = '';
                 let rowStyle = '';
@@ -14614,7 +14722,7 @@ function renderWorkOrdersTables() {
                         <td>${deptsHtml}${deptEditIcon}</td>
                         <td>${order.component || ''}</td>
                         <td>
-                            ${order.description || ''}
+                            ${order.description || ''} ${descEditIcon}
                             <div class="firebase-record-id">
                                 <span class="firebase-record-id-label">ID</span>
                                 <span>${order.key}</span>
