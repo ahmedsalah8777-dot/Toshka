@@ -13916,20 +13916,22 @@ function renderFaultReportsTable() {
             }
         });
 
-        // 2. إضافة أوامر الشغل الجارية
-        if (appData.workOrders) {
-            Object.values(appData.workOrders).forEach(wo => {
-                if (wo.status === 'active') {
-                    if (wo.station && wo.component) {
-                        const key = String(wo.station).trim() + '|||' + String(wo.component).trim();
-                        faultReportsDuplicateCounts[key] = (faultReportsDuplicateCounts[key] || 0) + 1;
+        // 2. إضافة أوامر الشغل الجارية (نقوم بجلبها مباشرة من db لضمان توفرها حتى لو لم تُفتح شاشة أوامر الشغل)
+        db.ref('work_orders').once('value').then(snap => {
+            if (snap.exists()) {
+                const workOrdersData = snap.val();
+                Object.values(workOrdersData).forEach(wo => {
+                    if (wo.status === 'active') {
+                        if (wo.station && wo.component) {
+                            const key = String(wo.station).trim() + '|||' + String(wo.component).trim();
+                            faultReportsDuplicateCounts[key] = (faultReportsDuplicateCounts[key] || 0) + 1;
+                        }
                     }
-                }
-            });
-        }
+                });
+            }
 
-        const viewData = filtered.slice(0, appData.faultReportsLimit);
-        viewData.forEach(item => {
+            const viewData = filtered.slice(0, appData.faultReportsLimit);
+            viewData.forEach(item => {
             let statusBadge = '<span class="status-inactive">انتظار</span>';
             if(item.supervisorStatus === 'confirmed') statusBadge = '<span class="status-active">مؤكد</span>';
             if(item.supervisorStatus === 'cancelled') statusBadge = '<span style="color:red">ملغي</span>';
@@ -13995,7 +13997,8 @@ function renderFaultReportsTable() {
         } else {
             loadMoreBtn.style.display = 'none';
         }
-    });
+    }); // إغلاق db.ref('work_orders').once('value').then(snap => {
+    }); // إغلاق on('value')
 }
 // 5. إجراءات الجدول (تأكيد / تحويل)
 window.confirmReport = function(key, isConfirmed) {
