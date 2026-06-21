@@ -7738,7 +7738,7 @@ document.getElementById('emergency-image-modal').addEventListener('click', funct
                 const supervisorBtn = document.getElementById('supervisor-btn');
                 if (supervisorBtn) supervisorBtn.style.display = (userType === 'admin' || userType === 'engineer' || userType === 'supervisor') ? 'inline-block' : 'none';
                 
-                if (userType === 'admin' || userType === 'engineer') {
+                if (userType === 'admin' || userType === 'engineer' || userType === 'supervisor') {
                     const woBtn = document.getElementById('work-orders-btn');
                     if (woBtn) woBtn.style.display = 'flex';
                 } else {
@@ -14486,11 +14486,11 @@ function updateMenuPermissions() {
     const supervisorBtn = document.getElementById('supervisor-btn');
     const reportsHubBtn = document.getElementById('reports-hub-btn');
     
-    // أوامر الشغل متاحة للمهندس والمدير فقط
-    if(type === 'admin' || type === 'engineer') {
-        woBtn.style.display = 'block';
+    // أوامر الشغل متاحة للمهندس والمدير والمشرف
+    if(type === 'admin' || type === 'engineer' || type === 'supervisor') {
+        if(woBtn) woBtn.style.display = 'block';
     } else {
-        woBtn.style.display = 'none';
+        if(woBtn) woBtn.style.display = 'none';
     }
     
     if(settingsBtn) settingsBtn.style.display = (type === 'admin') ? 'block' : 'none';
@@ -14713,6 +14713,10 @@ function renderWorkOrdersTables() {
                             <button class="btn btn-success btn-sm" onclick="openFixModal('${order.key}')" title="تم الإصلاح" style="flex:1">✅ تم</button>
                         </div>
                     `;
+                }
+
+                if (appData.currentUser && appData.currentUser.type === 'supervisor') {
+                    actionButtons = '<div style="color: #7f8c8d; font-size: 0.9rem; text-align: center; font-weight: bold;">معاينة فقط</div>';
                 }
 
                 activeBody.innerHTML += `
