@@ -779,14 +779,14 @@
             background: linear-gradient(135deg, #1e7e34, #28a745);
             color: white; 
             border: none;
-            padding: 10px 18px;
+            padding: 8px 12px;
             font-weight: bold;
             box-shadow: 0 3px 8px rgba(30, 126, 52, 0.3);
             transition: all 0.3s ease;
             display: inline-flex;
             align-items: center;
             justify-content: center;
-            gap: 6px;
+            gap: 5px;
         }
         
         .btn-excel:hover {
@@ -4684,13 +4684,13 @@
         <h3 style="color: #e67e22;">⚡ أوامر شغل جارية (تحت الإصلاح)</h3>
         
         <div class="filters-container" style="background: #fff; padding: 15px; border-radius: 8px; border: 1px solid #ddd; margin-bottom: 15px; display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 10px;">
-            <select id="wo-filter-zone" class="form-control">
+            <select id="wo-filter-zone" style="padding: 8px 12px; border: 1px solid #ddd; border-radius: 4px; font-size: 14px;">
                 <option value="">كل المناطق</option>
             </select>
-                        <select id="wo-filter-station" class="form-control">
+            <select id="wo-filter-station" style="padding: 8px 12px; border: 1px solid #ddd; border-radius: 4px; font-size: 14px;">
                 <option value="">كل المحطات</option>
             </select>
-            <select id="wo-filter-dept" class="form-control">
+            <select id="wo-filter-dept" style="padding: 8px 12px; border: 1px solid #ddd; border-radius: 4px; font-size: 14px;">
                 <option value="">كل الأقسام</option>
                 <option value="ميكانيكا">ميكانيكا</option>
                 <option value="كهرباء">كهرباء</option>
@@ -4699,7 +4699,7 @@
                 <option value="تكييف">تكييف</option>
                 <option value="تجهيزات">تجهيزات</option>
             </select>
-            <input type="number" id="wo-filter-duration" placeholder="الحد الأدنى للمدة (يوم)">
+            <input type="number" id="wo-filter-duration" placeholder="الحد الأدنى للمدة (يوم)" style="padding: 8px 12px; border: 1px solid #ddd; border-radius: 4px; font-size: 14px;">
             
             <button class="btn btn-primary" onclick="resetActiveLimit(); renderWorkOrdersTables()" style="grid-column: span 1;">بحث 🔍</button>
             <button class="btn btn-excel" onclick="exportActiveWorkOrders()" style="grid-column: span 1;">Excel 📥</button>
@@ -4723,12 +4723,24 @@
     <button id="back-from-archive" class="btn btn-outline">عودة لإدارة الأوامر</button>
 
     <div style="margin-top: 20px;">
-        <div class="filters-container" style="margin-bottom: 10px; background: #f9f9f9; padding: 15px; border-radius: 8px;">
-            <label>بحث وتصفية الأرشيف:</label>
-            <div style="display: flex; gap: 10px; flex-wrap: wrap; margin-top: 5px;">
-                <input type="text" id="archive-search" placeholder="بحث (المحطة، العطل، القائم بالإصلاح)..." onkeyup="resetArchiveLimit(); renderWorkOrdersTables()" style="flex: 1; min-width: 200px; padding: 8px;">
-                <button class="btn btn-excel" onclick="exportWorkOrdersArchive()">تصدير الأرشيف Excel 📥</button>
-            </div>
+        <div class="filters-container" style="background: #fff; padding: 15px; border-radius: 8px; border: 1px solid #ddd; margin-bottom: 15px; display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 10px;">
+            <select id="archive-filter-zone" style="padding: 8px 12px; border: 1px solid #ddd; border-radius: 4px; font-size: 14px;">
+                <option value="">كل المناطق</option>
+            </select>
+            <select id="archive-filter-station" style="padding: 8px 12px; border: 1px solid #ddd; border-radius: 4px; font-size: 14px;">
+                <option value="">كل المحطات</option>
+            </select>
+            <select id="archive-filter-dept" style="padding: 8px 12px; border: 1px solid #ddd; border-radius: 4px; font-size: 14px;">
+                <option value="">كل الأقسام</option>
+                <option value="ميكانيكا">ميكانيكا</option>
+                <option value="كهرباء">كهرباء</option>
+                <option value="I&C">تحكم (I&C)</option>
+                <option value="شبكات">شبكات</option>
+                <option value="تكييف">تكييف</option>
+                <option value="تجهيزات">تجهيزات</option>
+            </select>
+            <button class="btn btn-primary" onclick="resetArchiveLimit(); resetArchiveFilters(); renderWorkOrdersTables()" style="grid-column: span 1;">مسح الفلاتر 🔄</button>
+            <button class="btn btn-excel" onclick="exportWorkOrdersArchive()" style="grid-column: span 1;">Excel 📥</button>
         </div>
         
         <div class="table-responsive">
@@ -14389,18 +14401,35 @@ window.exportReportsTable = function() {
 };
 
 window.exportWorkOrdersArchive = function() {
-    // تصدير الأرشيف الكامل من الداتابيز
+    // قراءة قيم الفلاتر للأرشيف
+    const archiveFZoneElement = document.getElementById('archive-filter-zone');
+    const archiveFZone = archiveFZoneElement ? archiveFZoneElement.value : '';
+    
+    const archiveFStationElement = document.getElementById('archive-filter-station');
+    const archiveFStation = archiveFStationElement ? archiveFStationElement.value : '';
+    
+    const archiveFDeptElement = document.getElementById('archive-filter-dept');
+    const archiveFDept = archiveFDeptElement ? archiveFDeptElement.value : '';
+
+    // تصدير الأرشيف المفلتر من الداتابيز
     db.ref('work_orders').orderByChild('status').equalTo('fixed').once('value', (snap) => {
         const data = [];
         data.push(["تاريخ البدء", "تاريخ الإصلاح", "المدة (يوم)", "المنطقة", "المحطة", "الأقسام", "العطل", "الوصف", "وصف الإصلاح", "قطع الغيار", "القائم بالإصلاح"]);
         
         snap.forEach(child => {
             const o = child.val();
-            data.push([
-                o.startDate, o.fixDate, o.durationDays, o.zone, o.station, 
-                (o.departments || []).join(', '), o.component, o.description,
-                o.fixDescription, o.spareParts, o.fixedBy
-            ]);
+            let match = true;
+            if (archiveFZone && archiveFZone !== '' && o.zone !== archiveFZone) match = false;
+            if (archiveFDept && o.departments && !o.departments.includes(archiveFDept)) match = false;
+            if (archiveFStation && o.station !== archiveFStation) match = false;
+
+            if (match) {
+                data.push([
+                    o.startDate, o.fixDate, o.durationDays, o.zone, o.station, 
+                    (o.departments || []).join(', '), o.component, o.description,
+                    o.fixDescription, o.spareParts, o.fixedBy
+                ]);
+            }
         });
 
         const ws = XLSX.utils.aoa_to_sheet(data);
@@ -14606,8 +14635,15 @@ function renderWorkOrdersTables() {
     const fDurationElement = document.getElementById('wo-filter-duration');
     const fDuration = fDurationElement ? (parseInt(fDurationElement.value) || 0) : 0;
     
-    const searchArchiveElement = document.getElementById('archive-search');
-    const searchArchive = searchArchiveElement ? searchArchiveElement.value.toLowerCase() : '';
+    // قراءة قيم الفلاتر للأرشيف
+    const archiveFZoneElement = document.getElementById('archive-filter-zone');
+    const archiveFZone = archiveFZoneElement ? archiveFZoneElement.value : '';
+    
+    const archiveFStationElement = document.getElementById('archive-filter-station');
+    const archiveFStation = archiveFStationElement ? archiveFStationElement.value : '';
+    
+    const archiveFDeptElement = document.getElementById('archive-filter-dept');
+    const archiveFDept = archiveFDeptElement ? archiveFDeptElement.value : '';
 
     activeBody.innerHTML = '';
     archiveBody.innerHTML = '';
@@ -14659,8 +14695,12 @@ function renderWorkOrdersTables() {
             } 
             // 2. منطق التصفية للأرشيف (Fixed)
             else if (order.status === 'fixed') {
-                const text = `${order.station} ${order.component} ${order.description} ${order.fixDescription}`.toLowerCase();
-                if (!searchArchive || text.includes(searchArchive)) {
+                let match = true;
+                if (archiveFZone && archiveFZone !== '' && order.zone !== archiveFZone) match = false;
+                if (archiveFDept && order.departments && !order.departments.includes(archiveFDept)) match = false;
+                if (archiveFStation && order.station !== archiveFStation) match = false;
+
+                if (match) {
                     archiveOrders.push(order);
                 }
             }
@@ -14869,11 +14909,85 @@ function exportActiveWorkOrders() {
         XLSX.writeFile(wb, `اوامر_شغل_جارية_${getStandardDateTime().date.replace(/\//g,'-')}.xlsx`);
     });
 }
+function resetArchiveFilters() {
+    const zoneEl = document.getElementById('archive-filter-zone');
+    const stationEl = document.getElementById('archive-filter-station');
+    const deptEl = document.getElementById('archive-filter-dept');
+    if (zoneEl) zoneEl.value = '';
+    if (stationEl) stationEl.value = '';
+    if (deptEl) deptEl.value = '';
+}
+
 document.getElementById('btn-go-to-archive').addEventListener('click', () => {
     showScreen('archive-work-orders');
-    // إعادة تعيين الحد وعرض البيانات عند الدخول للشاشة
-    resetArchiveLimit(); 
-    renderWorkOrdersTables(); 
+    loadAppConfig(function() {
+        // Populate zones
+        var z = document.getElementById('archive-filter-zone');
+        if (z && z.options.length <= 1) { 
+            appData.zones.forEach(function(zone){ 
+                z.innerHTML += '<option value="'+zone+'">'+zone+'</option>'; 
+            }); 
+        }
+
+        // Update stations dropdown on zone change
+        z.addEventListener('change', function() {
+            var stationDropdown = document.getElementById('archive-filter-station');
+            stationDropdown.innerHTML = '<option value="">كل المحطات</option>'; // Reset
+            if (this.value) {
+                db.ref('stations').orderByChild('zone').equalTo(this.value).once('value', function(snapshot) {
+                    snapshot.forEach(function(childSnapshot) {
+                        var station = childSnapshot.val();
+                        stationDropdown.innerHTML += '<option value="'+station.name+'">'+station.name+'</option>';
+                    });
+                    renderWorkOrdersTables();
+                });
+            } else {
+                // If no zone is selected, load all stations
+                db.ref('stations').once('value', function(snapshot) {
+                    snapshot.forEach(function(childSnapshot) {
+                        var station = childSnapshot.val();
+                        stationDropdown.innerHTML += '<option value="'+station.name+'">'+station.name+'</option>';
+                    });
+                    renderWorkOrdersTables();
+                });
+            }
+        });
+
+        // Initial load of all stations
+        db.ref('stations').once('value', function(snapshot) {
+            var stationDropdown = document.getElementById('archive-filter-station');
+            if (stationDropdown.options.length <= 1) {
+                snapshot.forEach(function(childSnapshot) {
+                    var station = childSnapshot.val();
+                    stationDropdown.innerHTML += '<option value="'+station.name+'">'+station.name+'</option>';
+                });
+            }
+        });
+
+        // Add event listeners to archive filters
+        const archiveDept = document.getElementById('archive-filter-dept');
+        if (archiveDept) {
+            archiveDept.addEventListener('change', function() {
+                resetArchiveLimit();
+                renderWorkOrdersTables();
+            });
+        }
+        if (z) {
+            z.addEventListener('change', function() {
+                resetArchiveLimit();
+            });
+        }
+        const archiveStation = document.getElementById('archive-filter-station');
+        if (archiveStation) {
+            archiveStation.addEventListener('change', function() {
+                resetArchiveLimit();
+                renderWorkOrdersTables();
+            });
+        }
+        
+        resetArchiveLimit(); 
+        renderWorkOrdersTables(); 
+    });
 });
 
 // 2. تفعيل زر العودة من الأرشيف إلى شاشة الأوامر
