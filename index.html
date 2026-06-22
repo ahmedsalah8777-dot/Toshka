@@ -6200,7 +6200,7 @@ function setupAdminControls() {
 // --- إعداد مستمعي الأحداث ---
 function setupEventListeners() {
     // رجوع للرئيسية
-document.getElementById('back-to-stations-from-emergency').addEventListener('click', () => goBack());
+document.getElementById('back-to-stations-from-emergency').addEventListener('click', () => goToStationsRoot());
     
     // تحميل الصورة
     document.getElementById('upload-emergency-image-btn').addEventListener('click', () => {
@@ -7810,12 +7810,12 @@ document.getElementById('emergency-image-modal').addEventListener('click', funct
             }
         });
 
-        document.getElementById('back-to-stations').addEventListener('click', () => showScreen('stations'));
+        document.getElementById('back-to-stations').addEventListener('click', () => goToStationsRoot());
         document.getElementById('back-to-station').addEventListener('click', () => goBack());
-        document.getElementById('back-to-stations-from-users').addEventListener('click', () => goBack());
-        document.getElementById('back-to-stations-from-history').addEventListener('click', () => goBack());
-        document.getElementById('back-to-stations-from-faults').addEventListener('click', () => goBack());
-        document.getElementById('back-to-stations-from-cons').addEventListener('click', () => goBack());
+        document.getElementById('back-to-stations-from-users').addEventListener('click', () => goToStationsRoot());
+        document.getElementById('back-to-stations-from-history').addEventListener('click', () => goToStationsRoot());
+        document.getElementById('back-to-stations-from-faults').addEventListener('click', () => goToStationsRoot());
+        document.getElementById('back-to-stations-from-cons').addEventListener('click', () => goToStationsRoot());
         
         // معالجات أزرار التحديث الجديدة
         const consRefreshBtn = document.getElementById('cons-refresh-btn');
@@ -7901,13 +7901,13 @@ document.getElementById('emergency-image-modal').addEventListener('click', funct
         }
         document.getElementById('back-from-inspection').addEventListener('click', () => goBack());
         document.getElementById('back-from-inspection-status-log').addEventListener('click', () => goBack());
-        document.getElementById('back-from-settings').addEventListener('click', () => goBack());
+        document.getElementById('back-from-settings').addEventListener('click', () => goToStationsRoot());
         document.getElementById('back-from-reports-hub').addEventListener('click', () => goBack());
         document.getElementById('back-from-users-login-log').addEventListener('click', () => goBack());
-        document.getElementById('back-to-stations-from-profile').addEventListener('click', () => goBack());
-        document.getElementById('back-to-stations-from-users-data').addEventListener('click', () => goBack());
-        document.getElementById('back-to-stations-from-export').addEventListener('click', () => goBack());
-        document.getElementById('back-to-stations-from-supervisor').addEventListener('click', () => goBack());
+        document.getElementById('back-to-stations-from-profile').addEventListener('click', () => goToStationsRoot());
+        document.getElementById('back-to-stations-from-users-data').addEventListener('click', () => goToStationsRoot());
+        document.getElementById('back-to-stations-from-export').addEventListener('click', () => goToStationsRoot());
+        document.getElementById('back-to-stations-from-supervisor').addEventListener('click', () => goToStationsRoot());
         document.getElementById('back-to-supervisor-dashboard').addEventListener('click', () => goBack());
         document.getElementById('back-to-supervisor-dashboard-from-history').addEventListener('click', () => goBack());
         const toggleUsersLoginLogBtn = document.getElementById('toggle-users-login-log-deletable-btn');
@@ -11789,7 +11789,7 @@ document.getElementById('calculator-btn').addEventListener('click', () => {
     }
 });
 
-document.getElementById('back-to-stations-from-calc').addEventListener('click', () => goBack());
+document.getElementById('back-to-stations-from-calc').addEventListener('click', () => goToStationsRoot());
 
 function addMachineCalc() {
     const container = document.getElementById('machinesList');
@@ -12209,13 +12209,13 @@ document.getElementById('performance-menu-btn').addEventListener('click', () => 
 });
 
 const btnReports = document.getElementById('back-to-stations-from-reports');
-if(btnReports) btnReports.addEventListener('click', () => goBack());
+if(btnReports) btnReports.addEventListener('click', () => goToStationsRoot());
 
 const btnOrders = document.getElementById('back-to-stations-from-orders');
-if(btnOrders) btnOrders.addEventListener('click', () => goBack());
+if(btnOrders) btnOrders.addEventListener('click', () => goToStationsRoot());
 
 const btnPerfBack = document.getElementById('back-to-stations-from-performance');
-if(btnPerfBack) btnPerfBack.addEventListener('click', () => showScreen('stations'));
+if(btnPerfBack) btnPerfBack.addEventListener('click', () => goToStationsRoot());
 
     // شاشة تقييم الأداء
     window.renderPerformanceScreen = function() {
@@ -16753,7 +16753,7 @@ window.addEventListener('offline', function() {
         const backStatsBtn = document.getElementById('back-from-statistics');
         if (backStatsBtn) {
             backStatsBtn.addEventListener('click', function() {
-                goBack();
+                goToStationsRoot();
             });
         }
 
