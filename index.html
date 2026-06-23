@@ -5404,7 +5404,7 @@
 
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/xlsx-js-style@1.2.0/dist/xlsx.bundle.min.js"></script>
 
     <script>
 // القائمة العائمة
@@ -14414,7 +14414,7 @@ window.exportWorkOrdersArchive = function() {
     // تصدير الأرشيف المفلتر من الداتابيز
     db.ref('work_orders').orderByChild('status').equalTo('fixed').once('value', (snap) => {
         const data = [];
-        data.push(["تاريخ البدء", "تاريخ الإصلاح", "المدة (يوم)", "المنطقة", "المحطة", "الأقسام", "العطل", "الوصف", "وصف الإصلاح", "قطع الغيار", "القائم بالإصلاح"]);
+        data.push(["تاريخ البدء", "تاريخ الإصلاح", "المدة (يوم)", "المنطقة", "المحطة", "الأقسام", "العطل", "الوصف", "وصف الإصلاح", "قطع الغيار", "القائم بالإصلاح", "طارئ؟"]);
         
         snap.forEach(child => {
             const o = child.val();
@@ -14427,12 +14427,17 @@ window.exportWorkOrdersArchive = function() {
                 data.push([
                     o.startDate, o.fixDate, o.durationDays, o.zone, o.station, 
                     (o.departments || []).join(', '), o.component, o.description,
-                    o.fixDescription, o.spareParts, o.fixedBy
+                    o.fixDescription, o.spareParts, o.fixedBy, o.isUrgent ? "نعم" : "لا"
                 ]);
             }
         });
 
-        const ws = XLSX.utils.aoa_to_sheet(data);
+        if (data.length <= 1) {
+            alert('⚠️ لا توجد بيانات مطابقة للتصدير');
+            return;
+        }
+        
+        const ws = createStyledWorksheet(data, true);
         const wb = XLSX.utils.book_new();
         XLSX.utils.book_append_sheet(wb, ws, "أرشيف الإصلاحات");
         XLSX.writeFile(wb, `سجل_الاصلاحات_${getStandardDateTime().date.replace(/\//g,'-')}.xlsx`);
@@ -14854,7 +14859,82 @@ function renderWorkOrdersTables() {
         }
     });
 }
-// --- دالة تصدير أوامر الشغل الجارية (المفلترة) ---
+// --- دالة مساعدة لإنشاء ورقة العمل مع التنسيق
+function createStyledWorksheet(data, isArchive = false) {
+    // إنشاء الخلايا مع التنسيق
+    const wsData = data.map((row, rowIndex) => {
+        return row.map((cell, colIndex) => {
+            const cellObj = { v: cell };
+            
+            if (rowIndex === 0) {
+                // تنسيق الرأس (الصف الأول)
+                cellObj.s = {
+                    fill: { fgColor: { rgb: "1a5276" } }, // لون خلفية (أزرق داكن)
+                    font: { bold: true, color: { rgb: "FFFFFF" } }, // خط عريض أبيض
+                    alignment: { horizontal: "center", vertical: "center" }, // محاذاة المركز
+                    border: {
+                        top: { style: "thin", color: { rgb: "000000" } },
+                        bottom: { style: "thin", color: { rgb: "000000" } },
+                        left: { style: "thin", color: { rgb: "000000" } },
+                        right: { style: "thin", color: { rgb: "000000" } }
+                    }
+                };
+            } else {
+                // تنسيق الصفوف البيانات
+                cellObj.s = {
+                    fill: { fgColor: { rgb: rowIndex % 2 === 0 ? "eaf2f8" : "ffffff" } }, // ألوان متناوبة
+                    alignment: { horizontal: "center", vertical: "center" }, // محاذاة المركز
+                    border: {
+                        top: { style: "thin", color: { rgb: "d3d3d3" } },
+                        bottom: { style: "thin", color: { rgb: "d3d3d3" } },
+                        left: { style: "thin", color: { rgb: "d3d3d3" } },
+                        right: { style: "thin", color: { rgb: "d3d3d3" } }
+                    }
+                };
+            }
+            return cellObj;
+        });
+    });
+    
+    // إنشاء ورقة العمل من البيانات المُنسَّقة
+    const ws = XLSX.utils.aoa_to_sheet(wsData);
+    
+    // تعيين عرض الأعمدة
+    const cols = isArchive 
+        ? [
+            { wch: 15 }, // تاريخ البدء
+            { wch: 15 }, // تاريخ الإصلاح
+            { wch: 12 }, // المدة
+            { wch: 15 }, // المنطقة
+            { wch: 20 }, // المحطة
+            { wch: 25 }, // الأقسام
+            { wch: 25 }, // العطل
+            { wch: 40 }, // الوصف
+            { wch: 40 }, // وصف الإصلاح
+            { wch: 30 }, // قطع الغيار
+            { wch: 15 }, // القائم بالإصلاح
+            { wch: 10 }  // طارئ؟
+        ]
+        : [
+            { wch: 15 }, // تاريخ البدء
+            { wch: 15 }, // المنطقة
+            { wch: 20 }, // المحطة
+            { wch: 25 }, // الأقسام
+            { wch: 25 }, // العطل
+            { wch: 40 }, // الوصف
+            { wch: 15 }, // الصادر عنه
+            { wch: 12 }, // المدة الحالية
+            { wch: 15 }, // هل قيد الانتظار؟
+            { wch: 40 }, // سبب الانتظار
+            { wch: 15 }, // القائم بالتعليق
+            { wch: 10 }  // طارئ؟
+        ];
+    ws['!cols'] = cols;
+    
+    return ws;
+}
+
+// --- دالة تصدير أوامر الشغل الجارية (المفلترة) مع الأرشيف ---
 function exportActiveWorkOrders() {
     // نستخدم نفس منطق الفلترة للحصول على البيانات
     const fZoneElement = document.getElementById('wo-filter-zone');
@@ -14870,43 +14950,83 @@ function exportActiveWorkOrders() {
     const fDuration = fDurationElement ? (parseInt(fDurationElement.value) || 0) : 0;
     const now = Date.now();
 
-    db.ref('work_orders').orderByChild('status').equalTo('active').once('value', (snap) => {
-        let data = [];
-        // العناوين
-        data.push(["تاريخ البدء", "المنطقة", "المحطة", "الأقسام", "العطل", "الوصف", "الصادر عنه", "المدة الحالية (يوم)", "هل قيد الانتظار؟", "سبب الانتظار", "القائم بالتعليق"]);
-
+    db.ref('work_orders').once('value', (snap) => {
+        // --- بيانات الجارية ---
+        let activeData = [];
+        activeData.push(["تاريخ البدء", "المنطقة", "المحطة", "الأقسام", "العطل", "الوصف", "الصادر عنه", "المدة الحالية (يوم)", "هل قيد الانتظار؟", "سبب الانتظار", "القائم بالتعليق", "طارئ؟"]);
+        
+        // --- بيانات الأرشيف ---
+        let archiveData = [];
+        archiveData.push(["تاريخ البدء", "تاريخ الإصلاح", "المدة (يوم)", "المنطقة", "المحطة", "الأقسام", "العطل", "الوصف", "وصف الإصلاح", "قطع الغيار", "القائم بالإصلاح", "طارئ؟"]);
+        
+        // قراءة قيم الفلاتر للأرشيف
+        const archiveFZoneElement = document.getElementById('archive-filter-zone');
+        const archiveFZone = archiveFZoneElement ? archiveFZoneElement.value : '';
+        
+        const archiveFStationElement = document.getElementById('archive-filter-station');
+        const archiveFStation = archiveFStationElement ? archiveFStationElement.value : '';
+        
+        const archiveFDeptElement = document.getElementById('archive-filter-dept');
+        const archiveFDept = archiveFDeptElement ? archiveFDeptElement.value : '';
+        
         snap.forEach(child => {
             const o = child.val();
-            const diffDays = getWorkOrderActiveDurationDays(o, now);
-
-            let match = true;
-            if (fZone && fZone !== 'all' && o.zone !== fZone) match = false;
-            if (fDept && o.departments && !o.departments.includes(fDept)) match = false;
-            if (fStation && o.station !== fStation) match = false;
-            if (fDuration > 0 && diffDays < fDuration) match = false;
-
-            if (match) {
-                const isFrozenText = o.isFrozen ? "نعم" : "لا";
-                const freezeReason = o.isFrozen ? (o.freezeReason || "-") : "-";
-                const frozenBy = o.isFrozen ? (o.frozenBy || "-") : "-";
-
-                data.push([
-                    o.startDate, o.zone, o.station, 
-                    (o.departments || []).join(', '), o.component, o.description, o.issuedBy || '-', diffDays,
-                    isFrozenText, freezeReason, frozenBy
-                ]);
+            
+            if (o.status === 'active') {
+                const diffDays = getWorkOrderActiveDurationDays(o, now);
+                let match = true;
+                if (fZone && fZone !== 'all' && o.zone !== fZone) match = false;
+                if (fDept && o.departments && !o.departments.includes(fDept)) match = false;
+                if (fStation && o.station !== fStation) match = false;
+                if (fDuration > 0 && diffDays < fDuration) match = false;
+                
+                if (match) {
+                    const isFrozenText = o.isFrozen ? "نعم" : "لا";
+                    const freezeReason = o.isFrozen ? (o.freezeReason || "-") : "-";
+                    const frozenBy = o.isFrozen ? (o.frozenBy || "-") : "-";
+                    
+                    activeData.push([
+                        o.startDate, o.zone, o.station, 
+                        (o.departments || []).join(', '), o.component, o.description, 
+                        o.issuedBy || '-', diffDays,
+                        isFrozenText, freezeReason, frozenBy, o.isUrgent ? "نعم" : "لا"
+                    ]);
+                }
+            } else if (o.status === 'fixed') {
+                let match = true;
+                if (archiveFZone && archiveFZone !== '' && o.zone !== archiveFZone) match = false;
+                if (archiveFDept && o.departments && !o.departments.includes(archiveFDept)) match = false;
+                if (archiveFStation && o.station !== archiveFStation) match = false;
+                
+                if (match) {
+                    archiveData.push([
+                        o.startDate, o.fixDate, o.durationDays, o.zone, o.station, 
+                        (o.departments || []).join(', '), o.component, o.description,
+                        o.fixDescription, o.spareParts, o.fixedBy, o.isUrgent ? "نعم" : "لا"
+                    ]);
+                }
             }
         });
-
-        if (data.length <= 1) {
-            alert("لا توجد بيانات مطابقة للتصدير");
+        
+        // إنشاء المصنف
+        const wb = XLSX.utils.book_new();
+        
+        if (activeData.length > 1) {
+            const wsActive = createStyledWorksheet(activeData, false);
+            XLSX.utils.book_append_sheet(wb, wsActive, "أوامر الشغل الجارية");
+        }
+        
+        if (archiveData.length > 1) {
+            const wsArchive = createStyledWorksheet(archiveData, true);
+            XLSX.utils.book_append_sheet(wb, wsArchive, "أرشيف الإصلاحات");
+        }
+        
+        if (wb.SheetNames.length === 0) {
+            alert('⚠️ لا توجد بيانات مطابقة للتصدير');
             return;
         }
-
-        const ws = XLSX.utils.aoa_to_sheet(data);
-        const wb = XLSX.utils.book_new();
-        XLSX.utils.book_append_sheet(wb, ws, "أوامر الشغل الجارية");
-        XLSX.writeFile(wb, `اوامر_شغل_جارية_${getStandardDateTime().date.replace(/\//g,'-')}.xlsx`);
+        
+        XLSX.writeFile(wb, `اوامر_شغل_${getStandardDateTime().date.replace(/\//g,'-')}.xlsx`);
     });
 }
 function resetArchiveFilters() {
