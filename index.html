@@ -4678,6 +4678,7 @@
         <button id="back-to-stations-from-orders" class="btn btn-outline">عودة للرئيسية</button>
         <button id="wo-refresh-btn" class="btn btn-primary">تحديث القائمة 🔄</button>
         <button id="btn-go-to-archive" class="btn btn-success">📂 أرشيف الإصلاحات</button>
+        <button id="btn-go-to-dashboard" class="btn btn-warning">📊 لوحة تحكم الأقسام</button>
     </div>
 
     <div style="margin-top: 20px;">
@@ -4755,6 +4756,16 @@
         </div>
         <button id="load-more-archive-wo" class="btn btn-outline btn-sm" style="width: 100%; margin-top: 10px; display: none;" onclick="loadMoreArchiveOrders()">⬇️ عرض 100 صف إضافي</button>
     </div>
+</div>
+
+<div id="department-dashboard-screen" class="screen">
+    <h2 style="color: #8e44ad;">📊 لوحة تحكم الأقسام</h2>
+    <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+        <button id="back-from-dashboard" class="btn btn-outline">عودة لإدارة الأوامر</button>
+        <button id="dashboard-refresh-btn" class="btn btn-primary">تحديث البيانات 🔄</button>
+    </div>
+
+    <div id="dashboard-stats" style="margin-top: 20px; display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 15px;"></div>
 </div>
 
 <div id="modal-desc-edit" class="custom-modal">
@@ -14439,7 +14450,7 @@ window.exportWorkOrdersArchive = function() {
         
         const ws = createStyledWorksheet(data, true);
         const wb = XLSX.utils.book_new();
-        XLSX.utils.book_append_sheet(wb, ws, "أرشيف الإصلاحات");
+        XLSX.utils.book_append_sheet(wb, ws, "Repair Archive");
         XLSX.writeFile(wb, `سجل_الاصلاحات_${getStandardDateTime().date.replace(/\//g,'-')}.xlsx`);
     });
 };
@@ -14859,19 +14870,121 @@ function renderWorkOrdersTables() {
         }
     });
 }
+// --- دالة لإنشاء شيت الداشبورد ---
+function createDashboardSheet(dashboardData) {
+    let fullData = [];
+    
+    // عنوان الداشبورد
+    fullData.push([{ v: "📊 لوحة تحكم وإحصائيات الأقسام", s: { 
+        fill: { fgColor: { rgb: "2c3e50" } }, 
+        font: { bold: true, sz: 18, color: { rgb: "FFFFFF" } }, 
+        alignment: { horizontal: "center", vertical: "center" },
+        border: {
+            top: { style: "medium", color: { rgb: "000000" } },
+            bottom: { style: "medium", color: { rgb: "000000" } },
+            left: { style: "medium", color: { rgb: "000000" } },
+            right: { style: "medium", color: { rgb: "000000" } }
+        }
+    }}, null, null, null, null, null, null]);
+    
+    // سطر فارغ
+    fullData.push([]);
+    
+    // عناوين الجدول
+    const headers = ["القسم", "إجمالي الأوامر", "تم إنجازه", "قيد الانتظار", "المتبقي", "نسبة الإنجاز", "رسم بياني للإنجاز (مكتمل / إجمالي)"];
+    fullData.push(headers.map(h => ({
+        v: h,
+        s: {
+            fill: { fgColor: { rgb: "34495e" } },
+            font: { bold: true, color: { rgb: "FFFFFF" }, sz: 12 },
+            alignment: { horizontal: "center", vertical: "center" },
+            border: {
+                top: { style: "thin", color: { rgb: "bdc3c7" } },
+                bottom: { style: "thin", color: { rgb: "bdc3c7" } },
+                left: { style: "thin", color: { rgb: "bdc3c7" } },
+                right: { style: "thin", color: { rgb: "bdc3c7" } }
+            }
+        }
+    })));
+    
+    // بيانات الأقسام
+    dashboardData.forEach((deptStat, index) => {
+        const total = deptStat.total || 1; // لتجنب القسمة على صفر
+        const percent = Math.round((deptStat.completed / total) * 100);
+        
+        // رسم بياني نصي (كل 5% يمثل مربع)
+        const filledBlocks = Math.round(percent / 5);
+        const emptyBlocks = 20 - filledBlocks;
+        const chartStr = "█".repeat(filledBlocks) + "░".repeat(emptyBlocks);
+        
+        const rowStyle = {
+            fill: { fgColor: { rgb: index % 2 === 0 ? "ecf0f1" : "ffffff" } },
+            font: { sz: 11 },
+            alignment: { horizontal: "center", vertical: "center" },
+            border: {
+                top: { style: "thin", color: { rgb: "bdc3c7" } },
+                bottom: { style: "thin", color: { rgb: "bdc3c7" } },
+                left: { style: "thin", color: { rgb: "bdc3c7" } },
+                right: { style: "thin", color: { rgb: "bdc3c7" } }
+            }
+        };
+        
+        const boldRowStyle = { ...rowStyle, font: { bold: true, sz: 12 } };
+        
+        // ألوان خاصة للأرقام
+        const completedStyle = { ...rowStyle, font: { bold: true, color: { rgb: "27ae60" } } };
+        const frozenStyle = { ...rowStyle, font: { bold: true, color: { rgb: "f39c12" } } };
+        const remainingStyle = { ...rowStyle, font: { bold: true, color: { rgb: "2980b9" } } };
+        const chartStyle = { ...rowStyle, font: { color: { rgb: "27ae60" } }, alignment: { horizontal: "left", vertical: "center" } };
+        
+        fullData.push([
+            { v: deptStat.name, s: boldRowStyle },
+            { v: deptStat.total, s: boldRowStyle },
+            { v: deptStat.completed, s: completedStyle },
+            { v: deptStat.frozen, s: frozenStyle },
+            { v: deptStat.remaining, s: remainingStyle },
+            { v: percent + "%", s: completedStyle },
+            { v: chartStr, s: chartStyle }
+        ]);
+    });
+    
+    // إنشاء ورقة العمل
+    const ws = XLSX.utils.aoa_to_sheet(fullData);
+    
+    // دمج الخلايا لعنوان الداشبورد
+    ws["!merges"] = [{ s: { r: 0, c: 0 }, e: { r: 0, c: 6 } }];
+    
+    // عرض الأعمدة
+    ws['!cols'] = [
+        { wch: 20 }, // القسم
+        { wch: 15 }, // إجمالي
+        { wch: 15 }, // تم انجازه
+        { wch: 15 }, // قيد الانتظار
+        { wch: 15 }, // المتبقي
+        { wch: 15 }, // نسبة الإنجاز
+        { wch: 30 }  // الرسم البياني
+    ];
+    
+    // ارتفاع الصفوف
+    ws['!rows'] = [{ hpt: 40 }, { hpt: 15 }, { hpt: 25 }];
+    
+    return ws;
+}
+
 // --- دالة مساعدة لإنشاء ورقة العمل مع التنسيق
 function createStyledWorksheet(data, isArchive = false) {
-    // إنشاء الخلايا مع التنسيق
-    const wsData = data.map((row, rowIndex) => {
-        return row.map((cell, colIndex) => {
+    let fullData = [];
+    
+    // إضافة البيانات الأساسية
+    data.forEach((row, rowIndex) => {
+        const styledRow = row.map((cell, colIndex) => {
             const cellObj = { v: cell };
             
             if (rowIndex === 0) {
-                // تنسيق الرأس (الصف الأول)
                 cellObj.s = {
-                    fill: { fgColor: { rgb: "1a5276" } }, // لون خلفية (أزرق داكن)
-                    font: { bold: true, color: { rgb: "FFFFFF" } }, // خط عريض أبيض
-                    alignment: { horizontal: "center", vertical: "center" }, // محاذاة المركز
+                    fill: { fgColor: { rgb: "1a5276" } }, 
+                    font: { bold: true, color: { rgb: "FFFFFF" } }, 
+                    alignment: { horizontal: "center", vertical: "center" }, 
                     border: {
                         top: { style: "thin", color: { rgb: "000000" } },
                         bottom: { style: "thin", color: { rgb: "000000" } },
@@ -14880,10 +14993,9 @@ function createStyledWorksheet(data, isArchive = false) {
                     }
                 };
             } else {
-                // تنسيق الصفوف البيانات
                 cellObj.s = {
-                    fill: { fgColor: { rgb: rowIndex % 2 === 0 ? "eaf2f8" : "ffffff" } }, // ألوان متناوبة
-                    alignment: { horizontal: "center", vertical: "center" }, // محاذاة المركز
+                    fill: { fgColor: { rgb: rowIndex % 2 === 0 ? "eaf2f8" : "ffffff" } }, 
+                    alignment: { horizontal: "center", vertical: "center" }, 
                     border: {
                         top: { style: "thin", color: { rgb: "d3d3d3" } },
                         bottom: { style: "thin", color: { rgb: "d3d3d3" } },
@@ -14894,13 +15006,14 @@ function createStyledWorksheet(data, isArchive = false) {
             }
             return cellObj;
         });
+        fullData.push(styledRow);
     });
     
     // إنشاء ورقة العمل من البيانات المُنسَّقة
-    const ws = XLSX.utils.aoa_to_sheet(wsData);
+    const ws = XLSX.utils.aoa_to_sheet(fullData);
     
-    // تعيين عرض الأعمدة
-    const cols = isArchive 
+    // تعريف عرض الأعمدة
+    const baseCols = isArchive 
         ? [
             { wch: 15 }, // تاريخ البدء
             { wch: 15 }, // تاريخ الإصلاح
@@ -14929,7 +15042,8 @@ function createStyledWorksheet(data, isArchive = false) {
             { wch: 15 }, // القائم بالتعليق
             { wch: 10 }  // طارئ؟
         ];
-    ws['!cols'] = cols;
+    
+    ws['!cols'] = baseCols;
     
     return ws;
 }
@@ -14951,6 +15065,16 @@ function exportActiveWorkOrders() {
     const now = Date.now();
 
     db.ref('work_orders').once('value', (snap) => {
+        // --- تهيئة إحصائيات الأقسام ---
+        const departments = ["ميكانيكا", "كهرباء", "I&C", "شبكات", "تكييف", "تجهيزات"];
+        const dashboardData = departments.map(dept => ({
+            name: dept,
+            total: 0,
+            completed: 0,
+            frozen: 0,
+            remaining: 0
+        }));
+        
         // --- بيانات الجارية ---
         let activeData = [];
         activeData.push(["تاريخ البدء", "المنطقة", "المحطة", "الأقسام", "العطل", "الوصف", "الصادر عنه", "المدة الحالية (يوم)", "هل قيد الانتظار؟", "سبب الانتظار", "القائم بالتعليق", "طارئ؟"]);
@@ -14971,6 +15095,22 @@ function exportActiveWorkOrders() {
         
         snap.forEach(child => {
             const o = child.val();
+            const orderDepts = o.departments || [];
+            
+            // تحديث إحصائيات الأقسام لكل أمر
+            orderDepts.forEach(dept => {
+                const deptStat = dashboardData.find(d => d.name === dept);
+                if (deptStat) {
+                    deptStat.total++;
+                    if (o.status === 'fixed') {
+                        deptStat.completed++;
+                    } else if (o.isFrozen) {
+                        deptStat.frozen++;
+                    } else {
+                        deptStat.remaining++;
+                    }
+                }
+            });
             
             if (o.status === 'active') {
                 const diffDays = getWorkOrderActiveDurationDays(o, now);
@@ -15011,14 +15151,19 @@ function exportActiveWorkOrders() {
         // إنشاء المصنف
         const wb = XLSX.utils.book_new();
         
+        if (dashboardData && dashboardData.length > 0) {
+            const wsDashboard = createDashboardSheet(dashboardData);
+            XLSX.utils.book_append_sheet(wb, wsDashboard, "Dashboard");
+        }
+        
         if (activeData.length > 1) {
             const wsActive = createStyledWorksheet(activeData, false);
-            XLSX.utils.book_append_sheet(wb, wsActive, "أوامر الشغل الجارية");
+            XLSX.utils.book_append_sheet(wb, wsActive, "Active Work Orders");
         }
         
         if (archiveData.length > 1) {
             const wsArchive = createStyledWorksheet(archiveData, true);
-            XLSX.utils.book_append_sheet(wb, wsArchive, "أرشيف الإصلاحات");
+            XLSX.utils.book_append_sheet(wb, wsArchive, "Repair Archive");
         }
         
         if (wb.SheetNames.length === 0) {
@@ -15114,6 +15259,138 @@ document.getElementById('btn-go-to-archive').addEventListener('click', () => {
 document.getElementById('back-from-archive').addEventListener('click', () => {
     goBack();
 });
+
+// 3. تفعيل زر الذهاب إلى لوحة تحكم الأقسام
+document.getElementById('btn-go-to-dashboard').addEventListener('click', () => {
+    showScreen('department-dashboard');
+    renderDepartmentDashboard();
+});
+
+// 4. تفعيل زر العودة من لوحة تحكم الأقسام إلى شاشة الأوامر
+document.getElementById('back-from-dashboard').addEventListener('click', () => {
+    goBack();
+});
+
+// 5. تفعيل زر تحديث بيانات لوحة التحكم
+document.getElementById('dashboard-refresh-btn').addEventListener('click', () => {
+    renderDepartmentDashboard();
+});
+
+function renderDepartmentDashboard() {
+    // القوائم المتاحة (نفس الأقسام الموجودة في الفلاتر)
+    const departments = ["ميكانيكا", "كهرباء", "I&C", "شبكات", "تكييف", "تجهيزات"];
+    const statsContainer = document.getElementById('dashboard-stats');
+    statsContainer.innerHTML = '<div style="grid-column: span 1; text-align: center; padding: 30px;"><span style="font-size: 24px;">جاري تحميل البيانات... 🔄</span></div>';
+
+    // جلب جميع أوامر الشغل من قاعدة البيانات
+    db.ref('work_orders').once('value', (snapshot) => {
+        // تهيئة كائن لحفظ الإحصائيات لكل قسم
+        const deptStats = {};
+        departments.forEach(dept => {
+            deptStats[dept] = {
+                total: 0,
+                completed: 0,
+                frozen: 0,
+                remaining: 0
+            };
+        });
+
+        snapshot.forEach(childSnapshot => {
+            const order = childSnapshot.val();
+            const orderDepts = order.departments || [];
+
+            // إضافة الإحصائيات لكل قسم مرتبط بهذا الأمر
+            orderDepts.forEach(dept => {
+                if (deptStats[dept]) {
+                    deptStats[dept].total++; // زيادة العدد الإجمالي
+                    
+                    if (order.status === 'fixed') {
+                        deptStats[dept].completed++; // زيادة العدد المكتمل
+                    } else if (order.isFrozen) {
+                        deptStats[dept].frozen++; // زيادة العدد الموقوف/قيد الانتظار
+                    } else {
+                        deptStats[dept].remaining++; // زيادة العدد المتبقي/قيد العمل
+                    }
+                }
+            });
+        });
+
+        // بناء واجهة عرض البيانات
+        let html = '';
+        // أيقونات لكل قسم
+        const deptIcons = {
+            "ميكانيكا": "⚙️",
+            "كهرباء": "⚡",
+            "I&C": "🖥️",
+            "شبكات": "💧",
+            "تكييف": "❄️",
+            "تجهيزات": "🏗️"
+        };
+        // ألوان لكل قسم
+        const deptColors = {
+            "ميكانيكا": "#e67e22",
+            "كهرباء": "#f1c40f",
+            "I&C": "#3498db",
+            "شبكات": "#1abc9c",
+            "تكييف": "#34495e",
+            "تجهيزات": "#9b59b6"
+        };
+
+        departments.forEach(dept => {
+            const stats = deptStats[dept];
+            // حساب النسب المئوية
+            const total = stats.total || 1; // لتجنب القسمة على صفر
+            const completedPercent = Math.round((stats.completed / total) * 100);
+            const frozenPercent = Math.round((stats.frozen / total) * 100);
+            const remainingPercent = Math.round((stats.remaining / total) * 100);
+
+            html += `
+                <div style="background: #fff; border-radius: 10px; padding: 20px; box-shadow: 0 2px 10px rgba(0,0,0,0.08);">
+                    <h3 style="margin: 0 0 15px 0; color: ${deptColors[dept]}; display: flex; align-items: center; gap: 8px;">
+                        ${deptIcons[dept]} ${dept}
+                    </h3>
+                    
+                    <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; margin-bottom: 15px;">
+                        <div style="background: #f8f9fa; padding: 12px; border-radius: 6px; text-align: center;">
+                            <div style="font-size: 24px; font-weight: bold; color: #2c3e50;">${stats.total}</div>
+                            <div style="font-size: 13px; color: #7f8c8d;">إجمالي الأوامر</div>
+                        </div>
+                        <div style="background: #d5f4e6; padding: 12px; border-radius: 6px; text-align: center;">
+                            <div style="font-size: 24px; font-weight: bold; color: #27ae60;">${stats.completed}</div>
+                            <div style="font-size: 13px; color: #16a085;">تم انجازه</div>
+                        </div>
+                        <div style="background: #fff3cd; padding: 12px; border-radius: 6px; text-align: center;">
+                            <div style="font-size: 24px; font-weight: bold; color: #f39c12;">${stats.frozen}</div>
+                            <div style="font-size: 13px; color: #e67e22;">قيد الانتظار</div>
+                        </div>
+                        <div style="background: #e8f4f8; padding: 12px; border-radius: 6px; text-align: center;">
+                            <div style="font-size: 24px; font-weight: bold; color: #3498db;">${stats.remaining}</div>
+                            <div style="font-size: 13px; color: #2980b9;">المتبقي</div>
+                        </div>
+                    </div>
+
+                    <!-- شريط التقدم -->
+                    <div style="margin-top:10px;">
+                        <div style="font-size: 12px; color: #666; margin-bottom: 5px;">توزيع الأوامر:</div>
+                        <div style="height: 24px; width: 100%; background: #eee; border-radius: 12px; display: flex; overflow: hidden;">
+                            <div style="width: ${completedPercent}%; background: #27ae60; display: flex; align-items: center; justify-content: center; font-size: 11px; color: white; font-weight: bold;">
+                                ${completedPercent > 5 ? completedPercent + '%' : ''}
+                            </div>
+                            <div style="width: ${frozenPercent}%; background: #f39c12; display: flex; align-items: center; justify-content: center; font-size: 11px; color: white; font-weight: bold;">
+                                ${frozenPercent > 5 ? frozenPercent + '%' : ''}
+                            </div>
+                            <div style="width: ${remainingPercent}%; background: #3498db; display: flex; align-items: center; justify-content: center; font-size: 11px; color: white; font-weight: bold;">
+                                ${remainingPercent > 5 ? remainingPercent + '%' : ''}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+        });
+
+        statsContainer.innerHTML = html;
+    });
+}
 // متغير لتخزين معرف الأمر الحالي
 let currentFreezeOrderId = null;
 
