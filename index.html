@@ -14823,6 +14823,14 @@ function renderWorkOrdersTables() {
             const btnLoadMoreArch = document.getElementById('load-more-archive-wo');
             if(btnLoadMoreArch) btnLoadMoreArch.style.display = 'none';
         } else {
+            // ترتيب الأرشيف من الأحدث إلى الأقدم حسب تاريخ الإصلاح
+            archiveOrders.sort((a, b) => {
+                const dateA = parseCustomDate(`${a.fixDate || '01/01/1970'} ${a.fixTime || '00:00:00'}`);
+                const dateB = parseCustomDate(`${b.fixDate || '01/01/1970'} ${b.fixTime || '00:00:00'}`);
+                const tsA = dateA ? dateA.getTime() : 0;
+                const tsB = dateB ? dateB.getTime() : 0;
+                return tsB - tsA;
+            });
             const displayedArchive = archiveOrders.slice(0, appData.archiveOrdersLimit);
             displayedArchive.forEach(order => {
                 let deptsHtml = '';
