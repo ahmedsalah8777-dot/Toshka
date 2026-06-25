@@ -4805,6 +4805,10 @@
     <div class="modal-content">
         <div class="modal-header"><span>إتمام الإصلاح</span><span class="close-modal" onclick="closeModal('modal-fix-details')">&times;</span></div>
         <div class="form-group">
+            <label>تاريخ الإصلاح <span style="color:red">*</span></label>
+            <input type="date" id="fix-date" class="input-field" style="width:100%; padding:8px; font-size:1rem;">
+        </div>
+        <div class="form-group">
             <label>وصف عملية الإصلاح <span style="color:red">*</span></label>
             <textarea id="fix-desc" rows="3" class="input-field"></textarea>
         </div>
@@ -14361,6 +14365,9 @@ window.openFixModal = function(key) {
     currentReportId = key; // نستخدم نفس المتغير global
     document.getElementById('fix-desc').value = '';
     document.getElementById('fix-parts').value = '';
+    // تعيين تاريخ اليوم تلقائياً مع إمكانية التعديل
+    const todayISO = new Date().toISOString().split('T')[0];
+    document.getElementById('fix-date').value = todayISO;
     document.getElementById('modal-fix-details').classList.add('show');
 };
 
@@ -14368,8 +14375,14 @@ document.getElementById('btn-confirm-fix').addEventListener('click', () => {
     if(!currentReportId) return;
     const fixDesc = document.getElementById('fix-desc').value;
     const fixParts = document.getElementById('fix-parts').value;
+    const fixDateInput = document.getElementById('fix-date').value; // تاريخ الإصلاح المختار
 
     if(!fixDesc) { alert("يجب كتابة وصف للإصلاح"); return; }
+    if(!fixDateInput) { alert("يجب تحديد تاريخ الإصلاح"); return; }
+
+    // تحويل التاريخ المختار إلى صيغة DD/MM/YYYY
+    const [yyyy, mm, dd] = fixDateInput.split('-');
+    const fixDateFormatted = `${dd}/${mm}/${yyyy}`;
 
     // جلب الأمر لحساب المدة الفعلية مع استبعاد فترة الانتظار
     db.ref(`work_orders/${currentReportId}`).once('value', (snap) => {
@@ -14383,7 +14396,7 @@ document.getElementById('btn-confirm-fix').addEventListener('click', () => {
 
         const updateData = {
             status: 'fixed',
-            fixDate: nowStd.date,
+            fixDate: fixDateFormatted,  // تاريخ الإصلاح المختار (قابل للتعديل)
             fixTime: nowStd.time,
             fixDescription: fixDesc,
             spareParts: fixParts,
