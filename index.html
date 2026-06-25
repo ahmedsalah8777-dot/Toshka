@@ -4802,21 +4802,59 @@
 </div>
 
 <div id="modal-fix-details" class="custom-modal">
-    <div class="modal-content">
-        <div class="modal-header"><span>إتمام الإصلاح</span><span class="close-modal" onclick="closeModal('modal-fix-details')">&times;</span></div>
-        <div class="form-group">
-            <label>تاريخ الإصلاح <span style="color:red">*</span></label>
-            <input type="date" id="fix-date" class="input-field" style="width:100%; padding:8px; font-size:1rem;">
+    <div class="modal-content" style="max-width:520px; border-radius:16px; overflow:hidden; padding:0; box-shadow:0 20px 60px rgba(0,0,0,0.25);">
+        <!-- Header -->
+        <div style="background: linear-gradient(135deg, #27ae60, #2ecc71); padding:20px 22px; display:flex; justify-content:space-between; align-items:center;">
+            <div style="display:flex; align-items:center; gap:10px;">
+                <span style="font-size:1.6rem;">🔧</span>
+                <div>
+                    <div style="color:#fff; font-size:1.15rem; font-weight:700; line-height:1.2;">إتمام الإصلاح</div>
+                    <div style="color:rgba(255,255,255,0.8); font-size:0.78rem;">تسجيل بيانات إغلاق أمر الشغل</div>
+                </div>
+            </div>
+            <span class="close-modal" onclick="closeModal('modal-fix-details')" style="color:#fff; font-size:1.6rem; line-height:1; opacity:0.8; cursor:pointer;">&times;</span>
         </div>
-        <div class="form-group">
-            <label>وصف عملية الإصلاح <span style="color:red">*</span></label>
-            <textarea id="fix-desc" rows="3" class="input-field"></textarea>
+        <!-- Body -->
+        <div style="padding:22px 22px 18px;">
+            <!-- تاريخ الإصلاح -->
+            <div style="background:#f0faf4; border:1px solid #a9dfbf; border-radius:10px; padding:14px 16px; margin-bottom:14px;">
+                <label style="display:flex; align-items:center; gap:6px; font-weight:600; color:#1e8449; margin-bottom:8px; font-size:0.9rem;">
+                    <span>📅</span> تاريخ الإصلاح
+                    <span style="font-size:0.75rem; color:#7f8c8d; font-weight:400;">(  يمكن تعديله  )</span>
+                </label>
+                <input type="date" id="fix-date"
+                    style="width:100%; padding:9px 12px; border:1.5px solid #a9dfbf; border-radius:8px; font-size:1rem; background:#fff; color:#1a5276; outline:none; transition:border 0.2s;"
+                    onfocus="this.style.borderColor='#27ae60'" onblur="this.style.borderColor='#a9dfbf'">
+            </div>
+            <!-- وصف الإصلاح -->
+            <div style="margin-bottom:14px;">
+                <label style="display:flex; align-items:center; gap:6px; font-weight:600; color:#2c3e50; margin-bottom:7px; font-size:0.9rem;">
+                    <span>📝</span> وصف عملية الإصلاح <span style="color:#e74c3c;">*</span>
+                </label>
+                <textarea id="fix-desc" rows="3"
+                    placeholder="اكتب وصفاً تفصيلياً لعملية الإصلاح..."
+                    style="width:100%; padding:10px 12px; border:1.5px solid #dde; border-radius:8px; font-size:0.95rem; resize:vertical; outline:none; transition:border 0.2s; font-family:inherit;"
+                    onfocus="this.style.borderColor='#27ae60'" onblur="this.style.borderColor='#dde'"></textarea>
+            </div>
+            <!-- قطع الغيار -->
+            <div style="margin-bottom:20px;">
+                <label style="display:flex; align-items:center; gap:6px; font-weight:600; color:#2c3e50; margin-bottom:7px; font-size:0.9rem;">
+                    <span>🔩</span> قطع الغيار المستخدمة
+                    <span style="font-size:0.75rem; color:#7f8c8d; font-weight:400;">(إن وجد)</span>
+                </label>
+                <textarea id="fix-parts" rows="2"
+                    placeholder="اذكر قطع الغيار والكميات..."
+                    style="width:100%; padding:10px 12px; border:1.5px solid #dde; border-radius:8px; font-size:0.95rem; resize:vertical; outline:none; transition:border 0.2s; font-family:inherit;"
+                    onfocus="this.style.borderColor='#27ae60'" onblur="this.style.borderColor='#dde'"></textarea>
+            </div>
+            <!-- زر التأكيد -->
+            <button id="btn-confirm-fix"
+                style="width:100%; padding:13px; background:linear-gradient(135deg,#27ae60,#2ecc71); color:#fff; border:none; border-radius:10px; font-size:1rem; font-weight:700; cursor:pointer; letter-spacing:0.3px; box-shadow:0 4px 15px rgba(39,174,96,0.35); transition:all 0.2s;"
+                onmouseover="this.style.transform='translateY(-1px)'; this.style.boxShadow='0 6px 20px rgba(39,174,96,0.45)'"
+                onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 4px 15px rgba(39,174,96,0.35)'">
+                ✅ تأكيد وإغلاق أمر الشغل
+            </button>
         </div>
-        <div class="form-group">
-            <label>قطع الغيار المستخدمة (إن وجد)</label>
-            <textarea id="fix-parts" rows="2" class="input-field" placeholder="اذكر قطع الغيار والكميات..."></textarea>
-        </div>
-        <button id="btn-confirm-fix" class="btn btn-success" style="width: 100%;">تأكيد وإغلاق الأمر ✅</button>
     </div>
 </div>
 <!-- شاشة سجل الأعطال وأوامر الشغل للمحطة -->
@@ -14375,12 +14413,11 @@ document.getElementById('btn-confirm-fix').addEventListener('click', () => {
     if(!currentReportId) return;
     const fixDesc = document.getElementById('fix-desc').value;
     const fixParts = document.getElementById('fix-parts').value;
-    const fixDateInput = document.getElementById('fix-date').value; // تاريخ الإصلاح المختار
 
     if(!fixDesc) { alert("يجب كتابة وصف للإصلاح"); return; }
-    if(!fixDateInput) { alert("يجب تحديد تاريخ الإصلاح"); return; }
 
-    // تحويل التاريخ المختار إلى صيغة DD/MM/YYYY
+    // إذا لم يتم تعديل التاريخ يؤخذ تاريخ اليوم تلقائياً
+    const fixDateInput = document.getElementById('fix-date').value || new Date().toISOString().split('T')[0];
     const [yyyy, mm, dd] = fixDateInput.split('-');
     const fixDateFormatted = `${dd}/${mm}/${yyyy}`;
 
@@ -14396,7 +14433,7 @@ document.getElementById('btn-confirm-fix').addEventListener('click', () => {
 
         const updateData = {
             status: 'fixed',
-            fixDate: fixDateFormatted,  // تاريخ الإصلاح المختار (قابل للتعديل)
+            fixDate: fixDateFormatted,  // تاريخ الإصلاح (تلقائي أو معدّل)
             fixTime: nowStd.time,
             fixDescription: fixDesc,
             spareParts: fixParts,
