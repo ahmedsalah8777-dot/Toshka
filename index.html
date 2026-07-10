@@ -14367,7 +14367,9 @@ document.getElementById('btn-confirm-work-order').addEventListener('click', () =
                 departments: selectedDepts,
                 isUrgent: document.getElementById('urgent-work-order') ? document.getElementById('urgent-work-order').checked : false,
                 status: 'active',
-                issuedBy: appData.currentUser.username
+                issuedBy: appData.currentUser.username,
+                reporter: report.reporter || 'غير محدد',
+                reportDate: report.date || nowStd.date
             };
 
             return db.ref('work_orders').push(workOrder)
@@ -14680,6 +14682,53 @@ document.getElementById('work-orders-btn').addEventListener('click', () => {
 
 // --- الدالة الرئيسية لعرض الجداول (معدلة بالكامل) ---
 // --- الدالة الرئيسية لعرض الجداول (المصححة) ---
+function showOrderInfoModal(reporter, date, confirmedBy) {
+    let modal = document.getElementById('order-info-modal');
+    if (!modal) {
+        modal = document.createElement('div');
+        modal.id = 'order-info-modal';
+        modal.className = 'custom-modal';
+        modal.style.zIndex = '9999';
+        modal.innerHTML = `
+            <div class="modal-content" style="max-width:400px; border-radius:16px; overflow:hidden; padding:0; box-shadow:0 15px 40px rgba(0,0,0,0.3); animation: slideDown 0.3s ease;">
+                <div style="background: linear-gradient(135deg, var(--primary-color), var(--secondary-color)); padding:20px; color:white; text-align:center; position:relative;">
+                    <h3 style="margin:0; font-size:1.4rem; display:flex; align-items:center; justify-content:center; gap:8px;">
+                        <span style="font-size:1.5rem;">📄</span> تفاصيل البلاغ
+                    </h3>
+                    <button onclick="closeModal('order-info-modal')" style="position:absolute; top:15px; left:15px; background:none; border:none; color:white; font-size:1.5rem; cursor:pointer;">&times;</button>
+                </div>
+                <div style="padding:25px; font-size:1.1rem; line-height:1.8; color:#333; background:#fff;">
+                    <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px dashed #ddd; padding-bottom:12px; margin-bottom:12px;">
+                        <div style="display:flex; align-items:center; gap:8px; color:#7f8c8d; font-weight:bold;">
+                            <span style="font-size:1.2rem;">👤</span> اسم المُبَلِّغ:
+                        </div>
+                        <span id="oi-reporter" style="font-weight:bold; color:var(--primary-color); background:#eaf2f8; padding:4px 10px; border-radius:8px;"></span>
+                    </div>
+                    <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px dashed #ddd; padding-bottom:12px; margin-bottom:12px;">
+                        <div style="display:flex; align-items:center; gap:8px; color:#7f8c8d; font-weight:bold;">
+                            <span style="font-size:1.2rem;">📅</span> تاريخ البلاغ:
+                        </div>
+                        <span id="oi-date" style="font-weight:bold; color:var(--primary-color); background:#eaf2f8; padding:4px 10px; border-radius:8px;"></span>
+                    </div>
+                    <div style="display:flex; justify-content:space-between; align-items:center;">
+                        <div style="display:flex; align-items:center; gap:8px; color:#7f8c8d; font-weight:bold;">
+                            <span style="font-size:1.2rem;">✅</span> تأكيد بواسطة:
+                        </div>
+                        <span id="oi-confirmed" style="font-weight:bold; color:white; background:var(--success-color); padding:4px 10px; border-radius:8px; box-shadow: 0 2px 5px rgba(39, 174, 96, 0.3);"></span>
+                    </div>
+                </div>
+            </div>
+        `;
+        document.body.appendChild(modal);
+    }
+    
+    document.getElementById('oi-reporter').textContent = reporter;
+    document.getElementById('oi-date').textContent = date;
+    document.getElementById('oi-confirmed').textContent = confirmedBy;
+    
+    modal.classList.add('show');
+}
+
 function renderWorkOrdersTables() {
     const activeBody = document.getElementById('active-work-orders-body');
     const archiveBody = document.getElementById('archive-work-orders-body');
@@ -14723,17 +14772,27 @@ function renderWorkOrdersTables() {
     appData.workOrders = {};
 
     // جلب البيانات من Firebase مباشرة
-    db.ref('work_orders').once('value', (snap) => {
-        let allOrders = [];
-        
-        snap.forEach(c => { 
-            const val = c.val();
-            const key = c.key;
-            // تخزين البيانات في appData لكي تستخدمها نوافذ التجميد والإصلاح
-            appData.workOrders[key] = val; 
-            // إضافتها للمصفوفة للمعالجة
-            allOrders.push({key: key, ...val}); 
-        });
+    db.ref('fault_reports').once('value').then(reportsSnap => {
+        const allReports = reportsSnap.val() || {};
+        db.ref('work_orders').once('value', (snap) => {
+            let allOrders = [];
+            
+            snap.forEach(c => { 
+                const val = c.val();
+                const key = c.key;
+                
+                if (val.reportId && allReports[val.reportId]) {
+                    const rep = allReports[val.reportId];
+                    if (!val.reporter) val.reporter = rep.reporter;
+                    if (!val.reportDate) val.reportDate = rep.date;
+                    if (!val.confirmedBy) val.confirmedBy = rep.confirmedBy || rep.supervisorName || val.issuedBy;
+                }
+                
+                // تخزين البيانات في appData لكي تستخدمها نوافذ التجميد والإصلاح
+                appData.workOrders[key] = val; 
+                // إضافتها للمصفوفة للمعالجة
+                allOrders.push({key: key, ...val}); 
+            });
         // ترتيب: الطارئ أولاً ثم الأحدث
         allOrders.sort((a, b) => {
             const uA = a.isUrgent ? 1 : 0;
@@ -14840,7 +14899,13 @@ function renderWorkOrdersTables() {
                 activeBody.innerHTML += `
                     <tr style="${rowStyle}">
                         <td>${order.startDate || '-'}${urgentBadge}</td>
-                        <td>${order.zone || ''}<br><b>${order.station || ''}</b></td>
+                        <td>
+                            ${order.zone || ''}<br>
+                            <div style="display:flex; align-items:center; justify-content:space-between;">
+                                <b>${order.station || ''}</b>
+                                <span title="تفاصيل البلاغ" onclick="showOrderInfoModal('${(order.reporter || 'غير محدد').replace(/'/g, "\\'")}', '${(order.reportDate || order.startDate || '-').replace(/'/g, "\\'")}', '${(order.confirmedBy || order.issuedBy || 'غير محدد').replace(/'/g, "\\'")}')" style="cursor:pointer; color:var(--primary-color); font-size:1.1rem; padding:2px; margin-right:5px; transition: 0.3s; display:inline-flex; align-items:center; justify-content:center;" onmouseover="this.style.transform='scale(1.2)'" onmouseout="this.style.transform='scale(1)'">▼</span>
+                            </div>
+                        </td>
                         <td>${deptsHtml}${deptEditIcon}</td>
                         <td>${order.component || ''}</td>
                         <td>
@@ -14897,7 +14962,12 @@ function renderWorkOrdersTables() {
                             <div style="font-size:0.8rem; color:green">الإصلاح: ${order.fixDate || '-'}</div>
                         </td>
                         <td>${order.durationDays || 0} يوم</td>
-                        <td>${order.station || ''}</td>
+                        <td>
+                            <div style="display:flex; align-items:center; justify-content:space-between;">
+                                <span>${order.station || ''}</span>
+                                <span title="تفاصيل البلاغ" onclick="showOrderInfoModal('${(order.reporter || 'غير محدد').replace(/'/g, "\\'")}', '${(order.reportDate || order.startDate || '-').replace(/'/g, "\\'")}', '${(order.confirmedBy || order.issuedBy || 'غير محدد').replace(/'/g, "\\'")}')" style="cursor:pointer; color:var(--primary-color); font-size:1.0rem; margin-right:5px; transition: 0.3s; display:inline-flex; align-items:center; justify-content:center;" onmouseover="this.style.transform='scale(1.2)'" onmouseout="this.style.transform='scale(1)'">▼</span>
+                            </div>
+                        </td>
                         <td>${deptsHtml}</td>
                         <td>
                             ${order.component || ''}<br>
@@ -14926,6 +14996,7 @@ function renderWorkOrdersTables() {
                 }
             }
         }
+        });
     });
 }
 // --- دالة لإنشاء شيت الداشبورد ---
