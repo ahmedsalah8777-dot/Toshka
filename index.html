@@ -7745,7 +7745,7 @@ document.getElementById('emergency-image-modal').addEventListener('click', funct
                     id: u,
                     name: u,
                     type: user.type,
-                    permissions: appData.userTypes[user.type].permissions
+                    permissions: appData.userTypes[user.type] ? appData.userTypes[user.type].permissions : {}
                 };
 
                 // تحديث آخر تاريخ دخول للمستخدم (محلياً + على Firebase)
@@ -7760,10 +7760,10 @@ document.getElementById('emergency-image-modal').addEventListener('click', funct
                     if (!user.createdAt) db.ref('users/' + u + '/createdAt').set(nowStd).catch(function(){});
                 } catch(e) {}
                 
-                document.getElementById('current-user').textContent = `${appData.userTypes[user.type].name}: ${u}`;
+                document.getElementById('current-user').textContent = `${appData.userTypes[user.type] ? appData.userTypes[user.type].name : 'غير محدد'}: ${u}`;
                 
                 const userType = user.type;
-                const permissions = appData.userTypes[userType].permissions;
+                const permissions = appData.userTypes[userType] ? appData.userTypes[userType].permissions : {};
                 
                 const usersBtn = document.getElementById('users-management-btn');
                 if (usersBtn) usersBtn.style.display = permissions.manage_users ? 'inline-block' : 'none';
@@ -10604,7 +10604,7 @@ if (idx === 5) { // الرقم 5 يمثل "المضخه" في مصفوفة ال�
                     const fullname = (user.profile.fullname || '').toLowerCase();
                     const station = (user.profile.station || '').toLowerCase();
                     const phone = (user.profile.phone || '').toLowerCase();
-                    const userType = appData.userTypes[user.account.type].name.toLowerCase();
+                    const userType = appData.userTypes[user.account.type] ? appData.userTypes[user.account.type].name.toLowerCase() : 'غير محدد';
                     
                     if (!username.includes(searchInput) && 
                         !fullname.includes(searchInput) && 
@@ -10651,7 +10651,7 @@ if (idx === 5) { // الرقم 5 يمثل "المضخه" في مصفوفة ال�
             displayedUsers.forEach((user, index) => {
                 const account = user.account;
                 const profile = user.profile;
-                const userTypeName = appData.userTypes[account.type].name;
+                const userTypeName = appData.userTypes[account.type] ? appData.userTypes[account.type].name : 'غير محدد';
                 const typeClass = `type-${account.type}`;
                 const isCurrentUser = (user.username === currentUser.username);
                 const rowNum = startIndex + index + 1;
@@ -10848,12 +10848,14 @@ if (idx === 5) { // الرقم 5 يمثل "المضخه" في مصفوفة ال�
             
             displayedUsers.forEach((uName, index) => {
                 const user = appData.users[uName];
-                const typeName = appData.userTypes[user.type].name;
+                const typeName = appData.userTypes[user.type] ? appData.userTypes[user.type].name : 'غير محدد';
                 const typeClass = `type-${user.type}`;
                 const isCurrentUser = (currentUser && currentUser.username === uName);
                 const activityState = getUserLoginActivityState(uName, currentUser);
                 const canDelete = currentUser && 
+                                 currentUser.permissions && 
                                  currentUser.permissions.delete_users && 
+                                 currentUser.permissions.can_delete_types &&
                                  currentUser.permissions.can_delete_types.includes(user.type) &&
                                  !isCurrentUser;
                 
