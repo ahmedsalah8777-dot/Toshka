@@ -14795,8 +14795,6 @@ function renderWorkOrdersTables() {
     const archiveFDeptElement = document.getElementById('archive-filter-dept');
     const archiveFDept = archiveFDeptElement ? archiveFDeptElement.value : '';
 
-    activeBody.innerHTML = '';
-    archiveBody.innerHTML = '';
     const now = Date.now();
 
     // التأكد من وجود حدود للصفحات، إذا لم تكن موجودة نضع قيمة افتراضية
@@ -14810,6 +14808,8 @@ function renderWorkOrdersTables() {
     db.ref('fault_reports').once('value').then(reportsSnap => {
         const allReports = reportsSnap.val() || {};
         db.ref('work_orders').once('value', (snap) => {
+            activeBody.innerHTML = '';
+            archiveBody.innerHTML = '';
             let allOrders = [];
             
             snap.forEach(c => { 
@@ -15706,9 +15706,9 @@ window.renderStationSpecificLogs = function(stationId) {
     // --- 1. معالجة بلاغات الأعطال ---
     const faultsBody = document.getElementById('station-faults-body');
     const noFaultsMsg = document.getElementById('no-station-faults');
-    faultsBody.innerHTML = '';
     
     db.ref('fault_reports').orderByChild('station').equalTo(stationName).once('value', (snap) => {
+        faultsBody.innerHTML = '';
         const faults = [];
         snap.forEach(child => {
             const val = child.val();
@@ -15755,9 +15755,9 @@ window.renderStationSpecificLogs = function(stationId) {
     // --- 2. معالجة أوامر الشغل ---
     const woBody = document.getElementById('station-workorders-body');
     const noWoMsg = document.getElementById('no-station-workorders');
-    woBody.innerHTML = '';
     
     db.ref('work_orders').orderByChild('station').equalTo(stationName).once('value', (snap) => {
+        woBody.innerHTML = '';
         const orders = [];
         snap.forEach(child => {
             const val = child.val();
