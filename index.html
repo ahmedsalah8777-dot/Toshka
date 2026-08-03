@@ -6846,34 +6846,15 @@ document.getElementById('emergency-image-modal').addEventListener('click', funct
 
         // --- تحميل المستخدمين فقط عند بدء التطبيق (للاقتصاد في البيانات) ---
         function loadUsersOnly(cb) {
-            var cache = localStorage.getItem('toshka_users_cache');
-            if (cache) { 
-                try { 
-                    appData.users = JSON.parse(cache); 
-                    updateNetworkStatus(); 
-                    // استدعاء callback مباشرة من الكاش
-                    if (cb) cb();
-                } catch(e){} 
-            }
             db.ref('users').once('value').then(function(snap) {
                 var d = snap.val();
-                if (!d) {
-                    var nowStd = (typeof getStandardDateTime === 'function') ? getStandardDateTime().full : '';
-                    var defaultUsers = {
-                        admin: { type: 'admin', password: 'admin123', active: true, createdAt: nowStd, lastLogin: '' },
-                        engineer1: { type: 'engineer', password: 'eng123', active: true, createdAt: nowStd, lastLogin: '' },
-                        supervisor1: { type: 'supervisor', password: 'sup123', active: true, createdAt: nowStd, lastLogin: '' },
-                        operator1: { type: 'operator', password: 'op123', active: true, createdAt: nowStd, lastLogin: '' }
-                    };
-                    db.ref('users').set(defaultUsers);
-                    appData.users = defaultUsers;
-                } else { appData.users = d; }
-                localStorage.setItem('toshka_users_cache', JSON.stringify(appData.users));
+                appData.users = d || {};
                 updateNetworkStatus();
                 updateOfflineBanner();
                 // استدعاء callback بعد تحميل البيانات من Firebase
                 if (cb) cb();
             }).catch(function(){ 
+                appData.users = appData.users || {};
                 updateNetworkStatus(); 
                 updateOfflineBanner(); 
                 // استدعاء callback حتى في حالة الخطأ (البيانات موجودة من الكاش)
@@ -7727,6 +7708,10 @@ document.getElementById('emergency-image-modal').addEventListener('click', funct
         document.getElementById('login-btn').addEventListener('click', () => {
             const u = document.getElementById('username').value.trim();
             const p = document.getElementById('password').value.trim();
+            if (/[.#$\[\]\/]/.test(u)) { 
+                alert('اسم المستخدم يحتوي على رموز غير مسموحة'); 
+                return; 
+            }
             const user = appData.users[u];
             const remember = document.getElementById('remember-me').checked;
             
@@ -7754,10 +7739,15 @@ document.getElementById('emergency-image-modal').addEventListener('click', funct
                     if (appData.users && appData.users[u]) {
                         appData.users[u].lastLogin = nowStd;
                         if (!appData.users[u].createdAt) appData.users[u].createdAt = nowStd;
-                        localStorage.setItem('toshka_users_cache', JSON.stringify(appData.users));
                     }
-                    db.ref('users/' + u + '/lastLogin').set(nowStd).catch(function(){});
-                    if (!user.createdAt) db.ref('users/' + u + '/createdAt').set(nowStd).catch(function(){});
+                    db.ref('users/' + u).transaction(function(currentData) {
+                        if (!currentData || typeof currentData !== 'object') return;
+                        currentData.lastLogin = nowStd;
+                        if (!currentData.createdAt) currentData.createdAt = nowStd;
+                        return currentData;
+                    }).catch(function(e){
+                        try { console.warn(e); } catch(err) {}
+                    });
                 } catch(e) {}
                 
                 document.getElementById('current-user').textContent = `${appData.userTypes[user.type] ? appData.userTypes[user.type].name : 'غير محدد'}: ${u}`;
@@ -11026,6 +11016,10 @@ if (idx === 5) { // الرقم 5 يمثل "المضخه" في مصفوفة ال�
             const name = document.getElementById('new-username').value.trim();
             const pass = document.getElementById('new-password').value.trim();
             const type = document.getElementById('new-user-type').value;
+            if (/[.#$\[\]\/]/.test(name)) { 
+                alert('اسم المستخدم يحتوي على رموز غير مسموحة'); 
+                return; 
+            }
             
             if (!currentUser.permissions.can_add_types.includes(type)) {
                 alert('ليس لديك صلاحية لإضافة هذا النوع من المستخدمين');
