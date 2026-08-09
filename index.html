@@ -1,6 +1,3 @@
-
-
-
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
@@ -8898,6 +8895,26 @@ function saveDataInternal(options = {}) {
             lines.push(`الضغط: ${(s.pressure || s.pressure === 0) ? s.pressure : '-'} Bar`);
             lines.push(`التدفق: ${(s.waterFlow || s.waterFlow === 0) ? s.waterFlow : '-'} L/Sec`);
             lines.push(`عدد المضخات العاملة: ${s.activePumps != null ? s.activePumps : '-'}`);
+
+            if (Array.isArray(s.pumps) && s.pumps.length > 0) {
+                lines.push('');
+                lines.push('*حالة المضخات:*');
+                s.pumps.forEach(p => {
+                    const statusIcon = p.status === 'نشطة' ? '🟢' : (p.status === 'معطلة' ? '🔴' : '⚪');
+                    let pumpLine = `مضخة ${p.id}: ${statusIcon} ${p.status || '-'}`;
+                    if (p.status === 'نشطة') {
+                        const suc = (p.suctionPressure || p.suctionPressure === 0) ? p.suctionPressure : '-';
+                        const dis = (p.dischargePressure || p.dischargePressure === 0) ? p.dischargePressure : '-';
+                        const freq = (p.frequency || p.frequency === 0) ? p.frequency : '-';
+                        pumpLine += ` | سحب: ${suc} | طرد: ${dis} | تردد: ${freq}`;
+                    }
+                    if (p.operatingHours || p.operatingHours === 0) {
+                        pumpLine += ` | ساعات التشغيل: ${p.operatingHours}`;
+                    }
+                    lines.push(pumpLine);
+                });
+            }
+
             if (s.currentFault) lines.push(`⚠️ عطل 1: ${s.currentFault}${s.fault1Desc ? ' - ' + s.fault1Desc : ''}`);
             if (s.secondaryFault) lines.push(`⚠️ عطل 2: ${s.secondaryFault}${s.fault2Desc ? ' - ' + s.fault2Desc : ''}`);
             if (s.comments) lines.push(`ملاحظات: ${s.comments}`);
