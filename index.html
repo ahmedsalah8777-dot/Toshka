@@ -2881,6 +2881,24 @@
 .dept-option { display: flex; align-items: center; gap: 5px; background: #f9f9f9; padding: 8px; border-radius: 6px; border: 1px solid #ddd; cursor: pointer; }
 .dept-option:hover { background: #eaf2f8; }
 
+/* مشاركة بيانات المحطة عبر واتساب */
+#whatsapp-share-modal .modal-content { max-width: 420px; border-radius: 14px; }
+.whatsapp-message-preview {
+    background: #f4faf6;
+    border: 1px solid #d6ecdf;
+    border-radius: 8px;
+    padding: 10px 12px;
+    font-size: 0.85rem;
+    color: #333;
+    white-space: pre-line;
+    max-height: 200px;
+    overflow-y: auto;
+    margin: 12px 0;
+    line-height: 1.5;
+}
+.whatsapp-skip-btn { width: 100%; margin-top: 10px; background: #ecf0f1; color: #555; border: none; padding: 10px; border-radius: 6px; cursor: pointer; }
+.whatsapp-skip-btn:hover { background: #dfe4e6; }
+
 /* تنسيق الجداول الجديدة */
 .reports-table th { background-color: #2c3e50; font-size: 0.9rem; }
 .reports-table td { font-size: 0.9rem; vertical-align: middle; }
@@ -3771,6 +3789,19 @@
                     <div class="form-group"><label>ملاحظات عامة</label><textarea id="operator-comments" rows="3"></textarea></div>
                     <div class="form-actions"><button id="save-operator-data" class="btn btn-success" style="width: 100%;">حفظ البيانات</button></div>
                 </div>
+            </div>
+        </div>
+
+        <div id="whatsapp-share-modal" class="custom-modal">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <span>💬 مشاركة بيانات المحطة عبر واتساب</span>
+                    <span class="close-modal" onclick="closeWhatsAppShareModal()">&times;</span>
+                </div>
+                <p style="font-size:0.9rem; color:#666; margin-bottom:5px;">تم حفظ البيانات بنجاح. اضغط "مشاركة" لفتح واتساب واختيار جهة الإرسال من داخل التطبيق مباشرة.</p>
+                <div id="whatsapp-message-preview" class="whatsapp-message-preview"></div>
+                <button type="button" class="btn btn-success" style="width:100%; background:#25D366;" onclick="shareStationDataViaWhatsApp()">📤 مشاركة عبر واتساب</button>
+                <button type="button" class="whatsapp-skip-btn" onclick="closeWhatsAppShareModal()">تخطي والمتابعة</button>
             </div>
         </div>
 
@@ -8839,9 +8870,73 @@ function saveDataInternal(options = {}) {
             alertDiv.style.display = 'block';
             setTimeout(() => { 
                 alertDiv.style.display = 'none'; 
-                showStationDetails(sName); 
-            }, 1500);
+                openWhatsAppShareModal(sName, finalSavedAt);
+            }, 1200);
         }
+
+        // --- مشاركة بيانات المحطة عبر واتساب بعد الحفظ ---
+        let whatsAppShareStation = null;
+        let whatsAppShareSavedAt = null;
+
+        function openWhatsAppShareModal(sName, savedAt) {
+            whatsAppShareStation = sName;
+            whatsAppShareSavedAt = savedAt;
+            const preview = document.getElementById('whatsapp-message-preview');
+            if (preview) preview.textContent = buildStationWhatsAppMessage(sName);
+            const modal = document.getElementById('whatsapp-share-modal');
+            if (modal) modal.classList.add('show');
+        }
+
+        function buildStationWhatsAppMessage(sName) {
+            const s = appData.stations[sName] || {};
+            const lines = [];
+            lines.push(`*تقرير تشغيل محطة: ${sName}*`);
+            lines.push(`الحالة: ${s.status || '-'}`);
+            lines.push(`المشغل: ${s.operatorName || '-'}`);
+            lines.push(`آخر تحديث: ${whatsAppShareSavedAt || s.lastUpdate || '-'}`);
+            lines.push(`الجهد الكهربي: ${(s.voltage || s.voltage === 0) ? s.voltage : '-'} V`);
+            lines.push(`الضغط: ${(s.pressure || s.pressure === 0) ? s.pressure : '-'} Bar`);
+            lines.push(`التدفق: ${(s.waterFlow || s.waterFlow === 0) ? s.waterFlow : '-'} L/Sec`);
+            lines.push(`عدد المضخات العاملة: ${s.activePumps != null ? s.activePumps : '-'}`);
+            if (s.currentFault) lines.push(`⚠️ عطل 1: ${s.currentFault}${s.fault1Desc ? ' - ' + s.fault1Desc : ''}`);
+            if (s.secondaryFault) lines.push(`⚠️ عطل 2: ${s.secondaryFault}${s.fault2Desc ? ' - ' + s.fault2Desc : ''}`);
+            if (s.comments) lines.push(`ملاحظات: ${s.comments}`);
+            return lines.join('\n');
+        }
+
+        // تفتح واتساب مباشرة وتترك اختيار جهة الإرسال (الشخص/المجموعة) للمستخدم من داخل التطبيق نفسه،
+        // بدلاً من تحديد رقم مسبقاً من داخل الصفحة.
+        function shareStationDataViaWhatsApp() {
+            const sName = whatsAppShareStation;
+            if (!sName) return;
+            const message = buildStationWhatsAppMessage(sName);
+
+            // 1) في المتصفحات التي تدعم واجهة المشاركة الأصلية (الهاتف غالباً):
+            //    تفتح قائمة المشاركة بالنظام، يختار المستخدم منها واتساب، ثم يختار جهة الإرسال داخل واتساب نفسه.
+            if (navigator.share) {
+                navigator.share({ text: message })
+                    .catch(() => { /* المستخدم ألغى المشاركة - لا حاجة لأي إجراء */ })
+                    .finally(() => closeWhatsAppShareModal());
+                return;
+            }
+
+            // 2) خيار احتياطي: فتح واتساب مباشرة بدون تحديد رقم،
+            //    فيعرض واتساب نفسه قائمة الدردشات ليختار المستخدم المرسل إليه.
+            window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent(message)}`, '_blank');
+            closeWhatsAppShareModal();
+        }
+
+        function closeWhatsAppShareModal() {
+            const modal = document.getElementById('whatsapp-share-modal');
+            if (modal) modal.classList.remove('show');
+            const sName = whatsAppShareStation;
+            whatsAppShareStation = null;
+            whatsAppShareSavedAt = null;
+            if (sName) showStationDetails(sName);
+        }
+        window.openWhatsAppShareModal = openWhatsAppShareModal;
+        window.shareStationDataViaWhatsApp = shareStationDataViaWhatsApp;
+        window.closeWhatsAppShareModal = closeWhatsAppShareModal;
 
         function performOfflineSave(sName, updates, log, consumptionLogData, newFaultEntries, resolvedFaultEntries) {
              // DEPRECATED: Offline save functionality removed.
