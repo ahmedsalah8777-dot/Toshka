@@ -11727,8 +11727,12 @@ function updateFaultArchiveStationOptions() {
     if (zoneSel && zoneSel.value !== 'all') {
         stationsList = stationsList.filter(function(s) { return s.zone === zoneSel.value; });
     }
-    stationsList.sort(function(a, b) { return a.name.localeCompare(b.name); }).forEach(function(s) {
-        stationSel.innerHTML += '<option value="' + s.name + '">' + s.name + '</option>';
+    stationsList.sort(function(a, b) { 
+        var nameA = a.name || '';
+        var nameB = b.name || '';
+        return nameA.localeCompare(nameB); 
+    }).forEach(function(s) {
+        stationSel.innerHTML += '<option value="' + (s.name || 'unknown') + '">' + (s.name || 'محطة غير معروفة') + '</option>';
     });
     var opt = Array.from(stationSel.options).some(function(o) { return o.value === prev; });
     if (opt) stationSel.value = prev;
@@ -11741,7 +11745,7 @@ function updateFaultArchiveTypeOptions() {
     (appData.faultsLog || []).forEach(function(f) {
         if (f && f.type) set.add(f.type);
     });
-    var types = Array.from(set).sort(function(a, b) { return a.localeCompare(b); });
+    var types = Array.from(set).sort(function(a, b) { return (a || '').localeCompare(b || ''); });
     typeSel.innerHTML = '<option value="all">كل الأعطال</option>';
     types.forEach(function(t) {
         typeSel.innerHTML += '<option value="' + t + '">' + t + '</option>';
@@ -11759,24 +11763,31 @@ function renderFaultsLog() {
         archiveSection.style.display = isOperator ? 'none' : 'block';
     }
 
-    activeBody.innerHTML = '';
+    if(activeBody) activeBody.innerHTML = '';
     if (historyBody) historyBody.innerHTML = '';
     
     updateFaultArchiveZoneOptions();
     updateFaultArchiveStationOptions();
     updateFaultArchiveTypeOptions();
 
-    const fZone = document.getElementById('fault-archive-zone-filter').value;
-    const fStation = document.getElementById('fault-archive-station-filter').value;
-    const fType = document.getElementById('fault-archive-type-filter').value;
-    const fDateFrom = document.getElementById('fault-archive-date-from').value;
-    const fDateTo = document.getElementById('fault-archive-date-to').value;
+    const fZoneElem = document.getElementById('fault-archive-zone-filter');
+    const fStationElem = document.getElementById('fault-archive-station-filter');
+    const fTypeElem = document.getElementById('fault-archive-type-filter');
+    const fDateFromElem = document.getElementById('fault-archive-date-from');
+    const fDateToElem = document.getElementById('fault-archive-date-to');
+
+    const fZone = fZoneElem ? fZoneElem.value : 'all';
+    const fStation = fStationElem ? fStationElem.value : 'all';
+    const fType = fTypeElem ? fTypeElem.value : 'all';
+    const fDateFrom = fDateFromElem ? fDateFromElem.value : '';
+    const fDateTo = fDateToElem ? fDateToElem.value : '';
 
     // --- أولاً: عرض الأعطال النشطة ---
-    const stationsList = Object.values(appData.stations);
+    const stationsList = Object.values(appData.stations || {});
     let hasActiveFaults = false;
 
     stationsList.forEach(s => {
+        if (!s) return;
         // 1. فحص العطل الرئيسي
         if (s.currentFault) {
             hasActiveFaults = true;
