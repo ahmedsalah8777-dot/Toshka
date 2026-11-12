@@ -14353,6 +14353,15 @@ document.getElementById('emergency-image-modal').addEventListener('click', funct
         }
 
         function showScreen(screenId, addToHistory = true) {
+            if (screenId === 'work-orders' || screenId === 'archive-work-orders' || screenId === 'department-dashboard') {
+                const uType = appData.currentUser ? appData.currentUser.type : '';
+                if (uType !== 'admin' && uType !== 'engineer' && uType !== 'supervisor') {
+                    window.__pendingWorkOrderKey = null;
+                    alert('⚠️ ليس لديك صلاحية للوصول إلى شاشة أوامر الشغل');
+                    return;
+                }
+            }
+
             // إضافة الحالة للتاريخ إذا لم يكن استدعاء من زر الرجوع
             if (addToHistory) {
                 if (!appData.screenStack) appData.screenStack = [];
@@ -14748,8 +14757,17 @@ document.getElementById('emergency-image-modal').addEventListener('click', funct
                 // تحديث صلاحيات القائمة (بما في ذلك زر الإعلانات)
                 updateMenuPermissions();
 
+                const canAccessWorkOrders = (userType === 'admin' || userType === 'engineer' || userType === 'supervisor');
                 if (window.__pendingWorkOrderKey) {
-                    showScreen('work-orders');
+                    if (canAccessWorkOrders) {
+                        showScreen('work-orders');
+                    } else {
+                        window.__pendingWorkOrderKey = null;
+                        try { window.history.replaceState(null, null, window.location.pathname); } catch (e) {}
+                        alert('⚠️ ليس لديك صلاحية للوصول إلى شاشة أوامر الشغل');
+                        showScreen('stations');
+                        showAnnouncementAfterLogin();
+                    }
                 } else {
                     showScreen('stations');
                     // عرض الإعلان بعد تسجيل الدخول
