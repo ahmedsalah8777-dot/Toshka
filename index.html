@@ -12234,9 +12234,12 @@ document.querySelectorAll('.menu-item').forEach(item => {
             lastStationsUpdate: '',
             // Pagination limits
             historyLimit: 100,
-            historyPageSize: 5000,
+            historyPageSize: 1000,
             historyOldestKey: null,
             historyFullyLoaded: false,
+            stationsLoadedInSession: false,
+            appConfigLoadedInSession: false,
+            userProfilesLoadedInSession: false,
             faultsLimit: 100,
             faultReportsLimit: 100,
             usersLimit: 100,
@@ -12316,8 +12319,9 @@ document.querySelectorAll('.menu-item').forEach(item => {
             return new Date(year, month, day, hour, min, sec);
         }
         const CACHE_TTL = {
-            stations: 2 * 60 * 1000,
-            faultsLog: 60 * 1000
+            stations: 15 * 60 * 1000,
+            faultsLog: 10 * 60 * 1000,
+            userProfiles: 15 * 60 * 1000
         };
         function readCache(key, tsKey) {
             var raw = localStorage.getItem(key);
@@ -13519,6 +13523,7 @@ document.getElementById('emergency-image-modal').addEventListener('click', funct
 
         function loadAppConfig(cb, forceReload) {
             var cache = localStorage.getItem('toshka_app_config_cache');
+            var hasAppliedCache = false;
             if (cache && !forceReload) {
                 try {
                     var c = JSON.parse(cache);
@@ -13532,8 +13537,27 @@ document.getElementById('emergency-image-modal').addEventListener('click', funct
                         appData.logoUrl = null;
                         if (typeof applyAppLogo === 'function') applyAppLogo(null);
                     }
-                    if (cb) cb();
+                    hasAppliedCache = true;
                 } catch(e) {}
+            }
+            if (!forceReload && (appData.appConfigLoadedInSession || !navigator.onLine) && hasAppliedCache) {
+                if (cb) cb();
+                return;
+            }
+            var cbCalled = false;
+            if (hasAppliedCache && !forceReload) {
+                appData.appConfigLoadedInSession = true;
+                cbCalled = true;
+                if (cb) cb();
+                // تحديث خفيف لأسماء المناطق فقط في الخلفية دون إعادة تنزيل الشعار Base64 إن لم يتغير
+                db.ref('appConfig/zones').once('value').then(function(zSnap) {
+                    var zVal = zSnap.val();
+                    if (Array.isArray(zVal) && zVal.length > 0) {
+                        appData.zones = zVal;
+                        localStorage.setItem('toshka_app_config_cache', JSON.stringify({ zones: appData.zones, logoUrl: appData.logoUrl }));
+                    }
+                }).catch(function() {});
+                return;
             }
             db.ref('appConfig').once('value').then(function(snap) {
                 var c = snap.val() || {};
@@ -13547,14 +13571,17 @@ document.getElementById('emergency-image-modal').addEventListener('click', funct
                     appData.logoUrl = null;
                     if (typeof applyAppLogo === 'function') applyAppLogo(null);
                 }
-                localStorage.setItem('toshka_app_config_cache', JSON.stringify({ zones: appData.zones, logoUrl: appData.logoUrl }));
-                if (cb) cb();
+                appData.appConfigLoadedInSession = true;
+                try {
+                    localStorage.setItem('toshka_app_config_cache', JSON.stringify({ zones: appData.zones, logoUrl: appData.logoUrl }));
+                } catch (e) {}
+                if (cb && !cbCalled) cb();
             }).catch(function() {
-                if (cb) cb();
+                if (cb && !cbCalled) cb();
             });
         }
 
-        // --- تحميل عند استدعاء الشاشة فقط (Lazy) ---
+        // --- تحميل عند استدعاء الشاشة فقط (Lazy) مع الحفاظ على التحديث اللحظي ---
         function loadStations(cb, options) {
             var opts = options || {};
             var forceReload = !!opts.forceReload;
@@ -13565,38 +13592,74 @@ document.getElementById('emergency-image-modal').addEventListener('click', funct
             var cacheFresh = isCacheFresh(cacheObj.ts, CACHE_TTL.stations);
             var hasStations = appData.stations && Object.keys(appData.stations).length > 0;
             if (hasStations) setLastUpdateLabel(getStoredFirebaseUpdate());
-            if (hasStations && cb && !forceReload) { cb(); }
-            
-            var isOperator = appData.currentUser && appData.currentUser.type === 'operator';
-            if (!forceReload && isOperator && hasStations) {
-                if (cacheFresh) return;
+
+            // التأكد من تشغيل المستمع اللحظي (child_changed) ليحافظ على تزامن المحطات لحظياً بأقل استهلاك بيانات
+            if (appData.currentUser && typeof window.attachStationsLive === 'function') {
+                window.attachStationsLive();
             }
-            
-            // تحسين: إذا كانت البيانات موجودة بالفعل ومستمع التحديثات يعمل، لا داعي للتحميل الكامل مرة أخرى
-            if (!forceReload && hasStations && appData.listeners && appData.listeners.stationsRef) {
-                if (cacheFresh) return;
-            }
-            if (!forceReload && hasStations && cacheFresh) {
+
+            var liveListenerActive = !!(appData.listeners && appData.listeners.stationsRef);
+            if (!forceReload && hasStations && (appData.stationsLoadedInSession || cacheFresh || !navigator.onLine)) {
+                if (cacheFresh) appData.stationsLoadedInSession = true;
+                if (cb) cb();
                 return;
             }
-            if (!navigator.onLine && hasStations) {
+
+            // إذا كانت هناك بيانات محفوظة محلياً ونحتاج لتحديثها أول مرة في الجلسة، نعرض الكاش فوراً لو كانت شاشة المحطات مفتوحة
+            if (!forceReload && hasStations) {
+                var stationsScreen = document.getElementById('stations-screen');
+                if (stationsScreen && stationsScreen.classList.contains('active') && typeof renderStations === 'function') {
+                    var at = document.querySelector('.nav-tab.active');
+                    renderStations(at ? at.dataset.zone : 'all');
+                }
+            }
+
+            // دمج الطلبات المتزامنة لمنع تكرار تنزيل نفس بيانات المحطات في نفس اللحظة
+            if (appData._stationsFetching) {
+                if (cb) appData._stationsFetchCallbacks.push(cb);
                 return;
             }
+            appData._stationsFetching = true;
+            appData._stationsFetchCallbacks = cb ? [cb] : [];
 
             db.ref('stations').once('value').then(function(snap) {
                 var d = snap.val();
                 appData.stations = d || {};
+                appData.stationsLoadedInSession = true;
                 setStationsCache(appData.stations);
                 forceRepairStations();
                 refreshStationsLastUpdate();
-                if (cb) cb();
-            }).catch(function(){ if (cb) cb(); });
+                var cbs = (appData._stationsFetchCallbacks || []).slice();
+                appData._stationsFetching = false;
+                appData._stationsFetchCallbacks = [];
+                cbs.forEach(function(fn) { try { fn(); } catch(e) { console.error(e); } });
+            }).catch(function(){
+                var cbs = (appData._stationsFetchCallbacks || []).slice();
+                appData._stationsFetching = false;
+                appData._stationsFetchCallbacks = [];
+                cbs.forEach(function(fn) { try { fn(); } catch(e) { console.error(e); } });
+            });
         }
-        function loadUserProfiles(cb) {
+        function loadUserProfiles(cb, forceReload) {
+            if (!forceReload && appData.userProfilesLoadedInSession && appData.userProfiles && Object.keys(appData.userProfiles).length > 0) {
+                if (cb) cb();
+                return;
+            }
+            var cacheObj = readCache('toshka_user_profiles_cache', 'toshka_user_profiles_cache_ts');
+            if (!forceReload && cacheObj.data && isCacheFresh(cacheObj.ts, CACHE_TTL.userProfiles)) {
+                appData.userProfiles = cacheObj.data;
+                appData.userProfilesLoadedInSession = true;
+                if (cb) cb();
+                return;
+            }
+            if (cacheObj.data && (!appData.userProfiles || Object.keys(appData.userProfiles).length === 0)) {
+                appData.userProfiles = cacheObj.data;
+            }
             db.ref('userProfiles').once('value').then(function(snap) {
                 var d = snap.val();
                 appData.userProfiles = d || {};
-                localStorage.setItem('toshka_user_profiles_cache', JSON.stringify(appData.userProfiles));
+                appData.userProfilesLoadedInSession = true;
+                setCache('toshka_user_profiles_cache', 'toshka_user_profiles_cache_ts', appData.userProfiles);
                 if (cb) cb();
             }).catch(function(){ if (cb) cb(); });
         }
@@ -13626,9 +13689,31 @@ document.getElementById('emergency-image-modal').addEventListener('click', funct
         }
         function loadHistory(cb, options) {
             var opts = options || {};
-            var limit = opts.limit || appData.historyPageSize || 5000;
+            var limit = opts.limit || appData.historyPageSize || 1000;
             var beforeKey = opts.beforeKey;
             var appendOlder = !!opts.appendOlder;
+            var forceFull = !!opts.forceFull;
+
+            // إذا كان السجل محملاً بالفعل ولم يُطلب تحميل صفحة أقدم، نجلب فقط السجلات الجديدة المضافة بعد أحدث مفتاح لتوفير البيانات
+            if (!beforeKey && !appendOlder && !forceFull && appData.operationHistory && appData.operationHistory.length > 0) {
+                var newestItem = appData.operationHistory[0];
+                var newestKey = newestItem && newestItem._key ? newestItem._key : null;
+                if (newestKey && newestKey.charAt(0) === '-') {
+                    db.ref('history').orderByKey().startAt(newestKey).limitToLast(limit).once('value').then(function(snap) {
+                        var newList = normalizeHistorySnapshot(snap).reverse();
+                        var existingKeys = new Set((appData.operationHistory || []).map(function(x){ return x && x._key; }).filter(Boolean));
+                        var freshItems = newList.filter(function(x){ return x && x._key && !existingKeys.has(x._key); });
+                        if (freshItems.length > 0) {
+                            appData.operationHistory = freshItems.concat(appData.operationHistory);
+                            updateHistoryOldestKey();
+                            cleanHistoricalData();
+                        }
+                        if (cb) cb();
+                    }).catch(function(){ if (cb) cb(); });
+                    return;
+                }
+            }
+
             var ref = db.ref('history').orderByKey();
             if (beforeKey) {
                 ref = ref.endAt(beforeKey).limitToLast(limit + 1);
@@ -13652,14 +13737,7 @@ document.getElementById('emergency-image-modal').addEventListener('click', funct
             }).catch(function(){ if (cb) cb(); });
         }
         function loadHistoryLimited(limit, cb) {
-            db.ref('history').orderByKey().limitToLast(limit || 1000).once('value').then(function(snap) {
-                var list = normalizeHistorySnapshot(snap).reverse();
-                appData.operationHistory = list;
-                appData.historyFullyLoaded = list.length < (limit || 1000);
-                updateHistoryOldestKey();
-                cleanHistoricalData();
-                if (cb) cb();
-            }).catch(function(){ if (cb) cb(); });
+            loadHistory(cb, { limit: limit || 500 });
         }
         function getOldestHistoryDate() {
             var history = appData.operationHistory || [];
@@ -13694,7 +13772,7 @@ document.getElementById('emergency-image-modal').addEventListener('click', funct
             }
             var oldest = getOldestHistoryDate();
             if (oldest && oldest <= startDate) { if (cb) cb(); return; }
-            if (tries > 8) { if (cb) cb(); return; }
+            if (tries > 40) { if (cb) cb(); return; }
             loadMoreHistoryFromDb(function(){ ensureHistoryCoversDateRange(startDate, endDate, cb, tries + 1); });
         }
         function loadFaultsLog(cb, options) {
@@ -13705,7 +13783,6 @@ document.getElementById('emergency-image-modal').addEventListener('click', funct
                 if (cb) cb();
                 return;
             }
-            // تحسين: إضافة حد أقصى للسجلات لتقليل استهلاك البيانات
             var cacheObj = readCache('toshka_faults_log_cache', 'toshka_faults_log_cache_ts');
             var cacheFresh = isCacheFresh(cacheObj.ts, CACHE_TTL.faultsLog);
             var hasFaults = appData.faultsLog && appData.faultsLog.length > 0;
@@ -13713,15 +13790,76 @@ document.getElementById('emergency-image-modal').addEventListener('click', funct
                 appData.faultsLog = cacheObj.data;
                 hasFaults = true;
             }
-            if (hasFaults && cb) cb();
-            if (!navigator.onLine && hasFaults) return;
-            if (!forceReload && hasFaults && cacheFresh) return;
-            db.ref('faults_log').limitToLast(10000).once('value').then(function(snap) {
+            if (!forceReload && hasFaults && (cacheFresh || !navigator.onLine)) {
+                if (cb) cb();
+                return;
+            }
+            db.ref('faults_log').limitToLast(2500).once('value').then(function(snap) {
                 var v = snap.val();
                 appData.faultsLog = (v && (Array.isArray(v) ? v : Object.values(v))) || [];
                 setFaultsLogCache(appData.faultsLog);
                 if (cb) cb();
             }).catch(function(){ if (cb) cb(); });
+        }
+        function syncFaultsLogChanges(sName, newFaultEntries, resolvedFaultEntries, endTime) {
+            var nf = newFaultEntries || [];
+            var rf = resolvedFaultEntries || [];
+            if (nf.length === 0 && rf.length === 0) return Promise.resolve();
+            return db.ref('faults_log').limitToLast(150).once('value').then(function(snap) {
+                var recentMap = snap.val() || {};
+                var recentKeys = Object.keys(recentMap);
+                var updates = {};
+                nf.forEach(function(newF) {
+                    var exists = recentKeys.some(function(k) {
+                        var item = recentMap[k];
+                        return item && item.active === true && item.station === newF.station && item.type === newF.type;
+                    });
+                    if (!exists) {
+                        var newKey = db.ref('faults_log').push().key;
+                        updates[newKey] = newF;
+                    }
+                    if (Array.isArray(appData.faultsLog)) {
+                        var memEx = appData.faultsLog.some(function(f){ return f && f.active === true && f.station === newF.station && f.type === newF.type; });
+                        if (!memEx) appData.faultsLog.push(newF);
+                    }
+                });
+                rf.forEach(function(resF) {
+                    var matchedKey = null;
+                    for (var i = recentKeys.length - 1; i >= 0; i--) {
+                        var k = recentKeys[i];
+                        var item = recentMap[k];
+                        if (item && item.station === sName && item.type === resF.type && item.active === true) {
+                            matchedKey = k;
+                            break;
+                        }
+                    }
+                    if (matchedKey !== null) {
+                        updates[matchedKey + '/active'] = false;
+                        updates[matchedKey + '/endTime'] = endTime;
+                    } else {
+                        var pushKey = db.ref('faults_log').push().key;
+                        updates[pushKey] = resF;
+                    }
+                    if (Array.isArray(appData.faultsLog)) {
+                        var idx = appData.faultsLog.findIndex(function(f){ return f && f.station === sName && f.type === resF.type && f.active === true; });
+                        if (idx !== -1) {
+                            appData.faultsLog[idx].active = false;
+                            appData.faultsLog[idx].endTime = endTime;
+                        } else {
+                            appData.faultsLog.push(resF);
+                        }
+                    }
+                });
+                if (Array.isArray(appData.faultsLog) && appData.faultsLog.length > 0) {
+                    setFaultsLogCache(appData.faultsLog);
+                }
+                if (Object.keys(updates).length > 0) {
+                    return db.ref('faults_log').update(updates);
+                }
+            }).catch(function(err) {
+                console.warn('syncFaultsLogChanges fallback push:', err);
+                rf.forEach(function(resF) { db.ref('faults_log').push(resF); });
+            });
         }
         function loadConsumptionLogs(cb) {
             // تحسين: زيادة حد السجلات بناء على طلب المستخدم لضمان التقارير طويلة المدى
@@ -13738,23 +13876,29 @@ document.getElementById('emergency-image-modal').addEventListener('click', funct
             var isStaff = t === 'admin' || t === 'engineer' || t === 'supervisor';
 
             if (screenId === 'history' && ok) {
-                appData.refreshTimer = setInterval(function(){ loadHistoryLimited(2000, function(){ renderHistoryTable(true); }); }, 60000);
+                appData.refreshTimer = setInterval(function(){ loadHistoryLimited(500, function(){ renderHistoryTable(true); }); }, 60000);
             } else if (screenId === 'faults-log' && ok) {
-                appData.refreshTimer = setInterval(function(){ loadFaultsLog(function(){ renderFaultsLog(); }); }, 60000);
+                appData.refreshTimer = setInterval(function(){
+                    if (appData.archiveSearchTriggered) {
+                        loadFaultsLog(function(){ renderFaultsLog(); });
+                    } else {
+                        renderFaultsLog();
+                    }
+                }, 60000);
             } else if ((screenId === 'work-orders' || screenId === 'archive-work-orders') && isStaff) {
-                // تحديث تلقائي لشاشة أوامر الشغل لكلا من (مدير - مهندس - مشرف)
+                // تحديث تلقائي لشاشة أوامر الشغل مع الاعتماد على التزامن اللحظي دون إعادة تنزيل كامل الجدول
                 appData.refreshTimer = setInterval(function(){
                     if (document.querySelector('.modal.show')) return;
                     if (typeof renderWorkOrdersTables === 'function') {
-                        renderWorkOrdersTables(true, true);
+                        renderWorkOrdersTables(false, true);
                     }
                 }, 30000);
             } else if (screenId === 'fault-reporting') {
-                // تحديث تلقائي لشاشة بلاغات الأعطال لكل المستخدمين
+                // تحديث تلقائي لشاشة بلاغات الأعطال مع الاعتماد على التزامن اللحظي دون إعادة تنزيل كامل الجدول
                 appData.refreshTimer = setInterval(function(){
                     if (document.querySelector('.modal.show')) return;
                     if (typeof renderFaultReportsTable === 'function') {
-                        renderFaultReportsTable();
+                        renderFaultReportsTable(false);
                     }
                 }, 30000);
             }
@@ -13763,13 +13907,12 @@ document.getElementById('emergency-image-modal').addEventListener('click', funct
             if (appData.refreshTimer) { clearInterval(appData.refreshTimer); appData.refreshTimer = null; }
         }
         window.attachStationsLive = function() {
-            if (appData.currentUser && appData.currentUser.type === 'operator') return;
+            if (!appData.currentUser) return;
             if (!appData.listeners) appData.listeners = {};
             if (appData.listeners.stationsRef) return;
             var ref = db.ref('stations');
             appData.listeners.stationsRef = ref;
             var cacheObj = readCache('toshka_stations_cache', 'toshka_stations_cache_ts');
-            var cacheFresh = isCacheFresh(cacheObj.ts, CACHE_TTL.stations);
             var hasStations = appData.stations && Object.keys(appData.stations).length > 0;
             if (!hasStations && cacheObj.data) {
                 appData.stations = cacheObj.data;
@@ -13782,7 +13925,9 @@ document.getElementById('emergency-image-modal').addEventListener('click', funct
             // لا يتم تأخير تحديث بيانات الذاكرة أو Firebase؛ الدمج يخص رسم الواجهة فقط.
             var stationRenderQueued = false;
             var stationCacheTimer = null;
-            function scheduleStationRender() {
+            var lastUpdatedStationKey = null;
+            function scheduleStationRender(changedKey) {
+                if (changedKey) lastUpdatedStationKey = changedKey;
                 if (stationRenderQueued) return;
                 stationRenderQueued = true;
                 requestAnimationFrame(function() {
@@ -13791,6 +13936,14 @@ document.getElementById('emergency-image-modal').addEventListener('click', funct
                     if (stationsScreen && stationsScreen.classList.contains('active')) {
                         var at = document.querySelector('.nav-tab.active');
                         renderStations(at ? at.dataset.zone : 'all');
+                    }
+                    var faultsScreen = document.getElementById('faults-log-screen');
+                    if (faultsScreen && faultsScreen.classList.contains('active') && typeof renderFaultsLog === 'function') {
+                        renderFaultsLog();
+                    }
+                    var stationDetailScreen = document.getElementById('station-screen');
+                    if (stationDetailScreen && stationDetailScreen.classList.contains('active') && lastUpdatedStationKey && appData.currentStation === lastUpdatedStationKey && typeof showStationDetails === 'function') {
+                        showStationDetails(appData.currentStation, false);
                     }
                 });
             }
@@ -13817,22 +13970,9 @@ document.getElementById('emergency-image-modal').addEventListener('click', funct
                     appData.stations[stationKey] = stationData;
                     scheduleStationsCache();
                     applyStationsUpdateTime(stationData.lastUpdate);
-                    scheduleStationRender();
+                    scheduleStationRender(stationKey);
                 }
             });
-
-            // تحميل أولي للبيانات
-            if (!cacheFresh || !hasStations) {
-                ref.once('value').then(function(snap) {
-                    var d = snap.val();
-                    appData.stations = d || {};
-                    setStationsCache(appData.stations);
-                    refreshStationsLastUpdate();
-                    renderZonesTabs();
-                    var at = document.querySelector('.nav-tab.active');
-                    renderStations(at ? at.dataset.zone : 'all');
-                });
-            }
         };
         window.detachStationsLive = function() {
             var ref = appData.listeners && appData.listeners.stationsRef;
@@ -14075,7 +14215,7 @@ document.getElementById('emergency-image-modal').addEventListener('click', funct
             if (screenId === 'fault-reporting') {
                 loadStations(function() {
                     if (typeof initFaultReportingScreen === 'function') initFaultReportingScreen();
-                    if (typeof renderFaultReportsTable === 'function') renderFaultReportsTable();
+                    if (typeof renderFaultReportsTable === 'function') renderFaultReportsTable(true);
                     finishRefresh();
                 }, { forceReload: true });
                 return;
@@ -14088,7 +14228,7 @@ document.getElementById('emergency-image-modal').addEventListener('click', funct
                         if (typeof populateUsersTypeFilter === 'function') populateUsersTypeFilter();
                         if (typeof renderUsersManagement === 'function') renderUsersManagement();
                         finishRefresh();
-                    });
+                    }, true);
                 });
                 return;
             }
@@ -14098,7 +14238,7 @@ document.getElementById('emergency-image-modal').addEventListener('click', funct
                     appData.currentUsersDataPage = 0;
                     if (typeof renderUsersDataManagement === 'function') renderUsersDataManagement();
                     finishRefresh();
-                });
+                }, true);
                 return;
             }
 
@@ -14108,7 +14248,7 @@ document.getElementById('emergency-image-modal').addEventListener('click', funct
                     if (typeof renderUserProfileForm === 'function') renderUserProfileForm();
                     if (typeof renderUsersProfilesList === 'function') renderUsersProfilesList();
                     finishRefresh();
-                });
+                }, true);
                 return;
             }
 
@@ -14260,8 +14400,10 @@ document.getElementById('emergency-image-modal').addEventListener('click', funct
             window.scrollTo(0, 0);
             stopAutoRefresh();
             
-            if (screenId !== 'stations') {
+            if (screenId === 'login') {
                 detachStationsLive();
+                if (typeof detachWorkOrdersLive === 'function') detachWorkOrdersLive();
+                if (typeof detachFaultReportsLive === 'function') detachFaultReportsLive();
             }
             
             const userInfoDiv = document.getElementById('header-user-info');
@@ -14293,8 +14435,7 @@ document.getElementById('emergency-image-modal').addEventListener('click', funct
                 }
             }
             if(screenId === 'stations') {
-                const isOperator = appData.currentUser && appData.currentUser.type === 'operator';
-                loadAppConfig(function() { loadStations(function() { renderZonesTabs(); var at = document.querySelector('.nav-tab.active'); renderStations(at ? at.dataset.zone : 'all'); }, { forceReload: isOperator }); });
+                loadAppConfig(function() { loadStations(function() { renderZonesTabs(); var at = document.querySelector('.nav-tab.active'); renderStations(at ? at.dataset.zone : 'all'); }); });
                 attachStationsLive();
             }
             if(screenId === 'users') {
@@ -14331,19 +14472,13 @@ document.getElementById('emergency-image-modal').addEventListener('click', funct
             if(screenId === 'faults-log') {
                 appData.archiveSearchTriggered = false;
                 appData.faultsLimit = 100;
-                // Opening the page must never be blocked by a rendering or loading error.
-                try { renderFaultsLog(); }
-                catch (err) { console.error('Faults screen initial render failed:', err); }
+                // عرض الأعطال النشطة لحظياً من المحطات المحملة دون تحميل أرشيف الأعطال إلا عند الضغط على "بحث"
+                loadStations(function() {
+                    try { renderFaultsLog(); }
+                    catch (err) { console.error('Faults screen initial render failed:', err); }
+                });
                 if (appData.currentUser && appData.currentUser.type !== 'operator') {
-                    try {
-                        loadFaultsLog(function() {
-                            if (document.getElementById('faults-log-screen')?.classList.contains('active')) {
-                                try { renderFaultsLog(); }
-                                catch (err) { console.error('Faults screen refresh failed:', err); }
-                            }
-                        });
-                        startAutoRefresh('faults-log');
-                    } catch (err) { console.error('Faults screen loading failed:', err); }
+                    startAutoRefresh('faults-log');
                 }
             }
             if(screenId === 'user-profile') {
@@ -14426,44 +14561,40 @@ document.getElementById('emergency-image-modal').addEventListener('click', funct
             }
             if(screenId === 'work-orders') {
                 loadAppConfig(function() {
-                    var z = document.getElementById('wo-filter-zone');
-                    if (z && z.options.length <= 1) { appData.zones.forEach(function(zone){ z.innerHTML += '<option value="'+zone+'">'+zone+'</option>'; }); }
+                    loadStations(function() {
+                        var z = document.getElementById('wo-filter-zone');
+                        if (z && z.options.length <= 1) { appData.zones.forEach(function(zone){ z.innerHTML += '<option value="'+zone+'">'+zone+'</option>'; }); }
 
-                    // Update stations dropdown on zone change
-                    z.addEventListener('change', function() {
-                        var stationDropdown = document.getElementById('wo-filter-station');
-                        stationDropdown.innerHTML = '<option value="">كل المحطات</option>'; // Reset
-                        if (this.value) {
-                            db.ref('stations').orderByChild('zone').equalTo(this.value).once('value', function(snapshot) {
-                                snapshot.forEach(function(childSnapshot) {
-                                    var station = childSnapshot.val();
-                                    stationDropdown.innerHTML += '<option value="'+station.name+'">'+station.name+'</option>';
-                                });
+                        function populateWoStationDropdown(selectedZone) {
+                            var stationDropdown = document.getElementById('wo-filter-station');
+                            if (!stationDropdown) return;
+                            var prevVal = stationDropdown.value || '';
+                            stationDropdown.innerHTML = '<option value="">كل المحطات</option>';
+                            var stList = Object.values(appData.stations || {}).filter(function(st) {
+                                return st && st.name && (!selectedZone || st.zone === selectedZone);
+                            }).sort(function(a, b) { return String(a.name).localeCompare(String(b.name), 'ar', { numeric: true }); });
+                            stList.forEach(function(station) {
+                                stationDropdown.innerHTML += '<option value="'+station.name+'">'+station.name+'</option>';
                             });
-                        } else {
-                            // If no zone is selected, load all stations
-                            db.ref('stations').once('value', function(snapshot) {
-                                snapshot.forEach(function(childSnapshot) {
-                                    var station = childSnapshot.val();
-                                    stationDropdown.innerHTML += '<option value="'+station.name+'">'+station.name+'</option>';
-                                });
+                            if (prevVal && Array.from(stationDropdown.options).some(function(o){ return o.value === prevVal; })) {
+                                stationDropdown.value = prevVal;
+                            }
+                        }
+
+                        if (z && !z.dataset.woZoneBound) {
+                            z.dataset.woZoneBound = '1';
+                            z.addEventListener('change', function() {
+                                populateWoStationDropdown(this.value);
+                                renderWorkOrdersTables();
                             });
                         }
-                        renderWorkOrdersTables(); // Re-render tables on change
-                    });
 
-                    // Initial load of all stations
-                    db.ref('stations').once('value', function(snapshot) {
-                        var stationDropdown = document.getElementById('wo-filter-station');
-                        snapshot.forEach(function(childSnapshot) {
-                            var station = childSnapshot.val();
-                            stationDropdown.innerHTML += '<option value="'+station.name+'">'+station.name+'</option>';
-                        });
-                    });
+                        populateWoStationDropdown(z ? z.value : '');
 
-                    if (typeof resetActiveLimit === 'function') resetActiveLimit();
-                    if (typeof resetArchiveLimit === 'function') resetArchiveLimit();
-                    if (typeof renderWorkOrdersTables === 'function') renderWorkOrdersTables(true);
+                        if (typeof resetActiveLimit === 'function') resetActiveLimit();
+                        if (typeof resetArchiveLimit === 'function') resetArchiveLimit();
+                        if (typeof renderWorkOrdersTables === 'function') renderWorkOrdersTables(false);
+                    });
                 });
                 const userType = appData.currentUser ? appData.currentUser.type : '';
                 if (userType === 'admin' || userType === 'engineer' || userType === 'supervisor') {
@@ -14943,13 +15074,8 @@ window.handleTabClick = (zone, btn) => {
     btn.classList.add('active');
     // حفظ المنطقة في الذاكرة
     appData.currentZone = zone;
-    // عرض المحطات
-    const isOperator = appData.currentUser && appData.currentUser.type === 'operator';
-    if (isOperator) {
-        loadStations(function() { renderStations(zone); }, { forceReload: true });
-    } else {
-        renderStations(zone);
-    }
+    // عرض المحطات فوراً (البيانات محدثة لحظياً عبر attachStationsLive)
+    renderStations(zone);
 };
         
         window.renderStations = (zoneFilter = 'all') => {
@@ -15734,23 +15860,7 @@ function saveDataInternal(options = {}) {
             if(consumptionLogData) db.ref('consumption_logs').push(consumptionLogData);
             
             if (newFaultEntries.length > 0 || resolvedFaultEntries.length > 0) {
-                // إصلاح: استخدام transaction لتجنب تعارض الكتابة عند الضغط العالي
-                db.ref('faults_log').transaction(function(currentLogs) {
-                    let logs = [];
-                    if (currentLogs) { logs = Array.isArray(currentLogs) ? currentLogs : Object.values(currentLogs); }
-                    newFaultEntries.forEach(newF => {
-                        const exists = logs.some(existingF => existingF.active === true && existingF.station === newF.station && existingF.type === newF.type);
-                        if (!exists) logs.push(newF);
-                    });
-                    resolvedFaultEntries.forEach(rf => {
-                        const index = logs.findIndex(f => f.station === sName && f.type === rf.type && f.active === true);
-                        if (index !== -1) {
-                            logs[index].active = false; logs[index].endTime = stationFullDateTime;
-                        } else { logs.push(rf); }
-                    });
-                    if (logs.length > 200000) logs = logs.slice(-200000);
-                    return logs;
-                });
+                syncFaultsLogChanges(sName, newFaultEntries, resolvedFaultEntries, stationFullDateTime);
             }
             return "Success";
         });
@@ -19750,22 +19860,7 @@ function processOfflineQueue() {
                 // معالجة سجل الأعطال (newFaults / resolvedFaults)
                 var nf = (d.newFaults || []), rf = (d.resolvedFaults || []), sid = d.stationId, dt = (d.updates && d.updates.lastUpdate) || nowStd.full;
                 if (nf.length > 0 || rf.length > 0) {
-                    // إصلاح: استخدام transaction لتجنب تعارض الكتابة عند الضغط العالي
-                    db.ref('faults_log').transaction(function(currentLogs) {
-                        var logs = [];
-                        if (currentLogs) { logs = Array.isArray(currentLogs) ? currentLogs : Object.values(currentLogs); }
-                        nf.forEach(function(newF) {
-                            var ex = logs.some(function(f){ return f.active === true && f.station === newF.station && f.type === newF.type; });
-                            if (!ex) logs.push(newF);
-                        });
-                        rf.forEach(function(resF) {
-                            var idx = logs.findIndex(function(f){ return f.station === sid && f.type === resF.type && f.active === true; });
-                            if (idx !== -1) { logs[idx].active = false; logs[idx].endTime = dt; }
-                            else { logs.push(resF); }
-                        });
-                        if (logs.length > 200000) logs = logs.slice(-200000);
-                        return logs;
-                    });
+                    syncFaultsLogChanges(sid, nf, rf, dt);
                 }
             }
             else if (item.action === 'update_inspection') {
@@ -25806,23 +25901,143 @@ document.getElementById('btn-send-report').addEventListener('click', () => {
     });
 });
 
-// 4. عرض جدول البلاغات — يُحمّل عند فتح الشاشة من showScreen (لا .on للاقتصاد في البيانات)
+// 4. عرض جدول البلاغات مع التزامن اللحظي الذكي (Delta Listeners) لتوفير البيانات والحفاظ على التحديث اللحظي
+window.attachFaultReportsLive = function() {
+    if (!appData.listeners) appData.listeners = {};
+    if (appData.listeners.faultReportsRef) return;
+    const baseRef = db.ref('fault_reports');
+    appData.listeners.faultReportsRef = baseRef;
+    const keys = Object.keys(appData.cachedFaultReports || {}).sort();
+    const lastKey = keys.length > 0 ? keys[keys.length - 1] : null;
+    const addQuery = lastKey ? baseRef.orderByKey().startAt(lastKey) : baseRef;
+    appData.listeners.faultReportsAddQuery = addQuery;
 
-// --- دالة عرض جدول البلاغات (المصححة) ---
-function renderFaultReportsTable() {
+    let uiQueued = false;
+    function scheduleFaultReportsUiRefresh() {
+        if (uiQueued) return;
+        uiQueued = true;
+        requestAnimationFrame(() => {
+            uiQueued = false;
+            if (document.querySelector('.modal.show')) return;
+            const frScreen = document.getElementById('fault-reporting-screen');
+            if (frScreen && frScreen.classList.contains('active') && typeof renderFaultReportsTable === 'function') {
+                renderFaultReportsTable(false);
+            }
+        });
+    }
+
+    baseRef.on('child_changed', snap => {
+        if (!appData.cachedFaultReports) appData.cachedFaultReports = {};
+        if (snap.key) {
+            appData.cachedFaultReports[snap.key] = snap.val();
+            scheduleFaultReportsUiRefresh();
+        }
+    });
+    baseRef.on('child_removed', snap => {
+        if (appData.cachedFaultReports && snap.key && appData.cachedFaultReports[snap.key]) {
+            delete appData.cachedFaultReports[snap.key];
+            scheduleFaultReportsUiRefresh();
+        }
+    });
+    addQuery.on('child_added', snap => {
+        if (!appData.cachedFaultReports) appData.cachedFaultReports = {};
+        if (!snap.key || (lastKey && snap.key === lastKey && appData.cachedFaultReports[snap.key])) return;
+        appData.cachedFaultReports[snap.key] = snap.val();
+        scheduleFaultReportsUiRefresh();
+    });
+};
+
+window.detachFaultReportsLive = function() {
+    if (!appData.listeners) return;
+    if (appData.listeners.faultReportsRef) {
+        appData.listeners.faultReportsRef.off();
+        appData.listeners.faultReportsRef = null;
+    }
+    if (appData.listeners.faultReportsAddQuery) {
+        appData.listeners.faultReportsAddQuery.off();
+        appData.listeners.faultReportsAddQuery = null;
+    }
+};
+
+window.attachWorkOrdersLive = function() {
+    if (!appData.listeners) appData.listeners = {};
+    if (appData.listeners.workOrdersRef) return;
+    const baseRef = db.ref('work_orders');
+    appData.listeners.workOrdersRef = baseRef;
+    const keys = Object.keys(appData.workOrders || {}).sort();
+    const lastKey = keys.length > 0 ? keys[keys.length - 1] : null;
+    const addQuery = lastKey ? baseRef.orderByKey().startAt(lastKey) : baseRef;
+    appData.listeners.workOrdersAddQuery = addQuery;
+
+    let woUiQueued = false;
+    function scheduleWorkOrdersUiRefresh() {
+        if (woUiQueued) return;
+        woUiQueued = true;
+        requestAnimationFrame(() => {
+            woUiQueued = false;
+            if (document.querySelector('.modal.show')) return;
+            const woScreen = document.getElementById('work-orders-screen');
+            const archScreen = document.getElementById('archive-work-orders-screen');
+            const deptScreen = document.getElementById('department-dashboard-screen');
+            const frScreen = document.getElementById('fault-reporting-screen');
+            if (((woScreen && woScreen.classList.contains('active')) || (archScreen && archScreen.classList.contains('active'))) && typeof renderWorkOrdersTables === 'function') {
+                renderWorkOrdersTables(false, true);
+            }
+            if (deptScreen && deptScreen.classList.contains('active') && typeof renderDepartmentDashboard === 'function') {
+                renderDepartmentDashboard(false);
+            }
+            if (frScreen && frScreen.classList.contains('active') && typeof renderFaultReportsTable === 'function') {
+                renderFaultReportsTable(false);
+            }
+        });
+    }
+
+    baseRef.on('child_changed', snap => {
+        if (!appData.workOrders) appData.workOrders = {};
+        if (snap.key) {
+            appData.workOrders[snap.key] = snap.val();
+            scheduleWorkOrdersUiRefresh();
+        }
+    });
+    baseRef.on('child_removed', snap => {
+        if (appData.workOrders && snap.key && appData.workOrders[snap.key]) {
+            delete appData.workOrders[snap.key];
+            scheduleWorkOrdersUiRefresh();
+        }
+    });
+    addQuery.on('child_added', snap => {
+        if (!appData.workOrders) appData.workOrders = {};
+        if (!snap.key || (lastKey && snap.key === lastKey && appData.workOrders[snap.key])) return;
+        appData.workOrders[snap.key] = snap.val();
+        scheduleWorkOrdersUiRefresh();
+    });
+};
+
+window.detachWorkOrdersLive = function() {
+    if (!appData.listeners) return;
+    if (appData.listeners.workOrdersRef) {
+        appData.listeners.workOrdersRef.off();
+        appData.listeners.workOrdersRef = null;
+    }
+    if (appData.listeners.workOrdersAddQuery) {
+        appData.listeners.workOrdersAddQuery.off();
+        appData.listeners.workOrdersAddQuery = null;
+    }
+};
+
+// --- دالة عرض جدول البلاغات (المصححة والموفرة للبيانات مع التحديث اللحظي) ---
+function renderFaultReportsTable(forceReload = false) {
     const tbody = document.getElementById('fault-reports-body');
     const filterZone = document.getElementById('filter-report-zone').value;
     const filterStatus = document.getElementById('filter-report-status').value;
     const userType = appData.currentUser ? appData.currentUser.type : 'guest';
-    let query = null;
-    if (filterZone !== 'all') {
-        query = db.ref('fault_reports').orderByChild('zone').equalTo(filterZone);
-    } else {
-        query = db.ref('fault_reports').orderByChild('timestamp').limitToLast(500);
-    }
-    query.once('value', (snap) => {
+
+    const renderWithData = (reportsMap, workOrdersMap) => {
         const data = [];
-        snap.forEach(child => { data.push({key: child.key, ...child.val()}); });
+        Object.keys(reportsMap || {}).forEach(k => {
+            const val = reportsMap[k];
+            if (val) data.push({ key: k, ...val });
+        });
         data.sort((a, b) => {
             const am = parseReportCreatedAtMs(a);
             const bm = parseReportCreatedAtMs(b);
@@ -25855,22 +26070,18 @@ function renderFaultReportsTable() {
             }
         });
 
-        // 2. إضافة أوامر الشغل الجارية (نقوم بجلبها مباشرة من db لضمان توفرها حتى لو لم تُفتح شاشة أوامر الشغل)
-        db.ref('work_orders').once('value').then(snap => {
-            if (snap.exists()) {
-                const workOrdersData = snap.val();
-                Object.values(workOrdersData).forEach(wo => {
-                    if (wo.status === 'active') {
-                        if (wo.station && wo.component) {
-                            const key = String(wo.station).trim() + '|||' + String(wo.component).trim();
-                            faultReportsDuplicateCounts[key] = (faultReportsDuplicateCounts[key] || 0) + 1;
-                        }
-                    }
-                });
+        // 2. إضافة أوامر الشغل الجارية من الذاكرة المتزامنة لحظياً
+        Object.values(workOrdersMap || {}).forEach(wo => {
+            if (wo && wo.status === 'active') {
+                if (wo.station && wo.component) {
+                    const key = String(wo.station).trim() + '|||' + String(wo.component).trim();
+                    faultReportsDuplicateCounts[key] = (faultReportsDuplicateCounts[key] || 0) + 1;
+                }
             }
+        });
 
-            const viewData = filtered.slice(0, appData.faultReportsLimit);
-            viewData.forEach(item => {
+        const viewData = filtered.slice(0, appData.faultReportsLimit);
+        viewData.forEach(item => {
             let statusBadge = '<span class="status-inactive">انتظار</span>';
             if(item.supervisorStatus === 'confirmed') statusBadge = '<span class="status-active">مؤكد</span>';
             if(item.supervisorStatus === 'cancelled') statusBadge = '<span class="status-cancelled">ملغي</span>';
@@ -25941,8 +26152,42 @@ function renderFaultReportsTable() {
         } else {
             loadMoreBtn.style.display = 'none';
         }
-    }); // إغلاق db.ref('work_orders').once('value').then(snap => {
-    }); // إغلاق on('value')
+    };
+
+    const hasReports = appData.cachedFaultReports && Object.keys(appData.cachedFaultReports).length > 0;
+    const hasWorkOrders = appData.workOrders && Object.keys(appData.workOrders).length > 0;
+    const zoneSatisfied = hasReports && (filterZone === 'all' || appData._faultReportsAllLoaded || appData._faultReportsZoneLoaded === filterZone);
+
+    if (!forceReload && zoneSatisfied && hasWorkOrders) {
+        renderWithData(appData.cachedFaultReports, appData.workOrders);
+        return;
+    }
+
+    let query = null;
+    if (filterZone !== 'all') {
+        query = db.ref('fault_reports').orderByChild('zone').equalTo(filterZone);
+    } else {
+        query = db.ref('fault_reports').orderByChild('timestamp').limitToLast(500);
+    }
+    query.once('value', (snap) => {
+        if (!appData.cachedFaultReports || forceReload) appData.cachedFaultReports = {};
+        snap.forEach(child => { appData.cachedFaultReports[child.key] = child.val(); });
+        if (filterZone === 'all') appData._faultReportsAllLoaded = true;
+        else appData._faultReportsZoneLoaded = filterZone;
+        window.attachFaultReportsLive();
+
+        if (!forceReload && hasWorkOrders) {
+            renderWithData(appData.cachedFaultReports, appData.workOrders);
+            return;
+        }
+        db.ref('work_orders').once('value').then(woSnap => {
+            appData.workOrders = woSnap.val() || {};
+            window.attachWorkOrdersLive();
+            renderWithData(appData.cachedFaultReports, appData.workOrders);
+        }).catch(() => {
+            renderWithData(appData.cachedFaultReports, appData.workOrders || {});
+        });
+    });
 }
 // 5. إجراءات الجدول (تأكيد / تحويل)
 window.confirmReport = function(key, isConfirmed) {
@@ -27106,6 +27351,16 @@ window.exportWorkOrdersArchive = function() {
 
 // دالة تصدير أرشيف الأعطال السابقة إلى Excel
 window.exportFaultsArchive = function() {
+    if (!appData.faultsLog || appData.faultsLog.length === 0) {
+        loadFaultsLog(function() {
+            if (appData.faultsLog && appData.faultsLog.length > 0) {
+                window.exportFaultsArchive();
+            } else {
+                alert('⚠️ لا توجد أعطال سابقة لتصديرها');
+            }
+        });
+        return;
+    }
     // تصدير سجل الأعطال التي تم حلها
     const data = [];
     
@@ -27738,6 +27993,7 @@ function renderWorkOrdersTables(forceReload = false, silent = false) {
     };
 
     if (!forceReload && appData.workOrders && Object.keys(appData.workOrders).length > 0) {
+        if (typeof window.attachWorkOrdersLive === 'function') window.attachWorkOrdersLive();
         renderContent(appData.cachedFaultReports || {}, appData.workOrders);
         return;
     }
@@ -27747,20 +28003,31 @@ function renderWorkOrdersTables(forceReload = false, silent = false) {
         archiveBody.innerHTML = '<tr><td colspan="12" style="text-align:center; padding:20px;">جاري تحميل أوامر الشغل... ⏳</td></tr>';
     }
 
-    db.ref('fault_reports').once('value').then(reportsSnap => {
-        const allReports = reportsSnap.val() || {};
-        appData.cachedFaultReports = allReports;
+    const fetchWorkOrdersAndRender = () => {
         db.ref('work_orders').once('value', (snap) => {
             appData.workOrders = {};
             snap.forEach(c => { 
                 appData.workOrders[c.key] = c.val(); 
             });
-            renderContent(appData.cachedFaultReports, appData.workOrders);
+            if (typeof window.attachWorkOrdersLive === 'function') window.attachWorkOrdersLive();
+            renderContent(appData.cachedFaultReports || {}, appData.workOrders);
         });
-    }).catch(err => {
-        console.error('Error fetching work orders:', err);
-        renderContent(appData.cachedFaultReports || {}, appData.workOrders || {});
-    });
+    };
+
+    if (!forceReload && appData.cachedFaultReports && Object.keys(appData.cachedFaultReports).length > 0) {
+        if (typeof window.attachFaultReportsLive === 'function') window.attachFaultReportsLive();
+        fetchWorkOrdersAndRender();
+    } else {
+        db.ref('fault_reports').once('value').then(reportsSnap => {
+            const allReports = reportsSnap.val() || {};
+            appData.cachedFaultReports = allReports;
+            if (typeof window.attachFaultReportsLive === 'function') window.attachFaultReportsLive();
+            fetchWorkOrdersAndRender();
+        }).catch(err => {
+            console.error('Error fetching work orders:', err);
+            renderContent(appData.cachedFaultReports || {}, appData.workOrders || {});
+        });
+    }
 }
 // --- دالة لإنشاء شيت الداشبورد ---
 function createDashboardSheet(dashboardData) {
@@ -28078,72 +28345,61 @@ function resetArchiveFilters() {
 document.getElementById('btn-go-to-archive').addEventListener('click', () => {
     showScreen('archive-work-orders');
     loadAppConfig(function() {
-        // Populate zones
-        var z = document.getElementById('archive-filter-zone');
-        if (z && z.options.length <= 1) { 
-            appData.zones.forEach(function(zone){ 
-                z.innerHTML += '<option value="'+zone+'">'+zone+'</option>'; 
-            }); 
-        }
-
-        // Update stations dropdown on zone change
-        z.addEventListener('change', function() {
-            var stationDropdown = document.getElementById('archive-filter-station');
-            stationDropdown.innerHTML = '<option value="">كل المحطات</option>'; // Reset
-            if (this.value) {
-                db.ref('stations').orderByChild('zone').equalTo(this.value).once('value', function(snapshot) {
-                    snapshot.forEach(function(childSnapshot) {
-                        var station = childSnapshot.val();
-                        stationDropdown.innerHTML += '<option value="'+station.name+'">'+station.name+'</option>';
-                    });
-                    renderWorkOrdersTables();
-                });
-            } else {
-                // If no zone is selected, load all stations
-                db.ref('stations').once('value', function(snapshot) {
-                    snapshot.forEach(function(childSnapshot) {
-                        var station = childSnapshot.val();
-                        stationDropdown.innerHTML += '<option value="'+station.name+'">'+station.name+'</option>';
-                    });
-                    renderWorkOrdersTables();
-                });
+        loadStations(function() {
+            var z = document.getElementById('archive-filter-zone');
+            if (z && z.options.length <= 1) { 
+                appData.zones.forEach(function(zone){ 
+                    z.innerHTML += '<option value="'+zone+'">'+zone+'</option>'; 
+                }); 
             }
-        });
 
-        // Initial load of all stations
-        db.ref('stations').once('value', function(snapshot) {
-            var stationDropdown = document.getElementById('archive-filter-station');
-            if (stationDropdown.options.length <= 1) {
-                snapshot.forEach(function(childSnapshot) {
-                    var station = childSnapshot.val();
+            function populateArchiveStationDropdown(selectedZone) {
+                var stationDropdown = document.getElementById('archive-filter-station');
+                if (!stationDropdown) return;
+                var prevVal = stationDropdown.value || '';
+                stationDropdown.innerHTML = '<option value="">كل المحطات</option>';
+                var stList = Object.values(appData.stations || {}).filter(function(st) {
+                    return st && st.name && (!selectedZone || st.zone === selectedZone);
+                }).sort(function(a, b) { return String(a.name).localeCompare(String(b.name), 'ar', { numeric: true }); });
+                stList.forEach(function(station) {
                     stationDropdown.innerHTML += '<option value="'+station.name+'">'+station.name+'</option>';
                 });
+                if (prevVal && Array.from(stationDropdown.options).some(function(o){ return o.value === prevVal; })) {
+                    stationDropdown.value = prevVal;
+                }
             }
-        });
 
-        // Add event listeners to archive filters
-        const archiveDept = document.getElementById('archive-filter-dept');
-        if (archiveDept) {
-            archiveDept.addEventListener('change', function() {
-                resetArchiveLimit();
-                renderWorkOrdersTables();
-            });
-        }
-        if (z) {
-            z.addEventListener('change', function() {
-                resetArchiveLimit();
-            });
-        }
-        const archiveStation = document.getElementById('archive-filter-station');
-        if (archiveStation) {
-            archiveStation.addEventListener('change', function() {
-                resetArchiveLimit();
-                renderWorkOrdersTables();
-            });
-        }
-        
-        resetArchiveLimit(); 
-        renderWorkOrdersTables(); 
+            if (z && !z.dataset.archBound) {
+                z.dataset.archBound = '1';
+                z.addEventListener('change', function() {
+                    resetArchiveLimit();
+                    populateArchiveStationDropdown(this.value);
+                    renderWorkOrdersTables();
+                });
+            }
+
+            populateArchiveStationDropdown(z ? z.value : '');
+
+            const archiveDept = document.getElementById('archive-filter-dept');
+            if (archiveDept && !archiveDept.dataset.archBound) {
+                archiveDept.dataset.archBound = '1';
+                archiveDept.addEventListener('change', function() {
+                    resetArchiveLimit();
+                    renderWorkOrdersTables();
+                });
+            }
+            const archiveStation = document.getElementById('archive-filter-station');
+            if (archiveStation && !archiveStation.dataset.archBound) {
+                archiveStation.dataset.archBound = '1';
+                archiveStation.addEventListener('change', function() {
+                    resetArchiveLimit();
+                    renderWorkOrdersTables();
+                });
+            }
+            
+            resetArchiveLimit(); 
+            renderWorkOrdersTables(); 
+        });
     });
 });
 
@@ -28297,6 +28553,7 @@ function renderDepartmentDashboard(forceReload = false) {
             appData.workOrders[childSnapshot.key] = order;
             ordersList.push(order);
         });
+        if (typeof window.attachWorkOrdersLive === 'function') window.attachWorkOrdersLive();
         calculateAndRenderStats(ordersList);
     }).catch(err => {
         console.error('Error fetching dashboard orders:', err);
@@ -30585,19 +30842,19 @@ function closeAnnouncement() {
 
 // عرض الإعلان تلقائياً بعد تسجيل الدخول
 function showAnnouncementAfterLogin() {
-    // تحميل إعدادات الإعلان
-    db.ref('announcementSettings').once('value').then(snapshot => {
-        if (snapshot.exists()) {
-            const settings = snapshot.val();
-            
-            // التحقق من تفعيل الإعلان ووجود صورة
-            if (settings.enabled && settings.imageUrl) {
-                // الانتظار ثانية واحدة بعد تسجيل الدخول
-                setTimeout(() => {
-                    showAnnouncement(settings.duration, settings.imageUrl);
-                }, 1000);
+    // فحص خفيف لتفعيل الإعلان أولاً قبل تحميل صورة الإعلان بصيغة Base64
+    db.ref('announcementSettings/enabled').once('value').then(enabledSnap => {
+        if (!enabledSnap.val()) return;
+        return db.ref('announcementSettings').once('value').then(snapshot => {
+            if (snapshot.exists()) {
+                const settings = snapshot.val();
+                if (settings.enabled && settings.imageUrl) {
+                    setTimeout(() => {
+                        showAnnouncement(settings.duration, settings.imageUrl);
+                    }, 1000);
+                }
             }
-        }
+        });
     }).catch(error => {
         console.error('خطأ في تحميل الإعلان:', error);
     });
