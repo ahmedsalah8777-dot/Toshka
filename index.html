@@ -13581,6 +13581,9 @@ document.getElementById('emergency-image-modal').addEventListener('click', funct
             });
         }
 
+        // تحميل الشعار والإعدادات عند بدء التطبيق ليظهر لوجو صفحة الدخول من أول مرة
+        (function(){ function initLoginLogo(){ try { loadAppConfig(function(){ if (typeof applyAppLogo === 'function') applyAppLogo(appData.logoUrl || null); }); } catch(e) {} } if (document.readyState === 'complete') initLoginLogo(); else window.addEventListener('load', initLoginLogo); })();
+
         // --- تحميل عند استدعاء الشاشة فقط (Lazy) مع الحفاظ على التحديث اللحظي ---
         function loadStations(cb, options) {
             var opts = options || {};
@@ -30465,7 +30468,7 @@ function deleteStationInSelectedZone() {
 
 function saveZonesToFirebase() {
     const zones = Array.isArray(appData.zones) ? appData.zones.slice() : [];
-    localStorage.setItem('toshka_app_config_cache', JSON.stringify({ zones }));
+    localStorage.setItem('toshka_app_config_cache', JSON.stringify({ zones: zones, logoUrl: appData.logoUrl || null }));
     return db.ref('appConfig/zones').set(zones);
 }
 
