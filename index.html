@@ -38973,11 +38973,13 @@ function basinValidateAttendance(dateStr,opKey,shift,checked,attendance) {
                 return;
             }
 
-            let dayCount = 0, nightCount = 0, penSum = 0;
+            let dayCount = 0, nightCount = 0, presentCount = 0, absentCount = 0, penSum = 0;
             operators.forEach((op, idx) => {
                 const att = attendance[op.id || ('op_' + idx)] || {};
                 if (att.day) dayCount++;
                 if (att.night) nightCount++;
+                if (att.day || att.night) presentCount++;
+                else absentCount++;
                 if (att.penalties) { const n = parseFloat(att.penalties); if (!isNaN(n)) penSum += n; }
             });
 
@@ -39090,12 +39092,12 @@ function basinValidateAttendance(dateStr,opKey,shift,checked,attendance) {
                 if (isFirst) {
                     // شريط الإحصائيات المختصر (خلفية بيضاء وحدود سوداء لتوفير الحبر)
                     const kpis = [
-                        { lbl: 'إجمالي المشغلين', val: String(operators.length) },
+                        { lbl: 'إجمالي الحضور', val: String(presentCount) },
                         { lbl: 'حضور نهاري', val: String(dayCount) },
                         { lbl: 'حضور ليلي', val: String(nightCount) },
-                        { lbl: 'إجمالي الجزاءات', val: penSum > 0 ? (penSum + ' يوم') : 'بدون' },
+                        { lbl: 'إجمالي الغياب', val: String(absentCount) },
                         { lbl: 'آخر مسجل', val: (attendance._lastEditor && attendance._lastEditor.name) || supName },
-                        { lbl: 'حالة الاعتماد', val: isApproved ? ('✔ تم الاعتماد (' + (appInfo.byName || 'المهندس') + ')') : 'قيد المراجعة' }
+                        { lbl: 'اعتماد', val: isApproved ? ('✔ ' + (appInfo.byName || 'المهندس')) : 'قيد المراجعة' }
                     ];
                     const gap = 8;
                     const kw = (UW - gap * (kpis.length - 1)) / kpis.length;
