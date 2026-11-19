@@ -1572,10 +1572,36 @@
         }
         
         @media (max-width: 768px) {
+             header .header-content {
+                gap: 6px;
+                column-gap: 6px;
+                row-gap: 6px;
+            }
+             header .logo {
+                flex: 1 1 auto;
+                min-width: 0;
+                font-size: clamp(13.5px, 3.8vw, 17px) !important;
+                gap: 4px !important;
+                white-space: nowrap;
+                overflow: hidden;
+            }
+             header #header-app-name {
+                overflow: hidden;
+                text-overflow: ellipsis;
+                white-space: nowrap;
+            }
              .network-status-wrap {
                 position: static;
                 transform: none;
-                margin: 0 auto;
+                margin: 0;
+                flex: 0 0 auto;
+            }
+             header .network-status {
+                margin-right: 0;
+                padding: 2px 6px;
+                gap: 3px;
+                font-size: 0.72rem;
+                white-space: nowrap;
             }
         }
 
@@ -8433,11 +8459,38 @@ input, select, textarea, .login-form, .filters-container, .floating-menu,
 [data-theme="dark"] .att-card.is-present { background:#14532d33; border-color:#16a34a; }
 [data-theme="dark"] .att-name { color:#f8fafc; }
 [data-theme="dark"] .att-tog span, [data-theme="dark"] .att-extra select, [data-theme="dark"] .att-extra input, [data-theme="dark"] .att-search-row input { background:#0f172a; color:#e2e8f0; border-color:#334155; }
+/* شريط أدوات سركي الحضور: تثبيت مكان زر PDF ومنع تحركه بتغير طول اسم المنطقة */
+#serki-attendance-screen .serki-att-toolbar-top {
+  display:flex; flex-wrap:wrap; align-items:center; justify-content:space-between; gap:10px 12px;
+}
+#serki-attendance-screen .serki-att-controls {
+  display:flex; align-items:center; gap:10px 12px; flex-wrap:wrap; min-width:0;
+}
+#serki-attendance-screen .serki-att-field {
+  display:flex; align-items:center; gap:8px; min-width:0;
+}
+#serki-attendance-screen #serki-attendance-zone-select {
+  width:240px; min-width:240px; max-width:240px; text-overflow:ellipsis;
+}
+#serki-attendance-screen .serki-att-actions {
+  display:flex; align-items:center; gap:10px; margin-inline-start:auto; flex-shrink:0;
+}
+#serki-attendance-screen #serki-whatsapp-share-btn { white-space:nowrap; }
+#serki-attendance-screen .serki-att-stats-bar {
+  display:flex; gap:8px 10px; font-size:0.9rem; font-weight:700; flex-wrap:wrap;
+  margin-top:10px; padding-top:10px; border-top:1px solid #e2e8f0;
+}
+[data-theme="dark"] #serki-attendance-screen .serki-att-stats-bar { border-top-color:#334155; }
 @media (max-width:700px) {
   .att-cards { grid-template-columns:1fr; }
   #serki-attendance-screen .screen-header { flex-wrap:wrap; gap:8px; }
   #serki-attendance-screen .screen-header h2 { font-size:1.05rem; width:100%; }
-  #serki-attendance-screen .performance-card:first-child > div:first-child { flex-direction:column; align-items:stretch !important; }
+  #serki-attendance-screen .serki-att-toolbar-top { flex-direction:column; align-items:stretch; }
+  #serki-attendance-screen .serki-att-controls { flex-direction:column; align-items:stretch; }
+  #serki-attendance-screen .serki-att-field { width:100%; }
+  #serki-attendance-screen #serki-attendance-zone-select { width:100%; min-width:0; max-width:100%; }
+  #serki-attendance-screen .serki-att-actions { margin-inline-start:0; width:100%; }
+  #serki-attendance-screen #serki-whatsapp-share-btn { width:100%; justify-content:center; }
   #serki-attendance-screen select, #serki-attendance-screen input[type=date] { min-height:44px; width:100%; }
   #serki-attendance-screen .serki-screen-footer { position:sticky; bottom:0; background:#fff; padding:10px; border-top:1px solid #e2e8f0; box-shadow:0 -4px 12px rgba(0,0,0,.08); z-index:20; flex-direction:column; gap:10px; }
   #serki-attendance-screen .serki-screen-footer .btn { width:100%; min-height:48px; justify-content:center; }
@@ -10183,37 +10236,37 @@ html[data-theme="dark"] #serki-view-screen :is(.user-data-card,.serki-view-zone-
             
             <div class="container">
                 <div class="performance-card">
-                    <div style="display:flex; flex-wrap:wrap; justify-content:space-between; align-items:center; gap:12px;">
+                    <div class="serki-att-toolbar-top">
                         <!-- اختيار المنطقة وتاريخ السركي -->
-                        <div style="display:flex; align-items:center; gap:12px; flex-wrap:wrap;">
-                            <div style="display:flex; align-items:center; gap:8px;">
+                        <div class="serki-att-controls">
+                            <div class="serki-att-field">
                                 <label style="font-weight:700; font-size:0.95rem; white-space:nowrap;">📍 المنطقة:</label>
-                                <select id="serki-attendance-zone-select" style="padding:8px 12px; border-radius:6px; border:1px solid #cbd5e1; font-weight:700; font-size:0.95rem; min-width:180px;">
+                                <select id="serki-attendance-zone-select" style="padding:8px 12px; border-radius:6px; border:1px solid #cbd5e1; font-weight:700; font-size:0.95rem;">
                                 </select>
                             </div>
-                            <div style="display:flex; align-items:center; gap:8px;">
-                                <label style="font-weight:700; font-size:0.95rem;">📅 التاريخ:</label>
+                            <div class="serki-att-field">
+                                <label style="font-weight:700; font-size:0.95rem; white-space:nowrap;">📅 التاريخ:</label>
                                 <input type="date" id="serki-attendance-date" style="padding:8px 12px; border-radius:6px; border:1px solid #cbd5e1; font-weight:700; font-size:0.95rem;">
                             </div>
-                            <button type="button" class="btn btn-primary" id="serki-attendance-refresh-btn" style="font-weight:700; padding:8px 16px;" title="عرض سركي المنطقة والتاريخ المحددين">🔄 عرض</button>
+                            <button type="button" class="btn btn-primary" id="serki-attendance-refresh-btn" style="font-weight:700; padding:8px 16px; white-space:nowrap;" title="عرض سركي المنطقة والتاريخ المحددين">🔄 عرض</button>
                         </div>
 
-                        <!-- عدادات الحضور والجزاءات -->
-                        <div style="display:flex; gap:10px; font-size:0.9rem; font-weight:700; flex-wrap:wrap;">
-                            <span style="color:#15803d; background:#dcfce7; padding:6px 12px; border-radius:20px;">✅ الحضور: <b id="serki-count-day">0</b></span>
-                            <span style="color:#b45309; background:#fef3c7; padding:6px 12px; border-radius:20px;">🚫 الغياب: <b id="serki-count-night">0</b></span>
-                            <span style="color:#b91c1c; background:#fee2e2; padding:6px 12px; border-radius:20px;">⚠️ جزاءات: <b id="serki-count-penalties">0</b></span>
-
-                            <span style="color:#334155; background:#e2e8f0; padding:6px 12px; border-radius:20px;">👥 المشغلين: <b id="serki-count-total">0</b></span>
-                            <span style="color:#6d28d9; background:#ede9fe; padding:6px 12px; border-radius:20px;">✍️ آخر مسجل: <b id="serki-last-editor">—</b></span>
-                        </div>
-
-                        <!-- زر طباعة وتحميل PDF -->
-                        <div style="display:flex; gap:10px; align-items:center; flex-wrap:wrap;">
+                        <!-- زر طباعة وتحميل PDF (ثابت في نهاية الصف الأول) -->
+                        <div class="serki-att-actions">
                             <button type="button" class="btn" id="serki-whatsapp-share-btn" style="background:linear-gradient(135deg,#c0392b,#e74c3c); color:#fff; border:none; padding:8px 16px; border-radius:8px; font-weight:800; display:flex; align-items:center; gap:6px; box-shadow:0 2px 6px rgba(192,57,43,0.3);" title="طباعة وتحميل سركي الحضور كملف PDF خفيف الحجم">
                                 <span style="font-size:1.15rem;">📥</span> تحميل PDF
                             </button>
                         </div>
+                    </div>
+
+                    <!-- عدادات الحضور والجزاءات في صف مستقل -->
+                    <div class="serki-att-stats-bar">
+                        <span style="color:#15803d; background:#dcfce7; padding:6px 12px; border-radius:20px;">✅ الحضور: <b id="serki-count-day">0</b></span>
+                        <span style="color:#b45309; background:#fef3c7; padding:6px 12px; border-radius:20px;">🚫 الغياب: <b id="serki-count-night">0</b></span>
+                        <span style="color:#b91c1c; background:#fee2e2; padding:6px 12px; border-radius:20px;">⚠️ جزاءات: <b id="serki-count-penalties">0</b></span>
+
+                        <span style="color:#334155; background:#e2e8f0; padding:6px 12px; border-radius:20px;">👥 المشغلين: <b id="serki-count-total">0</b></span>
+                        <span style="color:#6d28d9; background:#ede9fe; padding:6px 12px; border-radius:20px;">✍️ آخر مسجل: <b id="serki-last-editor">—</b></span>
                     </div>
                 </div>
 
@@ -21321,8 +21374,11 @@ if(btnPerfBack) btnPerfBack.addEventListener('click', () => goToStationsRoot());
         await db.ref().update(updates);
         appData.supervisionZones = {...(appData.supervisionZones||{}),...updatedZones,[zoneData.id]:zoneData};
         appData.serkiOperators = finalOperators;
+        window.__serkiOpsBaseline = window.__serkiOpsBaseline || {};
         for (const id of new Set([zoneData.id,...moved.map(op=>op._fromZone)])) {
-            try {localStorage.setItem('toshka_serki_operators_' + id,JSON.stringify(finalOperators[id]||[]));} catch(e){}
+            const listForId = asList(finalOperators[id]);
+            try { window.__serkiOpsBaseline[id] = JSON.parse(JSON.stringify(listForId)); } catch (_) {}
+            try {localStorage.setItem('toshka_serki_operators_' + id,JSON.stringify(listForId));} catch(e){}
         }
         try {localStorage.setItem('toshka_supervision_zones_cache',JSON.stringify(appData.supervisionZones));} catch(e){}
         await Promise.allSettled([saveSupervisorStations(zoneData.supervisor,zoneData.stations || []),...Object.values(updatedZones).map(z => saveSupervisorStations(z.supervisor,z.stations || []))]);
@@ -36550,15 +36606,15 @@ function saveOperatorsForSpecificZone(targetZoneId, list) {
         });
     }
 
-    function saveOperatorsList(list) {
-        const zid = getZoneId();
+    function saveOperatorsList(list, targetZid) {
+        const zid = targetZid || getZoneId();
         if (!Array.isArray(list)) list = [];
         if (window.appData) {
             if (!window.appData.serkiOperators) window.appData.serkiOperators = {};
             window.appData.serkiOperators[zid] = list;
         }
         try {
-            localStorage.setItem(getOperatorsKey(), JSON.stringify(list));
+            localStorage.setItem('toshka_serki_operators_' + zid, JSON.stringify(list));
         } catch (_) {}
 
         if (typeof db !== 'undefined' && db.ref) {
@@ -36568,24 +36624,32 @@ function saveOperatorsForSpecificZone(targetZoneId, list) {
         }
     }
 
+    let __serkiOpsLoadSeq = 0;
     function loadRemoteOperators(callback) {
         const zid = getZoneId();
+        const reqId = ++__serkiOpsLoadSeq;
         if (typeof db !== 'undefined' && db.ref) {
             db.ref('serkiOperators/' + zid).once('value').then(snap => {
                 const val = snap.val();
-                if (Array.isArray(val)) {
-                    serkiSetOpsBaseline(zid, val);
-                    saveOperatorsList(val);
-                } else if (val && typeof val === 'object') {
-                    serkiSetOpsBaseline(zid, Object.values(val));
-                    saveOperatorsList(Object.values(val));
+                if (val !== null && val !== undefined) {
+                    const list = serkiOpsToArray(val);
+                    serkiSetOpsBaseline(zid, list);
+                    if (window.appData) {
+                        if (!window.appData.serkiOperators) window.appData.serkiOperators = {};
+                        window.appData.serkiOperators[zid] = list;
+                    }
+                    try {
+                        localStorage.setItem('toshka_serki_operators_' + zid, JSON.stringify(list));
+                    } catch (_) {}
                 }
-                if (callback) callback(getOperatorsList());
+                if (reqId !== __serkiOpsLoadSeq || getZoneId() !== zid) return;
+                if (callback) callback(getOperatorsForSpecificZone(zid));
             }).catch(() => {
-                if (callback) callback(getOperatorsList());
+                if (reqId !== __serkiOpsLoadSeq || getZoneId() !== zid) return;
+                if (callback) callback(getOperatorsForSpecificZone(zid));
             });
         } else {
-            if (callback) callback(getOperatorsList());
+            if (callback) callback(getOperatorsForSpecificZone(zid));
         }
     }
 
@@ -36668,15 +36732,15 @@ function saveOperatorsForSpecificZone(targetZoneId, list) {
         saveAttendanceRecord(dateStr,rec);
         renderAttendanceTable(dateStr);
     }
-    function saveAttendanceRecord(dateStr, rec) {
-        const zid = getZoneId();
+    function saveAttendanceRecord(dateStr, rec, targetZid) {
+        const zid = targetZid || getZoneId();
         const cleanRec = rec || {};
         if (window.appData) {
             if (!window.appData.serkiAttendance) window.appData.serkiAttendance = {};
             if (!window.appData.serkiAttendance[zid]) window.appData.serkiAttendance[zid] = {};
             window.appData.serkiAttendance[zid][dateStr] = cleanRec;
         }
-        safeSetSerkiStorage(getAttendanceDateKey(dateStr), JSON.stringify(cleanRec));
+        safeSetSerkiStorage('toshka_serki_att_' + zid + '_' + dateStr, JSON.stringify(cleanRec));
 
         if (typeof db !== 'undefined' && db.ref) {
             db.ref('serkiAttendance/' + zid + '/' + dateStr).set(cleanRec).catch(err => {
@@ -36747,16 +36811,17 @@ function saveOperatorsForSpecificZone(targetZoneId, list) {
         if (statusEl) statusEl.textContent = '';
         serkiRefreshSaveUI();
     }
-    function serkiCommitDraft(dateStr) {
+    function serkiCommitDraft(dateStr, targetZid) {
         let rec = null;
-        if (serkiDraft && serkiDraft.dateStr === dateStr && serkiDraft.zid === getZoneId()) rec = serkiDraft.rec;
+        const zid = targetZid || (serkiDraft && serkiDraft.dateStr === dateStr ? serkiDraft.zid : getZoneId());
+        if (serkiDraft && serkiDraft.dateStr === dateStr && serkiDraft.zid === zid) rec = serkiDraft.rec;
         if (!rec) rec = getAttendanceRecord(dateStr);
         serkiMarkEditor(rec);
-        saveAttendanceRecord(dateStr, rec);
+        saveAttendanceRecord(dateStr, rec, zid);
         serkiDraft = null;
         serkiRefreshSaveUI();
         showSavedIndicator();
-        updateAttendanceCounters(rec);
+        if (zid === getZoneId()) updateAttendanceCounters(rec);
         return true;
     }
 
@@ -36820,7 +36885,7 @@ function saveOperatorsForSpecificZone(targetZoneId, list) {
         ov.querySelector('.su-save').addEventListener('click', () => {
             const dd = serkiDraft;
             close();
-            if (dd) serkiCommitDraft(dd.dateStr);
+            if (dd) serkiCommitDraft(dd.dateStr, dd.zid);
             if (onProceed) onProceed();
         });
         const sb = ov.querySelector('.su-save');
@@ -36881,13 +36946,36 @@ function saveOperatorsForSpecificZone(targetZoneId, list) {
         });
     })();
 
+    let __serkiAttLoadSeq = 0;
     function loadRemoteAttendance(dateStr, callback) {
         const zid = getZoneId();
+        const reqId = ++__serkiAttLoadSeq;
+        const attLsKey = 'toshka_serki_att_' + zid + '_' + dateStr;
+        const readLocalForZid = () => {
+            if (serkiDraft && serkiDraft.dateStr === dateStr && serkiDraft.zid === zid) {
+                return JSON.parse(JSON.stringify(serkiDraft.rec));
+            }
+            let memRec = (window.appData && window.appData.serkiAttendance && window.appData.serkiAttendance[zid] && window.appData.serkiAttendance[zid][dateStr]) || null;
+            try {
+                const raw = localStorage.getItem(attLsKey);
+                if (raw) {
+                    const parsed = JSON.parse(raw) || {};
+                    if (memRec && typeof memRec === 'object') {
+                        const merged = Object.assign({}, parsed, memRec);
+                        if (memRec._approval && memRec._approval.approved) merged._approval = memRec._approval;
+                        else if (parsed._approval && parsed._approval.approved) merged._approval = parsed._approval;
+                        return merged;
+                    }
+                    return parsed;
+                }
+            } catch (_) {}
+            return memRec ? Object.assign({}, memRec) : {};
+        };
         if (typeof db !== 'undefined' && db.ref) {
             db.ref('serkiAttendance/' + zid + '/' + dateStr).once('value').then(snap => {
                 const val = snap.val();
                 if (val && typeof val === 'object') {
-                    const localCur = getAttendanceRecord(dateStr);
+                    const localCur = readLocalForZid();
                     const merged = Object.assign({}, localCur, val);
                     if (val._approval && val._approval.approved) merged._approval = val._approval;
                     else if (localCur._approval && localCur._approval.approved) merged._approval = localCur._approval;
@@ -36896,16 +36984,19 @@ function saveOperatorsForSpecificZone(targetZoneId, list) {
                         if (!window.appData.serkiAttendance[zid]) window.appData.serkiAttendance[zid] = {};
                         window.appData.serkiAttendance[zid][dateStr] = merged;
                     }
-                    safeSetSerkiStorage(getAttendanceDateKey(dateStr), JSON.stringify(merged));
+                    safeSetSerkiStorage(attLsKey, JSON.stringify(merged));
+                    if (reqId !== __serkiAttLoadSeq || getZoneId() !== zid) return;
                     if (callback) callback(merged);
                 } else {
-                    if (callback) callback(getAttendanceRecord(dateStr));
+                    if (reqId !== __serkiAttLoadSeq || getZoneId() !== zid) return;
+                    if (callback) callback(readLocalForZid());
                 }
             }).catch(() => {
-                if (callback) callback(getAttendanceRecord(dateStr));
+                if (reqId !== __serkiAttLoadSeq || getZoneId() !== zid) return;
+                if (callback) callback(readLocalForZid());
             });
         } else {
-            if (callback) callback(getAttendanceRecord(dateStr));
+            if (callback) callback(readLocalForZid());
         }
     }
 
