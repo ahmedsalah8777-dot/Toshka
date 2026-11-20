@@ -1573,17 +1573,18 @@
         
         @media (max-width: 768px) {
              header .header-content {
-                gap: 6px;
-                column-gap: 6px;
+                column-gap: 4px;
                 row-gap: 6px;
             }
              header .logo {
                 flex: 1 1 auto;
                 min-width: 0;
-                font-size: clamp(13.5px, 3.8vw, 17px) !important;
-                gap: 4px !important;
+                gap: 3px !important;
                 white-space: nowrap;
                 overflow: hidden;
+            }
+             header #header-app-logo {
+                margin-left: 3px !important;
             }
              header #header-app-name {
                 overflow: hidden;
@@ -1598,9 +1599,8 @@
             }
              header .network-status {
                 margin-right: 0;
-                padding: 2px 6px;
-                gap: 3px;
-                font-size: 0.72rem;
+                padding: 2px 5px;
+                gap: 2px;
                 white-space: nowrap;
             }
         }
