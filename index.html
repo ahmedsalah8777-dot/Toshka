@@ -1571,6 +1571,15 @@
             white-space: nowrap;
         }
         
+        @media (min-width: 769px) {
+            header #header-app-logo {
+                height: 46px !important;
+                width: auto;
+                border-radius: 6px;
+                object-fit: contain;
+            }
+        }
+        
         @media (max-width: 768px) {
              header .header-content {
                 column-gap: 4px;
@@ -7857,11 +7866,13 @@ input, select, textarea, .login-form, .filters-container, .floating-menu,
 [data-theme="dark"] #serki-attendance-screen #serki-count-night,
 [data-theme="dark"] #serki-attendance-screen #serki-count-penalties,
 [data-theme="dark"] #serki-attendance-screen #serki-count-total,
+[data-theme="dark"] #serki-attendance-screen #serki-count-nabatshiat,
 [data-theme="dark"] #serki-attendance-screen #serki-last-editor { color:inherit!important; }
 [data-theme="dark"] #serki-attendance-screen span:has(> #serki-count-day) {background:#123a2c!important;color:#86efac!important;border:1px solid #276749!important;}
 [data-theme="dark"] #serki-attendance-screen span:has(> #serki-count-night) {background:#182f53!important;color:#93c5fd!important;border:1px solid #31588a!important;}
 [data-theme="dark"] #serki-attendance-screen span:has(> #serki-count-penalties) {background:#45232b!important;color:#fca5a5!important;border:1px solid #854451!important;}
 [data-theme="dark"] #serki-attendance-screen span:has(> #serki-count-total) {background:#28364a!important;color:#e2e8f0!important;border:1px solid #52647d!important;}
+[data-theme="dark"] #serki-attendance-screen span:has(> #serki-count-nabatshiat) {background:#432818!important;color:#fdba74!important;border:1px solid #9a3412!important;}
 [data-theme="dark"] #serki-attendance-screen span:has(> #serki-last-editor) {background:#32254d!important;color:#d8b4fe!important;border:1px solid #66508e!important;}
 [data-theme="dark"] #serki-attendance-screen .att-more {background:#26364c!important;color:#e2e8f0!important;border-color:#536780!important;}
 [data-theme="dark"] #serki-attendance-screen .att-more.on {background:#49252c!important;color:#fda4af!important;border-color:#9f5360!important;}
@@ -8481,6 +8492,13 @@ input, select, textarea, .login-form, .filters-container, .floating-menu,
   margin-top:10px; padding-top:10px; border-top:1px solid #e2e8f0;
 }
 [data-theme="dark"] #serki-attendance-screen .serki-att-stats-bar { border-top-color:#334155; }
+#serki-attendance-screen .serki-footer-last-editor {
+  display:inline-flex; align-items:center; gap:6px; padding:6px 12px; border-radius:8px;
+  background:#ede9fe; color:#5b21b6; border:1px solid #c4b5fd; font-size:0.88rem; font-weight:700;
+}
+[data-theme="dark"] #serki-attendance-screen .serki-footer-last-editor {
+  background:#32254d; color:#ddd6fe; border-color:#5b21b6;
+}
 @media (max-width:700px) {
   .att-cards { grid-template-columns:1fr; }
   #serki-attendance-screen .screen-header { flex-wrap:wrap; gap:8px; }
@@ -10266,6 +10284,7 @@ html[data-theme="dark"] #serki-view-screen :is(.user-data-card,.serki-view-zone-
                         <span style="color:#b91c1c; background:#fee2e2; padding:6px 12px; border-radius:20px;">⚠️ جزاءات: <b id="serki-count-penalties">0</b></span>
 
                         <span style="color:#334155; background:#e2e8f0; padding:6px 12px; border-radius:20px;">👥 المشغلين: <b id="serki-count-total">0</b></span>
+                        <span style="color:#9a3412; background:#ffedd5; padding:6px 12px; border-radius:20px;">⏱️ النبطشيات: <b id="serki-count-nabatshiat">0</b></span>
                         <span style="color:#6d28d9; background:#ede9fe; padding:6px 12px; border-radius:20px;">✍️ آخر مسجل: <b id="serki-last-editor">—</b></span>
                     </div>
                 </div>
@@ -10302,11 +10321,12 @@ html[data-theme="dark"] #serki-view-screen :is(.user-data-card,.serki-view-zone-
                             </button>
                             <div id="serki-approval-status-badge" style="display:none; font-weight:bold; font-size:0.92rem; padding:6px 14px; border-radius:8px; background:#dcfce7; color:#15803d; border:1px solid #86efac;">
                             </div>
+                            <div id="serki-footer-last-editor-badge" class="serki-footer-last-editor" style="display:none;"></div>
                         </div>
 
-                        <div style="display:flex; align-items:center; gap:15px;">
-                            <span style="font-size:0.85rem; color:#64748b;" id="serki-last-saved-time">لا يتم الحفظ تلقائياً — اضغط «تأكيد وحفظ السركي» لحفظ التعديلات</span>
-                            <button type="button" class="btn btn-success" id="serki-save-attendance-btn" style="padding:9px 24px; font-weight:bold;">💾 تأكيد وحفظ السركي</button>
+                        <div style="display:flex; align-items:center; gap:10px; margin-inline-start:auto;">
+                            <span style="font-size:0.85rem; color:#64748b; display:none;" id="serki-last-saved-time"></span>
+                            <button type="button" class="btn btn-success" id="serki-save-attendance-btn" style="padding:9px 24px; font-weight:bold; white-space:nowrap;">💾 تأكيد وحفظ السركي</button>
                         </div>
                     </div>
                 </div>
@@ -36774,9 +36794,10 @@ function saveOperatorsForSpecificZone(targetZoneId, list) {
         const btn = document.getElementById('serki-save-attendance-btn');
         if (serkiDraft) {
             if (statusEl) {
-                statusEl.textContent = '● تعديلات غير محفوظة (' + serkiDraft.changes + ') — اضغط «تأكيد وحفظ السركي»';
+                statusEl.textContent = '● تعديلات غير محفوظة (' + serkiDraft.changes + ')';
                 statusEl.style.color = '#d97706';
                 statusEl.style.fontWeight = '800';
+                statusEl.style.display = '';
             }
             if (btn) {
                 btn.classList.add('serki-dirty');
@@ -36784,7 +36805,8 @@ function saveOperatorsForSpecificZone(targetZoneId, list) {
             }
         } else {
             if (statusEl && !/تم الحفظ/.test(statusEl.textContent)) {
-                statusEl.textContent = 'لا يتم الحفظ تلقائياً — اضغط «تأكيد وحفظ السركي» لحفظ التعديلات';
+                statusEl.textContent = '';
+                statusEl.style.display = 'none';
                 statusEl.style.color = '#64748b';
                 statusEl.style.fontWeight = '';
             }
@@ -37895,7 +37917,14 @@ function saveOperatorsForSpecificZone(targetZoneId, list) {
     // علامة الساعة أعلى مسلسل المشغل أثناء التسجيل دليلًا على احتساب نبطشية
     function updateNabatshiaMarks(dateStr) {
         let map = {};
-        try { map = computeDailyNabatshiat(dateStr).pointsMap; } catch (e) { console.warn('nabatshia marks', e); }
+        let totalPoints = 0;
+        try {
+            const res = computeDailyNabatshiat(dateStr);
+            map = res.pointsMap || {};
+            totalPoints = res.totalPoints || 0;
+        } catch (e) { console.warn('nabatshia marks', e); }
+        const nabCountEl = document.getElementById('serki-count-nabatshiat');
+        if (nabCountEl) nabCountEl.textContent = serkiFormatNabPoints(totalPoints);
         document.querySelectorAll('.serki-nab-slot').forEach(slot => {
             const info = map[slot.getAttribute('data-op-key')];
             if (info && info.points > 0) {
@@ -37927,6 +37956,8 @@ function renderAttendanceTable(dateStr) {
             </tr>
         `;
         updateAttendanceCounters({});
+        const nabCountEl = document.getElementById('serki-count-nabatshiat');
+        if (nabCountEl) nabCountEl.textContent = '0';
         if (typeof renderAttendanceCards === 'function') renderAttendanceCards([], {}, dateStr);
         return;
     }
@@ -38094,7 +38125,29 @@ function renderAttendanceTable(dateStr) {
         if (search) { search.oninput = applyFilter; applyFilter(); }
         if (serkiIsLocked(dateStr)) box.querySelectorAll('input,select').forEach(el => {el.disabled=true;});
     }
+    function getSerkiLastEditorName(attendance) {
+        if (!attendance || typeof attendance !== 'object') return '';
+        if (attendance._lastEditor && attendance._lastEditor.name) return String(attendance._lastEditor.name).trim();
+        if (Array.isArray(attendance._editHistory) && attendance._editHistory.length) {
+            const last = attendance._editHistory[attendance._editHistory.length - 1];
+            if (last && last.name) return String(last.name).trim();
+        }
+        return '';
+    }
+    function updateFooterLastEditorBadge(attendance) {
+        const el = document.getElementById('serki-footer-last-editor-badge');
+        if (!el) return;
+        const name = getSerkiLastEditorName(attendance);
+        if (name) {
+            el.innerHTML = `<span>✍️ آخر مسجل:</span> <b>${escapeHtml(name)}</b>`;
+            el.style.display = 'inline-flex';
+        } else {
+            el.style.display = 'none';
+            el.innerHTML = '';
+        }
+    }
     function renderApprovalBadge(attendance) {
+        updateFooterLastEditorBadge(attendance);
         const badge = document.getElementById('serki-approval-status-badge');
         const approveBtn = document.getElementById('serki-engineer-approve-btn');
         const appInfo = attendance && attendance._approval;
@@ -38273,7 +38326,9 @@ function renderAttendanceTable(dateStr) {
         if (penEl) penEl.textContent = penaltiesTotal > 0 ? penaltiesTotal : 0;
         if (totalEl) totalEl.textContent = operators.length;
         const lastEditorEl = document.getElementById('serki-last-editor');
-        if (lastEditorEl) lastEditorEl.textContent = (attendance && attendance._lastEditor && attendance._lastEditor.name) || '—';
+        const lastEditorName = getSerkiLastEditorName(attendance);
+        if (lastEditorEl) lastEditorEl.textContent = lastEditorName || '—';
+        updateFooterLastEditorBadge(attendance);
     }
 
     function showSavedIndicator() {
@@ -38282,6 +38337,7 @@ function renderAttendanceTable(dateStr) {
             const timeStr = new Date().toLocaleTimeString('ar-EG');
             statusEl.textContent = `✓ تم الحفظ في تمام ${timeStr}`;
             statusEl.style.color = '#16a34a';
+            statusEl.style.display = '';
         }
     }
 
@@ -39058,6 +39114,7 @@ function basinValidateAttendance(dateStr,opKey,shift,checked,attendance) {
             const attendance = getAttendanceRecord(dateStr);
             const appInfo = attendance._approval;
             const isApproved = !!(appInfo && appInfo.approved);
+            const lastEditorName = getSerkiLastEditorName(attendance) || '—';
 
             if (!operators.length) {
                 alert('⚠️ لا يوجد مشغلون مسجلون في هذه المنطقة لطباعة السركي.');
@@ -39187,7 +39244,7 @@ function basinValidateAttendance(dateStr,opKey,shift,checked,attendance) {
                         { lbl: 'حضور نهاري', val: String(dayCount) },
                         { lbl: 'حضور ليلي', val: String(nightCount) },
                         { lbl: 'إجمالي الغياب', val: String(absentCount) },
-                        { lbl: 'آخر مسجل', val: (attendance._lastEditor && attendance._lastEditor.name) || supName },
+                        { lbl: 'آخر مسجل', val: lastEditorName },
                         { lbl: 'اعتماد', val: isApproved ? ('✔ ' + (appInfo.byName || 'المهندس')) : 'قيد المراجعة' }
                     ];
                     const gap = 8;
@@ -39275,7 +39332,8 @@ function basinValidateAttendance(dateStr,opKey,shift,checked,attendance) {
             ctx.fillStyle = '#000000';
             ctx.font = 'bold 12px ' + FONT;
             ctx.textAlign = 'right';
-            ctx.fillText(`مشرف المنطقة: ${supName}`, XR - 10, y + 26);
+            ctx.fillText(`مشرف المنطقة: ${supName}`, XR - 10, y + 22);
+            ctx.fillText(`آخر مسجل: ${lastEditorName}`, XR - 10, y + 42);
 
             if (isApproved) {
                 // عنوان اعتماد المهندس وبجانبه شعار/ختم تم الاعتماد المطابق للصورة
